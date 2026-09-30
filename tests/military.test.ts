@@ -109,3 +109,29 @@ test('losing all territory creates a nation in exile with a comeback path', () =
   assert.equal(victim.exile, false);
   void settle; void advance; void DAY;
 });
+
+test('peace terms need both congresses and then settle consistently', async () => {
+  const { propose, voteProposal } = await import('../src/sim/congress');
+  const w = fresh(36);
+  const { a, b, border } = neighbours(w);
+  const war = declareWar(w, w.nations[a], { target: b, days: 21, goals: [border] });
+  const bt = createBattle(w, 'war', border, a, b, war.id);
+  war.battles.push(bt.id);
+  finishBattle(w, bt, 'a');
+  assert.equal(w.regions[border].occ?.nation, a);
+  const pa = w.citizens[w.nations[a].president!];
+  assert.ok(propose(w, pa, 'peace', { war: war.id, kind: 'armistice' }).ok);
+  const p1 = Object.values(w.proposals).find((x) => x.type === 'peace' && x.nation === a)!;
+  for (const d of w.nations[a].deputies) voteProposal(w, w.citizens[d], p1.id, true);
+  advance(w, 25 * 60, false);
+  assert.equal(p1.status, 'passed');
+  assert.equal(war.status, 'active', 'still at war until the other side agrees');
+  const p2 = Object.values(w.proposals).find((x) => x.type === 'peace' && x.nation === b && x.params.kind === 'accept')!;
+  assert.ok(p2, 'response vote opened in the enemy congress');
+  for (const d of w.nations[b].deputies) if (!p2.votes[d]) p2.votes[d] = 'y';
+  if (w.nations[b].president != null) p2.votes[w.nations[b].president!] = 'y';
+  advance(w, 25 * 60, false);
+  assert.equal(war.status, 'ended');
+  assert.equal(w.regions[border].occ, null, 'armistice returned the occupation');
+  assert.equal(w.regions[border].owner, b);
+});

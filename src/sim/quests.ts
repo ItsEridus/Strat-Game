@@ -212,6 +212,7 @@ export function checkProgress(w: World) {
       step = campaignStep(w, branch);
     }
   }
+  checkGoals(w);
   // dailies: mark done (claim is manual)
   for (const q of ps.dailies) if (!q.done && metric(w, q.metric) - q.base >= q.target) {
     q.done = true;
@@ -229,4 +230,32 @@ export function initPlayerProgress(w: World) {
     from: null, subject: `Welcome from ${ENVOY_NAME}, your civic guide`, kind: 'system',
     body: `Welcome, citizen. I’ll help you find your feet. Start by finding a job (Employment) — ${TUTORIAL[0].hint} Time only moves when you let it: use the clock controls at the top to play, pause, or jump ahead.`,
   });
+}
+
+// ---------- scenario goals (proposed solo goals; local achievements) ----------
+export const GOALS: { id: string; name: string; desc: string; test: (w: World) => boolean }[] = [
+  { id: 'industry', name: 'Integrated industry', desc: 'Own a raw-material producer and a factory that uses its output, both profitable over the last week.', test: (w) => {
+    const p = player(w);
+    const mine = Object.values(w.companies).filter((c) => c.owner.k === 'cit' && c.owner.id === p.id);
+    const profit = (c: typeof mine[number]) => c.hist.slice(-7).reduce((s, h) => s + h.profit, 0) > 0;
+    const pairs: [string, string][] = [['grain', 'food'], ['iron', 'wg'], ['titanium', 'wa'], ['oil', 'ticket']];
+    return pairs.some(([r, f]) => mine.some((c) => c.industry === r && profit(c)) && mine.some((c) => c.industry === f && profit(c)));
+  } },
+  { id: 'president', name: 'Elected president', desc: 'Win a competitive presidential election.', test: (w) => metric(w, 'wonPresidency') >= 1 },
+  { id: 'champions', name: 'Unit champions', desc: 'Win a tournament while commanding a military unit.', test: (w) => metric(w, 'tournamentWin') >= 1 && Object.values(w.units).some((u) => u.commander === w.playerId) },
+  { id: 'rebuild', name: 'National rebuilding', desc: 'Contribute to five completed construction projects.', test: (w) => Object.values(w.projects).filter((p) => p.done && !p.cancelled && (p.contrib[w.playerId] ?? 0) > 0).length >= 5 },
+  { id: 'homeland', name: 'Homeland recovered', desc: 'Fight in a battle that liberates one of your nation’s occupied regions.', test: (w) => metric(w, 'liberations') >= 1 },
+  { id: 'power', name: 'Regional power', desc: 'While you serve as president, your nation grows by three regions beyond its size when you took office.', test: (w) => metric(w, 'growthInOffice') >= 3 },
+  { id: 'publisher', name: 'Prominent publisher', desc: 'Own a newspaper with 150+ readers and 20 articles.', test: (w) => Object.values(w.papers).some((p) => p.owner.k === 'cit' && p.owner.id === w.playerId && p.subs.length + p.bgSubs >= 150 && p.articles >= 20) },
+  { id: 'investor', name: 'Prominent investor', desc: 'Own 20%+ of a holding worth 100+ gold.', test: (w) => Object.values(w.holdings).some((h) => (h.shares[w.playerId] ?? 0) / h.total >= 0.2 && h.valuation >= 100000) },
+];
+
+export function checkGoals(w: World) {
+  const ach = w.player.achievements;
+  for (const gl of GOALS) {
+    if (ach[gl.id] || !gl.test(w)) continue;
+    ach[gl.id] = w.time;
+    grant(w, { gold: g(5), xp: 25, prestige: 50 }, 'Goal achieved');
+    notify(w, 'progress', `🏆 Goal achieved: ${gl.name}! (+5 gold, +25 XP, +50 prestige)`, { critical: true, link: 'missions' });
+  }
 }

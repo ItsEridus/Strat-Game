@@ -16,6 +16,7 @@ import { controller, natref, player } from './query';
 import { relation, propose, eligibleVoters } from './congress';
 import type { ExtraProposal } from './congressExtra';
 import { partyOf } from './politics';
+import { bump } from './progress';
 import { cancelProject } from './construction';
 
 export const MAX_BATTLES_PER_SIDE = 2; // SOLO
@@ -142,7 +143,7 @@ export const WAR_PROPOSAL: ExtraProposal = {
     const ratio = militaryPower(w, n.id) / Math.max(1, militaryPower(w, p.target));
     const rel = n.relations[p.target]?.score ?? 0;
     const busy = activeWars(w).filter((x) => x.att === n.id || x.def === n.id).length;
-    return (hawk - 0.55) * 0.8 + Math.max(-0.4, Math.min(0.3, (ratio - 1) * 0.3)) - rel / 150 - busy * 0.2;
+    return (hawk - 0.55) * 0.8 + Math.max(-0.4, Math.min(0.3, (ratio - 1) * 0.3)) - rel / 150 - busy * 0.2 + n.warMood * 0.05;
   },
   enact(w, n, p) {
     const why = warCheck(w, n, p.params);
@@ -242,6 +243,8 @@ export function onWarBattleWon(w: World, b: Battle, winner: 'a' | 'd') {
     war.occupied = war.occupied.filter((x) => x !== r.id);
     war.counter = war.counter.filter((x) => x !== r.id);
     record(w, 'war', `🎉 ${w.nations[b.att].name} liberated ${r.name}.`, { region: r.id, nation: b.att, important: true });
+    const pl = player(w);
+    if (b.att === pl.nation && (b.total[pl.id]?.a ?? 0) > 0) bump(w, 'liberations');
   } else {
     r.occ = { nation: b.att, war: war.id };
     if (b.att === war.att) war.occupied.push(r.id); else war.counter.push(r.id);
@@ -295,6 +298,10 @@ export function settle(w: World, war: War, kind: Terms['kind'], offer?: PeaceOff
   if (pl.nation === att.id || pl.nation === def.id) notify(w, 'warHome', `🕊️ War with ${pl.nation === att.id ? def.name : att.name} ended by ${war.outcome}.`, { link: 'wars', critical: true });
   updateExile(w);
   computeSupply(w);
+  const pn = w.nations[pl.nation];
+  if (pn.president === pl.id && w.player.counters.regionsAtOffice != null) {
+    w.player.counters.growthInOffice = Math.max(w.player.counters.growthInOffice ?? 0, w.regions.filter((r) => r.owner === pn.id).length - w.player.counters.regionsAtOffice);
+  }
 }
 
 export function onWarDeadline(w: World, warId: Id) {

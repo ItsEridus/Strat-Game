@@ -196,6 +196,7 @@ export function audit(w: World): { ok: boolean; problems: string[] } {
     addIt(ct.give.items);
   }
   for (const p of Object.values(w.projects)) if (!p.done) addIt(p.mats);
+  for (const t of Object.values(w.tournaments)) money[GOLD] = (money[GOLD] ?? 0) + (t.escrow ?? 0);
   for (const [k, v] of Object.entries(w.stats.supply)) {
     if ((money[k] ?? 0) !== v) problems.push(`money ${k}: held ${money[k] ?? 0} vs supply ${v}`);
   }

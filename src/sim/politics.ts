@@ -417,6 +417,7 @@ export function runElection(w: World, eid: Id) {
   const prev = n.president;
   n.president = winner;
   n.termStart = w.time;
+  if (winner === pl.id && cands.length > 1) { bump(w, 'wonPresidency'); w.player.counters.regionsAtOffice = w.regions.filter((r) => r.owner === n.id).length; }
   if (prev !== winner) {
     n.cabinet = {};
     appointCabinetAI(w, n);

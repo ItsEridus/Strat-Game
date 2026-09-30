@@ -35,6 +35,8 @@ export function upcoming(w: World): Upcoming[] {
   for (const war of Object.values(w.wars)) if (war.status === 'active' && (war.att === p.nation || war.def === p.nation)) out.push({ label: `War deadline (${w.nations[war.att].name} vs ${w.nations[war.def].name})`, t: war.deadline, cat: 'war' });
   for (const a of Object.values(w.auctions)) if (a.status === 'open' && (a.seller === p.id || a.bid?.by === p.id)) out.push({ label: `Auction ends`, t: a.end, cat: 'market' });
   if (p.mining) out.push({ label: 'Mining shift complete', t: p.mining.end, cat: 'personal' });
-  // Later stages append tournaments and events here.
+  for (const t of Object.values(w.tournaments)) if (t.status === 'upcoming') out.push({ label: `Tournament: ${t.name}${t.entrants.includes(p.id) ? ' (registered)' : ''}`, t: t.start, cat: 'tournament' });
+  for (const e of Object.values(w.events)) if (e.status === 'active') out.push({ label: 'Pirate fleet departs', t: e.end, cat: 'event' });
+  for (const n of Object.values(w.nukes)) if (n.status === 'flying') out.push({ label: `Missile impact at ${w.regions[n.target].name}`, t: n.arrives, cat: 'war' });
   return out.filter((u) => u.t > w.time).sort((a, b) => a.t - b.t);
 }

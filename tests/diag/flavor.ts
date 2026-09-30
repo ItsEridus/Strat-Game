@@ -1,0 +1,13 @@
+import { generateWorld } from '../../src/sim/worldgen';
+import { registerSystems } from '../../src/sim/systems';
+import { advance } from '../../src/sim/tick';
+import { DAY } from '../../src/engine/clock';
+import { audit } from '../../src/engine/ledger';
+registerSystems();
+const w = generateWorld(7, 'T', 0);
+advance(w, Number(process.argv[2] ?? 70) * DAY, false);
+console.log(w.log.filter((e) => ['event', 'tournament', 'press', 'nuclear', 'nature'].includes(e.type)).slice(-14).map((e) => `d${Math.floor(e.t / 1440)} ${e.text}`).join('\n'));
+console.log('articles', Object.keys(w.articles).length, 'papers', Object.keys(w.papers).length, 'chapters', w.chapters.length, 'tournaments', Object.values(w.tournaments).map((t) => t.status).join(','));
+console.log('approval', w.nations.map((n) => Math.round(n.approval)).join(' '));
+console.log('audit', audit(w).ok, audit(w).problems.slice(0, 3));
+console.log(w.chapters[0]?.title, '\n', w.chapters[0]?.text.join('\n '));

@@ -27,6 +27,10 @@ import { Contracts } from './Contracts';
 import { Academy } from './Academy';
 import { Mining } from './Mining';
 import { Shop, BusinessMarket } from './Shop';
+import { Press } from './Press';
+import { Library } from './Library';
+import { Stadium } from './Stadium';
+import { Events } from './Events';
 
 export interface ScreenDef { id: string; label: string; icon: string; group: string; comp: FunctionComponent<{ w: World }>; hidden?: boolean; badge?: (w: World) => number }
 
@@ -53,8 +57,12 @@ export const SCREENS: ScreenDef[] = [
   { id: 'wars', label: 'Wars', icon: '🔥', group: 'Military', comp: Wars, badge: (w) => Object.values(w.wars).filter((x) => x.status === 'active' && (x.att === w.citizens[w.playerId].nation || x.def === w.citizens[w.playerId].nation)).length },
   { id: 'battle', label: 'Battle', icon: '⚔️', group: 'Military', comp: BattleScreen },
   { id: 'units', label: 'Military Unit', icon: '🎖️', group: 'Military', comp: Units },
+  { id: 'events', label: 'Events & Strategic', icon: '🏴‍☠️', group: 'Military', comp: Events, badge: (w) => Object.values(w.events).filter((e) => e.status === 'active').length },
+  { id: 'stadium', label: 'Stadium', icon: '🏟️', group: 'Military', comp: Stadium },
   { id: 'map', label: 'World Map', icon: '🗺️', group: 'World', comp: MapScreen },
   { id: 'country', label: 'Country', icon: '🏛️', group: 'World', comp: Country },
+  { id: 'press', label: 'Newspapers', icon: '🗞️', group: 'World', comp: Press },
+  { id: 'library', label: 'Library', icon: '📚', group: 'World', comp: Library },
   { id: 'news', label: 'News & Alerts', icon: '📰', group: 'World', comp: News },
   { id: 'inbox', label: 'Inbox', icon: '✉️', group: 'World', comp: Inbox },
   { id: 'settings', label: 'Settings & Saves', icon: '⚙️', group: 'Game', comp: Settings },

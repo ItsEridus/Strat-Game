@@ -1,7 +1,7 @@
 import type { World } from '../../sim/types';
 import { ActBtn, Bar, Panel, Help } from '../common';
 import { store } from '../store';
-import { CAMPAIGNS, TUTORIAL, campaignStep, claimDaily, claimSeason, metric, seasonReward, seasonTier } from '../../sim/quests';
+import { CAMPAIGNS, GOALS, TUTORIAL, campaignStep, claimDaily, claimSeason, metric, seasonReward, seasonTier } from '../../sim/quests';
 import { B } from '../../data/balance';
 import { itemName } from '../../data/items';
 
@@ -56,6 +56,10 @@ export function Missions({ w }: { w: World }) {
             </div>
           );
         })}
+      </Panel>
+      <Panel title="Personal goals (optional scenarios)">
+        <Help>Open-ended sandbox goals. Losing an election or a war never ends the campaign.</Help>
+        {GOALS.map((gl) => <div class="track"><span>{ps.achievements[gl.id] ? '🏆' : '▫️'} <b>{gl.name}</b><br /><small class="muted">{gl.desc}</small></span><small>{ps.achievements[gl.id] ? `day ${Math.floor(ps.achievements[gl.id] / 1440)}` : ''}</small></div>)}
       </Panel>
       <Panel title={`Season ${ps.season} track — ${ps.prestige} prestige (tier ${tier})`} class="wide">
         <Help>An entirely earnable progression track (replaces a paid battle pass). Every {B.season.prestigePerTier} prestige unlocks a tier.</Help>

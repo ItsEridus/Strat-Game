@@ -76,8 +76,8 @@ export function hitPreview(w: World, c: Citizen, b: Battle | null, side: 'a' | '
   const critDmg = B.damage.critDamage + c.attrs.luck * B.attrs.luckCritDmg + (gs.critDmg ?? 0);
   if (buffValue(w, c, 'focus')) { hit += 5; crit += 10; parts.push('Focus: +5 accuracy, +10 pt crit'); }
   let energy = B.cost.hit;
-  if (b) {
-    const r = w.regions[b.region];
+  const r = b ? w.regions[b.region] : undefined; // undefined for sea (event) battles
+  if (b && r) {
     const nat = sideNation(b, side);
     if (r.terrain === 'plains' && side === 'a') { mult *= 1 + B.damage.terrain.plainsAtk; parts.push('Plains: attacker +20%'); }
     if (r.terrain === 'mountains' && side === 'd') { mult *= 1 + B.damage.terrain.mountainsDef; parts.push('Mountains: defender +20%'); }
@@ -85,7 +85,6 @@ export function hitPreview(w: World, c: Citizen, b: Battle | null, side: 'a' | '
     if (r.terrain === 'desert') { energy *= B.damage.terrain.desertEnergyMult; parts.push('Desert: hits cost double energy'); }
     if (side === 'd' && r.bld.base) { mult *= 1 + r.bld.base * B.buildings.baseDefense; hit += r.bld.base * B.buildings.baseAccuracy; parts.push(`Military base L${r.bld.base}: defender +${Math.round(r.bld.base * B.buildings.baseDefense * 100)}%, +${r.bld.base} accuracy`); }
     if (side === 'd' && buffValue(w, c, 'bunker')) { mult *= 1 + buffValue(w, c, 'bunker'); parts.push('Bunker buff'); }
-    if (b.kind === 'event' && buffValue(w, c, 'cutlass')) { mult *= 1 + buffValue(w, c, 'cutlass'); parts.push('Cutlass: +20% vs ships'); }
     if (nat >= 0 && w.nations[nat]) {
       const sh = seatShare(w, w.nations[nat]);
       let ideo = 0;
@@ -100,13 +99,16 @@ export function hitPreview(w: World, c: Citizen, b: Battle | null, side: 'a' | '
       if (b.kind === 'war' && side === 'd' && !r.supplied) { mult *= 1 - B.damage.supplyPenalty; parts.push('Supply route to capital cut: −10%'); }
     }
     if (b.kind === 'war' && !ownOrAllied(w, c, nat)) { mult *= 1 - B.damage.foreignPenalty; parts.push('Foreign flag (not own/allied): −30%'); }
+  }
+  if (b) {
+    if (b.kind === 'event' && buffValue(w, c, 'cutlass')) { mult *= 1 + buffValue(w, c, 'cutlass'); parts.push('Cutlass: +20% vs ships'); }
     // Military unit order bonus
     const u = c.unit != null ? w.units[c.unit] : null;
     if (u && u.order && u.order.battle === b.id && u.order.side === side) {
       const sq = u.squads.find((s) => s.members.includes(c.id));
       let bonus = B.units.orderBonus;
       if (sq && sq.spec !== 'general') {
-        if (sq.spec === r.terrain) bonus += B.units.specBonus * sq.level;
+        if (r && sq.spec === r.terrain) bonus += B.units.specBonus * sq.level;
         if (sq.spec === 'ground' && wsel?.kind === 'wg') bonus += B.units.specBonus * sq.level;
         if (sq.spec === 'air' && wsel?.kind === 'wa') bonus += B.units.specBonus * sq.level;
       }

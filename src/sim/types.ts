@@ -196,6 +196,7 @@ export interface Nation {
   warScore: number; // recent military performance (-100..100), feeds voters
   unemployment: number; // share of citizens without a job (0..1)
   procure: Record<ItemKey, number>; // government demand not met by the market (signals producers)
+  warMood: number; // public appetite for war shaped by the press (-5..5)
 }
 
 export interface Households { nation: Id; wallet: Wallet; inv: Inventory; pop: number; unmet: number }
@@ -401,6 +402,8 @@ export interface Tournament {
   prize: number;
   podium: Id[];
   hostedBy?: Id;
+  escrow: number; // gold held from entry fees and host funding
+  sponsored?: boolean;
 }
 
 export interface GameEvent { id: Id; kind: 'pirates'; start: number; end: number; ships: { id: Id; name: string; holder: Id | null; battle: Id | null; defenders: number; depot: number }[]; status: 'active' | 'ended' }
@@ -490,5 +493,5 @@ export interface World {
   queue: ScheduledEvent[];
   stats: Stats;
   ledger: { t: number; text: string; amount: number; asset: AssetId; ref: string }[]; // player's transaction history
-  calendar: { nextDaily: number };
+  calendar: { nextDaily: number; terrainDone?: Id[] };
 }
