@@ -1,4 +1,6 @@
 import { useState } from 'preact/hooks';
+import { Emblem } from '../icons';
+import { GAME_VERSION } from '../Updates';
 import { store } from '../store';
 import { NATION_DEFS } from '../../data/names';
 import { EARTH } from '../../data/earth';
@@ -16,14 +18,23 @@ export function StartScreen() {
   const [difficulty, setDifficulty] = useState<Settings['difficulty']>('normal');
   const [adv, setAdv] = useState({ nuclear: true, pirates: true, terrainEvents: false, tournaments: true });
   const [importing, setImporting] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [text, setText] = useState('');
   const saves = SLOTS.map((s) => slotInfo(s)).filter(Boolean);
   const onFile = async (f: File | undefined) => { if (f) setText(await f.text()); };
+  const begin = () => { setGenerating(true); setTimeout(() => store.newGame(fixed ? seed : null, name, nation, cpn, difficulty, adv, pace), 60); };
   return (
     <div class="start">
-      <h1>MERIDIAN REACH</h1>
-      <p class="lead">A single-player society simulator set on Earth. Live as one citizen among thousands of simulated people, with a local society in every state and province of sixteen real-world nations:
-        work, trade, build companies, invest, publish, win elections, legislate, construct, and fight in wars — while the AI society keeps the world running.</p>
+      <TitleBackdrop />
+      {generating && <div class="loading-veil" role="status"><Emblem size={84} /><p>Charting the world</p><small>{NATION_DEFS[nation].name} · {(cpn * 520).toLocaleString()} lives being set in motion…</small></div>}
+      <div class="start-inner">
+      <div class="title-block">
+        <Emblem size={76} />
+        <h1>MERIDIAN REACH</h1>
+        <p class="tagline">A life · A nation · A world</p>
+        <div class="rule" />
+        <p class="lead">Live one life among thousands on a map of the real Earth: grow up, work, love, raise a family and grow old — or build companies, win elections and command armies — while a whole society lives around you.</p>
+      </div>
       {saves.length > 0 && (
         <section class="panel">
           <header><h3>Continue</h3></header>
@@ -72,7 +83,7 @@ export function StartScreen() {
           {fixed && <label>Seed <Num value={seed} onInput={setSeed} width={120} /> <button class="btn sm ghost" onClick={() => setSeed(Math.floor(Math.random() * 1e6))}>🎲</button></label>}
         </details>
         <p class="muted small">Time is paused until you press play. The world only advances while the game is open.</p>
-        <Btn kind="primary" onClick={() => store.newGame(fixed ? seed : null, name, nation, cpn, difficulty, adv, pace)}>Start campaign ▶</Btn>
+        <Btn kind="primary" onClick={begin}>Start campaign ▶</Btn>
         <Btn kind="ghost" onClick={() => setImporting(!importing)}>Import a save…</Btn>
         {importing && (
           <div class="import">
@@ -82,6 +93,23 @@ export function StartScreen() {
           </div>
         )}
       </section>
+      <p class="start-footer">Version {GAME_VERSION} · single-player · everything runs on your computer</p>
+      </div>
+    </div>
+  );
+}
+
+/** The slowly drifting Earth behind the title. */
+function TitleBackdrop() {
+  return (
+    <div class="title-bg" aria-hidden="true">
+      <svg class="earth" viewBox={`0 0 ${EARTH.width} ${EARTH.height}`} preserveAspectRatio="xMidYMid slice">
+        <path class="land-bg" d={EARTH.background} />
+        {EARTH.regions.map((r) => <path class="reg" d={r.path} />)}
+      </svg>
+      <div class="meridians" />
+      <div class="stars" />
+      <div class="vignette" />
     </div>
   );
 }

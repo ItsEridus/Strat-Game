@@ -6,6 +6,10 @@ import { StartScreen } from './screens/Start';
 import { ConversationPanel, StoryModal } from './Overlays';
 import { UpdateBanner } from './Updates';
 import { AdvanceBanner, AnnualReviewModal } from './LifeOverlays';
+import { ScreenIcon } from './icons';
+
+/** Screens that carry their own title. */
+const NO_HEAD = new Set(['life', 'local', 'citizen']);
 
 export function App() {
   const s = useStore();
@@ -25,6 +29,8 @@ export function App() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
+  // Each screen opens at its top (and a new campaign after the title screen).
+  useEffect(() => { window.scrollTo(0, 0); }, [s.tab, !!s.w]);
   if (!s.w) return <StartScreen />;
   const w = s.w;
   const screen = SCREENS.find((x) => x.id === s.tab) ?? SCREENS[0];
@@ -42,7 +48,7 @@ export function App() {
               <h4>{g}</h4>
               {SCREENS.filter((x) => x.group === g && !x.hidden).map((x) => (
                 <button class={x.id === s.tab ? 'on' : ''} onClick={() => { store.go(x.id); setNavOpen(false); }}>
-                  <span class="ico">{x.icon}</span>{x.label}
+                  <ScreenIcon id={x.id} fallback={x.icon} />{x.label}
                   {badges[x.id] ? <span class="badge">{badges[x.id]}</span> : null}
                 </button>
               ))}
@@ -50,6 +56,7 @@ export function App() {
           ))}
         </nav>
         <main class="main" key={s.tab}>
+          {!NO_HEAD.has(screen.id) && <div class="screen-head"><ScreenIcon id={screen.id} fallback={screen.icon} size={22} /><h1>{screen.label}</h1><span class="rule" /></div>}
           <screen.comp w={w} />
         </main>
       </div>

@@ -13,7 +13,7 @@ what remains, and the known limitations, so work can resume from here.
 | – | No levels: skills by practice, reputation, life gates | Done |
 | L1 | Lifecycle: pace of life, stages, age gates, birthdays, annual review, long advances, routine, Life hub | Done (see below) |
 | M1 | Military: civilian control (office holders go to the reserve), head of government as Commander-in-Chief, service age limits, veterans | Done |
-| UI1 | Premium design system and game shell | Next |
+| UI1 | Premium design system and game shell | Done |
 | N3 | Narrative stage 3: districts, venues, familiarity, availability, appointments | Planned |
 | L2 | Family graph with real children, pregnancy, adoption, guardians, siblings; hobbies, pets, gifts; story protagonists and memory subjects; budgets | Planned |
 | L3 | Schools, universities, clinics and offices as funded institutions; education ladder; qualifications; service careers (teaching, clinical care, administration, technical); work history; promotions; military academy | Planned |
@@ -88,6 +88,16 @@ what remains, and the known limitations, so work can resume from here.
   of serving age and every nation has a Chief of Staff from day one.
 - Still to come with later stages: officer training and a military academy (L3), service pensions and battle
   injuries (L4), the "Duty and family" story (L6), long-run officer supply checks (L7).
+
+### UI1: design system and shell
+- `assets/styles.css` rewritten as a design system (tokens, glass surfaces, gold accent, meridian motifs, refined
+  buttons, tabs, inputs, tables, gauges, stats, chips, modals, toasts, conversations, map chrome), keeping every class
+  the screens use, with transitions, focus rings, reduced-motion support and narrow-window layouts.
+- Bundled fonts (Inter, Barlow Condensed, Cinzel; SIL OFL, `assets/fonts`) embedded into `dist/fonts.css` by
+  `build.mjs` so they load from `file://` and offline.
+- Line icons (Lucide) for navigation and the HUD (`src/ui/icons.tsx`), a brand emblem, screen headings, a cinematic
+  title screen with a drifting Earth, and a "Charting the world" veil while a campaign is generated.
+- The release workflow no longer republishes an existing version on branch pushes (tests still run).
 
 ## Tests
 - `tests/life.test.ts` (6): death/estate/offices, special election, emigration, coming of age, the player's romance,

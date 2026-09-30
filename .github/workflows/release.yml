@@ -21,16 +21,26 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
+      skip: ${{ steps.tag.outputs.skip }}
     steps:
       - uses: actions/checkout@v4
       - name: Pick the release tag
         id: tag
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           if [ -n "${{ github.event.inputs.tag }}" ]; then TAG="${{ github.event.inputs.tag }}"
           elif [ "${{ github.ref_type }}" = tag ]; then TAG="${{ github.ref_name }}"
           else TAG="v$(node -p 'require("./package.json").version')"; fi
           echo "TAG=$TAG" >> "$GITHUB_ENV"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          # A branch push only publishes a version that has no release yet (bump package.json to release);
+          # anything else is built and tested but never overwrites a published release.
+          SKIP=false
+          if [ "${{ github.event_name }}" = push ] && [ "${{ github.ref_type }}" = branch ] && gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            SKIP=true; echo "::notice::$TAG is already released; building and testing only."
+          fi
+          echo "skip=$SKIP" >> "$GITHUB_OUTPUT"
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -61,6 +71,7 @@ jobs:
   # launcher port taken), stay single-instance and close cleanly from its close button. The screenshot is kept as an artifact.
   smoke-windows:
     needs: build
+    if: needs.build.outputs.skip != 'true'
     runs-on: windows-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -124,6 +135,7 @@ jobs:
 
   release:
     needs: [build, smoke-windows]
+    if: needs.build.outputs.skip != 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

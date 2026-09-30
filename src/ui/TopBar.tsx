@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { Emblem, HUD_ICONS } from './icons';
 import { SPEED_LABELS, store, useStore } from './store';
 import { Bar, Amt } from './common';
 import { DAY, fmtClock, fmtDur } from '../engine/clock';
@@ -20,8 +21,8 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
   const ups = open ? upcoming(w) : [];
   return (
     <header class="topbar">
-      <button class="menu-btn" onClick={onMenu} aria-label="Menu">☰</button>
-      <div class="brand">MERIDIAN&nbsp;REACH</div>
+      <button class="menu-btn" onClick={onMenu} aria-label="Menu"><HUD_ICONS.menu size={18} /></button>
+      <div class="brand"><Emblem size={30} /><span class="word">MERIDIAN&nbsp;REACH</span></div>
       <div class="clock">
         <b>{fmtClock(w)}</b>
         <div class="speeds">
@@ -55,11 +56,11 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
       </div>
       <div class="vitals">
         <div class="vital" title={`Energy regenerates 1 per 2 minutes. Full in ${fmtDur(energyEta(w, p))}.`}>
-          <small>⚡ Energy {Math.floor(p.energy)}/{max}{p.energy < max ? ` · full in ${fmtDur(energyEta(w, p))}` : ''}</small>
+          <small><HUD_ICONS.energy size={13} /> Energy {Math.floor(p.energy)}/{max}{p.energy < max ? ` · full in ${fmtDur(energyEta(w, p))}` : ''}</small>
           <Bar v={p.energy} max={max} color="#3fb5a8" />
         </div>
         <div class="vital" title="Eating allowance: each meal uses one; one regenerates every 45 minutes.">
-          <small>🍽 Allowance {p.allowance}/{allowanceCap(w, p)}{allowanceEta(w, p) ? ` · +1 in ${fmtDur(allowanceEta(w, p))}` : ''}</small>
+          <small><HUD_ICONS.meals size={13} /> Meals {p.allowance}/{allowanceCap(w, p)}{allowanceEta(w, p) ? ` · +1 in ${fmtDur(allowanceEta(w, p))}` : ''}</small>
           <Bar v={p.allowance} max={allowanceCap(w, p)} color="#e0a526" />
         </div>
         {(() => { const r = reputation(p); const lo = r.min, hi = r.next?.min ?? r.min + 1; return (
