@@ -132,6 +132,10 @@ a { color: var(--gold); }
   border-bottom: 1px solid var(--line); box-shadow: 0 10px 30px -18px #000;
 }
 .topbar::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: linear-gradient(90deg, transparent, rgba(230, 180, 79, .45) 30%, rgba(230, 180, 79, .45) 70%, transparent); opacity: .6; pointer-events: none; }
+.history { display: flex; gap: 4px; }
+.history button { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border-radius: 8px; background: var(--ink-3); border: 1px solid var(--line-2); color: var(--text-2); cursor: pointer; transition: color .15s, border-color .15s, background .15s; }
+.history button:hover:not(:disabled) { color: var(--gold-hi); border-color: rgba(230, 180, 79, .55); background: var(--ink-4); }
+.history button:disabled { opacity: .32; cursor: default; }
 .brand { display: flex; align-items: center; gap: .6rem; font: 700 1.02rem/1 var(--font-brand); letter-spacing: .2em; white-space: nowrap; }
 .brand .word { background: linear-gradient(180deg, var(--gold-hi), var(--gold) 55%, var(--gold-lo)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .menu-btn { display: none; align-items: center; justify-content: center; background: var(--ink-3); border: 1px solid var(--line-2); color: var(--text); border-radius: 8px; width: 36px; height: 36px; cursor: pointer; }
@@ -486,6 +490,10 @@ ul.news li { padding: .3rem 0; border-bottom: 1px solid var(--line); line-height
   .advance-actions { grid-row: auto; grid-column: 1; }
 }
 @media (max-width: 800px) { .local-hero { grid-template-columns: 1fr; } .book { grid-template-columns: 1fr; } }
+/* A part of the interface that failed (the rest of the game keeps running). */
+.ui-error { border-color: rgba(239, 95, 88, .45); margin: .6rem 0; }
+.ui-error h3 { color: var(--bad); margin: 0 0 .3rem; }
+.ui-error pre { white-space: pre-wrap; color: var(--muted); background: rgba(0, 0, 0, .25); padding: .5rem .7rem; border-radius: var(--radius-sm); margin: .4rem 0 .7rem; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
 }

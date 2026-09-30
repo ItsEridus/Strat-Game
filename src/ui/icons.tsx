@@ -2,7 +2,7 @@
 // set (Lucide, ISC licence; only the icons imported here are bundled). Story
 // text and news keep their emoji.
 import {
-  Anchor, ArrowLeftRight, Backpack, Bell, BookOpen, Briefcase, Building, Earth, Eye, Factory, Flag, Flame, Gavel, GraduationCap,
+  Anchor, ArrowLeftRight, Backpack, ChevronLeft, ChevronRight, Bell, BookOpen, Briefcase, Building, Earth, Eye, Factory, Flag, Flame, Gavel, GraduationCap,
   Handshake, HardHat, House, Inbox, Landmark, LibraryBig, Map as MapIcon, MapPinned, Medal, Menu, Newspaper, Pickaxe, Settings, ShieldHalf,
   ShoppingBag, ShoppingCart, Siren, Sprout, Store, Swords, Target, Trophy, UserCog, UserRound, Users, UsersRound, Utensils, Vote, Zap,
 } from 'lucide-preact';
@@ -19,7 +19,7 @@ export const SCREEN_ICONS: Record<string, Lucide> = {
   library: LibraryBig, news: Bell, inbox: Inbox, settings: Settings, citizen: UserRound, admin: UserCog,
 };
 
-export const HUD_ICONS = { menu: Menu, energy: Zap, meals: Utensils };
+export const HUD_ICONS = { menu: Menu, energy: Zap, meals: Utensils, back: ChevronLeft, forward: ChevronRight };
 
 /** A screen's icon (line icon if there is one, else its emoji). */
 export function ScreenIcon({ id, fallback, size = 17 }: { id: string; fallback?: string; size?: number }) {

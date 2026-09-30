@@ -10,6 +10,8 @@ import { allowanceCap, allowanceEta, energyEta } from '../sim/citizen';
 import { controller, maxEnergy, player } from '../sim/query';
 import { ageOf, nextBirthday, reputation } from '../sim/growth';
 import { upcoming } from './upcoming';
+import { SCREENS } from './screens';
+import type { World } from '../sim/types';
 
 export function TopBar({ onMenu }: { onMenu: () => void }) {
   const s = useStore();
@@ -24,6 +26,10 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
   return (
     <header class="topbar">
       <button class="menu-btn" onClick={onMenu} aria-label="Menu"><HUD_ICONS.menu size={18} /></button>
+      <div class="history" role="group" aria-label="Screen history">
+        <button disabled={!s.backTo} onClick={() => store.back()} title={s.backTo ? `Back to ${placeName(w, s.backTo)} (Alt+←)` : 'Back'} aria-label="Back"><HUD_ICONS.back size={18} /></button>
+        <button disabled={!s.forwardTo} onClick={() => store.forward()} title={s.forwardTo ? `Forward to ${placeName(w, s.forwardTo)} (Alt+→)` : 'Forward'} aria-label="Forward"><HUD_ICONS.forward size={18} /></button>
+      </div>
       <div class="brand"><Emblem size={30} /><span class="word">MERIDIAN&nbsp;REACH</span></div>
       <div class="clock" title={`Day ${dayOf(w.time)} of the campaign · ${SPEED_LABELS[speed]}`}>
         <div class="clock-face">
@@ -85,4 +91,11 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
       </div>
     </header>
   );
+}
+
+/** What a history entry leads to: a screen's name, or whose profile. */
+function placeName(w: World, v: { tab: string; sel: Record<string, any> }) {
+  if (v.tab !== 'citizen') return SCREENS.find((x) => x.id === v.tab)?.label ?? v.tab;
+  const id = v.sel.citizen ?? w.playerId;
+  return id === w.playerId ? 'your profile' : `${w.citizens[id]?.name ?? 'a person'}'s profile`;
 }

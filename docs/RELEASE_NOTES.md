@@ -3,6 +3,19 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.3.2: back and forward, and sturdier releases
+
+Updates now come more often, in smaller steps, each one tested before it is released.
+
+- **Back and forward.** Two buttons at the top left take you back to the screens and profiles you came from, and
+  forward again, returning to where you were on the page. Hover to see where they lead. Alt+← / Alt+→ and the
+  back and forward buttons on a mouse work too.
+- **Sturdier.** If one screen or window runs into a problem, the rest of the game keeps running and tells you,
+  instead of going blank. Your saves are safe, and "Try again" redraws the screen.
+- **Every update is play-tested.** Before a release is published it is played in a real browser (a new campaign,
+  time running, every screen opened, a conversation, save and reload) and a game saved by the previous version
+  is loaded and played in the new one. The Windows game is launched and updated on Windows as before.
+
 ### New in 1.3.1: a preview of 1.4 — a whole life
 
 A preview on the way to 1.4 (the life simulation). More is coming, and the Windows game updates itself.

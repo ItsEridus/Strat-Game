@@ -133,7 +133,7 @@ export function remember(w: World, npc: Citizen, delta: number, text: string, vi
   const p = player(w);
   if (delta) adjustRel(npc, p.id, delta);
   const list = (w.story.memories[npc.id] ??= []);
-  list.push({ t: w.time, text, delta, visibility, story });
+  list.push({ t: w.time, text, delta, visibility, story, about: p.id });
   if (list.length > 10) list.splice(0, list.length - 10);
   // Bounded overall: forget the people with the oldest memories first.
   const ids = Object.keys(w.story.memories);
@@ -157,7 +157,7 @@ export function startStory(w: World, defId: string, b: Binding, opts: { msg?: Id
   w.story.claims[claimKey] = w.time;
   const inst: StoryInstance = {
     id: nid(w), def: defId, ver: def.version, bind: { ...b.bind }, data: { ...(b.data ?? {}) }, key: b.key,
-    status: opts.status ?? 'offered', stage: def.start, stageAt: w.time, created: w.time, updated: w.time, decisions: [], msg: opts.msg,
+    status: opts.status ?? 'offered', stage: def.start, stageAt: w.time, created: w.time, updated: w.time, decisions: [], msg: opts.msg, who: w.playerId,
   };
   w.story.instances[inst.id] = inst;
   enterStage(w, inst, def.start, true);

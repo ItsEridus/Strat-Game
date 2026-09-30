@@ -32,6 +32,12 @@ export const SPEEDS = [0, 1, 5, 30, 180];
 export const SPEED_LABELS = ['Paused', '1× — a minute each second', '2× — 5 minutes a second', '3× — half an hour a second', '4× — 3 hours a second'];
 
 type Toast = { id: number; text: string; ok: boolean };
+/** A place in the interface: a screen with its selection (the person shown, the sub-tab…) and how far down it was scrolled. */
+type Visit = { tab: string; sel: Record<string, any>; y: number };
+/** Selections that belong to the moment rather than the screen (an open story window) and are never brought back. */
+const TRANSIENT = ['story'];
+/** Screen history kept for going back and forward. */
+const HISTORY = 50;
 
 class Store {
   w: World | null = null;
@@ -54,7 +60,7 @@ class Store {
 
   newGame(seed: number | null, name: string, nation: number, citizensPerRegion: number, difficulty: World['settings']['difficulty'], advanced: World['settings']['advanced'], lifeYearDays = 365) {
     this.w = generateWorld(seed ?? entropy() % 1e9, name, nation, { citizensPerRegion, difficulty, advanced, fixedFate: seed != null, lifeYearDays });
-    this.tab = 'dashboard';
+    this.resetView();
     this.save('autosave');
     this.emit();
   }
@@ -69,7 +75,7 @@ class Store {
       w.settings.paused = true; // closing the game pauses; resume manually
       stir(w); // reloading does not replay the same future
       this.w = w;
-      this.tab = 'dashboard';
+      this.resetView();
       this.lastAutosave = Date.now();
       this.toast(`Loaded ${slot}.`, true);
     } catch (e) {
@@ -92,6 +98,7 @@ class Store {
     w.settings.paused = true;
     stir(w);
     this.w = w;
+    this.resetView();
     this.save('autosave');
     this.toast('Save imported.', true);
     this.emit();
@@ -116,9 +123,51 @@ class Store {
   }
 
   go(tab: string, sel: Record<string, any> = {}) {
+    const next = { ...this.sel, ...sel };
+    // Another screen, or another person's profile, is a new page; a filter or sub-tab on the same screen is not.
+    const shown = (x: Record<string, any>) => x.citizen ?? this.w?.playerId; // no one chosen: your own profile
+    if (tab !== this.tab || (tab === 'citizen' && shown(next) !== shown(this.sel))) {
+      this.past = [...this.past.slice(1 - HISTORY), this.here()];
+      this.future = [];
+      this.page++;
+      this.scrollTo = 0;
+    }
     this.tab = tab;
-    this.sel = { ...this.sel, ...sel };
+    this.sel = next;
     this.emit();
+  }
+
+  // ---------- going back and forward between screens ----------
+  private past: Visit[] = [];
+  private future: Visit[] = [];
+  /** Counts page changes (the view scrolls to `scrollTo` on each). */
+  page = 0;
+  scrollTo = 0;
+
+  get backTo(): Visit | null { return this.past[this.past.length - 1] ?? null; }
+  get forwardTo(): Visit | null { return this.future[this.future.length - 1] ?? null; }
+  back() { const v = this.past.pop(); if (v) { this.future.push(this.here()); this.visit(v); } }
+  forward() { const v = this.future.pop(); if (v) { this.past.push(this.here()); this.visit(v); } }
+
+  private here(): Visit {
+    return { tab: this.tab, sel: { ...this.sel }, y: typeof window !== 'undefined' ? window.scrollY : 0 };
+  }
+  private visit(v: Visit) {
+    const keep = Object.fromEntries(TRANSIENT.map((k) => [k, this.sel[k]]));
+    this.tab = v.tab;
+    this.sel = { ...v.sel, ...keep };
+    this.page++;
+    this.scrollTo = v.y;
+    this.emit();
+  }
+  /** A new or loaded game starts on the dashboard with no history. */
+  private resetView() {
+    this.tab = 'dashboard';
+    this.sel = {};
+    this.past = [];
+    this.future = [];
+    this.page++;
+    this.scrollTo = 0;
   }
 
   toast(text: string, ok: boolean) {

@@ -1,3 +1,4 @@
+import { Component, type ComponentChildren } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { store, useStore } from './store';
 import { TopBar } from './TopBar';
@@ -22,15 +23,25 @@ export function App() {
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'a') { e.preventDefault(); store.go('admin'); return; }
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')) return;
+      // Back and forward between screens: Alt+← and Alt+→.
+      if (e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) { e.preventDefault(); if (e.key === 'ArrowLeft') store.back(); else store.forward(); return; }
       if (e.key.length !== 1) return;
       typed = (typed + e.key.toLowerCase()).slice(-5);
       if (typed === 'admin') { typed = ''; store.go('admin'); }
     };
+    // The back and forward buttons on a mouse.
+    const onMouse = (e: MouseEvent) => {
+      if (!store.w || (e.button !== 3 && e.button !== 4)) return;
+      e.preventDefault();
+      if (e.type === 'mouseup') { if (e.button === 3) store.back(); else store.forward(); }
+    };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener('mousedown', onMouse);
+    window.addEventListener('mouseup', onMouse);
+    return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('mousedown', onMouse); window.removeEventListener('mouseup', onMouse); };
   }, []);
-  // Each screen opens at its top (and a new campaign after the title screen).
-  useEffect(() => { window.scrollTo(0, 0); }, [s.tab, !!s.w]);
+  // Each new screen opens at its top; going back returns to where you were on it.
+  useEffect(() => { window.scrollTo(0, store.scrollTo); }, [s.page, !!s.w]);
   if (!s.w) return <StartScreen />;
   const w = s.w;
   const screen = SCREENS.find((x) => x.id === s.tab) ?? SCREENS[0];
@@ -38,7 +49,7 @@ export function App() {
   const badges = screenBadges();
   return (
     <div class="app">
-      <TopBar onMenu={() => setNavOpen(!navOpen)} />
+      <Guard name="the top bar"><TopBar onMenu={() => setNavOpen(!navOpen)} /></Guard>
       <UpdateBanner />
       <AdvanceBanner />
       <div class="body">
@@ -57,15 +68,45 @@ export function App() {
         </nav>
         <main class="main" key={s.tab}>
           {!NO_HEAD.has(screen.id) && <div class="screen-head"><ScreenIcon id={screen.id} fallback={screen.icon} size={22} /><h1>{screen.label}</h1><span class="rule" /></div>}
-          <screen.comp w={w} />
+          <Guard key={s.page} name={`the ${screen.label} screen`}><screen.comp w={w} /></Guard>
         </main>
       </div>
-      <ConversationPanel w={w} />
-      <StoryModal w={w} />
-      <AnnualReviewModal w={w} />
+      <Guard name="the conversation" quiet><ConversationPanel w={w} /></Guard>
+      <Guard name="the story window" quiet><StoryModal w={w} /></Guard>
+      <Guard name="the annual review" quiet><AnnualReviewModal w={w} /></Guard>
       <div class="toasts">{s.toasts.map((t) => <div class={`toast ${t.ok ? 'ok' : 'err'}`}>{t.text}</div>)}</div>
     </div>
   );
+}
+
+/**
+ * Keeps a part of the interface that fails from taking the whole game down: the
+ * error is logged, the rest keeps running and saves are unaffected. Overlays
+ * (quiet) step aside and try again a few seconds later.
+ */
+class Guard extends Component<{ name: string; quiet?: boolean; children: ComponentChildren }, { error: Error | null }> {
+  state = { error: null as Error | null };
+  static getDerivedStateFromError(error: Error) { return { error }; }
+  componentDidCatch(error: Error) {
+    console.error(`Meridian Reach: ${this.props.name} failed:`, error);
+    if (this.props.quiet) setTimeout(() => this.setState({ error: null }), 5000);
+  }
+  render() {
+    const e = this.state.error;
+    if (!e) return this.props.children;
+    if (this.props.quiet) return null;
+    return (
+      <div class="panel ui-error" role="alert">
+        <h3>Something went wrong in {this.props.name}</h3>
+        <p class="small">The rest of the game is still running and your saves are safe.</p>
+        <pre class="small">{e.message}</pre>
+        <div class="row">
+          <button class="btn sm primary" onClick={() => this.setState({ error: null })}>Try again</button>
+          <button class="btn sm ghost" onClick={() => { this.setState({ error: null }); store.go('dashboard'); }}>Back to the dashboard</button>
+        </div>
+      </div>
+    );
+  }
 }
 
 function screenBadges(): Record<string, number> {

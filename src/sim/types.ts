@@ -152,6 +152,10 @@ export interface Routine { work: boolean; train: boolean; family: boolean; rest:
 export interface LifeState {
   reviews: AnnualReview[];
   advance: { target: number; from: number; label: string } | null; // a long time advance in progress (resumable)
+  pregnancies: { id: Id; parents: Id[]; due: number; home: Id; name?: string }[]; // scheduled births (each resolves once)
+  adoptions: { id: Id; parents: Id[]; ready: number; fee: number; cur: string }[]; // applications in progress
+  orphans: { name: string; born: number; parents: Id[]; region: Id }[]; // children in the care system, waiting for a family
+  pets: Pet[];
   snap: { who: Id; t: number; age: number; cash: number; cur: string; job: string; status: string; kids: number; health: number; happiness: number } | null; // start of the current life year
 }
 
@@ -160,10 +164,13 @@ export interface Family {
   partner: Id | null;
   status: 'single' | 'dating' | 'engaged' | 'married';
   since: number; // when the current relationship status began
-  parents: Id[];
-  children: Id[]; // adult children (citizens)
-  kids: { name: string; born: number }[]; // children still growing up
+  parents: Id[]; // biological parents (never rewritten by adoption or guardianship)
+  children: Id[]; // children who are citizens (grown-up, or the player's family from birth)
+  kids: { name: string; born: number }[]; // children still growing up in a background family (compact records)
   exes: Id[];
+  adoptiveParents?: Id[]; // legal parents by adoption (ancestry stays in `parents` / `birthParents`)
+  guardians?: Id[]; // who is responsible for a minor (may differ from parents)
+  birthParents?: string[]; // names of birth parents who are not citizens (adoption records)
   lastDate?: number; // last time the couple spent time together
 }
 
@@ -739,12 +746,16 @@ export interface StoryInstance {
   waitUntil?: number; // waiting stages resume at
   waitWhy?: string;
   msg?: Id; // linked inbox message (legacy decision)
+  who?: Id; // the protagonist (the player when it began); only they can act in it
   decisions: { t: number; stage: string; choice: string; label: string; outcome: string }[];
   ending?: string;
 }
 export interface JournalEntry { id: Id; t: number; story?: Id; title: string; text: string; kind: 'lead' | 'outcome' | 'note' | 'promise' | 'fact'; npc?: Id }
 /** Why someone feels the way they do about you. */
-export interface Memory { t: number; text: string; delta: number; visibility: 'private' | 'witnessed' | 'public'; story?: Id }
+export interface Memory { t: number; text: string; delta: number; visibility: 'private' | 'witnessed' | 'public'; story?: Id; about?: Id } // about: whom the memory concerns (the player at the time)
+/** A pet: a real companion with an owner, upkeep and a life of its own. */
+export interface Pet { id: Id; name: string; kind: string; born: number; owner: Id; health: number; bond: number; lastCare: number; gone?: { t: number; why: 'died' | 'rehomed' } }
+
 export interface NarrativeState {
   instances: Record<Id, StoryInstance>;
   claims: Record<string, number>; // source keys already used (time claimed)

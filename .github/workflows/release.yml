@@ -3,10 +3,9 @@ name: Release
 on:
   push:
     tags: ['v*']
-    # Pushing a new version or new release notes to the development branch also publishes a release,
-    # tagged v<package.json version>.
+    # Every push to the development branch publishes a release, tagged v<package.json version>: each push
+    # bumps the version (npm version patch --no-git-tag-version) and adds its notes to docs/RELEASE_NOTES.md.
     branches: [claude/brave-mccarthy-h4uawp]
-    paths: [package.json, docs/RELEASE_NOTES.md, launcher/**, .github/workflows/release.yml]
   workflow_dispatch:
     inputs:
       tag:
@@ -21,7 +20,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
-      skip: ${{ steps.tag.outputs.skip }}
     steps:
       - uses: actions/checkout@v4
       - name: Pick the release tag
@@ -34,13 +32,16 @@ jobs:
           else TAG="v$(node -p 'require("./package.json").version')"; fi
           echo "TAG=$TAG" >> "$GITHUB_ENV"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          # A branch push only publishes a version that has no release yet (bump package.json to release);
-          # anything else is built and tested but never overwrites a published release.
-          SKIP=false
-          if [ "${{ github.event_name }}" = push ] && [ "${{ github.ref_type }}" = branch ] && gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
-            SKIP=true; echo "::notice::$TAG is already released; building and testing only."
+          # Every branch push is a new release: a version that is already out is never overwritten, and a
+          # push that forgot to bump the version or write its notes stops here instead of silently not releasing.
+          if [ "${{ github.event_name }}" = push ] && [ "${{ github.ref_type }}" = branch ]; then
+            if gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+              echo "::error::$TAG is already released. Every push publishes a release: bump the version (npm version patch --no-git-tag-version)."; exit 1
+            fi
+            if ! grep -qF "${TAG#v}" docs/RELEASE_NOTES.md; then
+              echo "::error::docs/RELEASE_NOTES.md has no notes for ${TAG#v}."; exit 1
+            fi
           fi
-          echo "skip=$SKIP" >> "$GITHUB_OUTPUT"
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -52,6 +53,19 @@ jobs:
       - run: npm test
       - name: Build the Windows game
         run: ./launcher/build.sh "$TAG"
+      - name: Previous release, for the upgrade test
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/prev" && cd "$RUNNER_TEMP/prev"
+          if gh release download --repo "${{ github.repository }}" --pattern '*-web.zip'; then
+            unzip -q ./*-web.zip && echo "PREV_DIR=$PWD/MeridianReach" >> "$GITHUB_ENV"
+          else echo "::warning::No previous release to upgrade from."; fi
+      - name: Play-test the build in a browser
+        run: |
+          npm install -g playwright@1.56.1
+          "$(npm root -g)/playwright/cli.js" install --with-deps chromium
+          PLAYWRIGHT_PATH="$(npm root -g)/playwright" node tools/smoke.mjs
       - name: Checksum for the auto-updater
         run: (cd release && sha256sum MeridianReach.exe | cut -d' ' -f1 > MeridianReach.exe.sha256)
       - name: Package the browser build
@@ -71,7 +85,6 @@ jobs:
   # launcher port taken), stay single-instance and close cleanly from its close button. The screenshot is kept as an artifact.
   smoke-windows:
     needs: build
-    if: needs.build.outputs.skip != 'true'
     runs-on: windows-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -135,7 +148,6 @@ jobs:
 
   release:
     needs: [build, smoke-windows]
-    if: needs.build.outputs.skip != 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

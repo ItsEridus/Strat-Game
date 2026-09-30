@@ -5,6 +5,24 @@ together with the narrative stages, the military career review and the UI
 overhaul that were folded into the same plan. It says what is implemented,
 what remains, and the known limitations, so work can resume from here.
 
+## Releases: every push is a release
+
+Standing rule from the player (30 Sep 2026): every push to GitHub ships a working release they can play. Each push:
+
+1. Bump the version: `npm version patch --no-git-tag-version` (1.3.2, 1.3.3, …; 1.4.0 when the life plan is done).
+2. Add a `### New in X.Y.Z` section at the top of `docs/RELEASE_NOTES.md` (the release page shows this file).
+3. Check locally: `npm run typecheck`, `npm test`, `npm run build`, then the browser play-test
+   `PLAYWRIGHT_PATH=$(npm root -g)/playwright PREV_DIR=<previous release's web build> node tools/smoke.mjs`
+   (unzip the latest release's `-web.zip`; the upgrade test loads a game saved by it). Launcher changes: `go test`
+   in `launcher/` (needs `launcher/web`, made by `launcher/build.sh`).
+4. Push to `claude/brave-mccarthy-h4uawp`, then follow the Release run to the end (tests, browser play-test,
+   Windows smoke test, publish) and confirm the release has `MeridianReach.exe`, `MeridianReach.exe.sha256` and
+   the `-web.zip`.
+
+The workflow enforces the first two: a branch push whose version is already released, or whose version has no
+release notes, fails instead of silently not releasing. Unfinished work is committed only once it plays; large
+stages go out in slices.
+
 ## Plan and order
 
 | # | Stage | Status |
@@ -16,7 +34,7 @@ what remains, and the known limitations, so work can resume from here.
 | UI1 | Premium design system and game shell | Done |
 | CLK | Clock overhaul: real calendar, descriptive date and time, seasons, slower time | Done |
 | N3 | Narrative stage 3: districts, venues, familiarity, availability, appointments | Done |
-| L2 | Family graph with real children, pregnancy, adoption, guardians, siblings; hobbies, pets, gifts; story protagonists and memory subjects; budgets | Planned |
+| L2 | Family graph with real children, pregnancy, adoption, guardians, siblings; hobbies, pets, gifts; story protagonists and memory subjects; budgets | In progress (data groundwork in 1.3.2) |
 | L3 | Schools, universities, clinics and offices as funded institutions; education ladder; qualifications; service careers (teaching, clinical care, administration, technical); work history; promotions; military academy | Planned |
 | L4 | Housing (rent/buy/sell); obligations (loans, mortgages, student loans); conditions and treatment; leave; retirement and funded pensions (incl. veterans); living-cost split | Planned |
 | L5 | Birth start; childhood and parenting; player mortality; wills, trusts, estates, heirlooms | Planned |
@@ -24,9 +42,23 @@ what remains, and the known limitations, so work can resume from here.
 | UI2 | Every screen restyled; cinematic story, review and succession; map polish; optional UI sound; screenshots | Planned |
 | L7 | Calibration, performance, docs, tests, e2e, release 1.4.0 (with narrative stage 5) | Planned |
 
-After 1.4.0 (requested; planned for the next release): natural disasters overhaul; a prison system; policing and
-crime careers overhaul; careers and employment overhaul (small businesses, trades, self-employment, freelancing,
-public sector, apprenticeships, the full employment cycle for player and AI).
+After 1.4.0: the plan continues in `ROADMAP.md` (1.5.0 → 2.5.0). Its main thread is a realistic geopolitical
+simulation, in which nations and AI actors advance over time. The earlier requests have their places there: careers
+and employment (1.5), policing, crime careers and prisons (1.7), and weather and natural disasters (1.9).
+
+| Version | Theme |
+| --- | --- |
+| 1.5.0 | Work & enterprise (GEO 1: companies expand or disband; careers and employment) |
+| 1.6.0 | The strategic engine (GEO 2: nations advance over time; level-of-detail simulation) |
+| 1.7.0 | Law & order (policing, crime careers, courts, prisons) |
+| 1.8.0 | Arsenal (GEO 3: militaries get better) |
+| 1.9.0 | Sky & ground (weather, natural disasters, resources and energy) |
+| 2.0.0 | The great game (GEO 4: diplomacy, treaties, international organisations) |
+| 2.1.0 | Shadows (GEO 5: intelligence gets better; governments act on estimates) |
+| 2.2.0 | War & peace (GEO 6: realistic wars and their endings) |
+| 2.3.0 | Rise & fall (GEO 7: regimes, coups, secession, new nations) |
+| 2.4.0 | Frontiers (GEO 8: technology, cyber and space) |
+| 2.5.0 | A world of consequences (GEO 9: world economy, climate, soft power; decades campaign) |
 
 ## Implemented
 

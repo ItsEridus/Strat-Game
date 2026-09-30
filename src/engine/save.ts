@@ -5,7 +5,7 @@
 // saves instantly. Saves made by older versions in localStorage still load.
 // Saves can also be exported and imported as files.
 import { civilianControl } from '../sim/forces';
-import { newLifeState } from '../sim/lifecycle';
+import { newLifeState, normalizeLife } from '../sim/lifecycle';
 import { initFamilies, initPlayerFamily } from '../sim/family';
 import { initPopulation } from '../sim/population';
 import { autoAllocate } from '../sim/worldgen';
@@ -73,6 +73,7 @@ function migrate(w: World, from: number): World {
     if (w.settings.notifyFilter.life == null) w.settings.notifyFilter.life = true;
     for (const q of [...w.player.dailies]) { const r = q.reward as typeof q.reward & { xp?: number }; if (r.xp) { r.rep = Math.max(1, Math.round(r.xp / 5)); delete r.xp; } }
   }
+  normalizeLife(w);
   w.version = SAVE_VERSION;
   return w;
 }

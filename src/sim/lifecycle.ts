@@ -10,7 +10,15 @@ import { ageOf } from './growth';
 import { player } from './query';
 import { journal } from './story';
 
-export const newLifeState = (): LifeState => ({ reviews: [], advance: null, snap: null });
+export const newLifeState = (): LifeState => ({ reviews: [], advance: null, snap: null, pregnancies: [], adoptions: [], orphans: [], pets: [] });
+
+/** Fill in life state added after a save was made (saves made while this version was in development). */
+export function normalizeLife(w: World) {
+  const L = (w.life ??= newLifeState());
+  L.pregnancies ??= []; L.adoptions ??= []; L.orphans ??= []; L.pets ??= []; L.reviews ??= [];
+  for (const i of Object.values(w.story.instances)) i.who ??= w.playerId;
+  for (const list of Object.values(w.story.memories)) for (const m of list) m.about ??= w.playerId;
+}
 
 // ---------- stages and gates ----------
 
