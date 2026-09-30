@@ -3,23 +3,19 @@
 // along borders, strikes, protests and riots driven by conditions on the ground,
 // internal migration, and new people arriving. Governments (AI or player)
 // respond with relief spending, lockdowns, crackdowns or concessions.
-import { YEAR } from './growth';
-import type { Citizen, Crisis, CrisisKind, Id, Persona, World } from './types';
-import { census, invalidateCensus } from './census';
+import type { Citizen, Crisis, CrisisKind, Id, World } from './types';
+import { presentIn } from './census';
 import { B } from '../data/balance';
 import { EARTH } from '../data/earth';
-import { NAME_POOLS } from '../data/names';
 import { COMMODITY_EVENTS, EPIDEMIC_NAMES, HAZARDS } from '../data/hazards';
-import { IDEOLOGY_LIST } from '../data/ideologies';
 import { fail, ok, type Result } from '../engine/result';
-import { mint, pay } from '../engine/ledger';
-import { GOLD, c as cur, fmtAmt, g } from '../engine/money';
+import { pay } from '../engine/ledger';
+import { c as cur, fmtAmt } from '../engine/money';
 import { DAY, HOUR, dayOf } from '../engine/clock';
 import { nid, notify, record, sendMsg } from '../engine/events';
 import { chance, pick, rand, randInt, weighted } from '../engine/rng';
 import { controller, cref, hhref, jailed, natref, player, regref } from './query';
 import { practise } from './growth';
-import { autoAllocate, newCitizen } from './worldgen';
 import { govTemplate } from './stategov';
 
 const regionKey = new Map(EARTH.regions.map((e, i) => [`${EARTH.nations[e.nation].iso}/${e.name}`, i]));
@@ -163,7 +159,7 @@ export function volunteer(w: World, c: Citizen, crisisId: Id): Result {
   k.end = Math.max(w.time + DAY, k.end - 2 * HOUR);
   c.sec.fame += 1;
   c.influence += 0.5;
-  for (const x of census(w).all) if (x.loc === c.loc && !x.player) x.rel[c.id] = Math.min(100, (x.rel[c.id] ?? 0) + 2);
+  for (const x of presentIn(w, c.loc)) if (!x.player) x.rel[c.id] = Math.min(100, (x.rel[c.id] ?? 0) + 2);
   practise(w, c, 'end', B.practice.volunteer);
   return ok(`You worked with relief crews in ${r.name}. Locals won't forget it (+fame, +influence).`);
 }
@@ -406,30 +402,6 @@ function migrationDaily(w: World) {
   }
 }
 
-const ARRIVAL_PERSONAS: [Persona, number][] = [['worker', 40], ['soldier', 12], ['industrialist', 8], ['merchant', 8], ['politician', 10], ['builder', 8], ['journalist', 6], ['investor', 8]];
-
-function arrivalsDaily(w: World) {
-  const base = (w.calendar.baseCitizens ??= Object.keys(w.citizens).length);
-  if (Object.keys(w.citizens).length >= base * B.dynamics.maxCitizensFactor || !chance(w, 1 / B.dynamics.arrivalEveryDays)) return;
-  const n = weighted(w, w.nations.filter((x) => !x.exile), (x) => x.approval + 30 * (1 + w.econ.cycle) - x.unemployment * 100)!;
-  if (!n) return;
-  const regions = w.regions.filter((r) => r.owner === n.id);
-  const loc = weighted(w, regions, (r) => r.pop)!.id;
-  const persona = weighted(w, ARRIVAL_PERSONAS, (x) => x[1])![0];
-  const pool = NAME_POOLS[n.cur];
-  const fromAbroad = chance(w, 0.35);
-  const origin = fromAbroad ? pick(w, w.nations.filter((x) => x.id !== n.id)) : n;
-  const name = `${pick(w, NAME_POOLS[origin.cur].first)} ${pick(w, fromAbroad ? NAME_POOLS[origin.cur].last : pool.last)}`;
-  const c = newCitizen(w, name, n.id, loc, persona, pick(w, IDEOLOGY_LIST));
-  c.born = w.time - randInt(w, 18, 40) * YEAR;
-  autoAllocate(c, randInt(w, 3, 24));
-  w.citizens[c.id] = c;
-  invalidateCensus(w);
-  mint(w, cref(c.id), n.cur, cur(randInt(w, 40, 140)), 'New arrival');
-  mint(w, cref(c.id), GOLD, g(rand(w, 0.5, 3)), 'New arrival');
-  if (n.id === player(w).nation) record(w, 'people', fromAbroad ? `🧳 ${c.name} emigrated from ${origin.name} to ${w.regions[loc].name}.` : `🎓 ${c.name} came of age in ${w.regions[loc].name} and entered public life.`, { cit: c.id, nation: n.id });
-}
-
 // ---------- daily entry point ----------
 
 export function dynamicsDaily(w: World) {
@@ -439,8 +411,7 @@ export function dynamicsDaily(w: World) {
   reliefDaily(w);
   strikesDaily(w);
   unrestDaily(w);
-  migrationDaily(w);
-  arrivalsDaily(w);
+  migrationDaily(w); // background population; AI citizens come and go in population.ts
   // Close finished crises and restore commodity output.
   for (const c of Object.values(w.crises)) {
     if (c.status !== 'active' || c.end > w.time) continue;

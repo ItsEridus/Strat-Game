@@ -34,6 +34,7 @@ export function census(w: World): Census {
   const c: Census = { all: [], byHome: new Map(), byLoc: new Map(), byNation: new Map(), police: new Map(), companies: [], coByRegion: new Map(), coByNation: new Map() };
   for (const id in w.citizens) {
     const x = w.citizens[id];
+    if (x.gone) continue; // died or emigrated: kept only so history can name them
     c.all.push(x);
     push(c.byHome, x.home, x);
     push(c.byLoc, x.loc, x);

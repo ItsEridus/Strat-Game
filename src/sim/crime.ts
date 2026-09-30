@@ -245,7 +245,7 @@ export function leaveSyndicate(w: World, c: Citizen): Result {
   return ok(`You walked away from ${s.name}. They won't forget it.`);
 }
 
-function removeMember(w: World, s: Syndicate, c: Citizen) {
+export function removeMember(w: World, s: Syndicate, c: Citizen) {
   s.members = s.members.filter((m) => m !== c.id);
   c.sec.syndicate = null;
   c.sec.srank = 0;

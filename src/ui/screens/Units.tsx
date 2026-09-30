@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { census } from '../../sim/census';
 import type { Unit, World } from '../../sim/types';
 import { ActBtn, CitLink, Empty, NationChip, Num, Panel, Select, Help } from '../common';
 import { player } from '../../sim/query';
@@ -37,7 +38,7 @@ function MyUnit({ w, u }: { w: World; u: Unit }) {
   const officer = u.commander === p.id || u.officers.includes(p.id);
   const battles = activeBattles(w).filter((b) => b.kind === 'war' && (b.att === u.nation || b.def === u.nation));
   const [bsel, setB] = useState(u.order?.battle ?? battles[0]?.id ?? -1);
-  const recruits = Object.values(w.citizens).filter((c) => c.nation === u.nation && c.unit == null && !c.player).sort((a, b) => (b.persona === 'soldier' ? 1 : 0) - (a.persona === 'soldier' ? 1 : 0) || b.power - a.power).slice(0, 12);
+  const recruits = census(w).all.filter((c) => c.nation === u.nation && c.unit == null && !c.player).sort((a, b) => (b.persona === 'soldier' ? 1 : 0) - (a.persona === 'soldier' ? 1 : 0) || b.power - a.power).slice(0, 12);
   const [amt, setAmt] = useState(50);
   const [item, setItem] = useState(Object.keys(p.inv).find((k) => k.startsWith('wg') || k.startsWith('food')) ?? 'wg:1');
   const n = w.nations[u.nation];

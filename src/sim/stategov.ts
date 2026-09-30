@@ -462,7 +462,8 @@ export function stateDaily(w: World) {
     // Heads who lose their citizenship of the owning nation stand down.
     if (s.head.cit != null) {
       const c = w.citizens[s.head.cit];
-      if (!c || c.nation !== r.owner) vacate(w, s, 'no longer a citizen');
+      if (!c || c.gone) vacate(w, s, c?.gone?.why === 'died' ? 'died in office' : 'left the country');
+      else if (c.nation !== r.owner) vacate(w, s, 'no longer a citizen');
     }
     if (r.occ) {
       if (s.nextElection <= w.time) s.nextElection = w.time + 7 * DAY; // postponed

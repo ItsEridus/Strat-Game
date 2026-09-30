@@ -1,4 +1,5 @@
 import { memo } from 'preact/compat';
+import { census } from '../../sim/census';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { Region, World } from '../../sim/types';
 import { Btn, CitLink, NationChip, Panel, Tabs, Amt } from '../common';
@@ -255,7 +256,7 @@ export function MapScreen({ w }: { w: World }) {
 
 function RegionInfo({ w, r }: { w: World; r: Region }) {
   const companies = Object.values(w.companies).filter((c) => c.region === r.id);
-  const residents = Object.values(w.citizens).filter((c) => c.loc === r.id);
+  const residents = census(w).all.filter((c) => c.loc === r.id);
   const owner = w.nations[r.owner];
   const ruler = w.nations[controller(r)];
   const battles = Object.values(w.battles).filter((b) => !b.done && b.region === r.id);

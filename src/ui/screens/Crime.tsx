@@ -1,5 +1,6 @@
 // Law & Order: your standing with the law, street crime, organised crime,
 // the police career and national police powers.
+import { census } from '../../sim/census';
 import { useState } from 'preact/hooks';
 import type { World } from '../../sim/types';
 import { ActBtn, Amt, Bar, CitLink, Empty, Help, Panel, RegionLink, Select } from '../common';
@@ -42,7 +43,7 @@ export function Crime({ w }: { w: World }) {
           <tr><td>Policing</td><td><Bar v={r.police} max={100} color="#5b8def" label={`${Math.round(r.police)}`} /></td></tr>
           <tr><td>Unrest</td><td><Bar v={r.unrest} max={100} color="#e39b3a" label={`${Math.round(r.unrest)}`} /></td></tr>
           <tr><td>Organised crime</td><td>{onTurf.length ? onTurf.map((s) => `${s.name} (${s.style})`).join(', ') : <span class="muted">none known</span>}</td></tr>
-          <tr><td>Officers here</td><td>{Object.values(w.citizens).filter((c) => c.sec.police === r.id).length}</td></tr>
+          <tr><td>Officers here</td><td>{census(w).all.filter((c) => c.sec.police === r.id).length}</td></tr>
         </tbody></table>
         <Help>Crime rises with unemployment, poverty, recession, city size, unrest and gangs, and falls with policing (state police budgets, national police funding, officers) and welfare. Above 50 it cuts local production.</Help>
       </Panel>

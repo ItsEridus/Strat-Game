@@ -21,7 +21,8 @@ export const BALANCE = {
   // No levels: skills grow by practice (sim/growth.ts). Effort per activity ≈ one day's worth.
   practice: { work: 1, train: 1.2, trainDonate: 0.6, hit: 0.03, build: 1, manager: 1, article: 1, rally: 1.5, canvass: 0.8, talk: 0.1, volunteer: 0.6, crime: 0.5, patrol: 0.6, spy: 0.6 }, // SOLO
   growth: { rate: 0.6, soft: 20 }, // SOLO gain = effort × rate × youth / (1 + skill / soft)
-  life: { adultAge: 18, playerAge: 24 }, // SOLO
+  family: { dateCost: 12, weddingCost: 150 }, // SOLO currency
+  life: { adultAge: 18, playerAge: 24, retireAge: 65, pace: 3 }, // SOLO; pace compresses mortality so generations turn over within a campaign
   standing: { rally: 0, talk: 0.05, daily: 0.2 }, // SOLO influence from daily goals (rallies/articles already give influence)
   attrs: {
     str: 5, // DOC +5 starting hit damage per point (applied before training-power multiplier, DOC Sept 19)
@@ -122,6 +123,9 @@ export const BALANCE = {
     canvassEnergy: 15, // SOLO
   },
   population: {
+    maxFactor: 4.2, // SOLO a region can grow to 4.2× the per-region setting (about 100 at 24)
+    worldCap: 1.35, // SOLO the whole world's AI population stays within 1.35× its starting size (performance)
+    churn: 0.0015, // SOLO daily share of residents coming and going in a steady region
     companiesPerCitizen: 0.8, // SOLO starting companies relative to the old 24-citizen industry plan (1 = same ratio)
   },
   living: { perDay: 4, discretionary: 0.05, comfort: 150 }, // SOLO daily living costs + 5%/day of cash above 150 spent on lifestyle; paid to the background economy (closes the money loop)

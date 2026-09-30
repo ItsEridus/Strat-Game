@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { census } from '../../sim/census';
 import type { Consideration, World } from '../../sim/types';
 import { ActBtn, CitLink, Empty, Num, Panel, Select, Help } from '../common';
 import { store } from '../store';
@@ -40,7 +41,7 @@ const describeSide = (w: World, x: Consideration) => describeContract(w, { id: 0
 
 export function Contracts({ w }: { w: World }) {
   const p = player(w);
-  const people = Object.values(w.citizens).filter((c) => !c.player).sort((a, b) => (a.nation === p.nation ? 0 : 1) - (b.nation === p.nation ? 0 : 1) || a.name.localeCompare(b.name));
+  const people = census(w).all.filter((c) => !c.player).sort((a, b) => (a.nation === p.nation ? 0 : 1) - (b.nation === p.nation ? 0 : 1) || a.name.localeCompare(b.name));
   const [to, setTo] = useState<number>(store.sel.contractTo ?? people[0].id);
   const [give, setGive] = useState<Consideration>(emptyCons());
   const [want, setWant] = useState<Consideration>(emptyCons());

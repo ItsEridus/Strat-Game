@@ -1,5 +1,6 @@
 // People: rivals and allies, the notable figures of your country, and who is
 // around you right now — what they do and what they want.
+import { census } from '../../sim/census';
 import { ageOf } from '../../sim/growth';
 import type { Citizen, World } from '../../sim/types';
 import { CitLink, Empty, Help, Panel, RegionLink } from '../common';
@@ -24,11 +25,11 @@ export function People({ w }: { w: World }) {
   const p = player(w);
   const known = (c: Citizen) => Math.abs(c.rel[p.id] ?? 0) >= 20 || c.sec.fame > 5 || c.influence > 30;
   const rivals = p.sec.rivals.map((id) => w.citizens[id]).filter(Boolean);
-  const friends = Object.values(w.citizens).filter((c) => !c.player && (c.rel[p.id] ?? 0) >= 30).sort((a, b) => (b.rel[p.id] ?? 0) - (a.rel[p.id] ?? 0)).slice(0, 10);
+  const friends = census(w).all.filter((c) => !c.player && (c.rel[p.id] ?? 0) >= 30).sort((a, b) => (b.rel[p.id] ?? 0) - (a.rel[p.id] ?? 0)).slice(0, 10);
   const n = w.nations[p.nation];
-  const notable = Object.values(w.citizens).filter((c) => c.nation === p.nation && !c.player && (n.president === c.id || Object.values(n.cabinet).includes(c.id) || headOf(w, c.id) != null || c.sec.prank >= 3 || c.influence > 40 || c.sec.fame > 8))
+  const notable = census(w).all.filter((c) => c.nation === p.nation && !c.player && (n.president === c.id || Object.values(n.cabinet).includes(c.id) || headOf(w, c.id) != null || c.sec.prank >= 3 || c.influence > 40 || c.sec.fame > 8))
     .sort((a, b) => (n.president === b.id ? 1 : 0) - (n.president === a.id ? 1 : 0) || b.influence - a.influence).slice(0, 25);
-  const here = Object.values(w.citizens).filter((c) => c.loc === p.loc && !c.player).sort((a, b) => (b.rel[p.id] ?? 0) - (a.rel[p.id] ?? 0) || b.influence - a.influence);
+  const here = census(w).all.filter((c) => c.loc === p.loc && !c.player).sort((a, b) => (b.rel[p.id] ?? 0) - (a.rel[p.id] ?? 0) || b.influence - a.influence);
   const gov = headOf(w, p.id);
   return (
     <div class="grid">

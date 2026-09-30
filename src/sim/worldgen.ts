@@ -1,4 +1,6 @@
 // Deterministic world generation from a seed.
+import { initFamilies, initPlayerFamily } from './family';
+import { initPopulation } from './population';
 import type { Citizen, Company, Id, Ideology, Industry, Nation, Persona, RawRes, Region, Settings, World } from './types';
 import { B, applyBalance } from '../data/balance';
 import { NAME_POOLS, NATION_DEFS } from '../data/names';
@@ -343,6 +345,9 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
   initForces(w);
   seedOfficers(w);
   seedLate(w);
+  initFamilies(w);
+  initPlayerFamily(w);
+  initPopulation(w);
 
   for (const n of w.nations) record(w, 'genesis', `${n.name} enters the new era with ${regions.filter((r) => r.owner === n.id).length} regions.`, { nation: n.id });
   record(w, 'player', `${p.name} begins life in ${w.regions[p.home].name}, ${pn.name}.`, { cit: p.id, nation: pn.id, player: true, important: true });

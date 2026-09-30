@@ -4,6 +4,8 @@
 // a small description of each slot is kept in localStorage so menus can list
 // saves instantly. Saves made by older versions in localStorage still load.
 // Saves can also be exported and imported as files.
+import { initFamilies, initPlayerFamily } from '../sim/family';
+import { initPopulation } from '../sim/population';
 import { autoAllocate } from '../sim/worldgen';
 import { YEAR } from '../sim/growth';
 import { B } from '../data/balance';
@@ -59,6 +61,9 @@ function migrate(w: World, from: number): World {
       delete o.level; delete o.xp; delete o.attrPts;
     }
     for (const t of Object.values(w.tournaments)) { const o = t as typeof t & { minLevel?: number }; if (t.minPower == null) t.minPower = B.tournaments.power; delete o.minLevel; }
+    initFamilies(w);
+    initPlayerFamily(w);
+    initPopulation(w);
     for (const q of [...w.player.dailies]) { const r = q.reward as typeof q.reward & { xp?: number }; if (r.xp) { r.rep = Math.max(1, Math.round(r.xp / 5)); delete r.xp; } }
   }
   w.version = SAVE_VERSION;

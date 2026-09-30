@@ -1,5 +1,6 @@
 // State / provincial government: the region panel on the map, and the table of
 // a nation's states on the Country screen.
+import { census } from '../../sim/census';
 import { useState } from 'preact/hooks';
 import type { Id, Region, World } from '../../sim/types';
 import { ActBtn, Amt, CitLink, Help, Num, Panel, Sparkline } from '../common';
@@ -87,7 +88,7 @@ function AppointBox({ w, r }: { w: World; r: Region }) {
   const p = player(w);
   const n = w.nations[r.owner];
   if (n.president !== p.id) return <p class="small muted">The {govTemplate(w, r.id)!.title} is appointed by the {n.leader.toLowerCase()} of {n.name}.</p>;
-  const cands = Object.values(w.citizens).filter((c) => c.nation === r.owner && c.loc === r.id && headOf(w, c.id) == null).slice(0, 8);
+  const cands = census(w).all.filter((c) => c.nation === r.owner && c.loc === r.id && headOf(w, c.id) == null).slice(0, 8);
   return (
     <div class="card">
       <b>Appoint</b> <small class="muted">(you are {n.leader})</small>

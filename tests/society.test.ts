@@ -47,7 +47,7 @@ test('indexes stay consistent with the world: order books and census', () => {
   adminTeleport(w, dest, false);
   assert.ok(census(w).byLoc.get(dest)!.includes(p), 'census follows moves');
   invalidateCensus(w);
-  assert.equal(census(w).all.length, Object.keys(w.citizens).length);
+  assert.equal(census(w).all.length, Object.values(w.citizens).filter((c) => !c.gone).length, 'the census holds everyone alive and present');
 });
 
 test('conversations, canvassing and rallies win people over; pledges decide a state election', () => {

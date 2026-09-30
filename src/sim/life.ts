@@ -5,7 +5,7 @@ import type { Citizen, Id, World } from './types';
 import { DAY, HOUR } from '../engine/clock';
 import { chance, pick } from '../engine/rng';
 import { controller, jailed, player, today } from './query';
-import { companiesIn, invalidateCensus, residents } from './census';
+import { census, companiesIn, invalidateCensus, residents } from './census';
 import { activeBattles } from './battle';
 
 export type Doing = 'work' | 'train' | 'home' | 'shop' | 'out' | 'sleep' | 'prison' | 'front' | 'away' | 'mining' | 'duty';
@@ -56,7 +56,7 @@ export function localNews(w: World, rid: Id, text: string) {
 export function lifeDaily(w: World) {
   const p = player(w);
   let moved = 0;
-  for (const c of Object.values(w.citizens)) {
+  for (const c of census(w).all) {
     if (c.player || jailed(w, c) || c.loc !== c.home || moved > 60) continue;
     const r = w.regions[c.home];
     // Commuters settle near their job after a while.

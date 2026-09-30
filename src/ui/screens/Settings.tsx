@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { census } from '../../sim/census';
 import { UpdateSettings } from '../Updates';
 import type { World } from '../../sim/types';
 import { Btn, Panel, Tabs, Help, Select } from '../common';
@@ -68,7 +69,7 @@ function Game({ w }: { w: World }) {
     <div class="form">
       <label>Month length (days) <Select value={s.monthLen} options={[[20, '20'], [30, '30 (default)'], [40, '40']]} onChange={(v) => { s.monthLen = v; store.emit(); }} /></label>
       <label class="check"><input type="checkbox" checked={s.autoTrain} onChange={() => { s.autoTrain = !s.autoTrain; store.emit(); }} /> Automatic first daily training</label>
-      <p class="small muted">{s.fixedFate ? `Reproducible world (seed ${w.seed}) · ` : 'Living world (unscripted) · '}difficulty {s.difficulty} · {Object.keys(w.citizens).length} citizens · advanced systems: {Object.entries(s.advanced).filter(([, v]) => v).map(([k]) => k).join(', ') || 'none'}.</p>
+      <p class="small muted">{s.fixedFate ? `Reproducible world (seed ${w.seed}) · ` : 'Living world (unscripted) · '}difficulty {s.difficulty} · {census(w).all.length} citizens · advanced systems: {Object.entries(s.advanced).filter(([, v]) => v).map(([k]) => k).join(', ') || 'none'}.</p>
       <p class="small muted">Elections follow the calendar: president day {B.politics.days.president}, party leaders day {B.politics.days.party}, congress day {B.politics.days.congress} of each month.</p>
     </div>
   );

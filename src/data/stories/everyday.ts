@@ -1,6 +1,7 @@
 // Everyday situations: single decisions drawn from the player's surroundings.
 // Each binds real people and entities when offered and re-checks them when the
 // player decides.
+import { census } from '../../sim/census';
 import type { StoryDef } from '../../sim/story';
 import { mint, moveItems, pay, produce } from '../../engine/ledger';
 import { GOLD, c as cur, fmtAmt, g } from '../../engine/money';
@@ -170,7 +171,7 @@ export const EVERYDAY: StoryDef[] = [
       const co = myCompanies(w, p)[0];
       if (!co) return null;
       const value = companyValue(w, co);
-      const buyer = Object.values(w.citizens).find((c) => !c.player && (c.persona === 'industrialist' || c.persona === 'investor') && c.nation === controller(w.regions[co.region]) && (c.wallet[GOLD] ?? 0) > value * 1.3);
+      const buyer = census(w).all.find((c) => !c.player && (c.persona === 'industrialist' || c.persona === 'investor') && c.nation === controller(w.regions[co.region]) && (c.wallet[GOLD] ?? 0) > value * 1.3);
       return buyer ? { bind: { co: co.id, buyer: buyer.id }, key: `buyout:${co.id}:${Math.floor(today(w) / 20)}`, data: { offer: Math.round(value * rand(w, 1.05, 1.35)), value } } : null;
     },
     stale: (c) => { const co = c.w.companies[c.num('co')]; return !co || !(co.owner.k === 'cit' && co.owner.id === c.p.id) ? 'The company is no longer yours.' : !c.cit('buyer') ? 'The buyer is gone.' : null; },
@@ -292,7 +293,7 @@ export const EVERYDAY: StoryDef[] = [
       const cand = playerCandidacy(w);
       if (!cand) return null;
       const code = w.nations[p.nation].cur;
-      const d = Object.values(w.citizens).find((c) => !c.player && c.nation === p.nation && (c.persona === 'industrialist' || c.persona === 'investor') && (c.wallet[code] ?? 0) > cur(400));
+      const d = census(w).all.find((c) => !c.player && c.nation === p.nation && (c.persona === 'industrialist' || c.persona === 'investor') && (c.wallet[code] ?? 0) > cur(400));
       return d ? { bind: { d: d.id }, key: `donor:${d.id}:${Math.floor(today(w) / 15)}`, data: { amt: cur(randInt(w, 10, 25) * 10), code, region: cand.region ?? -1, label: cand.label } } : null;
     },
     stale: (c) => (!playerCandidacy(c.w) ? 'You are no longer running.' : !c.cit('d') ? 'The donor is gone.' : null),

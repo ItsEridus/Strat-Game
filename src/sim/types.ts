@@ -40,6 +40,11 @@ export interface Citizen {
   inv: Inventory;
   born: number;
   attrs: Record<Attr, number>; // skills, grown by practice (sim/growth.ts)
+  health?: number; // 0..100 (sim/population.ts); undefined = 90
+  family?: Family; // partner, parents, children (sim/family.ts)
+  retired?: boolean;
+  trip?: { until: number; why: string } | null; // travelling away from home (AI)
+  gone?: { t: number; why: 'died' | 'emigrated'; note: string }; // no longer part of the world (kept for names in history)
   power: number; // training power
   eco: number; // economic skill
   dmgTotal: number;
@@ -111,6 +116,18 @@ export interface Formation {
 }
 
 /** Law, underworld, intelligence and public-profile state of a citizen. */
+/** Family ties. Children under 18 are not yet citizens: they live in `kids` until they come of age. */
+export interface Family {
+  partner: Id | null;
+  status: 'single' | 'dating' | 'engaged' | 'married';
+  since: number; // when the current relationship status began
+  parents: Id[];
+  children: Id[]; // adult children (citizens)
+  kids: { name: string; born: number }[]; // children still growing up
+  exes: Id[];
+  lastDate?: number; // last time the couple spent time together
+}
+
 export interface CitizenSec {
   heat: number; // police attention 0..100
   jailUntil: number; // in prison until this time (0 = free)
@@ -252,6 +269,8 @@ export interface Region {
   unrest: number; // 0..100 public unrest
   news?: { t: number; text: string }[]; // local happenings, newest last (kept short)
   disrupted: number; // production disrupted until this time (disasters, riots, sabotage)
+  pop0?: number; // background population at genesis
+  draw?: number; // how attractive the region is to live in, -1..1, smoothed (sim/population.ts)
   blockade: Id | null; // nation whose navy blockades this coast
 }
 
@@ -653,7 +672,7 @@ export interface World {
   queue: ScheduledEvent[];
   stats: Stats;
   ledger: { t: number; text: string; amount: number; asset: AssetId; ref: string }[]; // player's transaction history
-  calendar: { nextDaily: number; terrainDone?: Id[]; baseCitizens?: number };
+  calendar: { nextDaily: number; terrainDone?: Id[]; baseCitizens?: number; basePop?: number };
 }
 
 // ---------- narrative (sim/story.ts, data/stories) ----------

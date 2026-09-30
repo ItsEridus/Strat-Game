@@ -1,5 +1,6 @@
 // Intelligence: your nation's service, networks, dossiers, operations, careers,
 // and the double life of an asset.
+import { census } from '../../sim/census';
 import { useState } from 'preact/hooks';
 import type { Id, OpKind, World } from '../../sim/types';
 import { ActBtn, Bar, CitLink, Empty, Help, NationChip, Panel, Select } from '../common';
@@ -106,7 +107,7 @@ function OpsPanel({ w }: { w: World }) {
   const [target, setTarget] = useState(foreign[0].id);
   const regions = w.regions.filter((r) => controller(r) === target);
   const [region, setRegion] = useState<Id>(regions[0]?.id ?? -1);
-  const subjects = Object.values(w.citizens).filter((c) => c.nation === target).sort((a, b) => b.influence - a.influence).slice(0, 25);
+  const subjects = census(w).all.filter((c) => c.nation === target).sort((a, b) => b.influence - a.influence).slice(0, 25);
   const [subject, setSubject] = useState<Id>(subjects[0]?.id ?? -1);
   const forces = Object.values(w.forces).filter((f) => f.nation === target && visible(w, p.nation, f)).sort((a, b) => b.strength - a.strength);
   const [fid, setFid] = useState<Id>(forces[0]?.id ?? -1);

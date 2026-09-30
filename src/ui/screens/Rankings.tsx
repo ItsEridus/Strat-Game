@@ -1,4 +1,5 @@
 // Rankings: world power index of nations and citizen leaderboards.
+import { census } from '../../sim/census';
 import { useState } from 'preact/hooks';
 import type { Citizen, World } from '../../sim/types';
 import { Bar, CitLink, Help, NationChip, Panel } from '../common';
@@ -26,7 +27,7 @@ export function Rankings({ w }: { w: World }) {
     influence: (c) => c.influence,
     fame: (c) => c.sec.fame,
   };
-  const all = Object.values(w.citizens).filter((c) => key[board](c) >= 0).sort((a, b) => key[board](b) - key[board](a) || a.id - b.id);
+  const all = census(w).all.filter((c) => key[board](c) >= 0).sort((a, b) => key[board](b) - key[board](a) || a.id - b.id);
   const mine = all.findIndex((c) => c.id === p.id);
   const show = (c: Citizen) => board === 'military' ? `${BRANCH_ICON[c.mil.branch!]} ${rankName(c)}` : board === 'damage' ? c.dmgTotal.toLocaleString() : board === 'wealth' ? fmtAmt(GOLD, Math.round(wealthOf(w, c))) : Math.round(key[board](c)).toLocaleString();
   const maxOf = (k: 'military' | 'army' | 'navy' | 'air' | 'economy') => Math.max(1e-9, ...scores.map((s) => s[k]));
