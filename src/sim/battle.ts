@@ -18,6 +18,7 @@ import { controller, cref, player, today, jailed } from './query';
 import { rollDrop } from './gear';
 import { bump } from './progress';
 import { onBattleWon } from './warHooks';
+import { addSp, onBattleOver, serviceFromDamage } from './forces';
 
 export const TICKS_PER_ROUND = () => B.battle.roundMinutes / 10;
 export const tickPoints = (tickIdx: number) => B.battle.segmentPtsPerMin[Math.min(3, Math.floor(tickIdx / 4))] * 10;
@@ -86,6 +87,7 @@ export function hit(w: World, c: Citizen, bid: Id, side: 'a' | 'd', weapon: Weap
   const tot = (b.total[c.id] = b.total[c.id] ?? { a: 0, d: 0 });
   tot[side] += dmg;
   if (b.kind !== 'training') c.dmgTotal += dmg;
+  if (b.kind === 'war') serviceFromDamage(w, c, dmg);
   c.flags.hitDay = today(w);
   addXp(w, c, B.xp.hit);
   rollDrop(w, c, B.gear.dropAttack, 'combat', w.regions[b.region]?.terrain);
@@ -178,10 +180,12 @@ export function finishBattle(w: World, b: Battle, winner: 'a' | 'd' | null) {
     if (best != null) {
       const c = w.citizens[best];
       c.medals.hero = (c.medals.hero ?? 0) + 1;
+      if (b.kind === 'war') addSp(w, c, B.forces.heroSp);
       c.influence += 1;
       if (c.player) { bump(w, 'hero'); notify(w, 'progress', `🎖️ Hero medal: top damage for ${sideLabel(w, b, side)} in ${w.regions[b.region]?.name ?? 'the battle'}.`); }
     }
   }
+  if (b.kind === 'war') onBattleOver(w, b, winner);
   onBattleWon(w, b, winner);
 }
 

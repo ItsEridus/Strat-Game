@@ -18,6 +18,8 @@ import type { ExtraProposal } from './congressExtra';
 import { partyOf } from './politics';
 import { bump } from './progress';
 import { cancelProject } from './construction';
+import { canLand, power, routeBlocked } from './forces';
+import { landNeighbour } from './travel';
 
 export const MAX_BATTLES_PER_SIDE = 2; // SOLO
 
@@ -44,7 +46,7 @@ export function computeSupply(w: World) {
     reached.add(seat);
     while (q.length) {
       const id = q.shift()!;
-      for (const l of w.regions[id].links) if (!reached.has(l) && controller(w.regions[l]) === n.id) { reached.add(l); q.push(l); }
+      for (const l of w.regions[id].links) if (!reached.has(l) && controller(w.regions[l]) === n.id && !routeBlocked(w, n.id, id, l)) { reached.add(l); q.push(l); }
     }
   }
   for (const r of w.regions) r.supplied = reached.has(r.id) || (r.bld.base >= B.buildings.baseSupplyLevel && controller(r) === r.owner);
@@ -186,6 +188,7 @@ export function militaryPower(w: World, n: Id): number {
     s += (1 + c.power / 100) * (1 + c.level / 20) * (c.persona === 'soldier' ? 2 : 1) + Math.min(50, weapons) * 0.05;
   }
   const nat = w.nations[n];
+  for (const f of Object.values(w.forces)) if (f.nation === n) s += power(w, f) * 15;
   return s + (nat.wallet[nat.cur] ?? 0) / 1e6;
 }
 
@@ -205,8 +208,30 @@ export function invasionCheck(w: World, actor: Id, war: War | undefined, rid: Id
   return null;
 }
 
+/** A shared land border (sea lanes and straits don't count). */
+export function landBorder(w: World, nation: Id, rid: Id) {
+  return w.regions[rid].links.some((l) => controller(w.regions[l]) === nation && landNeighbour(w, l, rid));
+}
+
+/** Ground invasion possible: over a land border, or by sea where the navy has superiority. */
 export function isBorder(w: World, nation: Id, rid: Id) {
-  return w.regions[rid].links.some((l) => controller(w.regions[l]) === nation);
+  return landBorder(w, nation, rid) || canLand(w, nation, rid, controller(w.regions[rid]));
+}
+
+/** Open a battle in a war (shared by political invasions and military advances). */
+export function launchBattle(w: World, nat: Id, warId: Id, rid: Id) {
+  const war = w.wars[warId];
+  const r = w.regions[rid];
+  const exileCore = w.nations[nat].exile && r.core === nat;
+  const land = landBorder(w, nat, rid);
+  const amphibious = !land && canLand(w, nat, rid, controller(r));
+  const airOnly = !land && !amphibious && !exileCore;
+  const b = createBattle(w, 'war', rid, nat, controller(r), war.id, airOnly);
+  war.battles.push(b.id);
+  const pl = player(w);
+  record(w, 'war', `⚔️ ${w.nations[nat].name} attacks ${r.name}${amphibious ? ' with an amphibious landing' : airOnly ? ' (air assault: only air weapons count)' : ''}.`, { nation: nat, region: rid });
+  if (controller(r) === pl.nation) notify(w, 'warHome', `⚔️ ${w.nations[nat].name} is attacking ${r.name}! Defend it.`, { link: 'wars', critical: false });
+  return { b, airOnly, amphibious };
 }
 
 export function startInvasion(w: World, actor: Id, warId: Id, rid: Id): Result {
@@ -215,14 +240,8 @@ export function startInvasion(w: World, actor: Id, warId: Id, rid: Id): Result {
   if (why) return fail(why);
   const nat = w.citizens[actor].nation;
   const r = w.regions[rid];
-  const exileCore = w.nations[nat].exile && r.core === nat;
-  const airOnly = !isBorder(w, nat, rid) && !exileCore;
-  const b = createBattle(w, 'war', rid, nat, controller(r), war.id, airOnly);
-  war.battles.push(b.id);
-  const pl = player(w);
-  record(w, 'war', `⚔️ ${w.nations[nat].name} attacks ${r.name}${airOnly ? ' (air assault: only air weapons count)' : ''}.`, { nation: nat, region: rid });
-  if (controller(r) === pl.nation) notify(w, 'warHome', `⚔️ ${w.nations[nat].name} is attacking ${r.name}! Defend it.`, { link: 'wars', critical: false });
-  return ok(`Invasion of ${r.name} launched${airOnly ? ' as an air assault (no shared border)' : ''}.`, { id: b.id });
+  const { b, airOnly, amphibious } = launchBattle(w, nat, war.id, rid);
+  return ok(`Invasion of ${r.name} launched${amphibious ? ' as an amphibious landing' : airOnly ? ' as an air assault (no land border and no naval superiority)' : ''}.`, { id: b.id });
 }
 
 /** Battle won in a war: occupation or liberation, then settlement checks. */

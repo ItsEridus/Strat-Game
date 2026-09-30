@@ -234,3 +234,5 @@ pre { overflow: auto; max-height: 400px; background: var(--bg); padding: .6rem; 
 .netgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: .35rem .8rem; }
 .netgrid > div { display: grid; grid-template-columns: auto 1fr; gap: .4rem; align-items: center; }
 .checks.small label { margin-right: .6rem; }
+.sealabel { font-style: italic; fill: #9fc3ff !important; opacity: .85; }
+tr.me td { background: #e0a52622; }

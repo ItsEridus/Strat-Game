@@ -29,7 +29,7 @@ Requires Node.js 18+.
 ```sh
 npm install
 npm run build      # rebuild dist/game.js
-npm test           # 46 simulation & acceptance tests
+npm test           # 51 simulation & acceptance tests
 npm run sim -- 90  # 90-day headless world run with an asset audit
 npm run earth      # regenerate src/data/earth.json (downloads Natural Earth data to tools/ne/ on first run)
 ```
@@ -118,6 +118,21 @@ boss's chair…). Competitors become rivals who attack you in speeches, undercut
 off the police; friends vouch for you, warn you and lend money. NPCs offer bribes when you hold office, ask for
 interviews when you're famous, challenge you to debates, and journalists investigate the notorious. (People
 screen; the dashboard shows what's happening around you.)
+
+**Armed forces.** Every nation fields standing army divisions (infantry, armored, mountain, marines), navy
+formations (surface fleets, carrier strike groups, submarine flotillas) and air wings (fighters, bombers), sized to
+its real posture. They fight in battles alongside citizens — divisions in or next to the battle region, air wings
+within range, fleets in a sea that touches the coast — and take losses. Real coastlines are divided into 29 named
+seas: naval superiority allows amphibious landings, blockades enemy coasts (production and sea-lane supply) and
+lets armies cross the sea; fleets clash in naval battles. Formations cost upkeep from a military budget, wear
+their equipment and are repaired from national stocks. Enlist in the Army, Navy or Air Force, report for duty,
+fight, and climb a real rank ladder (Private to General, Seaman Recruit to Admiral, Airman Basic to Air Chief
+Marshal); from Colonel/Captain you command a formation and give it orders; the most senior officer becomes Chief
+of Staff. The defence ministry sets the budget and the national security alert level, raises and disbands
+formations, and — like the intelligence service — fights through fog of war: foreign forces are only visible near
+your borders and seas, through deep networks, or after military reconnaissance (which, with military sabotage,
+joins the intelligence operations). (Armed Forces screen; Military map view; Rankings screen for the world power
+index and citizen leaderboards.)
 
 **Wars** are declared by congress with goals and a deadline. Battles occupy regions, but ownership only changes
 at settlement. The **Wars** and **Battle** screens explain the scoring ticks, supply and win conditions.

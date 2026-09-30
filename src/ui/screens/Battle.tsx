@@ -1,4 +1,6 @@
 import { useState } from 'preact/hooks';
+import { engaged, visible } from '../../sim/forces';
+import { KINDS } from '../../data/military';
 import type { Battle as BattleT, World } from '../../sim/types';
 import { ActBtn, Btn, CitLink, Empty, NationChip, Panel, RegionLink, Select, Help } from '../common';
 import { store } from '../store';
@@ -73,6 +75,7 @@ function BattleHeader({ w, b }: { w: World; b: BattleT }) {
             const winner = b.ticks[i];
             return <span title={`Tick ${i + 1}: ${tickPoints(i)} pts`} style={{ background: winner ? sideColor(w, b, winner) : i === idx ? '#555' : undefined, opacity: winner ? 1 : 0.5 }} />;
           })}</div>
+          <ForcesLine w={w} b={b} />
           <p class="small">Points {b.pts.a} – {b.pts.d} of {roundPoints()} (win with {Math.floor(roundPoints() / 2) + 1}). Tick {idx + 1}/{TICKS_PER_ROUND()}, segment {seg + 1} worth {tickPoints(idx)} pts; next tick in {fmtDur(nextTick - w.time)}.
             Each tick goes to the side leading in <b>round damage</b> when it ends (ties to the defender) — surging late decides the heavy final ticks.</p>
           <div class="row">
@@ -149,5 +152,16 @@ function Contributors({ w, b }: { w: World; b: BattleT }) {
       </div>
       <Help>The top damage dealer on each side at the end earns the exclusive hero medal.</Help>
     </Panel>
+  );
+}
+
+/** Standing formations in this battle and their share of the damage. */
+function ForcesLine({ w, b }: { w: World; b: BattleT }) {
+  const p = player(w);
+  const A = engaged(w, b, 'a'), D = engaged(w, b, 'd');
+  if (!A.length && !D.length && !b.forceDmg) return null;
+  const fmt = (fs: typeof A, side: 'a' | 'd') => fs.filter((f) => visible(w, p.nation, f)).map((f) => `${KINDS[f.kind].icon} ${f.name} (${Math.round(f.strength)}%)`).join(', ') || (fs.length ? `${fs.length} unseen formation${fs.length > 1 ? 's' : ''}` : 'none');
+  return (
+    <p class="small">🎖️ Formations — attackers: {fmt(A, 'a')}; defenders: {fmt(D, 'd')}.{b.forceDmg ? ` Formation damage so far: ${b.forceDmg.a.toLocaleString()} / ${b.forceDmg.d.toLocaleString()}.` : ''}{b.airOnly ? ' Air assault: no ground forces.' : ''}</p>
   );
 }

@@ -19,9 +19,10 @@ import { initPlayerProgress } from './quests';
 import { seedLate } from './seedLate';
 import { initGovs } from './stategov';
 import { initCrime } from './crime';
+import { initForces, seedOfficers } from './forces';
 import { AGENCY_NAMES } from '../data/names';
 
-export const SAVE_VERSION = 4; // 4: crime, policing, intelligence, crises, economy cycle
+export const SAVE_VERSION = 5; // 4: crime, policing, intelligence, crises, economy cycle
 
 export function defaultSettings(): Settings {
   const pauseOn: Record<string, boolean> = {};
@@ -56,7 +57,7 @@ function genRegions(w: World): Region[] {
       terrain: e.terrain, res, pop: 0,
       prodWindow: new Array(B.pollution.windowDays).fill(0), pollution: 0,
       bld: { hospital: 0, fields: 0, industrial: 0, base: 0 }, project: null, supplied: true,
-      crime: 20, police: 30, unrest: 10, disrupted: 0,
+      crime: 20, police: 30, unrest: 10, disrupted: 0, blockade: null,
     };
   });
   NATION_DEFS.forEach((d, ni) => {
@@ -97,6 +98,7 @@ export function newCitizen(w: World, name: string, nation: Id, loc: Id, persona:
     influence: 0, rel: {}, gear: {}, loadouts: [], buffs: [], studies: {}, reserve: 0, mining: null, mineSite: loc,
     medals: {}, mood: 0, lastIncome: 0, incomeToday: 0, flags: {},
     sec: newSec(),
+    mil: { branch: null, rank: 0, sp: 0, since: 0, lastDuty: -1, commands: 0 },
   };
 }
 
@@ -132,6 +134,7 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
     version: SAVE_VERSION, seed, rng: seed | 0, time: DAY + 8 * HOUR, nextId: 1, seq: 1, settings,
     playerId: -1, player: null as any,
     regions: [], govs: [], syndicates: {}, cases: {}, ops: {}, crises: {},
+    forces: {}, navalLog: [],
     econ: { cycle: 0.2, trend: 0, phase: 'expansion', hist: [], commodity: { grain: 1, iron: 1, titanium: 1, oil: 1 } },
     nations: [], households: [], citizens: {}, companies: {}, listings: {}, fx: {}, fxTrades: {}, trades: {}, lastPrice: {},
     parties: {}, elections: {}, proposals: {}, projects: {}, wars: {}, battles: {}, units: {}, gear: {}, holdings: {}, shareOrders: {},
@@ -158,8 +161,9 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
     relations: {}, alliances: [], embargoes: [], pacts: {}, exile: false, approval: 55, printed: 0, warheads: [], nukeProd: null, intel: 0,
     priorities: { battle: null, side: null, project: null }, termStart: w.time,
     stats: { revenue: 0, spending: 0, revToday: 0, spendToday: 0, revHist: [], spendHist: [] }, aiPlan: { lastWarCheck: 0, lastBuild: 0 }, recruitGoal: 0, fxAnchor: 0, requests: [], propCount: {}, warScore: 0, unemployment: 0, procure: {}, warMood: 0,
-    agency: { name: AGENCY_NAMES[d.cur] ?? `${d.adj} Intelligence Service`, budget: B.intel.budget, network: {}, counter: 20, dossiers: {}, focus: [], opsRun: 0, caught: 0, exposed: 0 },
+    agency: { name: AGENCY_NAMES[d.cur] ?? `${d.adj} Intelligence Service`, budget: B.intel.budget, network: {}, counter: 20, dossiers: {}, milIntel: {}, focus: [], opsRun: 0, caught: 0, exposed: 0 },
     policeFunding: 0.02,
+    defense: { budget: B.forces.budget, chief: null, unpaid: 0 }, alert: 1,
   }));
   for (const n of w.nations) for (const m of w.nations) if (m.id !== n.id) n.relations[m.id] = { score: randInt(w, -10, 20), hist: [] };
   w.households = w.nations.map((n) => ({ nation: n.id, wallet: {}, inv: {}, pop: regions.filter((r) => r.owner === n.id).reduce((s, r) => s + r.pop, 0), unmet: 0 }));
@@ -290,6 +294,8 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
   seedPolitics(w);
   initGovs(w);
   initCrime(w);
+  initForces(w);
+  seedOfficers(w);
   seedLate(w);
 
   for (const n of w.nations) record(w, 'genesis', `${n.name} enters the new era with ${regions.filter((r) => r.owner === n.id).length} regions.`, { nation: n.id });

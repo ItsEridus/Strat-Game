@@ -34,6 +34,7 @@ import { crimeDaily, crimeHourly, playerRackets, policeRecruitment, replyArrest,
 import { intelDaily, replySpyApproach, resolveOp } from './intel';
 import { dynamicsDaily, replyStrike } from './dynamics';
 import { npcDaily, replyBribe, replyDebate, replyInterview, replyLoan } from './npc';
+import { forcesDaily, forcesTick } from './forces';
 
 let done = false;
 export function registerSystems() {
@@ -107,6 +108,10 @@ export function registerSystems() {
   REPLY_HANDLERS.helpReq = replyHelp;
   REPLY_HANDLERS.order = replyOrder;
   REPLY_HANDLERS.diplo = (w, m, o) => replyDiplo(w, m, o, (type, params) => propose(w, player(w), type as any, params));
+
+  // Stage 7: armed forces (formations fight each tick before battle scoring)
+  tickHooks.unshift(forcesTick);
+  dailyHooks.push(forcesDaily);
 
   // Stage 6: law & order, intelligence, a dynamic world and a responsive society
   HANDLERS.opResolve = (w, p) => resolveOp(w, p.id);

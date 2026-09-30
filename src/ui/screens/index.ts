@@ -35,6 +35,8 @@ import { Crime } from './Crime';
 import { Intel } from './Intel';
 import { WorldState } from './WorldState';
 import { People } from './People';
+import { Forces } from './Forces';
+import { Rankings } from './Rankings';
 
 export interface ScreenDef { id: string; label: string; icon: string; group: string; comp: FunctionComponent<{ w: World }>; hidden?: boolean; badge?: (w: World) => number }
 
@@ -59,6 +61,8 @@ export const SCREENS: ScreenDef[] = [
   { id: 'congress', label: 'Congress', icon: '📜', group: 'Politics', comp: Congress, badge: (w) => Object.values(w.proposals).filter((p) => p.status === 'open' && p.nation === w.citizens[w.playerId].nation && (w.nations[p.nation].deputies.includes(w.playerId) || w.nations[p.nation].president === w.playerId) && !p.votes[w.playerId]).length },
   { id: 'construction', label: 'Construction', icon: '🏗️', group: 'Politics', comp: Construction },
   { id: 'wars', label: 'Wars', icon: '🔥', group: 'Military', comp: Wars, badge: (w) => Object.values(w.wars).filter((x) => x.status === 'active' && (x.att === w.citizens[w.playerId].nation || x.def === w.citizens[w.playerId].nation)).length },
+  { id: 'forces', label: 'Armed Forces', icon: '🎖️', group: 'Military', comp: Forces },
+  { id: 'rankings', label: 'Rankings', icon: '🏆', group: 'Military', comp: Rankings },
   { id: 'battle', label: 'Battle', icon: '⚔️', group: 'Military', comp: BattleScreen },
   { id: 'units', label: 'Military Unit', icon: '🎖️', group: 'Military', comp: Units },
   { id: 'events', label: 'Events & Strategic', icon: '🏴‍☠️', group: 'Military', comp: Events, badge: (w) => Object.values(w.events).filter((e) => e.status === 'active').length },

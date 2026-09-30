@@ -99,6 +99,7 @@ export function hitPreview(w: World, c: Citizen, b: Battle | null, side: 'a' | '
       if (b.kind === 'war' && side === 'd' && !r.supplied) { mult *= 1 - B.damage.supplyPenalty; parts.push('Supply route to capital cut: −10%'); }
     }
     if (b.kind === 'war' && !ownOrAllied(w, c, nat)) { mult *= 1 - B.damage.foreignPenalty; parts.push('Foreign flag (not own/allied): −30%'); }
+    if (b.kind === 'war' && c.mil.branch && ownOrAllied(w, c, nat)) { const rb = 1 + c.mil.rank * B.forces.rankBonus; mult *= rb; parts.push(`Serving ${c.mil.branch} rank ${c.mil.rank + 1} → ×${rb.toFixed(2)}`); }
   }
   if (b) {
     if (b.kind === 'event' && buffValue(w, c, 'cutlass')) { mult *= 1 + buffValue(w, c, 'cutlass'); parts.push('Cutlass: +20% vs ships'); }

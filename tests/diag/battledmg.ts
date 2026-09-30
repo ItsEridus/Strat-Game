@@ -1,0 +1,12 @@
+import { generateWorld } from '../../src/sim/worldgen';
+import { registerSystems } from '../../src/sim/systems';
+import { advance } from '../../src/sim/tick';
+import { DAY } from '../../src/engine/clock';
+registerSystems();
+const w = generateWorld(7, 'T', 0);
+for (let d = 0; d < 40; d++) advance(w, DAY, false);
+const rounds = Object.values(w.battles).filter((b) => b.kind === 'war').flatMap((b) => b.rounds);
+const tot = rounds.map((r) => r.a + r.d).sort((a, b) => a - b);
+console.log('war rounds', rounds.length, 'median round dmg (both sides)', tot[Math.floor(tot.length / 2)], 'p90', tot[Math.floor(tot.length * 0.9)]);
+const p = Object.values(w.citizens).filter((c) => c.dmgTotal > 0).map((c) => c.dmgTotal).sort((a, b) => a - b);
+console.log('citizen dmg median', p[Math.floor(p.length / 2)]);

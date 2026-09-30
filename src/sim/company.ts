@@ -67,6 +67,7 @@ export function productionFactors(w: World, co: Company, worker: Citizen | null)
   if (ideo) f.push({ label: co.state ? 'Socialist state production' : 'Capitalist production', mult: 1 + ideo });
   if (r.crime > 50) f.push({ label: `Crime ${Math.round(r.crime)}`, mult: 1 - (r.crime - 50) / 250 });
   if (r.disrupted > w.time) f.push({ label: 'Regional disruption (disaster, riot or sabotage)', mult: 0.6 });
+  if (r.blockade != null) f.push({ label: `Naval blockade by ${w.nations[r.blockade].name}`, mult: 1 - B.forces.blockade });
   const shock = raw ? w.econ.commodity[co.industry] ?? 1 : 1;
   if (shock !== 1) f.push({ label: shock > 1 ? `World ${co.industry} boom` : `World ${co.industry} supply shock`, mult: shock });
   const crisis = crisisFactor(w, co.region, co.industry);

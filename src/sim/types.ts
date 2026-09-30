@@ -79,6 +79,37 @@ export interface Citizen {
   incomeToday: number;
   flags: Record<string, number>;
   sec: CitizenSec;
+  mil: MilService;
+}
+
+export type Branch = 'army' | 'navy' | 'air';
+/** Service in the national armed forces. */
+export interface MilService {
+  branch: Branch | null;
+  rank: number; // index into the branch's rank ladder
+  sp: number; // service points (promotion)
+  since: number; // enlistment time
+  lastDuty: number;
+  commands: number; // days in command of a formation (general/flag rank requirement)
+}
+
+export type FormationKind = 'infantry' | 'armored' | 'mountain' | 'marines' | 'fleet' | 'carrier' | 'submarine' | 'fighter' | 'bomber';
+export interface FormationOrder { kind: 'garrison' | 'move' | 'support' | 'patrol' | 'strike' | 'superiority'; target: Id | string | null }
+/** A standing military formation: an army division, a fleet or an air wing. */
+export interface Formation {
+  id: Id; nation: Id; branch: Branch; kind: FormationKind; name: string;
+  loc: Id; // region (army/air); a fleet's home port
+  zone: string | null; // sea zone a fleet is operating in
+  strength: number; // 0..100 personnel/hulls/aircraft
+  equipment: number; // 0..100
+  readiness: number; // 0..100
+  morale: number; // 0..100
+  experience: number; // 0..100
+  commander: Id | null;
+  order: FormationOrder;
+  path: (Id | string)[]; // remaining route (regions or sea zones)
+  created: number;
+  kills: number; // enemy strength destroyed
 }
 
 /** Law, underworld, intelligence and public-profile state of a citizen. */
@@ -119,13 +150,15 @@ export interface Agency {
   network: Record<Id, number>; // penetration of each foreign nation 0..100
   counter: number; // counter-intelligence 0..100
   dossiers: Record<Id, { t: number; lines: string[] }>;
+  milIntel: Record<Id, number>; // foreign order of battle known until this time
   focus: Id[]; // nations the service prioritises
   opsRun: number; caught: number; exposed: number;
 }
-export type OpKind = 'intel' | 'sabotage' | 'theft' | 'unrest' | 'propaganda' | 'scandal' | 'recruit' | 'counter';
+export type OpKind = 'intel' | 'sabotage' | 'theft' | 'unrest' | 'propaganda' | 'scandal' | 'recruit' | 'counter' | 'milintel' | 'milsabotage';
 export interface SpyOp {
   id: Id; nation: Id; target: Id; region: Id | null; kind: OpKind; agent: Id | null; subject?: Id | null;
   start: number; ends: number; status: 'active' | 'success' | 'failed' | 'exposed'; result?: string;
+  formation?: Id | null; // target of military sabotage
 }
 export type CrisisKind = 'hurricane' | 'earthquake' | 'flood' | 'wildfire' | 'blizzard' | 'drought' | 'epidemic' | 'strike' | 'protest' | 'riot' | 'boom' | 'shock';
 export interface Crisis {
@@ -220,6 +253,7 @@ export interface Region {
   police: number; // 0..100 effective policing
   unrest: number; // 0..100 public unrest
   disrupted: number; // production disrupted until this time (disasters, riots, sabotage)
+  blockade: Id | null; // nation whose navy blockades this coast
 }
 
 export interface Relation { score: number; hist: { t: number; delta: number; why: string }[] }
@@ -266,7 +300,9 @@ export interface Nation {
   procure: Record<ItemKey, number>; // government demand not met by the market (signals producers)
   warMood: number; // public appetite for war shaped by the press (-5..5)
   agency: Agency; // intelligence service
-  policeFunding: number; // share of daily revenue for national police (regions without their own government, federal crimes)
+  policeFunding: number;
+  defense: { budget: number; chief: Id | null; unpaid: number }; // military budget (share of revenue), chief of staff, days unpaid
+  alert: number; // national security alert 1 (normal) .. 5 (maximum) // share of daily revenue for national police (regions without their own government, federal crimes)
 }
 
 export interface Households { nation: Id; wallet: Wallet; inv: Inventory; pop: number; unmet: number }
@@ -354,6 +390,8 @@ export interface Battle {
   winner: 'a' | 'd' | null;
   ended?: number;
   eventRef?: Id;
+  forceDmg?: { a: number; d: number }; // damage dealt by standing formations
+  prevDmg?: { a: number; d: number }; // damage totals at the previous tick (for attrition)
 }
 
 export interface War {
@@ -564,6 +602,8 @@ export interface World {
   ops: Record<Id, SpyOp>;
   crises: Record<Id, Crisis>;
   econ: EconState;
+  forces: Record<Id, Formation>;
+  navalLog: { t: number; zone: string; text: string }[];
   nations: Nation[];
   households: Households[];
   citizens: Record<Id, Citizen>;

@@ -5,7 +5,7 @@
 import { createRequire } from 'node:module';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { NATIONS, classify, government, HOTSPOTS, ROUTES, NO_WAGE_TAX, FOREST_ZONES, DRY_ZONES } from './earth-defs.mjs';
+import { NATIONS, classify, government, HOTSPOTS, ROUTES, NO_WAGE_TAX, FOREST_ZONES, DRY_ZONES, SEA_ZONES } from './earth-defs.mjs';
 
 const require = createRequire(import.meta.url);
 const { topology } = require('topojson-server');
@@ -153,6 +153,30 @@ for (const [a, b, name] of ROUTES) addLink(find(a), find(b), name);
   if (seen.size !== regions.length) throw new Error(`Map not connected: ${regions.filter((r) => !seen.has(r.id)).map((r) => r.key).join(', ')}`);
 }
 
+// ---- Coastlines: arcs used by one region and no neutral country are sea coast ----
+{
+  const users = new Map(); // arc -> count of unit users, neutral-land flag
+  const walk = (arcs, fn) => { for (const a of arcs) Array.isArray(a) ? walk(a, fn) : fn(a < 0 ? ~a : a); };
+  unitGeoms.forEach((g) => walk(g.arcs ?? [], (a) => { const u = users.get(a) ?? { units: new Set(), neutral: false }; u.units.add(g.properties._rid); users.set(a, u); }));
+  const playable = new Set(NATIONS.map((n) => n.iso3));
+  for (const g of topo.objects.land.geometries) if (!playable.has(g.properties.ADM0_A3)) walk(g.arcs ?? [], (a) => { const u = users.get(a); if (u) u.neutral = true; });
+  for (const r of regions) r.seaPts = {};
+  for (const [a, u] of users) {
+    if (u.neutral || u.units.size !== 1) continue;
+    const rid = [...u.units][0];
+    const coords = feature(topo, { type: 'LineString', arcs: [a] }).geometry.coordinates;
+    for (let i = 0; i < coords.length; i += 3) {
+      let best = null;
+      for (const z of SEA_ZONES) { const d = geoDistance(z.c, coords[i]); if (!best || d < best.d) best = { z: z.name, d }; }
+      regions[rid].seaPts[best.z] = (regions[rid].seaPts[best.z] ?? 0) + 1;
+    }
+  }
+  for (const r of regions) {
+    const total = Object.values(r.seaPts).reduce((a, b) => a + b, 0);
+    r.seas = total >= 3 ? Object.entries(r.seaPts).filter(([, v]) => v >= Math.max(2, total * 0.12)).sort((a, b) => b[1] - a[1]).map(([k]) => k) : [];
+  }
+}
+
 // ---- Places: seats of government and population weight ----
 const inside = (r, lon, lat) => {
   const [[w, s], [e, n]] = r.bounds;
@@ -229,6 +253,7 @@ const out = {
   // Coastlines and international borders of playable nations (drawn over region fills).
   nationBorders: path(mesh(topo, topo.objects.units, (a, b) => a === b || regions[a.properties._rid].nation !== regions[b.properties._rid].nation)),
   nations: [], regions: [], routes,
+  seas: SEA_ZONES.map((z) => { const [x, y] = projection(z.c); return { name: z.name, x: r1(x), y: r1(y), adj: z.adj }; }),
 };
 const nationPop = Object.fromEntries(admin0.map((f) => [f.properties.ADM0_A3, f.properties.POP_EST]));
 NATIONS.forEach((n, ni) => {
@@ -250,6 +275,7 @@ for (const r of regions) {
   out.regions.push({
     name: r.name, nation: r.nation, kind: r.kind, seat: r.seat, city: r.city, gov, noWageTax: NO_WAGE_TAX.includes(r.key) || undefined,
     terrain: farmBelt(r, terrainOf(r)), res: HOTSPOTS[r.key] ?? [], popReal: r.popReal,
+    seas: r.seas.length ? r.seas : undefined,
     x: r1(x), y: r1(y), lon: +r.label[0].toFixed(3), lat: +r.label[1].toFixed(3), span: r.span, path: path(drawable(r.geom)), links: [...links[r.id]].sort((a, b) => a - b),
   });
 }

@@ -4,6 +4,7 @@ import { useState } from 'preact/hooks';
 import type { Id, OpKind, World } from '../../sim/types';
 import { ActBtn, Bar, CitLink, Empty, Help, NationChip, Panel, Select } from '../common';
 import { controller, player } from '../../sim/query';
+import { visible } from '../../sim/forces';
 import { nationPerm } from '../../sim/authority';
 import { B } from '../../data/balance';
 import { dayOf } from '../../engine/clock';
@@ -107,15 +108,18 @@ function OpsPanel({ w }: { w: World }) {
   const [region, setRegion] = useState<Id>(regions[0]?.id ?? -1);
   const subjects = Object.values(w.citizens).filter((c) => c.nation === target).sort((a, b) => b.influence - a.influence).slice(0, 25);
   const [subject, setSubject] = useState<Id>(subjects[0]?.id ?? -1);
+  const forces = Object.values(w.forces).filter((f) => f.nation === target && visible(w, p.nation, f)).sort((a, b) => b.strength - a.strength);
+  const [fid, setFid] = useState<Id>(forces[0]?.id ?? -1);
   const def = OPS[kind];
   const rid = def.needs === 'region' ? (regions.some((r) => r.id === region) ? region : regions[0]?.id ?? null) : null;
-  const sid = def.needs === 'subject' ? (subjects.some((c) => c.id === subject) ? subject : subjects[0]?.id ?? null) : null;
+  const sid = def.needs === 'subject' ? (subjects.some((c) => c.id === subject) ? subject : subjects[0]?.id ?? null) : def.needs === 'formation' ? (forces.some((f) => f.id === fid) ? fid : forces[0]?.id ?? null) : null;
   return (
     <Panel title="🗂️ Plan an operation" class="wide">
       <div class="row small">
         <Select value={kind} options={(Object.keys(OPS) as OpKind[]).map((k) => [k, `${OPS[k].name} (${B.intel.opCost[k]})`])} onChange={setKind} />
         {kind !== 'counter' && <Select value={target} options={foreign.map((x) => [x.id, `${x.name} · network ${Math.round(w.nations[p.nation].agency.network[x.id] ?? 0)}`])} onChange={setTarget} />}
         {def.needs === 'region' && <Select value={rid ?? -1} options={regions.map((r) => [r.id, r.name])} onChange={setRegion} />}
+        {def.needs === 'formation' && <Select value={sid ?? -1} options={forces.map((f) => [f.id, `${f.name} (${f.branch === 'navy' ? f.zone : w.regions[f.loc].name})`])} onChange={setFid} />}
         {def.needs === 'subject' && <Select value={sid ?? -1} options={subjects.map((c) => [c.id, `${c.name} (influence ${Math.round(c.influence)})`])} onChange={setSubject} />}
         <ActBtn kind="primary" why={opCheck(w, p.id, p.nation, kind, target, rid, sid)} run={(w) => launchOp(w, p.id, p.nation, kind, target, rid, sid)}>Launch</ActBtn>
       </div>

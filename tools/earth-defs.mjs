@@ -219,3 +219,37 @@ export const DRY_ZONES = [
   [34, 16, 56, 32], [69, 24, 75, 29.5], [75, 36, 112, 46], // Arabia, Thar, Tarim & Gobi
   [44, 44, 50, 48], [17, -32, 24, -26], // Caspian lowland, Karoo
 ];
+
+// Sea zones for naval operations: a centre point (coastline is assigned to the
+// nearest centre) and the zones a fleet can sail to directly.
+export const SEA_ZONES = [
+  { name: 'Gulf of Mexico & Caribbean', c: [-85, 23], adj: ['Northwest Atlantic', 'South Atlantic', 'Eastern Pacific'] },
+  { name: 'Northwest Atlantic', c: [-66, 38], adj: ['North Atlantic', 'Gulf of Mexico & Caribbean'] },
+  { name: 'North Atlantic', c: [-35, 52], adj: ['Northwest Atlantic', 'North Sea', 'Canadian Arctic', 'Mediterranean', 'South Atlantic'] },
+  { name: 'North Sea', c: [3, 57], adj: ['North Atlantic', 'Baltic Sea', 'Arctic Ocean'] },
+  { name: 'Baltic Sea', c: [20, 58], adj: ['North Sea'] },
+  { name: 'Mediterranean', c: [22, 35], adj: ['North Atlantic', 'Black Sea', 'Red Sea'] },
+  { name: 'Black Sea', c: [34, 43], adj: ['Mediterranean'] },
+  { name: 'Caspian Sea', c: [50, 42], adj: [] },
+  { name: 'Red Sea', c: [38, 21], adj: ['Mediterranean', 'Arabian Sea'] },
+  { name: 'Persian Gulf', c: [51, 27], adj: ['Arabian Sea'] },
+  { name: 'Arabian Sea', c: [64, 16], adj: ['Red Sea', 'Persian Gulf', 'Indian Ocean', 'Bay of Bengal'] },
+  { name: 'Bay of Bengal', c: [88, 14], adj: ['Arabian Sea', 'Indian Ocean', 'South China Sea'] },
+  { name: 'Indian Ocean', c: [78, -22], adj: ['Arabian Sea', 'Bay of Bengal', 'South Atlantic', 'Southern Ocean', 'Timor & Arafura Sea'] },
+  { name: 'South Atlantic', c: [-28, -22], adj: ['North Atlantic', 'Gulf of Mexico & Caribbean', 'Southwest Atlantic', 'Indian Ocean'] },
+  { name: 'Southwest Atlantic', c: [-55, -42], adj: ['South Atlantic', 'Eastern Pacific'] },
+  { name: 'Eastern Pacific', c: [-108, 16], adj: ['Gulf of Mexico & Caribbean', 'Northeast Pacific', 'Southwest Atlantic'] },
+  { name: 'Northeast Pacific', c: [-135, 45], adj: ['Eastern Pacific', 'Bering Sea', 'Western Pacific'] },
+  { name: 'Bering Sea', c: [-178, 60], adj: ['Northeast Pacific', 'Arctic Ocean', 'Sea of Okhotsk', 'Western Pacific', 'Canadian Arctic'] },
+  { name: 'Canadian Arctic', c: [-95, 74], adj: ['North Atlantic', 'Hudson Bay', 'Arctic Ocean', 'Bering Sea'] },
+  { name: 'Hudson Bay', c: [-85, 59], adj: ['Canadian Arctic'] },
+  { name: 'Arctic Ocean', c: [95, 78], adj: ['North Sea', 'Bering Sea', 'Canadian Arctic'] },
+  { name: 'Sea of Okhotsk', c: [148, 54], adj: ['Bering Sea', 'Sea of Japan', 'Western Pacific'] },
+  { name: 'Sea of Japan', c: [135, 40], adj: ['Sea of Okhotsk', 'East China & Yellow Sea', 'Western Pacific'] },
+  { name: 'East China & Yellow Sea', c: [124, 31], adj: ['Sea of Japan', 'South China Sea', 'Western Pacific'] },
+  { name: 'South China Sea', c: [113, 15], adj: ['East China & Yellow Sea', 'Bay of Bengal', 'Timor & Arafura Sea', 'Western Pacific'] },
+  { name: 'Western Pacific', c: [145, 25], adj: ['Northeast Pacific', 'Bering Sea', 'Sea of Okhotsk', 'Sea of Japan', 'East China & Yellow Sea', 'South China Sea', 'Coral & Tasman Sea'] },
+  { name: 'Timor & Arafura Sea', c: [130, -11], adj: ['South China Sea', 'Indian Ocean', 'Coral & Tasman Sea'] },
+  { name: 'Coral & Tasman Sea', c: [157, -28], adj: ['Timor & Arafura Sea', 'Western Pacific', 'Southern Ocean'] },
+  { name: 'Southern Ocean', c: [130, -42], adj: ['Indian Ocean', 'Coral & Tasman Sea'] },
+];

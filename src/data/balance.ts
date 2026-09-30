@@ -235,9 +235,9 @@ export const BALANCE = {
     budget: 0.025, // SOLO default share of daily revenue for the intelligence service
     networkGain: 0.6, // SOLO network points per 100 currency invested per day
     networkDecay: 0.4, // SOLO daily network decay
-    opHours: { intel: 8, sabotage: 18, theft: 24, unrest: 20, propaganda: 16, scandal: 30, recruit: 20, counter: 12 }, // SOLO
-    opCost: { intel: 30, sabotage: 80, theft: 60, unrest: 60, propaganda: 50, scandal: 70, recruit: 40, counter: 30 }, // SOLO currency
-    minNetwork: { intel: 0, sabotage: 25, theft: 35, unrest: 20, propaganda: 10, scandal: 30, recruit: 15, counter: 0 }, // SOLO
+    opHours: { intel: 8, sabotage: 18, theft: 24, unrest: 20, propaganda: 16, scandal: 30, recruit: 20, counter: 12, milintel: 12, milsabotage: 20 }, // SOLO
+    opCost: { intel: 30, sabotage: 80, theft: 60, unrest: 60, propaganda: 50, scandal: 70, recruit: 40, counter: 30, milintel: 40, milsabotage: 90 }, // SOLO currency
+    minNetwork: { intel: 0, sabotage: 25, theft: 35, unrest: 20, propaganda: 10, scandal: 30, recruit: 15, counter: 0, milintel: 20, milsabotage: 35 }, // SOLO
     level: 6, // SOLO level to join an intelligence service
     energy: 25, // SOLO field agent energy per operation
     agentCd: 12, // SOLO hours between a citizen agent's operations
@@ -257,6 +257,29 @@ export const BALANCE = {
     migration: 0.004, // SOLO share of population that can move per day between regions
     arrivalEveryDays: 3, // SOLO a new AI citizen arrives in some nation about this often
     maxCitizensFactor: 1.3, // SOLO cap on AI population growth
+  },
+  forces: {
+    budget: 0.15, // SOLO default military budget: share of daily revenue (upkeep and duty pay draw on it)
+    upkeepScale: 0.07, // SOLO converts a formation type's upkeep weight into currency per day
+    dmgPerTick: 300, // SOLO battle damage per 10-minute tick of a full-strength formation with power 1
+    attrition: 0.35, // SOLO strength lost per tick × enemy share of the tick's damage
+    reinforce: 3, // SOLO strength regained per day when paid and supplied at home
+    readinessDrift: 0.08, // SOLO daily move of readiness toward its target
+    airSuperiority: 0.1, // SOLO damage bonus for the side that wins the air
+    airRangeKm: 2500, // SOLO bomber/fighter reach from base
+    blockade: 0.15, // SOLO production penalty on blockaded coasts
+    naval: [0.08, 0.25], // SOLO strength lost by the loser of a naval engagement (min, max); winners lose a third
+    salary: [1, 1, 1.2, 1.4, 1.6, 2, 2.3, 2.6, 3, 3.5, 4, 4.5, 5, 5.5, 6], // SOLO duty pay by rank index (currency per day of duty)
+    dutyEnergy: 15, // SOLO
+    dutySp: 3, // SOLO service points per day of duty
+    dmgPerSp: 25000, // SOLO damage in war battles per service point
+    victorySp: 5, // SOLO service points for fighting in a won battle
+    heroSp: 10, // SOLO
+    commandSp: 1, // SOLO per day in command
+    rankBonus: 0.015, // SOLO war damage bonus per rank index for enlisted citizens
+    chiefBonus: 0.05, // SOLO power bonus for all formations with a chief of staff
+    alertUpkeep: 0.12, // SOLO extra upkeep per alert level above 1
+    alertCounter: 6, // SOLO counter-intelligence target per alert level above 1
   },
   state: {
     termDays: 60, // SOLO state/provincial election cycle (staggered across regions)
@@ -334,6 +357,7 @@ export const PROVENANCE: { key: string; src: Source; note: string }[] = [
   { key: 'crime & justice', src: 'SOLO', note: 'Regional crime from unemployment, poverty, the cycle, city size, unrest and gangs vs policing; cases, evidence, arrests, trials, fines and prison; syndicates with turf, rackets, feuds and raids; police careers (balance: crime, police, justice, syndicate)' },
   { key: 'intelligence', src: 'SOLO', note: 'Real agency names; budgets build networks and counter-intelligence; eight operation types with network thresholds, costs, durations and exposure; agent careers and double agents (balance: intel)' },
   { key: 'dynamic world', src: 'SOLO', note: 'Business cycle, commodity shocks, seasonal disasters in real hazard zones, epidemics spreading along borders, strikes, protests/riots, migration, new arrivals (balance: dynamics; data/hazards.ts)' },
+  { key: 'armed forces', src: 'SOLO', note: 'Army divisions, fleets and air wings with strength/equipment/readiness/morale/experience; per-tick battle damage and attrition; upkeep from a military budget; wear-and-repair from national stocks; sea zones from real coastlines, naval superiority, amphibious landings and blockades; rank ladders and service points (balance: forces; data/military.ts)' },
   { key: 'state governments', src: 'SOLO', note: 'Real titles and elected/appointed heads; wage tax 0–12% (0% in US no-wage-tax states), resident levy, block grants, welfare/infrastructure/business budgets and 60-day election cycles are chosen defaults (balance: state)' },
   { key: 'politics.days', src: 'WIKI', note: 'President ~1st, party ~10th, congress ~25th of month' },
   { key: 'politics.congressMin/Max', src: 'WIKI', note: '3–20 deputies by population' },

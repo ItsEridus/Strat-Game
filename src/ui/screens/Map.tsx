@@ -9,13 +9,15 @@ import { EARTH } from '../../data/earth';
 import { RegionActions } from './RegionActions';
 import { StateGovPanel } from './StateGov';
 import { activeCrises, KIND_ICON } from '../../sim/dynamics';
+import { visible } from '../../sim/forces';
+import { BRANCH_ICON } from '../../data/military';
 
 const CRISIS_COLOR: Record<string, string> = { hurricane: '#5b8def', earthquake: '#8e6e53', flood: '#2e86c1', wildfire: '#e67e22', blizzard: '#d6eaf8', drought: '#d4ac0d', epidemic: '#27ae60', protest: '#f39c12', riot: '#c0392b', strike: '#a569bd' };
 import { IDEOLOGIES, IDEOLOGY_LIST } from '../../data/ideologies';
 
 const TERRAIN_COLOR: Record<string, string> = { plains: '#9bbf5a', mountains: '#8a7f73', forest: '#3f7d4a', desert: '#d8c27a' };
 const RES_ICON: Record<string, string> = { grain: '🌾', iron: '🪨', titanium: '💠', oil: '🛢️' };
-type Mode = 'political' | 'government' | 'crime' | 'unrest' | 'crises' | 'economic' | 'terrain' | 'pollution' | 'buildings' | 'supply' | 'war';
+type Mode = 'political' | 'military' | 'government' | 'crime' | 'unrest' | 'crises' | 'economic' | 'terrain' | 'pollution' | 'buildings' | 'supply' | 'war';
 
 const MW = EARTH.width, MH = EARTH.height;
 const MAX_ZOOM = 14;
@@ -116,6 +118,13 @@ export function MapScreen({ w }: { w: World }) {
   const u = view.w / pxWidth; // map units per screen pixel, for constant-size text
   const battleRegions = new Set(Object.values(w.battles).filter((b) => !b.done && b.kind === 'war').map((b) => b.region));
   const capitals = new Set(w.nations.filter((n) => !n.exile).map((n) => n.capital));
+  const forcesAt = new Map<number, Record<string, number>>();
+  const fleetsAt = new Map<string, Record<number, number>>();
+  if (mode === 'military') for (const f of Object.values(w.forces)) {
+    if (!visible(w, p.nation, f)) continue;
+    if (f.branch === 'navy') { if (f.zone) { const m = fleetsAt.get(f.zone) ?? {}; m[f.nation] = (m[f.nation] ?? 0) + 1; fleetsAt.set(f.zone, m); } continue; }
+    const m = forcesAt.get(f.loc) ?? {}; m[f.branch] = (m[f.branch] ?? 0) + 1; forcesAt.set(f.loc, m);
+  }
   const crisisAt = new Map<number, string>();
   for (const c of activeCrises(w)) for (const rid of c.regions) if (!crisisAt.has(rid)) crisisAt.set(rid, c.kind);
   const warPairs = new Set(Object.values(w.wars).filter((x) => x.status === 'active').flatMap((x) => [`${x.att}:${x.def}`, `${x.def}:${x.att}`]));
@@ -142,6 +151,7 @@ export function MapScreen({ w }: { w: World }) {
     if (mode === 'terrain') return r.terrain;
     if (mode === 'crime') return `${Math.round(r.crime)}`;
     if (mode === 'unrest') return `${Math.round(r.unrest)}`;
+    if (mode === 'military') { const fs = forcesAt.get(r.id); return fs ? (['army', 'air'] as const).map((b) => fs[b] ? `${BRANCH_ICON[b]}${fs[b]}` : '').join('') : ''; }
     if (mode === 'crises') return crisisAt.has(r.id) ? KIND_ICON[crisisAt.get(r.id) as keyof typeof KIND_ICON] : '';
     return '';
   };
@@ -154,7 +164,7 @@ export function MapScreen({ w }: { w: World }) {
   return (
     <div class="map-layout">
       <Panel title="World map" class="map-panel" right={
-        <Tabs<Mode> tabs={[['political', 'Political'], ['government', 'Governments'], ['crime', 'Crime'], ['unrest', 'Unrest'], ['crises', 'Crises'], ['economic', 'Resources'], ['terrain', 'Terrain'], ['pollution', 'Pollution'], ['buildings', 'Buildings'], ['supply', 'Supply'], ['war', 'War']]} value={mode} onChange={(m) => store.go('map', { mapMode: m })} />
+        <Tabs<Mode> tabs={[['political', 'Political'], ['military', 'Military'], ['government', 'Governments'], ['crime', 'Crime'], ['unrest', 'Unrest'], ['crises', 'Crises'], ['economic', 'Resources'], ['terrain', 'Terrain'], ['pollution', 'Pollution'], ['buildings', 'Buildings'], ['supply', 'Supply'], ['war', 'War']]} value={mode} onChange={(m) => store.go('map', { mapMode: m })} />
       }>
         <div class="map-wrap">
           <svg ref={svgRef} viewBox={`${view.x.toFixed(1)} ${view.y.toFixed(1)} ${view.w.toFixed(1)} ${((view.w * MH) / MW).toFixed(1)}`} class="map"
@@ -179,6 +189,16 @@ export function MapScreen({ w }: { w: World }) {
             })}
             {/* the selected region's outline on top of its neighbours */}
             <Overlay />
+            {mode === 'military' && EARTH.seas.map((z) => {
+              const fl = fleetsAt.get(z.name);
+              return (
+                <g class="sea-label">
+                  <text x={z.x} y={z.y} class="sealabel" style={{ fontSize: `${10 * u}px`, strokeWidth: `${2.5 * u}px` }}>{z.name}</text>
+                  {fl && <text x={z.x} y={z.y + 13 * u} class="ricon" style={{ fontSize: `${11 * u}px` }}>{Object.values(fl).map((c) => `⚓${c}`).join(' ')}</text>}
+                  {fl && Object.keys(fl).map((n, i) => <circle cx={z.x - 10 * u + i * 9 * u} cy={z.y + 24 * u} r={3.5 * u} fill={w.nations[Number(n)].color} stroke="#000" stroke-width={u / 2} />)}
+                </g>
+              );
+            })}
             {sel && <path d={EARTH.regions[sel.id].path} class="sel-outline" />}
             {EARTH.routes.flatMap((rt) => routeSegments(w.regions[rt.a], w.regions[rt.b]).map(([x1, y1, x2, y2]) => (
               <line x1={x1} y1={y1} x2={x2} y2={y2} class={`route ${rt.name === 'Strait' ? 'strait' : ''} ${warPairs.has(`${controller(w.regions[rt.a])}:${controller(w.regions[rt.b])}`) ? 'front' : ''}`}><title>{rt.name === 'Strait' ? 'Strait' : `${rt.name} route`}: {w.regions[rt.a].name} ↔ {w.regions[rt.b].name}</title></line>

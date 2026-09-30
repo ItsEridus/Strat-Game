@@ -20,8 +20,9 @@ import { chance, pick } from '../engine/rng';
 import { controller, cref, hhref, jailed, natref, player } from './query';
 import { nationPerm } from './authority';
 import { relation } from './congress';
+import { visible } from './forces';
 
-export const OPS: Record<OpKind, { name: string; desc: string; needs: 'region' | 'subject' | null; rank: number; relation: number }> = {
+export const OPS: Record<OpKind, { name: string; desc: string; needs: 'region' | 'subject' | 'formation' | null; rank: number; relation: number }> = {
   intel: { name: 'Gather intelligence', desc: 'Compile a dossier: treasury, forces, warheads, organised crime, leadership.', needs: null, rank: 1, relation: -4 },
   sabotage: { name: 'Industrial sabotage', desc: 'Halt factories and damage infrastructure in a region.', needs: 'region', rank: 2, relation: -15 },
   theft: { name: 'Treasury theft', desc: 'Siphon money from the target treasury.', needs: null, rank: 2, relation: -15 },
@@ -30,6 +31,8 @@ export const OPS: Record<OpKind, { name: string; desc: string; needs: 'region' |
   scandal: { name: 'Plant a scandal', desc: 'Leak compromising material about a politician.', needs: 'subject', rank: 2, relation: -12 },
   recruit: { name: 'Recruit an asset', desc: 'Turn a foreign citizen: a lasting boost to your network.', needs: 'subject', rank: 1, relation: -8 },
   counter: { name: 'Counter-intelligence sweep', desc: 'Hunt foreign agents and assets at home.', needs: null, rank: 1, relation: 0 },
+  milintel: { name: 'Military reconnaissance', desc: 'Map their order of battle: every division, fleet and air wing, their strength and orders, for 10 days.', needs: null, rank: 1, relation: -6 },
+  milsabotage: { name: 'Military sabotage', desc: 'Wreck a formation’s equipment and readiness (a fleet in port, an air base, a division’s depots).', needs: 'formation', rank: 2, relation: -15 },
 };
 export const ARANKS = ['Analyst', 'Case Officer', 'Field Agent', 'Station Chief', 'Deputy Director'];
 
@@ -61,6 +64,11 @@ export function opCheck(w: World, actor: Id, sponsor: Id, kind: OpKind, target: 
   if (def.needs === 'subject') {
     const s = subject != null ? w.citizens[subject] : null;
     if (!s || s.nation !== target) return `Pick a ${t.adj} citizen.`;
+  }
+  if (def.needs === 'formation') {
+    const f = subject != null ? w.forces[subject] : null;
+    if (!f || f.nation !== target) return `Pick a ${t.adj} formation.`;
+    if (!visible(w, sponsor, f)) return 'You don’t know where that formation is: run reconnaissance first.';
   }
   const cost = cur(B.intel.opCost[kind]);
   if ((n.wallet[n.cur] ?? 0) < cost) return `The service needs ${fmtAmt(n.cur, cost)} from the treasury.`;
@@ -214,6 +222,25 @@ function applyOp(w: World, op: SpyOp): string {
       s.sec.asset = op.nation;
       n.agency.network[t.id] = Math.min(100, (n.agency.network[t.id] ?? 0) + 8);
       return `${s.name} now works for us.`;
+    }
+    case 'milintel': {
+      n.agency.milIntel[t.id] = w.time + 10 * DAY;
+      const fs = Object.values(w.forces).filter((f) => f.nation === t.id);
+      const by = (b: string) => fs.filter((f) => f.branch === b);
+      n.agency.dossiers[t.id] = { t: w.time, lines: [
+        ...(n.agency.dossiers[t.id]?.lines.filter((l) => !l.startsWith('Order of battle')) ?? []),
+        `Order of battle: ${by('army').length} divisions, ${by('navy').length} naval formations, ${by('air').length} air wings; alert level ${t.alert}.`,
+      ] };
+      return `Order of battle of ${t.name} mapped: ${fs.length} formations located (valid 10 days).`;
+    }
+    case 'milsabotage': {
+      const f = w.forces[op.subject!];
+      if (!f) return 'The target formation no longer exists.';
+      f.readiness = Math.max(0, f.readiness - 30);
+      f.equipment = Math.max(0, f.equipment - 25);
+      f.morale = Math.max(0, f.morale - 10);
+      record(w, 'espionage', `💥 Mysterious explosions hit the ${f.name} (${t.name}).`, { nation: t.id, important: t.id === p.nation || op.nation === p.nation });
+      return `The ${f.name} was hit: readiness ${Math.round(f.readiness)}, equipment ${Math.round(f.equipment)}.`;
     }
     case 'counter': {
       let found = 0;
@@ -417,6 +444,9 @@ function intelAI(w: World) {
     for (const e of enemies) {
       const regions = w.regions.filter((r) => controller(r) === e);
       const r = regions.length ? pick(w, regions).id : null;
+      if ((n.agency.milIntel[e] ?? 0) < w.time) plans.push(['milintel', e, null, null]);
+      const targets = Object.values(w.forces).filter((f) => f.nation === e && visible(w, n.id, f)).sort((a, b) => b.strength - a.strength);
+      if (targets.length) plans.push(['milsabotage', e, null, targets[0].id]);
       plans.push(['sabotage', e, r, null], ['theft', e, null, null], ['intel', e, null, null]);
     }
     for (const t of n.agency.focus) {

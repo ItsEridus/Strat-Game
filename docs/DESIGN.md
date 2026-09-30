@@ -43,7 +43,7 @@ invented. Where the brief marks a rule as **documented** (current announcements)
   populated places), terrain (sampled points against Natural Earth deserts and mountain ranges, then broad
   climate zones; dense urban regions count as plains), national capitals and populations. **Hand-written:**
   names, government titles and selection methods, notable resource deposits and farm belts, and sea lanes.
-  Shapes stay out of saves; region ids index the static data. Older saves (versions 1–3) are rejected with a
+  Shapes stay out of saves; region ids index the static data. Older saves (versions 1–4) are rejected with a
   message.
 - **Procedural per seed** (where it adds replay value without contradicting geography): deposit richness and
   extra deposits (weighted by terrain), background population (each nation's total follows its real population,
@@ -95,6 +95,23 @@ invented. Where the brief marks a rule as **documented** (current announcements)
   notorious citizens; NPCs clash, mentor and invest among themselves; and a daily snapshot comparison makes the
   world react to the player's new companies, offices and convictions. Secret affiliations (syndicate, agency)
   are hidden from the player unless they'd plausibly know.
+- **Armed forces** (`src/sim/forces.ts`, `src/data/military.ts`): formations are world entities with strength,
+  equipment, readiness, morale and experience; power = type base × strength × equipment × readiness × morale ×
+  experience × commander rank × chief-of-staff bonus. Every 10-minute tick, formations engaged in a war battle
+  (defending divisions in the region; divisions ordered to support from the region or a neighbour; air wings on
+  strike/superiority within 2,500 km; fleets supporting from a sea touching the coast) add damage by terrain,
+  landing and defence modifiers, and lose strength in proportion to the enemy's share of the previous tick's
+  damage; winning air power adds +10%. The builder derives sea zones from real coastlines (arcs used by one region
+  and no neutral country, assigned to the nearest of 29 named seas). Naval superiority (1.2× the enemy's naval
+  power in a sea) is required for amphibious landings, blocks enemy sea lanes in supply, blockades enemy coasts
+  (−15% production) and allows armies to cross sea lanes; hostile fleets in the same sea fight daily naval
+  engagements. Upkeep and procurement are capped by a military budget share of revenue plus 1% of the treasury;
+  equipment wears 0.3/day and is repaired from national stocks. AI defence ministries assign commanders, send
+  divisions to battles and toward enemy borders, sail fleets into enemy seas, fly air wings over battles, rebuild
+  lost divisions and set the security alert (1–5: readiness, counter-intelligence, upkeep, approval). Citizens
+  enlist, earn service points from duty, war damage, victories, hero medals and command, and climb 15-rank
+  ladders (command from index 10, flag ranks after 10 days in command). Fog of war hides foreign formations
+  unless near your territory or seas, revealed by networks ≥ 50 or military reconnaissance.
 - **Modules:** `sim/` (rules), `ai/` (behaviour), `ui/` (screens), `data/` (tables). Later systems plug in
   through `sim/systems.ts` hooks, so depth can be added without touching the loop.
 
@@ -140,7 +157,7 @@ invented. Where the brief marks a rule as **documented** (current announcements)
 
 ## Acceptance checklist (brief §17)
 
-All items are covered by automated tests (`npm test`, 46 passing) and the headless audit. The browser smoke
+All items are covered by automated tests (`npm test`, 51 passing) and the headless audit. The browser smoke
 tests `tests/e2e.mjs` and `tests/e2e-play.mjs` check every screen and the tutorial flow for console errors.
 
 | # | Item | Status | Evidence |

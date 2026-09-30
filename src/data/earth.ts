@@ -9,6 +9,7 @@ export interface EarthNation { name: string; code: string; label: [number, numbe
 export interface EarthGov { title: string; legislature: string; mode: 'elected' | 'appointed' }
 export interface EarthRegion {
   name: string; nation: number; kind: string; seat: string; city: string; gov: EarthGov | null; noWageTax?: boolean;
+  seas?: string[]; // sea zones this region's coast touches
   terrain: Terrain; res: RawRes[]; popReal: number; x: number; y: number; lon: number; lat: number; span: number; path: string; links: number[];
 }
 export interface EarthRoute { a: number; b: number; name: string }
@@ -16,4 +17,5 @@ export interface EarthRoute { a: number; b: number; name: string }
 export const EARTH = raw as unknown as {
   width: number; height: number; background: string; lakes: string; nationBorders: string; graticule: string;
   nations: EarthNation[]; regions: EarthRegion[]; routes: EarthRoute[];
+  seas: { name: string; x: number; y: number; adj: string[] }[];
 };
