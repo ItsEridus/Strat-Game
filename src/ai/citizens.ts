@@ -8,6 +8,7 @@ import { GOLD, c as cur, g } from '../engine/money';
 import { applyJob, netWage, openOffers, publicWorksShift, quitJob, workShift } from '../sim/company';
 import { eat, train } from '../sim/citizen';
 import { contributeLabor } from '../sim/construction';
+import { restockWeapons } from './military';
 import { buyBest, listingsFor } from '../sim/market';
 import { buyGold, sellGold, midRate } from '../sim/fx';
 import { controller, cref, effEco, maxEnergy, today } from '../sim/query';
@@ -103,6 +104,7 @@ export function citizenHourly(w: World, c: Citizen) {
   if (h === 18) {
     const target = c.persona === 'soldier' ? 12 : 4;
     restockFood(w, c, target);
+    restockWeapons(w, c);
   }
 
   // Portfolio: savers keep roughly half their wealth in gold; others cash out gold above a small float.

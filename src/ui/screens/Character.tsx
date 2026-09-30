@@ -64,6 +64,12 @@ export function Character({ w }: { w: World }) {
         </div>
         <details><summary>Formula</summary><ul class="small">{pv.parts.map((x) => <li>{x}</li>)}</ul></details>
       </Panel>
+      <Panel title="Military rank ladder">
+        <table class="table compact"><tbody>{B.ranks.names.map((nm, i) => (
+          <tr class={rankOf(p.dmgTotal).index === i ? 'me' : ''}><td>{i + 1}. {nm}</td><td class="num">{B.ranks.thresholds[i].toLocaleString()}</td><td>×{(1 + i * B.ranks.multStep).toFixed(1)}</td></tr>
+        ))}</tbody></table>
+        <p class="small muted">Lifetime damage {p.dmgTotal.toLocaleString()} (never lost in defeat). Early thresholds are wiki values; later ones are solo extrapolations.</p>
+      </Panel>
       <Panel title="Energy">
         <Bar v={p.energy} max={maxEnergy(w, p)} color="#3fb5a8" label={`${Math.floor(p.energy)} / ${maxEnergy(w, p)}`} />
         <p class="small muted">Base {B.energy.baseMax} + Endurance {p.attrs.end} + hospital in your region ({w.regions[p.loc].bld.hospital} × {B.energy.hospitalPerLevel}).</p>

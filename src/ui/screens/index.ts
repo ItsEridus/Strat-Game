@@ -17,6 +17,10 @@ import { Country } from './Country';
 import { Politics } from './Politics';
 import { Congress } from './Congress';
 import { Construction } from './Construction';
+import { Wars } from './Wars';
+import { BattleScreen } from './Battle';
+import { Units } from './Units';
+import { Equipment } from './Equipment';
 
 export interface ScreenDef { id: string; label: string; icon: string; group: string; comp: FunctionComponent<{ w: World }>; hidden?: boolean; badge?: (w: World) => number }
 
@@ -25,6 +29,7 @@ export const SCREENS: ScreenDef[] = [
   { id: 'character', label: 'Character', icon: '🧍', group: 'Citizen', comp: Character, badge: (w) => w.citizens[w.playerId].attrPts },
   { id: 'inventory', label: 'Inventory & Bank', icon: '🎒', group: 'Citizen', comp: Inventory },
   { id: 'missions', label: 'Missions', icon: '🎯', group: 'Citizen', comp: Missions },
+  { id: 'equipment', label: 'Equipment', icon: '🪖', group: 'Citizen', comp: Equipment },
   { id: 'jobs', label: 'Employment', icon: '💼', group: 'Economy', comp: Jobs },
   { id: 'companies', label: 'Companies', icon: '🏭', group: 'Economy', comp: Companies },
   { id: 'market', label: 'Goods Market', icon: '🛒', group: 'Economy', comp: Market },
@@ -32,6 +37,9 @@ export const SCREENS: ScreenDef[] = [
   { id: 'politics', label: 'Parties & Elections', icon: '🗳️', group: 'Politics', comp: Politics },
   { id: 'congress', label: 'Congress', icon: '📜', group: 'Politics', comp: Congress, badge: (w) => Object.values(w.proposals).filter((p) => p.status === 'open' && p.nation === w.citizens[w.playerId].nation && (w.nations[p.nation].deputies.includes(w.playerId) || w.nations[p.nation].president === w.playerId) && !p.votes[w.playerId]).length },
   { id: 'construction', label: 'Construction', icon: '🏗️', group: 'Politics', comp: Construction },
+  { id: 'wars', label: 'Wars', icon: '🔥', group: 'Military', comp: Wars, badge: (w) => Object.values(w.wars).filter((x) => x.status === 'active' && (x.att === w.citizens[w.playerId].nation || x.def === w.citizens[w.playerId].nation)).length },
+  { id: 'battle', label: 'Battle', icon: '⚔️', group: 'Military', comp: BattleScreen },
+  { id: 'units', label: 'Military Unit', icon: '🎖️', group: 'Military', comp: Units },
   { id: 'map', label: 'World Map', icon: '🗺️', group: 'World', comp: MapScreen },
   { id: 'country', label: 'Country', icon: '🏛️', group: 'World', comp: Country },
   { id: 'news', label: 'News & Alerts', icon: '📰', group: 'World', comp: News },

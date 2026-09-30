@@ -276,6 +276,7 @@ export interface Battle {
   cur: Record<Id, { a: number; d: number }>; // current round contributions
   total: Record<Id, { a: number; d: number }>;
   hits: { a: number; d: number };
+  ticks: ('a' | 'd')[]; // scoring-tick winners in the current round
   weaponsUsed: { a: number; d: number };
   done: boolean;
   winner: 'a' | 'd' | null;

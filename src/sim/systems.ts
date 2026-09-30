@@ -12,12 +12,15 @@ import { expireBuffs } from './specials';
 import { aiCompanyMarket } from './companyMarket';
 import { player } from './query';
 import { fail, ok } from '../engine/result';
+import { EXTRA_PROPOSALS } from './congressExtra';
+import { PEACE_PROPOSAL, WAR_PROPOSAL, onWarBattleWon, onWarDeadline, peaceHousekeeping, updateExile, computeSupply } from './war';
+import { battleWonHandlers } from './warHooks';
+import { aiClaimReserves, defenseBudget, diplomacyDaily, militaryHourly, soldiersTick } from '../ai/military';
 
 let done = false;
 export function registerSystems() {
   if (done) return;
   done = true;
-  void tickHooks;
 
   // Stage 2: politics, construction, citizenship
   HANDLERS.election = (w, p) => runElection(w, p.id);
@@ -38,6 +41,15 @@ export function registerSystems() {
     partyRecruitment(w);
     payOfficials(w);
   });
+  // Stage 3: military
+  EXTRA_PROPOSALS.war = WAR_PROPOSAL;
+  EXTRA_PROPOSALS.peace = PEACE_PROPOSAL;
+  battleWonHandlers.war = onWarBattleWon;
+  HANDLERS.warDeadline = (w, p) => onWarDeadline(w, p.war);
+  tickHooks.push(soldiersTick);
+  hourlyHooks.push((w: World) => { militaryHourly(w); peaceHousekeeping(w); });
+  dailyHooks.push((w: World) => { diplomacyDaily(w); defenseBudget(w); aiClaimReserves(w); updateExile(w); computeSupply(w); });
+
   REPLY_HANDLERS.ministerOffer = (w, m, o) => ministerOfferReply(w, m.payload!, o);
   REPLY_HANDLERS.citizenship = (w, m, o) => {
     const r = decideCitizenship(w, player(w).id, m.payload!.nation, m.payload!.cit, o === 'approve');
