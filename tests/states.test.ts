@@ -15,7 +15,7 @@ import { IDEOLOGY_LIST } from '../src/data/ideologies';
 import type { World } from '../src/sim/types';
 
 registerSystems();
-const fresh = (seed = 61) => generateWorld(seed, 'Tester', 0, { citizensPerNation: 16 });
+const fresh = (seed = 61) => generateWorld(seed, 'Tester', 0, { citizensPerRegion: 1 });
 const region = (w: World, name: string, nation = 0) => w.regions.find((r) => r.name === name && r.owner === nation)!;
 
 const US_STATES = ['Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming'];
@@ -102,6 +102,7 @@ test('a citizen can run for governor, campaign, vote and then govern', () => {
   const dir = before < 3 ? 1 : -1;
   for (const i of IDEOLOGY_LIST) s.seats[i] = 0;
   s.seats[dir > 0 ? 'communism' : 'capitalism'] = s.size;
+  s.lastTaxChange = -1e9; // the previous governor may have just changed it
   assert.ok(setStateTax(w, p.id, co.id, before + dir).ok);
   assert.equal(s.tax, before + dir);
   assert.equal(setStateTax(w, p.id, co.id, before).ok, false, 'cool-down between tax votes');

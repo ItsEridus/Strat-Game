@@ -11,6 +11,7 @@
 // production bonus) and business support (subsidies to local companies).
 // Heads are generated officials or full citizens, including the player.
 import type { Company, Id, Ideology, StateCandidate, StateGov, World } from './types';
+import { nationals, officersOf, residents } from './census';
 import { B } from '../data/balance';
 import { EARTH, type EarthGov } from '../data/earth';
 import { NAME_POOLS } from '../data/names';
@@ -102,14 +103,21 @@ export function legislatureSupport(s: StateGov, dir: number) {
 
 export function initGovs(w: World) {
   w.govs = w.regions.map(() => null);
+  const national = w.nations.map((n) => {
+    const m = {} as Record<Ideology, number>;
+    for (const i of IDEOLOGY_LIST) m[i] = 0;
+    for (const c of nationals(w, n.id)) m[c.ideo] += 1;
+    return normalize(m);
+  });
   for (const r of w.regions) {
     const tpl = govTemplate(w, r.id);
     if (!tpl) continue;
     const n = w.nations[r.owner];
-    // Electorate leaning: the nation's citizen mix, tilted by how urban the region is.
+    // Electorate leaning: the local residents and the nation's mix, tilted by how urban the region is.
     const mix = {} as Record<Ideology, number>;
-    for (const i of IDEOLOGY_LIST) mix[i] = 0.04;
-    for (const c of Object.values(w.citizens)) if (c.nation === n.id) mix[c.ideo] += 1;
+    const locals = residents(w, r.id).filter((c) => c.nation === n.id);
+    for (const i of IDEOLOGY_LIST) mix[i] = 0.04 + (national[n.id][i] ?? 0);
+    for (const c of locals) mix[c.ideo] += 1 / Math.max(1, locals.length);
     const urban = Math.min(1, Math.max(0, (Math.log10(EARTH.regions[r.id].popReal) - 5) / 2.5));
     for (const i of IDEOLOGY_LIST) mix[i] *= rand(w, 0.5, 1.5);
     mix.socialism *= 1 + urban * 0.6; mix.capitalism *= 1 + urban * 0.3; mix.nationalism *= 1 + (1 - urban) * 0.7; mix.imperialism *= 1 + (1 - urban) * 0.3;
@@ -146,8 +154,8 @@ function openRegistration(w: World, s: StateGov, announce = true) {
     add({ name: s.head.name, ideo: s.head.ideo, cit: s.head.cit, campaign: 0 });
   }
   // AI politicians living in the region may run.
-  for (const c of Object.values(w.citizens)) {
-    if (c.player || c.persona !== 'politician' || c.loc !== r.id || c.nation !== r.owner) continue;
+  for (const c of residents(w, r.id)) {
+    if (c.player || c.persona !== 'politician' || c.nation !== r.owner) continue;
     if (eligibleCandidate(w, c.id, r.id) === null && chance(w, 0.25)) add({ name: c.name, ideo: c.ideo, cit: c.id, campaign: 0 });
   }
   // Generated challengers from the strongest currents in the electorate.
@@ -499,7 +507,7 @@ function spend(w: World, s: StateGov, amount: number, local: Company[]) {
 /** Police spending: salaries for citizen officers serving here, the rest to local employment (households). */
 function payPolice(w: World, s: StateGov, amount: number): number {
   const ref = regref(s.region);
-  const officers = Object.values(w.citizens).filter((c) => c.sec.police === s.region && !c.sec.jailUntil);
+  const officers = officersOf(w, s.region).filter((c) => !c.sec.jailUntil);
   let paid = 0;
   const each = officers.length ? Math.min(cur(B.police.salary) * 2, Math.floor((amount * 0.5) / officers.length)) : 0;
   for (const o of officers) if (each > 0 && pay(w, ref, cref(o.id), s.cur, each, `Police salary (${w.regions[s.region].name})`)) paid += each;

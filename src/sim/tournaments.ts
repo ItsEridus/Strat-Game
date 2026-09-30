@@ -2,6 +2,7 @@
 // bracket bouts with organiser-issued Q2 weapons (not consumed) and a fixed
 // hit budget, so supplies are equal and builds decide. Fees fund the prize pool.
 import type { Battle, Citizen, Id, Terrain, Tournament, World } from './types';
+import { census } from './census';
 import { B } from '../data/balance';
 import { fail, ok, type Result } from '../engine/result';
 import { burn, escrowIn, escrowOut, mint } from '../engine/ledger';
@@ -77,7 +78,7 @@ export function onTournamentStart(w: World, id: Id) {
   const t = w.tournaments[id];
   if (!t || t.status !== 'upcoming') return;
   // AI entrants fill the field.
-  const pool = shuffle(w, Object.values(w.citizens).filter((c) => !c.player && c.level >= t.minLevel && !t.entrants.includes(c.id) && (c.persona === 'soldier' || chance(w, 0.1)) && (c.wallet[GOLD] ?? 0) >= t.fee));
+  const pool = shuffle(w, census(w).all.filter((c) => !c.player && c.level >= t.minLevel && !t.entrants.includes(c.id) && (c.persona === 'soldier' || chance(w, 0.1)) && (c.wallet[GOLD] ?? 0) >= t.fee));
   for (const c of pool) { if (t.entrants.length >= t.cap) break; enter(w, c, t.id); }
   if (!t.hostedBy) { t.prize += g(SPONSOR); t.sponsored = true; }
   if (t.entrants.length < 2) {

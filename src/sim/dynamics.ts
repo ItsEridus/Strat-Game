@@ -4,6 +4,7 @@
 // internal migration, and new people arriving. Governments (AI or player)
 // respond with relief spending, lockdowns, crackdowns or concessions.
 import type { Citizen, Crisis, CrisisKind, Id, Persona, World } from './types';
+import { census, invalidateCensus } from './census';
 import { B } from '../data/balance';
 import { EARTH } from '../data/earth';
 import { NAME_POOLS } from '../data/names';
@@ -161,7 +162,7 @@ export function volunteer(w: World, c: Citizen, crisisId: Id): Result {
   k.end = Math.max(w.time + DAY, k.end - 2 * HOUR);
   c.sec.fame += 1;
   c.influence += 0.5;
-  for (const x of Object.values(w.citizens)) if (x.loc === c.loc && !x.player) x.rel[c.id] = Math.min(100, (x.rel[c.id] ?? 0) + 2);
+  for (const x of census(w).all) if (x.loc === c.loc && !x.player) x.rel[c.id] = Math.min(100, (x.rel[c.id] ?? 0) + 2);
   addXp(w, c, 3);
   return ok(`You worked with relief crews in ${r.name}. Locals won't forget it (+fame, +influence).`);
 }
@@ -420,6 +421,7 @@ function arrivalsDaily(w: World) {
   c.attrPts = c.level * B.levels.attrPerLevel;
   autoAllocate(c);
   w.citizens[c.id] = c;
+  invalidateCensus(w);
   mint(w, cref(c.id), n.cur, cur(randInt(w, 40, 140)), 'New arrival');
   mint(w, cref(c.id), GOLD, g(rand(w, 0.5, 3)), 'New arrival');
   if (n.id === player(w).nation) record(w, 'people', fromAbroad ? `🧳 ${c.name} emigrated from ${origin.name} to ${w.regions[loc].name}.` : `🎓 ${c.name} came of age in ${w.regions[loc].name} and entered public life.`, { cit: c.id, nation: n.id });

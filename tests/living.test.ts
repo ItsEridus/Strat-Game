@@ -17,7 +17,7 @@ import { replyBribe, replyLoan } from '../src/sim/npc';
 import type { World } from '../src/sim/types';
 
 registerSystems();
-const fresh = (seed = 71) => generateWorld(seed, 'Tester', 0, { citizensPerNation: 16 });
+const fresh = (seed = 71) => generateWorld(seed, 'Tester', 0, { citizensPerRegion: 1 });
 const big = (w: World) => w.regions.filter((r) => r.owner === 0).sort((a, b) => b.pop - a.pop)[0];
 
 test('crime opens cases; arrest, trial and prison follow; prison blocks actions', () => {

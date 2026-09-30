@@ -27,7 +27,7 @@ import { builderRank, rankOf } from '../src/sim/combatMath';
 import { foundPaper, publish } from '../src/sim/press';
 
 registerSystems();
-const fresh = (seed = 51, cpn = 24) => generateWorld(seed, 'Tester', 0, { citizensPerNation: cpn });
+const fresh = (seed = 51, cpn = 1) => generateWorld(seed, 'Tester', 0, { citizensPerRegion: cpn });
 
 /** A simple scripted player for career tests: works, eats, trains; extra behaviour per career. */
 function playDay(w: World, career: 'worker' | 'entrepreneur' | 'politician' | 'soldier' | 'builder') {
@@ -117,6 +117,7 @@ test('3. all four production chains consume and create the right goods', () => {
   // The titanium → air weapon chain works when there is demand: run it directly.
   const p = player(w);
   const co = createCompany(w, cref(p.id), 'wa', 1, p.loc);
+  w.regions[p.loc].pollution = 0; // the chain, not the capital's air quality, is under test
   mint(w, cref(p.id), GOLD, g(1), 'test');
   produce(w, coref(co.id), 'titanium', 20, 'test');
   const pv = shiftPreview(w, co, p);
@@ -148,7 +149,7 @@ test('4. businesses stop production without funds, labour, inputs or capacity', 
 });
 
 test('6. NPCs keep markets, elections, government and the military functioning', () => {
-  const w = fresh(55, 24);
+  const w = fresh(55, 2);
   advance(w, 60 * DAY, false);
   assert.ok(Object.values(w.trades).some((t) => t.length > 30), 'markets trade every day');
   assert.ok(Object.values(w.elections).filter((e) => e.done && e.result?.winners.length).length >= 8, 'elections held');
@@ -223,7 +224,7 @@ test('19. timers use simulation time and nothing advances while paused', () => {
 });
 
 test('21. long advances stay stable and explainable', () => {
-  const w = fresh(60, 24);
+  const w = fresh(60, 2);
   advance(w, 120 * DAY, false);
   const a = audit(w);
   assert.ok(a.ok, a.problems.join('\n'));
@@ -235,7 +236,7 @@ test('21. long advances stay stable and explainable', () => {
 });
 
 test('22. news and histories reflect events that actually occurred', () => {
-  const w = fresh(61, 24);
+  const w = fresh(61, 2);
   advance(w, 45 * DAY, false);
   for (const war of Object.values(w.wars)) assert.ok(w.log.some((e) => e.type === 'war' && e.text.includes('declared war') && e.text.includes(w.nations[war.att].name) && e.text.includes(w.nations[war.def].name)));
   for (const e of Object.values(w.elections).filter((x) => x.done && x.kind === 'president' && x.result?.winners.length)) {
@@ -272,6 +273,10 @@ test('23. meaningful play as entrepreneur, politician, soldier or builder', () =
   const pres = w.citizens[w.nations[p.nation].president!];
   const { startProject } = constructionMod;
   startProject(w, pres.id, p.nation, w.regions.find((r) => r.owner === p.nation && r.project == null)!.id, 'hospital');
+  // Contribute on the first evening, before the region's own builders finish the labour.
+  const site = Object.values(w.projects).find((x) => !x.done)!;
+  p.energy = 100;
+  contributeLabor(w, p, site.id, 5);
   for (let d = 0; d < 4; d++) playDay(w, 'builder');
   assert.ok(p.buildTotal > 0 && builderRank(p.buildTotal).index >= 0, 'builder: contributed');
 });

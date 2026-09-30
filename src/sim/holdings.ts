@@ -2,6 +2,7 @@
 // a stock market for their shares (citizens only — holdings may not buy
 // shares, DOC). Issuance dilutes, dividends pay pro rata, splits scale orders.
 import type { Citizen, Holding, Id, ShareOrder, World } from './types';
+import { census } from './census';
 import { B } from '../data/balance';
 import { fail, ok, type Result } from '../engine/result';
 import { acct, burn, pay } from '../engine/ledger';
@@ -235,7 +236,7 @@ export function holdingsDaily(w: World) {
     }
   }
   // AI investors: buy undervalued asks, list when overvalued.
-  const investors = Object.values(w.citizens).filter((c) => !c.player && (c.persona === 'investor' || c.persona === 'merchant'));
+  const investors = census(w).all.filter((c) => !c.player && (c.persona === 'investor' || c.persona === 'merchant'));
   for (const o of Object.values(w.shareOrders).sort((a, b) => a.price - b.price || a.id - b.id)) {
     const h = w.holdings[o.holding];
     if (!h) continue;
@@ -258,7 +259,7 @@ export function holdingsDaily(w: World) {
 /** AI holding CEOs move profits up from their companies (handled by company AI) and buy cheap companies. */
 export function seedHoldings(w: World) {
   for (const n of w.nations) {
-    const inv = Object.values(w.citizens).filter((c) => c.nation === n.id && !c.player && c.persona === 'investor').sort((a, b) => (b.wallet[GOLD] ?? 0) - (a.wallet[GOLD] ?? 0))[0];
+    const inv = census(w).all.filter((c) => c.nation === n.id && !c.player && c.persona === 'investor').sort((a, b) => (b.wallet[GOLD] ?? 0) - (a.wallet[GOLD] ?? 0))[0];
     if (!inv) continue;
     const h = createHolding(w, inv, `${n.adj} Capital Group`);
     const cos = Object.values(w.companies).filter((co) => co.owner.k === 'cit' && co.owner.id === inv.id).slice(0, 2);

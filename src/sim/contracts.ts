@@ -3,6 +3,7 @@
 // acceptance moves both sides in one operation; cancel/reject/expiry releases
 // the escrow. NPC recipients decide by value and relationship.
 import type { Citizen, Consideration, Contract, Id, World } from './types';
+import { census } from './census';
 import { B } from '../data/balance';
 import { itemName } from '../data/items';
 import { fail, ok, type Result } from '../engine/result';
@@ -179,7 +180,7 @@ export function contractsHourly(w: World) {
 export function npcOffers(w: World) {
   const p = player(w);
   if ((Math.floor(w.time / DAY) + p.id) % 4 !== 0) return;
-  const merchants = Object.values(w.citizens).filter((c) => !c.player && (c.persona === 'merchant' || c.persona === 'investor') && c.nation === p.nation);
+  const merchants = census(w).all.filter((c) => !c.player && (c.persona === 'merchant' || c.persona === 'investor') && c.nation === p.nation);
   const m = merchants[Math.floor(w.time / DAY) % Math.max(1, merchants.length)];
   if (!m) return;
   const surplus = Object.entries(p.inv).filter(([k, q]) => !k.startsWith('sp:') && q >= 30).sort((a, b) => b[1] - a[1])[0];

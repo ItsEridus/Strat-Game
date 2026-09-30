@@ -1,6 +1,7 @@
 // AI business management and background household demand. AI owners use the
 // same market/company actions (and permission checks) as the player.
 import type { Company, Id, World } from '../sim/types';
+import { census } from '../sim/census';
 import { B } from '../data/balance';
 import { PRODUCTS, RAWS, kindOf, outputKey, qualityOf, refValue } from '../data/items';
 import { consume, mint, pay } from '../engine/ledger';
@@ -161,12 +162,12 @@ export function householdsDaily(w: World, half: number) {
 /** Daily money circulation: living costs to households, treasury transfers. */
 export function circulation(w: World) {
   const yday = Math.floor(w.time / 1440) - 1;
-  for (const c of Object.values(w.citizens)) {
+  for (const c of census(w).all) {
     if (c.player) continue;
     const done = (c.lastWorkDay === yday ? 1 : 0) + (c.lastTrainDay === yday ? 1 : 0) + (c.flags.hitDay === yday ? 1 : 0) + (c.flags.buildDay === yday ? 1 : 0) + (c.flags.voteDay === yday ? 1 : 0);
     if (done) mint(w, cref(c.id), GOLD, g(B.missions.aiGold * done), 'Daily missions');
   }
-  for (const c of Object.values(w.citizens)) {
+  for (const c of census(w).all) {
     const n = w.nations[c.nation];
     const cash = c.wallet[n.cur] ?? 0;
     const due = cur(B.living.perDay);
@@ -195,7 +196,7 @@ export function entrepreneurship(w: World) {
         const busy = Object.values(w.companies).filter((co) => controller(w.regions[co.region]) === n.id && outputKey(co.industry, co.q) === key)
           .every((co) => (co.hist[co.hist.length - 1]?.produced ?? 0) > 0 && (!co.offer || co.workers.length >= co.offer.slots));
         if (traded > 0 && supply < traded / 3 && producers < 8 && busy && chance(w, 0.3)) {
-          const founders = Object.values(w.citizens).filter((c) => c.nation === n.id && !c.player && (c.persona === 'industrialist' || c.persona === 'investor' || c.persona === 'merchant') && (c.wallet.GOLD ?? 0) > B.company.foundCost[0] * 1000 * 1.5 && (c.wallet[n.cur] ?? 0) > cur(200));
+          const founders = census(w).all.filter((c) => c.nation === n.id && !c.player && (c.persona === 'industrialist' || c.persona === 'investor' || c.persona === 'merchant') && (c.wallet.GOLD ?? 0) > B.company.foundCost[0] * 1000 * 1.5 && (c.wallet[n.cur] ?? 0) > cur(200));
           const f = founders.sort((a, b) => b.traits.ambition - a.traits.ambition)[0];
           if (!f) continue;
           foundForDemand(w, f.id, kindOf(key), n.id);

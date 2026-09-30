@@ -20,7 +20,7 @@ export function StartScreen() {
   return (
     <div class="start">
       <h1>MERIDIAN REACH</h1>
-      <p class="lead">A single-player society simulator set on Earth. Live as one citizen among hundreds of simulated people across sixteen real-world nations:
+      <p class="lead">A single-player society simulator set on Earth. Live as one citizen among thousands of simulated people, with a local society in every state and province of sixteen real-world nations:
         work, trade, build companies, invest, publish, win elections, legislate, construct, and fight in wars — while the AI society keeps the world running.</p>
       {saves.length > 0 && (
         <section class="panel">
@@ -39,7 +39,7 @@ export function StartScreen() {
           <label>Your name <input value={name} maxLength={28} onInput={(e) => setName((e.target as HTMLInputElement).value)} /></label>
           <label>Seed <Num value={seed} onInput={setSeed} width={120} /> <button class="btn sm ghost" onClick={() => setSeed(Math.floor(Math.random() * 1e6))}>🎲</button></label>
           <label>Difficulty <Select value={difficulty} options={[['easy', 'Easy — more starting funds'], ['normal', 'Normal'], ['hard', 'Hard — leaner start']]} onChange={setDifficulty} /></label>
-          <label>AI citizens per nation <Select value={cpn} options={[[16, '16 (faster)'], [24, '24 (default)'], [36, '36 (richer society)']]} onChange={setCpn} /></label>
+          <label>AI citizens per region <Select value={cpn} options={[[8, '8 (≈4,000 people · fastest)'], [16, '16 (≈8,000 people)'], [24, '24 (≈12,500 people · default)'], [32, '32 (≈16,500 people · slowest)']]} onChange={setCpn} /></label>
         </div>
         <h4>Choose your nation</h4>
         <svg class="start-map" viewBox={`0 0 ${EARTH.width} ${EARTH.height}`}>

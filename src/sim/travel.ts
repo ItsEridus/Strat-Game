@@ -1,6 +1,7 @@
 // Travel and citizenship. Location (where you are) and citizenship (who you
 // belong to) are separate. Travel shows methods, ticket use and energy first.
 import type { Citizen, Id, World } from './types';
+import { invalidateCensus } from './census';
 import { B } from '../data/balance';
 import { fail, ok, type Result } from '../engine/result';
 import { burn, consume } from '../engine/ledger';
@@ -73,6 +74,7 @@ export function travel(w: World, c: Citizen, dest: Id, method: string): Result {
   if (opt.ticket) consume(w, cref(c.id), opt.ticket, 1, 'travel');
   const from = w.regions[c.loc].name;
   c.loc = dest;
+  invalidateCensus(w);
   if (c.player) bump(w, 'travel');
   return ok(`Travelled from ${from} to ${w.regions[dest].name} (${opt.energy} energy${opt.ticket ? ', 1 ticket' : ''}).`);
 }
@@ -124,6 +126,7 @@ function changeCitizenship(w: World, c: Citizen, nation: Id) {
   for (const [k, v] of Object.entries(old.cabinet)) if (v === c.id) delete (old.cabinet as any)[k];
   if (old.president === c.id) old.president = old.cabinet.vp ?? null;
   c.nation = nation;
+  invalidateCensus(w);
   c.influence = Math.round(c.influence / 2);
   record(w, 'citizenship', `${c.name} left ${old.name} to become a citizen of ${w.nations[nation].name}.`, { cit: c.id, nation, player: c.player });
   if (c.player) notify(w, 'personal', `🛂 You are now a citizen of ${w.nations[nation].name}.`, { critical: true });

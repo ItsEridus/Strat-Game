@@ -1,4 +1,5 @@
 import type { FunctionComponent } from 'preact';
+import { Admin } from './Admin';
 import type { World } from '../../sim/types';
 import { Dashboard } from './Dashboard';
 import { Character } from './Character';
@@ -79,4 +80,5 @@ export const SCREENS: ScreenDef[] = [
   { id: 'inbox', label: 'Inbox', icon: '✉️', group: 'World', comp: Inbox },
   { id: 'settings', label: 'Settings & Saves', icon: '⚙️', group: 'Game', comp: Settings },
   { id: 'citizen', label: 'Citizen', icon: '👤', group: 'World', comp: CitizenProfile, hidden: true },
+  { id: 'admin', label: 'Admin', icon: '🛠️', group: 'Game', comp: Admin, hidden: true },
 ];

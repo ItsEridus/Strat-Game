@@ -35,6 +35,7 @@ export interface Citizen {
   persona: Persona;
   nation: Id; // citizenship
   loc: Id; // current region
+  home: Id; // region where they live (work, neighbours, local life); travel moves loc, moving house moves home
   wallet: Wallet;
   inv: Inventory;
   born: number;
@@ -528,9 +529,10 @@ export interface Settings {
   pauseOn: Record<string, boolean>;
   autoTrain: boolean;
   advanced: { nuclear: boolean; pirates: boolean; terrainEvents: boolean; tournaments: boolean };
-  citizensPerNation: number;
+  citizensPerRegion: number; // AI citizens living in an average region (populous regions get up to twice as many)
   balance: Record<string, any>;
   notifyFilter: Record<string, boolean>;
+  adminUsed?: boolean; // the admin panel changed this campaign
 }
 
 export interface Stats {

@@ -10,6 +10,7 @@
 // player) open cases; evidence builds with policing; arrests lead to trials with
 // fines and prison. AI and player use the same functions.
 import type { Case, Citizen, CrimeKind, Id, Syndicate, World } from './types';
+import { census, nationals, officersOf, presentIn, residents, invalidateCensus } from './census';
 import { B } from '../data/balance';
 import { EARTH } from '../data/earth';
 import { NAME_POOLS, POLICE_NAMES, SYNDICATE_STYLES } from '../data/names';
@@ -87,7 +88,10 @@ export function initCrime(w: World) {
     const byPop = [...own].sort((a, b) => b.pop - a.pop);
     for (let i = 0; i < count && i < byPop.length; i++) {
       const home = byPop[Math.min(byPop.length - 1, i * 2 + randInt(w, 0, 1))];
-      const recruits = Object.values(w.citizens).filter((c) => c.nation === n.id && !c.player && c.sec.syndicate == null && c.traits.greed > 0.55 && c.traits.risk > 0.45 && c.persona !== 'politician');
+      // Recruited from the neighbourhood: the home region and the regions around it.
+      const hood = [home.id, ...home.links.filter((l) => w.regions[l].owner === n.id)].flatMap((rid) => residents(w, rid));
+      const pool = hood.length >= 6 ? hood : nationals(w, n.id);
+      const recruits = pool.filter((c) => c.nation === n.id && !c.player && c.sec.syndicate == null && c.traits.greed > 0.55 && c.traits.risk > 0.45 && c.persona !== 'politician');
       const boss = recruits.length ? pick(w, recruits) : null;
       const s = foundSyndicate(w, n.id, home.id, boss);
       for (const c of recruits.filter((x) => x !== boss).slice(0, randInt(w, 1, 3))) enlist(w, s, c, randInt(w, 0, 2));
@@ -113,7 +117,7 @@ export function policeTarget(w: World, rid: Id, avg?: Map<Id, number>): number {
   }
   p += Math.min(25, n.policeFunding * B.police.nationalPerShare); // national police
   if (!s) p += 10; // directly administered regions are policed by the national force
-  for (const c of Object.values(w.citizens)) if (c.sec.police === rid && !jailed(w, c)) p += B.police.officer * (1 + c.sec.prank * 0.25);
+  for (const c of officersOf(w, rid)) if (!jailed(w, c)) p += B.police.officer * (1 + c.sec.prank * 0.25);
   if (r.occ) p *= 0.5; // occupation disrupts policing
   return Math.max(5, Math.min(100, p));
 }
@@ -329,6 +333,7 @@ export function joinPolice(w: World, c: Citizen): Result {
   const why = joinPoliceCheck(w, c);
   if (why) return fail(why);
   c.sec.police = c.loc;
+  invalidateCensus(w);
   c.sec.prank = 0;
   return ok(`Sworn in as an officer of the ${policeName(w, c.loc)}. Patrol daily; arrests earn promotion.`);
 }
@@ -336,6 +341,7 @@ export function joinPolice(w: World, c: Citizen): Result {
 export function leavePolice(w: World, c: Citizen): Result {
   if (c.sec.police == null) return fail('You are not a police officer.');
   c.sec.police = null;
+  invalidateCensus(w);
   c.sec.prank = 0;
   return ok('You handed in your badge.');
 }
@@ -366,7 +372,7 @@ export function patrol(w: World, c: Citizen): Result {
     if (k.evidence >= B.police.arrestAt && tryArrest(w, k, c)) parts.push(`you arrested ${w.citizens[k.suspect].name}`);
   }
   // Catch someone in the act.
-  const crooks = Object.values(w.citizens).filter((x) => x.loc === r.id && x.sec.syndicate != null && !x.player && !jailed(w, x) && x.id !== c.id);
+  const crooks = presentIn(w, r.id).filter((x) => x.sec.syndicate != null && !x.player && !jailed(w, x) && x.id !== c.id);
   if (crooks.length && chance(w, 0.15 + c.sec.prank * 0.05)) {
     const x = pick(w, crooks);
     openCase(w, x, 'extortion', r.id, rand(w, 30, 50), 0);
@@ -478,7 +484,7 @@ export function trial(w: World, k: Case, lawyer: boolean) {
   s.sec.record.fines += paid;
   s.sec.heat = 0;
   k.outcome = `convicted: ${fmtAmt(code, paid)} fine, ${days} day${days > 1 ? 's' : ''} in prison`;
-  if (s.sec.police != null) s.sec.police = null; // dismissed
+  if (s.sec.police != null) { s.sec.police = null; invalidateCensus(w); } // dismissed
   if (s.player) {
     notify(w, 'personal', `⚖️ Convicted of ${CRIME_NAME[k.kind]}: ${k.outcome}.`, { critical: true, link: 'crime' });
     record(w, 'justice', `⚖️ ${s.name} was convicted of ${CRIME_NAME[k.kind]} (${k.outcome}).`, { cit: s.id, player: true, important: true });
@@ -575,11 +581,13 @@ export function crimeDaily(w: World) {
     const r = w.regions[k.region];
     k.evidence = Math.min(100, k.evidence + B.police.evidencePerDay * (r.police / 50) + s.sec.heat / 25 - (k.detective ? 0 : 0.5));
     if (k.evidence >= B.police.arrestAt) {
-      const officers = Object.values(w.citizens).filter((c) => c.sec.police != null && w.regions[c.sec.police].owner === k.nation && !c.player && !jailed(w, c));
+      // The arresting officer comes from the region's own force, else the nation's.
+      let officers = officersOf(w, k.region).filter((c) => !c.player && !jailed(w, c));
+      if (!officers.length) officers = w.regions.filter((x) => x.owner === k.nation).flatMap((x) => officersOf(w, x.id)).filter((c) => !c.player && !jailed(w, c));
       tryArrest(w, k, officers.length ? pick(w, officers) : null);
     } else if (w.time - k.opened > B.justice.coldAfterDays * DAY && k.evidence < 40) { k.status = 'closed'; k.outcome = 'went cold'; }
   }
-  for (const c of Object.values(w.citizens)) {
+  for (const c of census(w).all) {
     c.sec.heat = Math.max(0, c.sec.heat - B.justice.heatDecay);
     if (c.sec.jailUntil && c.sec.jailUntil <= w.time) {
       c.sec.jailUntil = 0;
@@ -636,7 +644,7 @@ function syndicatesDaily(w: World) {
     const cash = (s.wallet[code] ?? 0) / 100;
     s.strength = Math.max(0, Math.min(100, s.strength * 0.9 + (crew.length * 5 + Math.sqrt(cash) + s.turf.length * 2) * 0.1));
     // Recruitment of disaffected citizens.
-    for (const c of Object.values(w.citizens)) {
+    for (const c of census(w).all) {
       if (c.player || c.nation !== s.nation || c.sec.syndicate != null || c.sec.police != null || c.sec.agency != null || !s.turf.includes(c.loc)) continue;
       const pull = (c.job == null ? 0.5 : 0) + (c.mood < 0 ? 0.3 : 0) + c.traits.greed * 0.4 + c.traits.risk * 0.3 - c.traits.loyalty * 0.3;
       if (pull > 0.7 && chance(w, B.syndicate.joinChance)) { enlist(w, s, c, 0); if (c.nation === p.nation && c.rel[p.id] && c.rel[p.id] > 20) notify(w, 'personal', `🎩 Your acquaintance ${c.name} has fallen in with ${s.name}.`); }
@@ -777,7 +785,7 @@ export function playerRackets(w: World) {
 /** Hourly: some AI citizens commit crimes or work syndicate jobs; officers patrol. */
 export function crimeHourly(w: World) {
   const h = hourOf(w.time);
-  for (const c of Object.values(w.citizens)) {
+  for (const c of census(w).all) {
     if (c.player || jailed(w, c)) continue;
     if (c.sec.police != null && h === (c.workHour + 2) % 24) { if (!patrolCheck(w, c)) patrol(w, c); continue; }
     if ((c.id + h) % 24 !== 0) continue; // each citizen considers crime once a day
@@ -797,7 +805,7 @@ export function crimeHourly(w: World) {
 
 /** AI citizens drawn to police work join the local force. */
 export function policeRecruitment(w: World) {
-  for (const c of Object.values(w.citizens)) {
+  for (const c of census(w).all) {
     if (c.player || c.sec.police != null || (c.id + dayOf(w.time)) % 30 !== 0) continue;
     const fit = (c.persona === 'soldier' ? 0.3 : 0) + c.traits.loyalty * 0.5 + (c.job == null ? 0.2 : 0) - c.traits.greed * 0.3;
     if (fit > 0.45 && !joinPoliceCheck(w, c)) joinPolice(w, c);

@@ -24,12 +24,13 @@ export function allowanceCap(w: World, c: Citizen) {
 }
 
 /** Called every 10-minute tick for every citizen. */
-export function regenTick(w: World, c: Citizen) {
+/** Energy and food allowance recover over `ticks` ten-minute ticks. */
+export function regenTick(w: World, c: Citizen, ticks = 1) {
   const max = maxEnergy(w, c);
-  if (c.energy < max) c.energy = Math.min(max, c.energy + B.energy.regenPerTick);
+  if (c.energy < max) c.energy = Math.min(max, c.energy + B.energy.regenPerTick * ticks);
   const cap = allowanceCap(w, c);
   if (c.allowance < cap) {
-    c.allowAcc += 10;
+    c.allowAcc += 10 * ticks;
     while (c.allowAcc >= B.food.allowanceEvery && c.allowance < cap) {
       c.allowAcc -= B.food.allowanceEvery;
       c.allowance++;

@@ -13,7 +13,7 @@ import { mint, produce } from '../src/engine/ledger';
 import { GOLD, c as cur, g } from '../src/engine/money';
 
 registerSystems();
-const fresh = (seed = 11) => generateWorld(seed, 'Tester', 0, { citizensPerNation: 20 });
+const fresh = (seed = 11) => generateWorld(seed, 'Tester', 0, { citizensPerRegion: 1 });
 
 test('world generation is deterministic', () => {
   assert.equal(serialize(fresh(5)), serialize(fresh(5)));

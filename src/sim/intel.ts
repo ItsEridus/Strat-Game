@@ -10,6 +10,7 @@
 // join their service and climb from analyst to deputy director, and foreign
 // services try to turn well-placed citizens into double agents.
 import type { Citizen, Id, OpKind, SpyOp, World } from './types';
+import { census, nationals } from './census';
 import { B } from '../data/balance';
 import { fail, ok, type Result } from '../engine/result';
 import { pay } from '../engine/ledger';
@@ -88,7 +89,7 @@ export function launchOp(w: World, actor: Id, sponsor: Id, kind: OpKind, target:
   if (!official || c.sec.agency === sponsor) agent = actor;
   if (official && agent == null) {
     const busy = new Set(active(w, sponsor).map((o) => o.agent));
-    const pool = Object.values(w.citizens).filter((x) => x.sec.agency === sponsor && x.sec.arank >= OPS[kind].rank && !jailed(w, x) && !busy.has(x.id) && !x.player);
+    const pool = census(w).all.filter((x) => x.sec.agency === sponsor && x.sec.arank >= OPS[kind].rank && !jailed(w, x) && !busy.has(x.id) && !x.player);
     agent = pool.sort((a, b) => b.sec.tradecraft - a.sec.tradecraft)[0]?.id ?? null;
   }
   if (!official) { c.energy -= B.intel.energy; c.sec.last.op = w.time; }
@@ -152,8 +153,8 @@ function applyOp(w: World, op: SpyOp): string {
   const p = player(w);
   switch (op.kind) {
     case 'intel': {
-      const soldiers = Object.values(w.citizens).filter((c) => c.nation === t.id && c.persona === 'soldier').length;
-      const weapons = Object.values(w.citizens).filter((c) => c.nation === t.id).reduce((s, c) => s + Object.entries(c.inv).filter(([k]) => k.startsWith('wg') || k.startsWith('wa')).reduce((a, [, v]) => a + v, 0), 0);
+      const soldiers = census(w).all.filter((c) => c.nation === t.id && c.persona === 'soldier').length;
+      const weapons = census(w).all.filter((c) => c.nation === t.id).reduce((s, c) => s + Object.entries(c.inv).filter(([k]) => k.startsWith('wg') || k.startsWith('wa')).reduce((a, [, v]) => a + v, 0), 0);
       const synd = Object.values(w.syndicates).filter((s) => s.nation === t.id).map((s) => `${s.name} (${Math.round(s.strength)})`);
       const lines = [
         `Treasury: ${fmtAmt(t.cur, t.wallet[t.cur] ?? 0)} and ${fmtAmt('GOLD', t.wallet.GOLD ?? 0)}; approval ${Math.round(t.approval)}%.`,
@@ -248,7 +249,7 @@ function applyOp(w: World, op: SpyOp): string {
         if (o.status !== 'active' || o.target !== op.nation || o.nation === op.nation) continue;
         if (chance(w, 0.5)) { o.ends = w.time; o.status = 'exposed'; found++; relation(w, o.nation, op.nation, -10, 'spy ring uncovered'); w.nations[o.nation].agency.network[op.nation] = Math.max(0, (w.nations[o.nation].agency.network[op.nation] ?? 0) - 15); }
       }
-      for (const c of Object.values(w.citizens)) {
+      for (const c of census(w).all) {
         if (c.sec.asset == null || c.nation !== op.nation || !chance(w, 0.3)) continue;
         const k = { id: nid(w), suspect: c.id, kind: 'espionage' as const, region: c.loc, nation: op.nation, evidence: 70, opened: w.time, status: 'open' as const, detective: null, loot: 0 };
         w.cases[k.id] = k;
@@ -372,6 +373,8 @@ export function quitAsset(w: World, c: Citizen): Result {
 // ---------- daily running and AI ----------
 
 export function intelDaily(w: World) {
+  const assets = new Map<string, number>();
+  for (const c of census(w).all) if (c.sec.asset != null) assets.set(`${c.nation}|${c.sec.asset}`, (assets.get(`${c.nation}|${c.sec.asset}`) ?? 0) + 1);
   const p = player(w);
   for (const n of w.nations) {
     if (n.exile) continue;
@@ -387,13 +390,13 @@ export function intelDaily(w: World) {
       let v = (a.network[o.id] ?? 0) * (1 - B.intel.networkDecay / 100);
       if (a.focus.includes(o.id)) v += (per * B.intel.networkGain * (1 - o.agency.counter / 200)) / (1 + v / 50);
       // Assets inside the country keep feeding the network.
-      v += Object.values(w.citizens).filter((c) => c.nation === o.id && c.sec.asset === n.id).length;
+      v += assets.get(`${o.id}|${n.id}`) ?? 0;
       a.network[o.id] = Math.max(0, Math.min(100, v));
     }
     a.counter += (Math.min(90, 15 + a.budget * 600) - a.counter) * 0.08;
   }
   // Salaries for citizens in the service.
-  for (const c of Object.values(w.citizens)) {
+  for (const c of census(w).all) {
     if (c.sec.agency != null && !jailed(w, c)) { const n = w.nations[c.sec.agency]; pay(w, natref(n.id), cref(c.id), n.cur, cur(B.intel.salary) * (1 + c.sec.arank * 0.3) | 0, `${n.agency.name}: salary`); }
     // Double agents are paid by their handlers.
     if (c.sec.asset != null) {
@@ -411,10 +414,12 @@ export function intelDaily(w: World) {
     if (hostile.length) approachPlayer(w, pick(w, hostile).id);
   }
   // AI citizens join their service.
-  for (const c of Object.values(w.citizens)) {
+  // The service employs about 1% of the population (at least 5).
+  const staff = w.nations.map(() => 0);
+  for (const c of census(w).all) if (c.sec.agency != null) staff[c.sec.agency]++;
+  for (const c of census(w).all) {
     if (c.player || c.sec.agency != null || (c.id + dayOf(w.time)) % 40 !== 0) continue;
-    const staff = Object.values(w.citizens).filter((x) => x.sec.agency === c.nation).length;
-    if (staff < 5 && c.traits.loyalty > 0.65 && c.level >= B.intel.level && !joinAgencyCheck(w, c) && chance(w, 0.4)) joinAgency(w, c);
+    if (staff[c.nation] < Math.max(5, Math.round(nationals(w, c.nation).length * B.intel.staffShare)) && c.traits.loyalty > 0.65 && c.level >= B.intel.level && !joinAgencyCheck(w, c) && chance(w, 0.4) && ++staff[c.nation]) joinAgency(w, c);
     if (c.sec.agency != null && chance(w, 0.5)) c.sec.arank = Math.min(3, 1 + Math.floor(c.level / 12));
   }
 }
@@ -453,11 +458,11 @@ function intelAI(w: World) {
       if ((n.relations[t]?.score ?? 0) < -20) {
         const regions = w.regions.filter((r) => controller(r) === t);
         plans.push(['unrest', t, regions.length ? pick(w, regions).id : null, null], ['propaganda', t, null, null]);
-        const pols = Object.values(w.citizens).filter((c) => c.nation === t && (w.nations[t].president === c.id || Object.values(w.nations[t].cabinet).includes(c.id)));
+        const pols = [w.nations[t].president, ...Object.values(w.nations[t].cabinet)].filter((id): id is Id => id != null && !!w.citizens[id]).map((id) => w.citizens[id]);
         if (pols.length && chance(w, 0.3)) plans.push(['scandal', t, null, pick(w, pols).id]);
       }
       plans.push(['intel', t, null, null]);
-      const locals = Object.values(w.citizens).filter((c) => c.nation === t && c.sec.asset == null && (c.player ? chance(w, 0.3) : true));
+      const locals = nationals(w, t).filter((c) => c.sec.asset == null && (c.player ? chance(w, 0.3) : true));
       if (locals.length && chance(w, 0.25)) plans.push(['recruit', t, null, pick(w, locals).id]);
     }
     const foreignExposed = Object.values(w.ops).some((o) => o.target === n.id && o.status === 'exposed' && w.time - o.ends < 5 * DAY);

@@ -17,7 +17,7 @@ import { travelOptions } from '../src/sim/travel';
 import type { World } from '../src/sim/types';
 
 registerSystems();
-const fresh = (seed = 81) => generateWorld(seed, 'Tester', 0, { citizensPerNation: 16 });
+const fresh = (seed = 81) => generateWorld(seed, 'Tester', 0, { citizensPerRegion: 1 });
 const nat = (w: World, name: string) => w.nations.findIndex((n) => n.name === name);
 const region = (w: World, name: string, nation: number) => w.regions.find((r) => r.name === name && r.owner === nation)!;
 

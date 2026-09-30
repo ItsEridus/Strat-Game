@@ -3,6 +3,7 @@
 // multiplier. Mining blocks travel, fighting, market trading and donations but
 // allows work and training. Rewards are calculated once at completion.
 import type { Citizen, World } from './types';
+import { census } from './census';
 import { B } from '../data/balance';
 import { fail, ok, type Result } from '../engine/result';
 import { mint } from '../engine/ledger';
@@ -77,7 +78,7 @@ export function assignSite(w: World, c: Citizen) {
 
 /** AI: some citizens mine when at their site with energy to spare. */
 export function aiMining(w: World) {
-  for (const c of Object.values(w.citizens)) {
+  for (const c of census(w).all) {
     if (c.player || c.mining || c.energy < 50) continue;
     if (!(c.persona === 'worker' || c.persona === 'investor') || (c.id + Math.floor(w.time / HOUR)) % 120 !== 0) continue; // ~0.2 shifts/day each
     if (c.loc !== c.mineSite) { c.mineSite = c.loc; continue; }

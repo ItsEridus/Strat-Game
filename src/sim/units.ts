@@ -2,6 +2,7 @@
 // doctrine, a shared supply store, and squad specialisations. Bonuses apply only
 // when fighting on the ordered side in the assigned battle.
 import type { Citizen, Id, Unit, World } from './types';
+import { census } from './census';
 import { B } from '../data/balance';
 import { UNIT_WORDS } from '../data/names';
 import { fail, ok, type Result } from '../engine/result';
@@ -188,7 +189,7 @@ export function promote(w: World, actor: Citizen, uid: Id, target: Id): Result {
 /** Seed one or two AI units per nation from its soldiers. */
 export function seedUnits(w: World) {
   for (const n of w.nations) {
-    const soldiers = Object.values(w.citizens).filter((c) => c.nation === n.id && !c.player && (c.persona === 'soldier' || (c.persona === 'builder' && c.traits.risk > 0.7))).sort((a, b) => b.power - a.power || a.id - b.id);
+    const soldiers = census(w).all.filter((c) => c.nation === n.id && !c.player && (c.persona === 'soldier' || (c.persona === 'builder' && c.traits.risk > 0.7))).sort((a, b) => b.power - a.power || a.id - b.id);
     if (soldiers.length < 3) continue;
     const u = createUnit(w, soldiers[0]);
     for (const s of soldiers.slice(1, 12)) addMember(u, s);

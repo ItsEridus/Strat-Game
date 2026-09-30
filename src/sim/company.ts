@@ -2,6 +2,7 @@
 // and wage funds, and creates goods; it refuses to run (with a reason) when
 // labour, funds, inputs or storage capacity are missing.
 import type { AccountRef, Citizen, Company, DayRecord, Id, Industry, World } from './types';
+import { companiesOf, invalidateCensus } from './census';
 import { B } from '../data/balance';
 import { INDUSTRY_INFO, INPUT_OF, itemName, outputKey, weightOf } from '../data/items';
 import { IDEOLOGIES } from '../data/ideologies';
@@ -41,6 +42,7 @@ export function createCompany(w: World, owner: AccountRef, ind: Industry, q: num
     ownerHist: [{ t: w.time, owner }], shortage: null, auto: { sell: owner.k !== 'cit' || owner.id !== w.playerId, buyInputs: false, hire: false },
   };
   w.companies[co.id] = co;
+  invalidateCensus(w);
   return co;
 }
 
@@ -395,6 +397,7 @@ export function relocate(w: World, actor: Citizen, coId: Id, region: Id): Result
   if (permit) consume(w, cref(actor.id), 'sp:permit', 1, 'special used');
   else if (!burn(w, cref(actor.id), GOLD, g(B.company.relocateFee), 'Company relocation')) return fail(`Relocation costs ${B.company.relocateFee} gold.`);
   co.region = region;
+  invalidateCensus(w);
   co.moveCooldown = permit ? co.moveCooldown : w.time + B.company.relocateCooldownDays * DAY;
   return ok(`${co.name} moved to ${r.name}.`);
 }
@@ -417,7 +420,7 @@ export function companiesOwnedBy(w: World, ref: AccountRef) {
 }
 
 export function openOffers(w: World, nation: Id) {
-  return Object.values(w.companies).filter((co) => co.offer && co.offer.slots > co.workers.length && controller(w.regions[co.region]) === nation);
+  return companiesOf(w, nation).filter((co) => w.companies[co.id] && co.offer && co.offer.slots > co.workers.length && controller(w.regions[co.region]) === nation);
 }
 
 // ---------- public works (fallback employer) ----------

@@ -3,6 +3,7 @@
 //  - Voters are individual AI citizens plus aggregated background blocs.
 //  - Every result stores turnout, tallies, seats and a readable explanation.
 import type { Citizen, Election, Id, Ministry, Nation, Party, World } from './types';
+import { census } from './census';
 import { B } from '../data/balance';
 import { PARTY_NAMES } from '../data/names';
 import { IDEOLOGIES } from '../data/ideologies';
@@ -583,7 +584,7 @@ export function dailyOpinion(w: World) {
 
 /** AI citizens join parties that match their views; leaderless parties get new leaders. */
 export function partyRecruitment(w: World) {
-  for (const c of Object.values(w.citizens)) {
+  for (const c of census(w).all) {
     if (c.player || c.party != null || c.level < B.politics.partyLevel) continue;
     if (!chance(w, 0.03 * (c.ideoStr + c.traits.ambition))) continue;
     const opts = partiesOf(w, c.nation).filter((p) => p.ideo === c.ideo);

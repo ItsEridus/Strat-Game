@@ -3,6 +3,7 @@
 // requests and threats through the inbox; journalists investigate; NPCs build
 // their own relationships and feuds; and everyone reacts to what the player does.
 import type { Citizen, Id, World } from './types';
+import { census, nationals, residents } from './census';
 import { B } from '../data/balance';
 import { IDEOLOGIES } from '../data/ideologies';
 import { fail, ok, type Result } from '../engine/result';
@@ -79,7 +80,7 @@ export function goalText(w: World, c: Citizen): string {
 
 function agendasDaily(w: World) {
   const p = player(w);
-  for (const c of Object.values(w.citizens)) {
+  for (const c of census(w).all) {
     if (c.player || (c.id + dayOf(w.time)) % 5 !== 0) continue;
     if (c.sec.goal && goalMet(w, c)) {
       const text = goalText(w, c);
@@ -112,7 +113,7 @@ function refreshRivals(w: World) {
   const mine = Object.values(w.companies).filter((co) => co.owner.k === 'cit' && co.owner.id === p.id);
   for (const co of Object.values(w.companies)) if (co.owner.k === 'cit' && mine.some((m) => m.industry === co.industry && controller(w.regions[m.region]) === controller(w.regions[co.region]))) bump(co.owner.id, 8);
   if (p.sec.syndicate != null) for (const f of w.syndicates[p.sec.syndicate]?.feuds ?? []) bump(w.syndicates[f]?.boss, 25);
-  for (const c of Object.values(w.citizens)) if ((c.rel[p.id] ?? 0) <= -30) bump(c.id, -(c.rel[p.id] ?? 0) / 2);
+  for (const c of census(w).all) if ((c.rel[p.id] ?? 0) <= -30) bump(c.id, -(c.rel[p.id] ?? 0) / 2);
   const before = new Set(p.sec.rivals);
   p.sec.rivals = [...rivals.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0]).slice(0, 5).map(([id]) => id);
   for (const id of p.sec.rivals) {
@@ -161,7 +162,7 @@ function rivalsAndAllies(w: World) {
     if (moves.length) pick(w, moves)();
   }
   // Allies: friends warn, lend and vouch.
-  const friends = Object.values(w.citizens).filter((c) => !c.player && (c.rel[p.id] ?? 0) >= 40 && !jailed(w, c));
+  const friends = census(w).all.filter((c) => !c.player && (c.rel[p.id] ?? 0) >= 40 && !jailed(w, c));
   if (friends.length && chance(w, 0.2)) {
     const f = pick(w, friends);
     const danger = Object.values(w.cases).find((k) => k.status === 'open' && k.suspect === p.id && k.evidence > 35);
@@ -213,7 +214,7 @@ function bribeOffers(w: World) {
   if (w.inbox.some((m) => m.payload?.handler === 'bribeOffer' && !m.resolved) || !chance(w, 0.12)) return;
   const code = w.nations[p.nation].cur;
   const gov = headOf(w, p.id);
-  const crooks = Object.values(w.citizens).filter((c) => !c.player && c.nation === p.nation && c.traits.greed > 0.6 && (c.wallet[code] ?? 0) > cur(200) && !jailed(w, c));
+  const crooks = census(w).all.filter((c) => !c.player && c.nation === p.nation && c.traits.greed > 0.6 && (c.wallet[code] ?? 0) > cur(200) && !jailed(w, c));
   if (!crooks.length) return;
   const c = pick(w, crooks);
   const amount = cur(randInt(w, 60, 200));
@@ -259,13 +260,22 @@ export function replyBribe(w: World, payload: Record<string, any>, option: strin
 
 // ---------- journalists ----------
 
+/**
+ * Journalists dig into people with something to hide in their own patch (home
+ * region and next door), or anyone prominent in the country.
+ */
 function journalistsDaily(w: World) {
   const p = player(w);
-  for (const j of Object.values(w.citizens)) {
+  const corrupt = new Set(Object.values(w.cases).filter((k) => k.kind === 'corruption' && k.status === 'open').map((k) => k.suspect));
+  const shady = (c: Citizen) => c.sec.notoriety > 4 || c.sec.heat > 30 || corrupt.has(c.id);
+  const prominent = w.nations.map((n) => nationals(w, n.id).filter((c) => shady(c) && c.influence > 40));
+  const papers = Object.values(w.papers);
+  for (const j of census(w).all) {
     if (j.player || j.persona !== 'journalist' || jailed(w, j) || (j.id + dayOf(w.time)) % 4 !== 0) continue;
-    const paper = Object.values(w.papers).find((x) => x.owner.k === 'cit' && x.owner.id === j.id) ?? Object.values(w.papers).find((x) => x.nation === j.nation);
+    const paper = papers.find((x) => x.owner.k === 'cit' && x.owner.id === j.id) ?? papers.find((x) => x.nation === j.nation);
     if (!paper) continue;
-    const suspects = Object.values(w.citizens).filter((c) => c.nation === j.nation && c.id !== j.id && (c.sec.notoriety > 4 || c.sec.heat > 30 || Object.values(w.cases).some((k) => k.suspect === c.id && k.kind === 'corruption' && k.status === 'open')));
+    const patch = [j.home, ...w.regions[j.home].links].flatMap((r) => residents(w, r)).filter((c) => c.nation === j.nation && c.id !== j.id && shady(c));
+    const suspects = [...patch, ...prominent[j.nation].filter((c) => c.id !== j.id)];
     if (!suspects.length || !chance(w, 0.4)) continue;
     const t = suspects.sort((a, b) => (b.influence + b.sec.notoriety * 3) - (a.influence + a.sec.notoriety * 3))[0];
     const k = Object.values(w.cases).find((x) => x.suspect === t.id && x.status === 'open');
@@ -282,7 +292,7 @@ function journalistsDaily(w: World) {
   }
   // Interview requests for well-known players.
   if (p.sec.fame > 8 && chance(w, 0.08) && !w.inbox.some((m) => m.payload?.handler === 'interview' && !m.resolved)) {
-    const j = Object.values(w.citizens).find((c) => c.persona === 'journalist' && c.nation === p.nation && !c.player);
+    const j = census(w).all.find((c) => c.persona === 'journalist' && c.nation === p.nation && !c.player);
     if (j) sendMsg(w, { from: j.id, subject: `${j.name} requests an interview`, kind: 'npc', body: `Readers want to hear from you. Talk to me for tomorrow's edition?`, options: [{ id: 'bold', label: 'Give a bold interview' }, { id: 'safe', label: 'Play it safe' }, { id: 'decline', label: 'Decline' }], payload: { handler: 'interview', j: j.id } });
   }
 }
@@ -326,7 +336,7 @@ export function replyDebate(w: World, payload: Record<string, any>, option: stri
 
 function npcSocial(w: World) {
   const p = player(w);
-  const pool = Object.values(w.citizens).filter((c) => !c.player && !jailed(w, c) && c.nation === p.nation);
+  const pool = census(w).all.filter((c) => !c.player && !jailed(w, c) && c.nation === p.nation);
   if (pool.length < 4) return;
   for (let i = 0; i < 2; i++) {
     const a = pick(w, pool);
@@ -361,7 +371,7 @@ function reactToPlayer(w: World) {
     level: p.level,
   };
   const prev = { cos: p.flags.snapCos ?? snap.cos, office: p.flags.snapOffice ?? snap.office, conv: p.flags.snapConv ?? snap.conv };
-  const locals = Object.values(w.citizens).filter((c) => !c.player && c.nation === p.nation);
+  const locals = census(w).all.filter((c) => !c.player && c.nation === p.nation);
   if (snap.office > prev.office) {
     const well = locals.filter((c) => c.ideo === p.ideo).slice(0, 3);
     const foes = locals.filter((c) => c.persona === 'politician' && c.ideo !== p.ideo).slice(0, 2);

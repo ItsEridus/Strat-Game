@@ -1,11 +1,12 @@
 // AI citizen routines. Personas shape priorities; every action goes through the
 // same validated action functions the player uses.
-import type { Citizen, World } from '../sim/types';
+import type { Citizen, Company, World } from '../sim/types';
 import { B } from '../data/balance';
 import { hourOf } from '../engine/clock';
 import { chance } from '../engine/rng';
 import { GOLD, c as cur, g } from '../engine/money';
-import { applyJob, netWage, openOffers, publicWorksShift, quitJob, workShift } from '../sim/company';
+import { applyJob, netWage, publicWorksShift, quitJob, workShift } from '../sim/company';
+import { companiesIn, companiesOf } from '../sim/census';
 import { eat, train } from '../sim/citizen';
 import { contributeLabor } from '../sim/construction';
 import { restockWeapons } from './military';
@@ -13,16 +14,30 @@ import { buyBest, listingsFor } from '../sim/market';
 import { buyGold, sellGold, midRate } from '../sim/fx';
 import { controller, cref, effEco, maxEnergy, today, jailed } from '../sim/query';
 
-/** Best job the citizen qualifies for, by net wage. */
+/**
+ * Best job the citizen qualifies for, by net wage, preferring work near home:
+ * jobs in the home region count in full, next door at 90%, further away at 75%.
+ * Beyond the neighbourhood, a sample of the country's openings is considered.
+ */
 export function bestOffer(w: World, c: Citizen) {
   const nat = controller(w.regions[c.loc]);
+  const cur_ = w.nations[nat].cur;
+  const eco = effEco(w, c);
+  const home = w.regions[c.home];
+  const near = new Set<number>([c.home, ...home.links]);
+  const open = (co: Company) => w.companies[co.id] && co.offer && co.offer.slots > co.workers.length && controller(w.regions[co.region]) === nat;
+  let cands = [...near].flatMap((r) => companiesIn(w, r)).filter(open);
+  if (cands.length < 3) {
+    const all = companiesOf(w, nat);
+    for (let i = 0, k = (c.id * 7919 + today(w)) % Math.max(1, all.length); i < Math.min(40, all.length); i++, k = (k + 37) % all.length) if (open(all[k])) cands.push(all[k]);
+  }
   let best: { id: number; net: number } | null = null;
-  for (const co of openOffers(w, nat)) {
+  for (const co of cands) {
     if (co.owner.k === 'cit' && co.owner.id === c.id) continue;
-    if (effEco(w, c) < (co.offer?.minEco ?? 0)) continue;
-    const cur_ = w.nations[nat].cur;
+    if (eco < (co.offer?.minEco ?? 0)) continue;
     if ((co.wallet[cur_] ?? 0) < (co.offer?.wage ?? 0) * 2) continue; // avoid employers who can't pay
-    const net = netWage(w, co, c).net;
+    const pref = co.region === c.home ? 1 : near.has(co.region) ? 0.9 : 0.75;
+    const net = netWage(w, co, c).net * pref;
     if (!best || net > best.net) best = { id: co.id, net };
   }
   return best;
@@ -31,7 +46,9 @@ export function bestOffer(w: World, c: Citizen) {
 function currentNet(w: World, c: Citizen) {
   if (c.job == null) return 0;
   const co = w.companies[c.job];
-  return co ? netWage(w, co, c).net : 0;
+  if (!co) return 0;
+  const pref = co.region === c.home ? 1 : w.regions[c.home].links.includes(co.region) ? 0.9 : 0.75;
+  return netWage(w, co, c).net * pref;
 }
 
 /** Buy food when stocks are low, choosing the best energy per currency. */

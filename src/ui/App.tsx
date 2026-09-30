@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { store, useStore } from './store';
 import { TopBar } from './TopBar';
 import { SCREENS } from './screens';
@@ -7,6 +7,21 @@ import { StartScreen } from './screens/Start';
 export function App() {
   const s = useStore();
   const [navOpen, setNavOpen] = useState(false);
+  useEffect(() => {
+    // Secret admin panel: Ctrl+Shift+A, or type "admin" outside a text field.
+    let typed = '';
+    const onKey = (e: KeyboardEvent) => {
+      if (!store.w) return;
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'a') { e.preventDefault(); store.go('admin'); return; }
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')) return;
+      if (e.key.length !== 1) return;
+      typed = (typed + e.key.toLowerCase()).slice(-5);
+      if (typed === 'admin') { typed = ''; store.go('admin'); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
   if (!s.w) return <StartScreen />;
   const w = s.w;
   const screen = SCREENS.find((x) => x.id === s.tab) ?? SCREENS[0];

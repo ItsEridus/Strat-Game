@@ -3,6 +3,7 @@
 // at 75%. Passive studies work while unlocked; active ones grant a timed buff
 // with a cooldown. Decay is gentle by default and can be set to 0.
 import type { Citizen, World } from './types';
+import { census } from './census';
 import { B } from '../data/balance';
 import { itemName } from '../data/items';
 import { fail, ok, type Result } from '../engine/result';
@@ -99,13 +100,13 @@ export function activate(w: World, c: Citizen, id: string): Result {
 export function academyHourly(w: World) {
   const d = B.studies.decayPerHour;
   if (d <= 0) return;
-  for (const c of Object.values(w.citizens)) for (const st of Object.values(c.studies)) if (st.progress > 0) st.progress = Math.max(0, st.progress - d);
+  for (const c of census(w).all) for (const st of Object.values(c.studies)) if (st.progress > 0) st.progress = Math.max(0, st.progress - d);
 }
 
 /** AI citizens keep one persona-appropriate study going. */
 export function aiStudies(w: World) {
   const pick: Record<string, string> = { soldier: 'infantry', worker: 'hustler', builder: 'blacksmith', industrialist: 'npcrise', merchant: 'crafty', investor: 'lighter', politician: 'gymrat', journalist: 'packinglight' };
-  for (const c of Object.values(w.citizens)) {
+  for (const c of census(w).all) {
     if (c.player || c.energy < 60) continue;
     const id = pick[c.persona];
     if (progressOf(c, id) < 90) contribute(w, c, id, 'energy');

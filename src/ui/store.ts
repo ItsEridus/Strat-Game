@@ -6,8 +6,8 @@ import type { Result } from '../engine/result';
 import { advance, advanceTo } from '../sim/tick';
 import { generateWorld } from '../sim/worldgen';
 import { registerSystems } from '../sim/systems';
-import { deserialize, latestSlot, loadFromSlot, saveToSlot, serialize } from '../engine/save';
-import { DAY } from '../engine/clock';
+import { deserialize, latestSlot, loadFromSlot, saveToSlot, savesSettled, serialize } from '../engine/save';
+import { invalidateCensus } from '../sim/census';
 import { checkProgress } from '../sim/quests';
 
 registerSystems();
@@ -27,7 +27,8 @@ class Store {
   private listeners = new Set<() => void>();
   private acc = 0;
   private lastRender = 0;
-  private lastAutosaveDay = -1;
+  private lastAutosave = 0; // real time of the last autosave
+  saving = false;
   private toastId = 1;
   pauseReason = '';
 
@@ -36,27 +37,38 @@ class Store {
 
   get paused() { return !this.w || this.w.settings.paused || this.w.settings.speed === 0; }
 
-  newGame(seed: number, name: string, nation: number, citizensPerNation: number, difficulty: World['settings']['difficulty'], advanced: World['settings']['advanced']) {
-    this.w = generateWorld(seed, name, nation, { citizensPerNation, difficulty, advanced });
+  newGame(seed: number, name: string, nation: number, citizensPerRegion: number, difficulty: World['settings']['difficulty'], advanced: World['settings']['advanced']) {
+    this.w = generateWorld(seed, name, nation, { citizensPerRegion, difficulty, advanced });
     this.tab = 'dashboard';
     this.save('autosave');
     this.emit();
   }
 
-  loadSlot(slot: string) {
-    const w = loadFromSlot(slot);
-    if (!w) return this.toast('That slot is empty.', false);
-    w.settings.paused = true; // closing the game pauses; resume manually
-    this.w = w;
-    this.tab = 'dashboard';
-    this.toast(`Loaded ${slot}.`, true);
+  loading = false;
+  async loadSlot(slot: string) {
+    this.loading = true;
     this.emit();
+    try {
+      const w = await loadFromSlot(slot);
+      if (!w) return this.toast('That slot is empty.', false);
+      w.settings.paused = true; // closing the game pauses; resume manually
+      this.w = w;
+      this.tab = 'dashboard';
+      this.lastAutosave = Date.now();
+      this.toast(`Loaded ${slot}.`, true);
+    } catch (e) {
+      this.toast(`Could not load ${slot}: ${(e as Error).message}`, false);
+    } finally {
+      this.loading = false;
+      this.emit();
+    }
   }
 
   tryResume() {
     const slot = latestSlot();
     if (!slot) return false;
-    try { this.loadSlot(slot); return true; } catch { return false; }
+    void this.loadSlot(slot);
+    return true;
   }
 
   importText(text: string) {
@@ -70,10 +82,20 @@ class Store {
 
   exportText() { return this.w ? serialize(this.w) : ''; }
 
-  save(slot: string) {
-    if (!this.w) return;
-    const r = saveToSlot(this.w, slot);
-    if (slot !== 'autosave' || !r.ok) this.toast(r.msg, r.ok);
+  save(slot: string): Promise<void> {
+    if (!this.w) return Promise.resolve();
+    if (slot === 'autosave') this.lastAutosave = Date.now();
+    this.saving = true;
+    return saveToSlot(this.w, slot).then((r) => {
+      this.saving = false;
+      if (slot !== 'autosave' || !r.ok) this.toast(r.msg, r.ok);
+      this.emit();
+    });
+  }
+
+  /** Autosave at most every few real minutes while time runs (a large world takes a moment to save). */
+  private maybeAutosave() {
+    if (Date.now() - this.lastAutosave > AUTOSAVE_MS) void this.save('autosave');
   }
 
   go(tab: string, sel: Record<string, any> = {}) {
@@ -94,6 +116,7 @@ class Store {
   act(fn: (w: World) => Result | void): Result | void {
     if (!this.w) return;
     const r = fn(this.w);
+    invalidateCensus(this.w); // the action may have moved people or changed jobs
     if (r) this.toast(r.msg, r.ok);
     checkProgress(this.w);
     this.emit();
@@ -127,8 +150,7 @@ class Store {
       this.pauseReason = w.notices[0]?.text ?? 'Important event';
       this.toast(`⏸ Paused: ${this.pauseReason}`, true);
     }
-    const day = Math.floor(w.time / DAY);
-    if (day !== this.lastAutosaveDay) { this.lastAutosaveDay = day; this.save('autosave'); }
+    this.maybeAutosave();
     this.emit();
   }
 
@@ -142,22 +164,25 @@ class Store {
     this.acc -= whole;
     const r = advance(w, whole, true);
     if (r.stopped) { this.acc = 0; this.afterAdvance(true); return; }
-    const day = Math.floor(w.time / DAY);
-    if (day !== this.lastAutosaveDay) { this.lastAutosaveDay = day; this.save('autosave'); }
+    this.maybeAutosave();
     const now = Date.now();
     if (now - this.lastRender > 150) { this.lastRender = now; this.emit(); }
   }
 }
+
+const AUTOSAVE_MS = 3 * 60 * 1000;
 
 export const store = new Store();
 
 let last = Date.now();
 if (typeof window !== 'undefined') {
   setInterval(() => { const now = Date.now(); store.loop(now - last); last = now; }, 100);
-  window.addEventListener('beforeunload', () => store.save('autosave'));
+  window.addEventListener('beforeunload', () => { void store.save('autosave'); });
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden && store.w) { store.w.settings.paused = true; store.save('autosave'); store.emit(); }
+    if (document.hidden && store.w) { store.w.settings.paused = true; void store.save('autosave'); store.emit(); }
   });
+  // The desktop window calls this on close and waits for the save to finish.
+  (window as any).__meridianSave = async () => { if (store.w) { store.w.settings.paused = true; await store.save('autosave'); } await savesSettled(); };
 }
 
 /** Preact hook: re-render when the store changes. */

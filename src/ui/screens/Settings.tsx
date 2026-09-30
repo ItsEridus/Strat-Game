@@ -36,15 +36,15 @@ function Saves({ w }: { w: World }) {
   const upload = async (f?: File) => { if (!f) return; try { store.importText(await f.text()); } catch (e) { store.toast((e as Error).message, false); } };
   return (
     <>
-      <Help>Saves include the clock, RNG state, scheduled events, pending votes, escrows, battles and occupations. The game autosaves every simulated day, when the tab is hidden, and on close.</Help>
+      <Help>Saves include the clock, RNG state, scheduled events, pending votes, escrows, battles and occupations. The game autosaves every three minutes of play, when the window is hidden or closed, and when you quit to the title screen. Saves are stored compressed in the browser's database; export a file for a backup.</Help>
       <table class="table">
         <thead><tr><th>Slot</th><th>Contents</th><th /></tr></thead>
         <tbody>{SLOTS.map((s) => {
           const i = slotInfo(s);
           return (
-            <tr><td>{s}</td><td>{i ? `${i.name} · day ${i.day} · ${new Date(i.savedAt).toLocaleString()} · ${Math.round(i.size / 512)} KB` : <span class="muted">empty</span>}</td>
+            <tr><td>{s}</td><td>{i ? `${i.name} · day ${i.day} · ${new Date(i.savedAt).toLocaleString()} · ${(i.size / 1e6).toFixed(1)} MB` : <span class="muted">empty</span>}</td>
               <td>
-                {s !== 'autosave' && <Btn small onClick={() => { store.save(s); force((x) => x + 1); }}>Save here</Btn>}
+                {s !== 'autosave' && <Btn small onClick={() => { void store.save(s).then(() => force((x) => x + 1)); }}>Save here</Btn>}
                 <Btn small why={!i ? 'Empty slot.' : null} showWhy={false} onClick={() => { if (confirm(`Load ${s}? Unsaved progress will be lost.`)) store.loadSlot(s); }}>Load</Btn>
                 <Btn small kind="danger" why={!i ? 'Empty slot.' : null} showWhy={false} onClick={() => { if (confirm(`Delete ${s}?`)) { deleteSlot(s); force((x) => x + 1); } }}>Delete</Btn>
               </td></tr>
@@ -54,7 +54,7 @@ function Saves({ w }: { w: World }) {
       <div class="row">
         <Btn onClick={download}>⬇ Export save file</Btn>
         <label class="btn">⬆ Import save file<input type="file" accept=".json" style={{ display: 'none' }} onChange={(e) => upload((e.target as HTMLInputElement).files?.[0])} /></label>
-        <Btn kind="danger" onClick={() => { if (confirm('Quit to the title screen? (Progress is autosaved.)')) { store.save('autosave'); store.w = null; store.emit(); } }}>Quit to title</Btn>
+        <Btn kind="danger" onClick={() => { if (confirm('Quit to the title screen? (Progress is autosaved.)')) { void store.save('autosave').then(() => { store.w = null; store.emit(); }); } }}>Quit to title</Btn>
       </div>
     </>
   );

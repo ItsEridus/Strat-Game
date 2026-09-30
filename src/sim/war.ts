@@ -5,6 +5,7 @@
 //    occupations return, retained regions lose one building level, a 7-day pact follows.
 //  - Deadlines and peace terms (armistice, surrender, demand, trade) also settle wars.
 import type { Battle, Id, Nation, PeaceOffer, Proposal, War, World } from './types';
+import { census } from './census';
 import { B } from '../data/balance';
 import { IDEOLOGIES } from '../data/ideologies';
 import { fail, ok, type Result } from '../engine/result';
@@ -182,7 +183,7 @@ export function neighborNations(w: World, n: Id): Id[] {
 /** Rough military strength used by AI decisions: citizens' power, levels and weapon stocks, plus treasury. */
 export function militaryPower(w: World, n: Id): number {
   let s = 0;
-  for (const c of Object.values(w.citizens)) {
+  for (const c of census(w).all) {
     if (c.nation !== n) continue;
     const weapons = Object.entries(c.inv).filter(([k]) => k.startsWith('wg:') || k.startsWith('wa:')).reduce((a, [, v]) => a + v, 0);
     s += (1 + c.power / 100) * (1 + c.level / 20) * (c.persona === 'soldier' ? 2 : 1) + Math.min(50, weapons) * 0.05;

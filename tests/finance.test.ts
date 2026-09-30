@@ -16,7 +16,7 @@ import { contribute, unlocked } from '../src/sim/academy';
 import { serialize, deserialize } from '../src/engine/save';
 
 registerSystems();
-const fresh = (seed = 41) => generateWorld(seed, 'Tester', 0, { citizensPerNation: 20 });
+const fresh = (seed = 41) => generateWorld(seed, 'Tester', 0, { citizensPerRegion: 1 });
 
 test('auctions escrow bids, refund the outbid, and deliver exactly once', () => {
   const w = fresh();

@@ -1,5 +1,6 @@
 // Read-only helpers shared by simulation, AI and UI.
 import type { AccountRef, Citizen, Company, Id, Nation, Region, World } from './types';
+import { nationals } from './census';
 import { B } from '../data/balance';
 import { dayOf } from '../engine/clock';
 
@@ -21,7 +22,7 @@ export const nationOfRegion = (w: World, rid: Id) => w.nations[controller(w.regi
 export const locNation = (w: World, c: Citizen) => controller(w.regions[c.loc]);
 export const regionsOf = (w: World, nid: Id) => w.regions.filter((r) => r.owner === nid);
 export const controlledBy = (w: World, nid: Id) => w.regions.filter((r) => controller(r) === nid);
-export const citizensOf = (w: World, nid: Id) => Object.values(w.citizens).filter((c) => c.nation === nid);
+export const citizensOf = (w: World, nid: Id): Citizen[] => [...nationals(w, nid)];
 export const companyCurrency = (w: World, co: Company) => w.nations[controller(w.regions[co.region])].cur;
 export const marketCur = (w: World, market: Id) => w.nations[market].cur;
 export const alive = (n: Nation) => !n.exile;

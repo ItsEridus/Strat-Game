@@ -14,7 +14,7 @@ import { travel } from '../src/sim/travel';
 import { withAuthority, AUTH_ANY } from '../src/sim/worldgen';
 
 registerSystems();
-const fresh = (seed = 21) => generateWorld(seed, 'Tester', 0, { citizensPerNation: 20 });
+const fresh = (seed = 21) => generateWorld(seed, 'Tester', 0, { citizensPerRegion: 1 });
 
 test('elections run on the calendar and assign real offices and seats', () => {
   const w = fresh();

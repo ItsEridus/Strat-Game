@@ -1,5 +1,5 @@
 // Deterministic world generation from a seed.
-import type { Citizen, Id, Ideology, Industry, Nation, Persona, RawRes, Region, Settings, World } from './types';
+import type { Citizen, Company, Id, Ideology, Industry, Nation, Persona, RawRes, Region, Settings, World } from './types';
 import { B, applyBalance } from '../data/balance';
 import { NAME_POOLS, NATION_DEFS } from '../data/names';
 import { EARTH } from '../data/earth';
@@ -22,7 +22,7 @@ import { initCrime } from './crime';
 import { initForces, seedOfficers } from './forces';
 import { AGENCY_NAMES } from '../data/names';
 
-export const SAVE_VERSION = 5; // 4: crime, policing, intelligence, crises, economy cycle
+export const SAVE_VERSION = 6; // 5: armed forces; 6: per-region population, home regions
 
 export function defaultSettings(): Settings {
   const pauseOn: Record<string, boolean> = {};
@@ -32,7 +32,7 @@ export function defaultSettings(): Settings {
   return {
     speed: 1, paused: true, monthLen: 30, difficulty: 'normal', pauseOn, autoTrain: false,
     advanced: { nuclear: true, pirates: true, terrainEvents: false, tournaments: true },
-    citizensPerNation: 24, balance: {}, notifyFilter,
+    citizensPerRegion: 24, balance: {}, notifyFilter,
   };
 }
 
@@ -70,8 +70,14 @@ function genRegions(w: World): Region[] {
   return regions;
 }
 
-/** Larger countries field somewhat more full citizens (0.75×–1.35× the setting). */
-export const citizenScale = (pop: number) => Math.min(1.35, Math.max(0.75, (pop / 1e8) ** 0.15));
+/**
+ * AI citizens living in a region: the per-region setting, with populous regions
+ * (California, England, Tokyo…) holding up to twice as many as small ones.
+ */
+export const residentsFor = (perRegion: number, popReal: number) => Math.max(1, Math.round(perRegion * Math.min(2, Math.max(1, (popReal / 4e6) ** 0.3))));
+
+import { census, invalidateCensus } from './census';
+export { citizenScale, referenceSociety } from './census';
 
 function personName(w: World, cur: string, used: Set<string>) {
   const pool = NAME_POOLS[cur];
@@ -86,7 +92,7 @@ function personName(w: World, cur: string, used: Set<string>) {
 
 export function newCitizen(w: World, name: string, nation: Id, loc: Id, persona: Persona, ideo: Ideology): Citizen {
   return {
-    id: w.nextId++, name, persona, nation, loc, wallet: {}, inv: {}, born: w.time,
+    id: w.nextId++, name, persona, nation, loc, home: loc, wallet: {}, inv: {}, born: w.time,
     xp: 0, level: 1, attrPts: B.levels.attrPerLevel,
     attrs: { str: 0, acc: 0, luck: 0, end: 0, lead: 0, eco: 0, cons: 0 },
     power: B.training.startPower, eco: B.eco.startSkill, dmgTotal: 0, buildTotal: 0,
@@ -126,6 +132,27 @@ const PERSONA_MIX: [Persona, number][] = [['worker', 38], ['soldier', 16], ['ind
 
 // Every nation starts with owners for its companies, candidates for office and a few soldiers.
 const CORE_ROLES: Persona[] = ['industrialist', 'industrialist', 'merchant', 'investor', 'politician', 'politician', 'politician', 'soldier', 'soldier', 'builder', 'journalist'];
+
+function makeGenesisCitizen(w: World, n: Nation, loc: Id, persona: Persona, ideo: Ideology, used: Set<string>) {
+  const c = newCitizen(w, personName(w, n.cur, used), n.id, loc, persona, ideo);
+  c.born = w.time - randInt(w, 18, 70) * 365 * DAY;
+  c.level = randInt(w, 2, 22) + (persona === 'politician' ? 4 : 0);
+  c.attrPts = Math.min(c.level, B.levels.attrMaxLevel) * B.levels.attrPerLevel;
+  autoAllocate(c);
+  c.power = +(B.training.startPower + c.level * rand(w, 0.8, 2.2) * (persona === 'soldier' ? 1.6 : 1)).toFixed(2);
+  c.eco = +(1 + c.level * rand(w, 0.1, 0.35) * (persona === 'worker' || persona === 'industrialist' ? 1.5 : 1)).toFixed(2);
+  c.dmgTotal = Math.round(c.power * c.level * rand(w, 500, 3000) * (persona === 'soldier' ? 3 : 0.5));
+  c.influence = Math.round(rand(w, 0, 20) + (persona === 'politician' ? 25 : persona === 'journalist' ? 12 : 0) + c.level);
+  c.energy = rand(w, 40, 100);
+  w.citizens[c.id] = c;
+  invalidateCensus(w);
+  const wealth = { industrialist: 3, investor: 2.5, merchant: 1.8, politician: 1.3 }[persona as string] ?? 1;
+  mint(w, cref(c.id), n.cur, cur(randInt(w, 80, 260) * wealth), 'Genesis endowment');
+  mint(w, cref(c.id), GOLD, g(rand(w, 1, 12) * wealth), 'Genesis endowment');
+  produce(w, cref(c.id), 'food:1', randInt(w, 3, 12), 'genesis');
+  if (persona === 'soldier') { produce(w, cref(c.id), 'wg:1', randInt(w, 5, 25), 'genesis'); produce(w, cref(c.id), 'food:2', randInt(w, 2, 8), 'genesis'); }
+  return c;
+}
 
 export function generateWorld(seed: number, playerName: string, playerNation: number, opts: Partial<Settings> = {}): World {
   const settings = { ...defaultSettings(), ...opts };
@@ -169,47 +196,50 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
   w.households = w.nations.map((n) => ({ nation: n.id, wallet: {}, inv: {}, pop: regions.filter((r) => r.owner === n.id).reduce((s, r) => s + r.pop, 0), unmet: 0 }));
   for (const h of w.households) mint(w, hhref(h.nation), w.nations[h.nation].cur, cur(h.pop * B.households.startPerPop), 'Genesis endowment');
 
-  // Citizens.
+  // Citizens: a local society in every region. Each region has its own business owners, politicians
+  // (candidates for the state house) and the rest of a working population; the capital also holds the
+  // nation's core figures.
   const used = new Set<string>();
   for (const n of w.nations) {
     const own = regions.filter((r) => r.owner === n.id);
     const nationIdeos = shuffle(w, [...IDEOLOGY_LIST]).slice(0, randInt(w, 3, 4));
-    const count = Math.round(settings.citizensPerNation * citizenScale(NATION_DEFS[n.id].pop));
-    for (let k = 0; k < count; k++) {
-      const persona = k < CORE_ROLES.length ? CORE_ROLES[k] : weighted(w, PERSONA_MIX, (x) => x[1])![0];
-      const loc = weighted(w, own, (r) => r.pop + (r.id === n.capital ? 30000 : 0))!.id;
-      const ideo = chance(w, 0.85) ? pick(w, nationIdeos) : pick(w, IDEOLOGY_LIST);
-      const c = newCitizen(w, personName(w, n.cur, used), n.id, loc, persona, ideo);
-      c.level = randInt(w, 2, 22) + (persona === 'politician' ? 4 : 0);
-      c.attrPts = Math.min(c.level, B.levels.attrMaxLevel) * B.levels.attrPerLevel;
-      autoAllocate(c);
-      c.power = +(B.training.startPower + c.level * rand(w, 0.8, 2.2) * (persona === 'soldier' ? 1.6 : 1)).toFixed(2);
-      c.eco = +(1 + c.level * rand(w, 0.1, 0.35) * (persona === 'worker' || persona === 'industrialist' ? 1.5 : 1)).toFixed(2);
-      c.dmgTotal = Math.round(c.power * c.level * rand(w, 500, 3000) * (persona === 'soldier' ? 3 : 0.5));
-      c.influence = Math.round(rand(w, 0, 20) + (persona === 'politician' ? 25 : persona === 'journalist' ? 12 : 0) + c.level);
-      c.energy = rand(w, 40, 100);
-      w.citizens[c.id] = c;
-      const wealth = { industrialist: 3, investor: 2.5, merchant: 1.8, politician: 1.3 }[persona as string] ?? 1;
-      mint(w, cref(c.id), n.cur, cur(randInt(w, 80, 260) * wealth), 'Genesis endowment');
-      mint(w, cref(c.id), GOLD, g(rand(w, 1, 12) * wealth), 'Genesis endowment');
-      produce(w, cref(c.id), 'food:1', randInt(w, 3, 12), 'genesis');
-      if (persona === 'soldier') { produce(w, cref(c.id), 'wg:1', randInt(w, 5, 25), 'genesis'); produce(w, cref(c.id), 'food:2', randInt(w, 2, 8), 'genesis'); }
+    for (const r of own) {
+      const count = residentsFor(settings.citizensPerRegion, EARTH.regions[r.id].popReal);
+      const roles: Persona[] = r.id === n.capital ? [...CORE_ROLES] : [];
+      const local: Persona[] = ['politician', 'industrialist', 'worker', 'merchant', 'soldier', 'politician', 'journalist', 'builder', 'investor', 'industrialist'];
+      if (count >= 6) for (let k = 0; roles.length < count && k < local.length && k < Math.ceil(count / 2.4); k++) roles.push(local[k]);
+      while (roles.length < count) roles.push(weighted(w, PERSONA_MIX, (x) => x[1])![0]);
+      for (const persona of roles) makeGenesisCitizen(w, n, r.id, persona, chance(w, 0.85) ? pick(w, nationIdeos) : pick(w, IDEOLOGY_LIST), used);
     }
   }
 
-  // Companies per nation, owned by industrialists/merchants/investors.
+  // Companies: the national industry mix (balanced for about 24 citizens) scaled to the nation's
+  // population, spread over its regions (raw producers where the deposits are, the rest where people
+  // live) and owned by business people from that region where possible.
   const plan: [Industry, number][] = [['grain', 5], ['iron', 3], ['titanium', 1], ['oil', 1], ['food', 4], ['wg', 2], ['wa', 1], ['ticket', 1]];
   for (const n of w.nations) {
     const own = regions.filter((r) => r.owner === n.id);
-    const owners = Object.values(w.citizens).filter((c) => c.nation === n.id && ['industrialist', 'merchant', 'investor'].includes(c.persona));
+    const people = census(w).all.filter((c) => c.nation === n.id);
+    const isOwner = (c: Citizen) => c.persona === 'industrialist' || c.persona === 'merchant' || c.persona === 'investor';
+    const owners = people.filter(isOwner);
+    const localOwners = new Map<Id, Citizen[]>();
+    for (const c of owners) localOwners.set(c.home, [...(localOwners.get(c.home) ?? []), c]);
+    const residents = new Map<Id, number>();
+    for (const c of people) residents.set(c.home, (residents.get(c.home) ?? 0) + 1);
+    const scale = Math.max(1, (people.length / 24) * B.population.companiesPerCitizen);
+    const hosted = new Map<Id, number>(); // companies already placed per region: each extra one is less likely
     let oi = 0;
-    for (const [ind, k] of plan) {
+    for (const [ind, base] of plan) {
+      const k = Math.max(1, Math.round(base * scale));
       for (let j = 0; j < k; j++) {
-        const owner = owners[oi++ % owners.length];
         const raw = RAWS.includes(ind as RawRes);
+        const crowd = (r: Region) => 1 / (1 + (hosted.get(r.id) ?? 0)) ** 2;
         const region = raw
-          ? weighted(w, own, (r) => ((r.res[ind as RawRes] ?? 0) ** 2) + 0.05)!
-          : weighted(w, own, (r) => r.pop)!;
+          ? weighted(w, own, (r) => ((r.res[ind as RawRes] ?? 0) * (residents.get(r.id) ?? 1) + 0.05) * crowd(r))!
+          : weighted(w, own, (r) => (residents.get(r.id) ?? 0) * Math.sqrt(r.pop) * crowd(r))!; // where people live and the market is big
+        hosted.set(region.id, (hosted.get(region.id) ?? 0) + 1);
+        const locals = localOwners.get(region.id);
+        const owner = locals?.length ? locals[j % locals.length] : owners[oi++ % owners.length];
         const q = weighted(w, [1, 2, 3], (x) => ({ 1: 5, 2: 3, 3: 1.5 }[x]!))!;
         const co = createCompany(w, cref(owner.id), ind, q, region.id);
         co.auto = { sell: true, buyInputs: true, hire: true };
@@ -226,7 +256,7 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
 
   // Treasuries (currency + gold reserves for the exchange).
   for (const n of w.nations) {
-    const cits = Object.values(w.citizens).filter((c) => c.nation === n.id).length;
+    const cits = census(w).all.filter((c) => c.nation === n.id).length;
     mint(w, natref(n.id), n.cur, cur(cits * B.treasury.startPerCitizen), 'Genesis endowment');
     mint(w, natref(n.id), GOLD, g(400), 'Genesis endowment');
     produce(w, natref(n.id), 'iron', 300, 'genesis');
@@ -242,6 +272,7 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
   p.workHour = 9; p.trainHour = 8; p.traits = { ambition: 1, risk: 0.5, loyalty: 0.5, greed: 0.5, activity: 1 };
   p.energy = B.energy.baseMax;
   w.citizens[p.id] = p;
+  invalidateCensus(w);
   w.playerId = p.id;
   const diff = { easy: 2, normal: 1, hard: 0.5 }[settings.difficulty];
   mint(w, cref(p.id), pn.cur, cur(60 * diff), 'Starting funds');
@@ -251,10 +282,17 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
   produce(w, cref(p.id), 'wg:1', 5, 'genesis');
   initPlayerProgress(w);
 
-  // Initial hiring: citizens apply to companies in their nation.
-  for (const c of shuffle(w, Object.values(w.citizens).filter((x) => !x.player))) {
+  // Initial hiring: citizens take jobs near home (their region, then neighbouring regions, then anywhere
+  // in the country).
+  const openByRegion = new Map<Id, Company[]>();
+  for (const co of Object.values(w.companies)) if (co.offer) openByRegion.set(co.region, [...(openByRegion.get(co.region) ?? []), co]);
+  for (const c of shuffle(w, census(w).all.filter((x) => !x.player))) {
     if (c.persona === 'industrialist' || c.persona === 'investor') continue;
-    const offers = Object.values(w.companies).filter((co) => co.offer && co.workers.length < co.offer.slots && regions[co.region].owner === c.nation && !(co.owner.k === 'cit' && co.owner.id === c.id));
+    const free = (co: Company) => co.workers.length < co.offer!.slots && !(co.owner.k === 'cit' && co.owner.id === c.id) && regions[co.region].owner === c.nation;
+    const near = [c.home, ...regions[c.home].links];
+    let offers = (openByRegion.get(c.home) ?? []).filter(free);
+    if (!offers.length) offers = near.flatMap((r) => openByRegion.get(r) ?? []).filter(free);
+    if (!offers.length) offers = regions.filter((r) => r.owner === c.nation).flatMap((r) => openByRegion.get(r.id) ?? []).filter(free);
     if (!offers.length) continue;
     const co = weighted(w, offers, (o) => o.offer!.wage)!;
     co.workers.push(c.id);

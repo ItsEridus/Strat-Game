@@ -2,6 +2,7 @@
 // (wiki; size SOLO). Purchase transfers gold and ownership atomically and keeps
 // the company's accounting and ownership history.
 import type { AccountRef, Citizen, Company, Id, World } from './types';
+import { census } from './census';
 import { B } from '../data/balance';
 import { fail, ok, type Result } from '../engine/result';
 import { acct, pay } from '../engine/ledger';
@@ -85,7 +86,7 @@ export function aiCompanyMarket(w: World) {
     if (co.forSale == null) continue;
     const value = companyValue(w, co);
     if (co.forSale > value * 1.1) continue;
-    const buyers = Object.values(w.citizens).filter((c) => !c.player && (c.persona === 'industrialist' || c.persona === 'investor') && (c.wallet[GOLD] ?? 0) > co.forSale! * 1.3);
+    const buyers = census(w).all.filter((c) => !c.player && (c.persona === 'industrialist' || c.persona === 'investor') && (c.wallet[GOLD] ?? 0) > co.forSale! * 1.3);
     const b = buyers.sort((a, z) => (z.wallet[GOLD] ?? 0) - (a.wallet[GOLD] ?? 0) || a.id - z.id)[0];
     if (b) buyCompany(w, b.id, cref(b.id), co.id);
   }

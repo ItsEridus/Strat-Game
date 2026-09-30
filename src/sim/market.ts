@@ -57,21 +57,68 @@ export function saleTaxes(w: World, market: Id, seller: AccountRef, buyer?: Acco
   return { vat, imp };
 }
 
-export function listingsFor(w: World, market: Id, item: ItemKey): Listing[] {
-  return Object.values(w.listings).filter((l) => l.market === market && l.item === item).sort((a, b) => a.price - b.price || a.id - b.id);
+// ---------- order-book index ----------
+// Derived, never saved: listings grouped by market and item, and a count per
+// seller and market. It is rebuilt from w.listings when a world is created or
+// loaded, then kept in step by the functions below (the only places that add,
+// remove or reprice listings).
+interface BookIndex { books: Map<string, Set<Listing>>; sorted: Map<string, Listing[]>; sellers: Map<string, number> }
+const INDEX = new WeakMap<Record<Id, Listing>, BookIndex>();
+const bookKey = (market: Id, item: ItemKey) => `${market}|${item}`;
+const sellerKey = (ref: AccountRef, market: Id) => `${ref.k}:${ref.id}|${market}`;
+
+function books(w: World): BookIndex {
+  let ix = INDEX.get(w.listings);
+  if (!ix) {
+    ix = { books: new Map(), sorted: new Map(), sellers: new Map() };
+    INDEX.set(w.listings, ix);
+    for (const l of Object.values(w.listings)) indexAdd(ix, l);
+  }
+  return ix;
+}
+function indexAdd(ix: BookIndex, l: Listing) {
+  const k = bookKey(l.market, l.item);
+  let set = ix.books.get(k);
+  if (!set) ix.books.set(k, (set = new Set()));
+  set.add(l);
+  ix.sorted.delete(k);
+  const sk = sellerKey(l.seller, l.market);
+  ix.sellers.set(sk, (ix.sellers.get(sk) ?? 0) + 1);
+}
+function indexRemove(ix: BookIndex, l: Listing) {
+  const k = bookKey(l.market, l.item);
+  ix.books.get(k)?.delete(l);
+  ix.sorted.delete(k);
+  const sk = sellerKey(l.seller, l.market);
+  ix.sellers.set(sk, Math.max(0, (ix.sellers.get(sk) ?? 1) - 1));
+}
+function removeListing(w: World, l: Listing) {
+  indexRemove(books(w), l);
+  delete w.listings[l.id];
 }
 
-export const bestAsk = (w: World, market: Id, item: ItemKey): number | null => {
-  let best: number | null = null;
-  for (const l of Object.values(w.listings)) if (l.market === market && l.item === item && (best === null || l.price < best)) best = l.price;
-  return best;
-};
+/** Listings for an item in a market, cheapest first. The array is shared: do not modify it. */
+export function listingsFor(w: World, market: Id, item: ItemKey): readonly Listing[] {
+  const ix = books(w);
+  const k = bookKey(market, item);
+  let arr = ix.sorted.get(k);
+  if (!arr) {
+    arr = [...(ix.books.get(k) ?? [])].sort((a, b) => a.price - b.price || a.id - b.id);
+    ix.sorted.set(k, arr);
+  }
+  return arr;
+}
+
+export const bestAsk = (w: World, market: Id, item: ItemKey): number | null => listingsFor(w, market, item)[0]?.price ?? null;
 
 export const supplyOf = (w: World, market: Id, item: ItemKey) => {
   let s = 0;
-  for (const l of Object.values(w.listings)) if (l.market === market && l.item === item) s += l.qty;
+  for (const l of listingsFor(w, market, item)) s += l.qty;
   return s;
 };
+
+/** Number of listings a seller has in a market. */
+export const listingCount = (w: World, seller: AccountRef, market: Id) => books(w).sellers.get(sellerKey(seller, market)) ?? 0;
 
 export function listCheck(w: World, actor: Id, seller: AccountRef, market: Id, item: ItemKey, qty: number, price: number): string | null {
   const a = acct(w, seller);
@@ -86,8 +133,7 @@ export function listCheck(w: World, actor: Id, seller: AccountRef, market: Id, i
   if (seller.k === 'cit' && w.citizens[seller.id].mining) return 'Market trading is blocked while mining.';
   if (w.nations[market].exile) return 'This nation has no territory and no market.';
   if (embargoed(w, accountNation(w, seller), market)) return 'Trade is blocked by an embargo.';
-  const count = Object.values(w.listings).filter((l) => sameRef(l.seller, seller) && l.market === market).length;
-  if (count >= B.market.maxListings) return `Listing limit reached (${B.market.maxListings}).`;
+  if (listingCount(w, seller, market) >= B.market.maxListings) return `Listing limit reached (${B.market.maxListings}).`;
   return null;
 }
 
@@ -95,12 +141,13 @@ export function list(w: World, actor: Id, seller: AccountRef, market: Id, item: 
   const why = listCheck(w, actor, seller, market, item, qty, price);
   if (why) return fail(why);
   // Merge with an identical listing to keep books tidy.
-  const same = Object.values(w.listings).find((l) => sameRef(l.seller, seller) && l.market === market && l.item === item && l.price === price);
+  const same = listingsFor(w, market, item).find((l) => l.price === price && sameRef(l.seller, seller));
   itemsToEscrow(w, seller, item, qty);
   if (same) same.qty += qty;
   else {
     const l: Listing = { id: nid(w), market, item, qty, price, seller, created: w.time };
     w.listings[l.id] = l;
+    indexAdd(books(w), l);
   }
   if (seller.k === 'cit' && seller.id === w.playerId) bump(w, 'list');
   return ok(`Listed ${qty} ${itemName(item)} at ${fmtAmt(w.nations[market].cur, price)} each.`);
@@ -114,7 +161,7 @@ export function cancelListing(w: World, actor: Id, id: Id, qty?: number): Result
   const n = Math.min(l.qty, qty ?? l.qty);
   itemsFromEscrow(w, l.seller, l.item, n);
   l.qty -= n;
-  if (l.qty <= 0) delete w.listings[id];
+  if (l.qty <= 0) removeListing(w, l);
   return ok(`Withdrew ${n} ${itemName(l.item)} from the market.`);
 }
 
@@ -124,7 +171,10 @@ export function repriceListing(w: World, actor: Id, id: Id, price: number): Resu
   const auth = authorize(w, actor, l.seller, l.seller.k === 'nat' ? 'publicTrade' : 'trade');
   if (auth) return fail(auth);
   if (!Number.isInteger(price) || price < 1) return fail('Invalid price.');
-  l.price = price;
+  if (l.price !== price) {
+    l.price = price;
+    books(w).sorted.delete(bookKey(l.market, l.item));
+  }
   return ok('Price updated.');
 }
 
@@ -180,7 +230,7 @@ export function buyListing(w: World, actor: Id, buyer: AccountRef, id: Id, n: nu
   w.nations[l.market].stats.revToday += tax;
   itemsFromEscrow(w, buyer, l.item, n);
   l.qty -= n;
-  if (l.qty <= 0) delete w.listings[id];
+  if (l.qty <= 0) removeListing(w, l);
   recordTrade(w, l.market, l.item, n, l.price);
   if (l.seller.k === 'co') {
     const co = w.companies[l.seller.id];

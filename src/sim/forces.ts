@@ -14,6 +14,7 @@
 // becomes chief of staff. AI defence ministries raise, supply, deploy and order
 // forces by the same rules the player's government uses.
 import type { Battle, Branch, Citizen, Formation, FormationKind, Id, World } from './types';
+import { census, nationals, referenceSociety } from './census';
 import { B } from '../data/balance';
 import { EARTH } from '../data/earth';
 import { ALERT_NAMES, BRANCH_NAME, KINDS, POSTURE, RANKS, ordinal } from '../data/military';
@@ -477,7 +478,7 @@ export function forcesDaily(w: World) {
     if (n.alert > 1) n.approval = Math.max(5, n.approval - (n.alert - 1) * 0.15);
     n.agency.counter = Math.min(100, n.agency.counter + (n.alert - 1) * B.forces.alertCounter * 0.08);
     // Chief of staff: the most senior serving officer.
-    const officers = Object.values(w.citizens).filter((c) => c.nation === n.id && c.mil.branch && RANKS[c.mil.branch][c.mil.rank].command && !jailed(w, c));
+    const officers = nationals(w, n.id).filter((c) => c.mil.branch && RANKS[c.mil.branch][c.mil.rank].command && !jailed(w, c));
     const chief = officers.sort((a, b) => b.mil.rank - a.mil.rank || b.mil.sp - a.mil.sp || a.id - b.id)[0];
     if ((chief?.id ?? null) !== n.defense.chief) {
       n.defense.chief = chief?.id ?? null;
@@ -574,7 +575,9 @@ function procurement(w: World, nation: Id, budget: number) {
 /** Genesis: career officers and NCOs already serving, with ranks that fit their experience. */
 export function seedOfficers(w: World) {
   for (const n of w.nations) {
-    const pool = Object.values(w.citizens).filter((c) => !c.player && c.nation === n.id && (c.persona === 'soldier' || (c.traits.loyalty > 0.7 && c.level > 12))).sort((a, b) => b.level - a.level || a.id - b.id).slice(0, 7);
+    // About 3% of the population serves as career officers and NCOs (at least 7).
+    const people = nationals(w, n.id);
+    const pool = people.filter((c) => !c.player && (c.persona === 'soldier' || (c.traits.loyalty > 0.7 && c.level > 12))).sort((a, b) => b.level - a.level || a.id - b.id).slice(0, Math.max(7, Math.round(people.length * B.forces.careerShare)));
     pool.forEach((c, i) => {
       const branch: Branch = i % 4 === 1 && formationsOf(w, n.id).some((f) => f.branch === 'navy') ? 'navy' : i % 4 === 3 ? 'air' : 'army';
       const ladder = RANKS[branch];
@@ -582,10 +585,18 @@ export function seedOfficers(w: World) {
       while (rank + 1 < ladder.length && ladder[rank + 1].level <= c.level && !(ladder[rank + 1].flag && i > 1)) rank++;
       c.mil = { branch, rank, sp: ladder[rank].sp, since: w.time - 365 * DAY, lastDuty: -1, commands: ladder[rank].flag ? 30 : 0 };
     });
-    for (const f of formationsOf(w, n.id)) {
-      const c = Object.values(w.citizens).filter((x) => !x.player && x.nation === n.id && !commandCheck(w, x, f.id)).sort((a, b) => b.mil.rank - a.mil.rank || a.id - b.id)[0];
-      if (c) f.commander = c.id;
-    }
+    assignCommanders(w, n.id);
+  }
+}
+
+/** Vacant formations get the most senior eligible officer. */
+function assignCommanders(w: World, nation: Id) {
+  const vacant = formationsOf(w, nation).filter((f) => f.commander == null);
+  if (!vacant.length) return;
+  const officers = nationals(w, nation).filter((x) => !x.player && x.mil.branch && RANKS[x.mil.branch][x.mil.rank].command).sort((a, b) => b.mil.rank - a.mil.rank || a.id - b.id);
+  for (const f of vacant) {
+    const c = officers.find((x) => !commandCheck(w, x, f.id));
+    if (c) f.commander = c.id;
   }
 }
 
@@ -606,10 +617,7 @@ function defenseMinistryAI(w: World) {
     if (actor == null || playerRuns || !w.citizens[actor]) continue;
     if ((dayOf(w.time) + n.id) % 2) continue;
     // Commanders: the best eligible officers take command.
-    for (const f of formationsOf(w, n.id)) if (f.commander == null) {
-      const c = Object.values(w.citizens).filter((x) => !x.player && x.nation === n.id && !commandCheck(w, x, f.id)).sort((a, b) => b.mil.rank - a.mil.rank || a.id - b.id)[0];
-      if (c) f.commander = c.id;
-    }
+    assignCommanders(w, n.id);
     // War: armies to the front, fleets to enemy seas, air over battles.
     for (const war of wars) {
       const enemy = enemyOf(war, n.id);
@@ -656,14 +664,15 @@ function defenseMinistryAI(w: World) {
 
 /** AI citizens enlist (soldiers first), report for duty and rise through the ranks. */
 function militaryCareersAI(w: World) {
-  for (const c of Object.values(w.citizens)) {
+  const serving = w.nations.map((n) => nationals(w, n.id).filter((x) => x.mil.branch).length);
+  const cap = w.nations.map((n) => Math.max(8, Math.round(nationals(w, n.id).length * B.forces.serviceShare)));
+  for (const c of census(w).all) {
     if (c.player || jailed(w, c)) continue;
     if (!c.mil.branch) {
       if ((c.id + dayOf(w.time)) % 20 !== 0) continue;
-      const serving = Object.values(w.citizens).filter((x) => x.nation === c.nation && x.mil.branch).length;
-      if (serving >= 8) continue;
+      if (serving[c.nation] >= cap[c.nation]) continue;
       const fit = (c.persona === 'soldier' ? 0.6 : 0) + c.traits.loyalty * 0.3 + (c.job == null ? 0.2 : 0);
-      if (fit > 0.55 && !enlistCheck(w, c, 'army')) enlist(w, c, c.traits.risk > 0.7 ? 'air' : c.id % 3 === 0 && formationsOf(w, c.nation).some((f) => f.branch === 'navy') ? 'navy' : 'army');
+      if (fit > 0.55 && !enlistCheck(w, c, 'army') && ++serving[c.nation]) enlist(w, c, c.traits.risk > 0.7 ? 'air' : c.id % 3 === 0 && formationsOf(w, c.nation).some((f) => f.branch === 'navy') ? 'navy' : 'army');
       continue;
     }
     if (c.energy >= B.forces.dutyEnergy + 20 && !dutyCheck(w, c)) reportForDuty(w, c);
@@ -678,9 +687,11 @@ export function nationScores(w: World): NationScore[] {
   const rows = w.nations.map((n) => {
     const fs = formationsOf(w, n.id);
     const sum = (b: Branch) => fs.filter((f) => f.branch === b).reduce((s, f) => s + power(w, f), 0) * 10;
-    const soldiers = Object.values(w.citizens).filter((c) => c.nation === n.id).reduce((s, c) => s + (c.persona === 'soldier' || c.mil.branch ? 1 + c.power / 50 : 0.1), 0);
+    // Citizen soldiers count relative to the society they come from (see referenceSociety).
+    const people = nationals(w, n.id);
+    const soldiers = people.reduce((s, c) => s + (c.persona === 'soldier' || c.mil.branch ? 1 + c.power / 50 : 0.1), 0) * (referenceSociety(n.id) / Math.max(1, people.length));
     const army = sum('army') + soldiers, navy = sum('navy'), air = sum('air');
-    const production = Object.values(w.companies).filter((co) => controller(w.regions[co.region]) === n.id).reduce((s, co) => s + (co.hist[co.hist.length - 1]?.produced ?? 0), 0);
+    const production = census(w).companies.filter((co) => controller(w.regions[co.region]) === n.id).reduce((s, co) => s + (co.hist[co.hist.length - 1]?.produced ?? 0), 0);
     const economy = production / 10 + (n.wallet.GOLD ?? 0) / 20000 + (n.wallet[n.cur] ?? 0) / 20000;
     const own = w.regions.filter((r) => controller(r) === n.id);
     const stability = own.length ? n.approval - own.reduce((s, r) => s + r.unrest + r.crime / 2, 0) / own.length : 0;

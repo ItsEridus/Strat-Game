@@ -2,6 +2,7 @@
 // their own energy, food and weapons (bought on the market); commanders and
 // ministries plan battles, supply units and seek peace.
 import type { Battle, Citizen, Id, Nation, World } from '../sim/types';
+import { census } from '../sim/census';
 import { B } from '../data/balance';
 import { IDEOLOGIES } from '../data/ideologies';
 import { chance } from '../engine/rng';
@@ -48,7 +49,7 @@ export function soldiersTick(w: World) {
       void side;
     }
   }
-  for (const c of Object.values(w.citizens)) {
+  for (const c of census(w).all) {
     if (c.player || c.mining || c.energy < B.cost.hit) continue;
     const mine = byNation[c.nation];
     if (!mine) {
@@ -113,7 +114,7 @@ export function restockWeapons(w: World, c: Citizen) {
 
 function airStock(w: World, nation: Id) {
   let s = 0;
-  for (const c of Object.values(w.citizens)) if (c.nation === nation) for (let q = 1; q <= 5; q++) s += c.inv[`wa:${q}`] ?? 0;
+  for (const c of census(w).all) if (c.nation === nation) for (let q = 1; q <= 5; q++) s += c.inv[`wa:${q}`] ?? 0;
   return s;
 }
 
@@ -258,7 +259,7 @@ export function diplomacyDaily(w: World) {
 }
 
 export function aiClaimReserves(w: World) {
-  for (const c of Object.values(w.citizens)) if (!c.player && c.reserve > 0) claimReserve(w, c);
+  for (const c of census(w).all) if (!c.player && c.reserve > 0) claimReserve(w, c);
 }
 
 export function militaryHourly(w: World) {

@@ -11,7 +11,7 @@ import { computeSupply, declareWar, onWarBattleWon, settle, updateExile, warChec
 import type { World } from '../src/sim/types';
 
 registerSystems();
-const fresh = (seed = 31) => generateWorld(seed, 'Tester', 0, { citizensPerNation: 20 });
+const fresh = (seed = 31) => generateWorld(seed, 'Tester', 0, { citizensPerRegion: 1 });
 function neighbours(w: World) {
   // A non-capital border region, so losing it doesn't trigger capital-loss behaviour.
   const capitals = new Set(w.nations.map((n) => n.capital));

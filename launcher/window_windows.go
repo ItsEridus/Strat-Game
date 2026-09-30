@@ -126,8 +126,8 @@ func saveOnClose(w webview2.WebView, hwnd uintptr) {
 	var once sync.Once
 	quit := func() {
 		once.Do(func() {
-			// Give the browser process a moment to commit the save to disk.
-			time.Sleep(500 * time.Millisecond)
+			// Give the browser process a moment to flush the save to disk.
+			time.Sleep(300 * time.Millisecond)
 			w.Dispatch(w.Terminate)
 		})
 	}
@@ -135,8 +135,9 @@ func saveOnClose(w webview2.WebView, hwnd uintptr) {
 	var prev uintptr
 	proc := windows.NewCallback(func(h, msg, wp, lp uintptr) uintptr {
 		if msg == wmClose {
-			w.Eval(`try{dispatchEvent(new Event('beforeunload'))}catch(e){}window.__meridianClosed();`)
-			go func() { time.Sleep(3 * time.Second); quit() }() // page unresponsive: close anyway
+			// The game saves (asynchronously, it can take a few seconds for a big world), then reports back.
+			w.Eval(`(async()=>{try{if(window.__meridianSave)await window.__meridianSave();else dispatchEvent(new Event('beforeunload'))}catch(e){}window.__meridianClosed();})()`)
+			go func() { time.Sleep(20 * time.Second); quit() }() // page unresponsive: close anyway
 			return 0
 		}
 		r, _, _ := procCallWindowProc.Call(prev, h, msg, wp, lp)

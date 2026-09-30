@@ -1,0 +1,12 @@
+import { generateWorld } from '../../src/sim/worldgen';
+import { registerSystems } from '../../src/sim/systems';
+import { advance } from '../../src/sim/tick';
+import { DAY } from '../../src/engine/clock';
+registerSystems();
+const cpr = Number(process.argv[2] ?? 1);
+const w = generateWorld(53, 'Tester', 0, { citizensPerRegion: cpr });
+advance(w, 6 * DAY, false);
+const rows = w.regions.map((r) => ({ name: r.name, pol: r.pollution, pop: r.pop, cos: Object.values(w.companies).filter((c) => c.region === r.id).length, load: r.prodWindow.reduce((a, b) => a + b, 0) }));
+rows.sort((a, b) => b.pol - a.pol);
+console.log(rows.slice(0, 12));
+console.log('avg pollution', (rows.reduce((s, r) => s + r.pol, 0) / rows.length).toFixed(3), 'regions >50%:', rows.filter((r) => r.pol > 0.5).length);

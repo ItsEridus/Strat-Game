@@ -2,6 +2,7 @@
 // stance and the current situation (not from parsing prose). NPC journalists
 // report real events. Revenue comes from background readers (households).
 import type { Article, Citizen, Id, Newspaper, World } from './types';
+import { census } from './census';
 import { B } from '../data/balance';
 import { PAPER_WORDS } from '../data/names';
 import { IDEOLOGIES } from '../data/ideologies';
@@ -210,7 +211,7 @@ export function npcJournalism(w: World) {
 
 export function seedPapers(w: World) {
   for (const n of w.nations) {
-    const j = Object.values(w.citizens).filter((c) => c.nation === n.id && c.persona === 'journalist' && !c.player).sort((a, b) => b.influence - a.influence)[0];
+    const j = census(w).all.filter((c) => c.nation === n.id && c.persona === 'journalist' && !c.player).sort((a, b) => b.influence - a.influence)[0];
     if (!j) continue;
     const p = createPaper(w, j, `The ${n.adj} ${pick(w, PAPER_WORDS)}`);
     p.bgSubs = 60;

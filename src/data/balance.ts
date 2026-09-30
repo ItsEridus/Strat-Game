@@ -118,6 +118,9 @@ export const BALANCE = {
     startPerPop: 0.01, // SOLO starting household wallet per resident
     maxStockShare: 0.7, // SOLO households buy at most 70% of the listed stock per shopping round, leaving goods for citizens
   },
+  population: {
+    companiesPerCitizen: 0.6, // SOLO starting companies relative to the old 24-citizen industry plan (1 = same ratio)
+  },
   living: { perDay: 4, discretionary: 0.05, comfort: 150 }, // SOLO daily living costs + 5%/day of cash above 150 spent on lifestyle; paid to the background economy (closes the money loop)
   wages: { start: 8, min: 5 }, // SOLO starting offer and minimum wage (currency)
   treasury: { householdTransfer: 0.02, publicWorksFrac: 0.6, startPerCitizen: 400 }, // SOLO daily transfer share, fallback wage share
@@ -232,6 +235,7 @@ export const BALANCE = {
     level: 3, // SOLO level to be offered membership
   },
   intel: {
+    staffShare: 0.01, // SOLO AI citizens stop joining the intelligence service once it employs this share of the nation
     budget: 0.025, // SOLO default share of daily revenue for the intelligence service
     networkGain: 0.6, // SOLO network points per 100 currency invested per day
     networkDecay: 0.4, // SOLO daily network decay
@@ -261,6 +265,8 @@ export const BALANCE = {
   forces: {
     budget: 0.15, // SOLO default military budget: share of daily revenue (upkeep and duty pay draw on it)
     upkeepScale: 0.07, // SOLO converts a formation type's upkeep weight into currency per day
+    careerShare: 0.03, // SOLO share of a nation's citizens seeded as career officers and NCOs
+    serviceShare: 0.08, // SOLO AI citizens stop enlisting once this share of the nation serves
     dmgPerTick: 300, // SOLO battle damage per 10-minute tick of a full-strength formation with power 1
     attrition: 0.35, // SOLO strength lost per tick × enemy share of the tick's damage
     reinforce: 3, // SOLO strength regained per day when paid and supplied at home

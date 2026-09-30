@@ -14,6 +14,7 @@ import { centralBank, circulation, entrepreneurship, householdsDaily, manageComp
 import { player } from './query';
 import { train } from './citizen';
 import { HANDLERS, dailyHooks, hourlyHooks, tickHooks } from './hooks';
+import { census, nationals, referenceSociety } from './census';
 
 function runQueue(w: World) {
   while (w.queue.length && w.queue[0].at <= w.time) {
@@ -23,18 +24,18 @@ function runQueue(w: World) {
   }
 }
 
+// The player (and anyone fighting) recovers every tick; the rest of society in
+// hourly steps, which is the same amount of energy for a fraction of the work.
 function tick10(w: World) {
-  for (const id in w.citizens) regenTick(w, w.citizens[id]);
+  const p = player(w);
+  if (p) regenTick(w, p);
   for (const f of tickHooks) f(w);
 }
 
 function hourly(w: World) {
   const h = hourOf(w.time);
-  const ids = Object.keys(w.citizens).map(Number).sort((a, b) => a - b);
-  for (const id of ids) {
-    const c = w.citizens[id];
-    if (c && !c.player) citizenHourly(w, c);
-  }
+  for (const c of census(w).all) if (!c.player) regenTick(w, c, 6);
+  for (const c of census(w).all) if (w.citizens[c.id] && !c.player) citizenHourly(w, c);
   if (h === 5) for (const co of Object.values(w.companies).sort((a, b) => a.id - b.id)) manageCompany(w, co);
   if (h === 12 || h === 19) householdsDaily(w, h === 12 ? 0 : 1);
   if (h === 7) entrepreneurship(w);
@@ -48,11 +49,16 @@ function hourly(w: World) {
 function daily(w: World) {
   closeCompanyDay(w);
   circulation(w);
-  for (const c of Object.values(w.citizens)) { c.lastIncome = c.incomeToday; c.incomeToday = 0; }
+  for (const c of census(w).all) { c.lastIncome = c.incomeToday; c.incomeToday = 0; }
+  // A region absorbs pollution in proportion to its population and to the size of the national
+  // economy (more citizens run more companies than the 24-citizen economy the capacity was set for).
+  // Sparsely populated regions absorb at least as much as the nation's average region.
+  const econScale = w.nations.map((n) => Math.max(1, (nationals(w, n.id).length / referenceSociety(n.id)) * B.population.companiesPerCitizen));
+  const meanPop = w.nations.map((n) => { const own = w.regions.filter((r) => r.owner === n.id); return own.reduce((t, r) => t + r.pop, 0) / Math.max(1, own.length); });
   for (const r of w.regions) {
     r.prodWindow.push(0);
     while (r.prodWindow.length > B.pollution.windowDays) r.prodWindow.shift();
-    const cap = r.pop * B.pollution.capacityPerPop * (1 + r.bld.industrial * B.pollution.industrialMitigation);
+    const cap = Math.max(r.pop, meanPop[r.owner]) * B.pollution.capacityPerPop * econScale[r.owner] * (1 + r.bld.industrial * B.pollution.industrialMitigation);
     const load = r.prodWindow.reduce((a, b) => a + b, 0);
     r.pollution = Math.max(0, Math.min(1, cap > 0 ? load / cap - 0.5 : 1));
   }

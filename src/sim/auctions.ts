@@ -3,6 +3,7 @@
 // a bid in the last minutes extends the auction (adapted to 10-minute ticks).
 // Endings are processed by the event queue exactly once.
 import type { Auction, Citizen, Id, World } from './types';
+import { census } from './census';
 import { B } from '../data/balance';
 import { itemName, SPECIALS } from '../data/items';
 import { fail, ok, type Result } from '../engine/result';
@@ -117,7 +118,7 @@ export function lotValue(w: World, a: Auction, c: Citizen): number {
 export function aiBidding(w: World) {
   const open = Object.values(w.auctions).filter((a) => a.status === 'open').sort((a, b) => a.id - b.id);
   if (!open.length) return;
-  const bidders = Object.values(w.citizens).filter((c) => !c.player && c.level >= B.auctions.level && (c.wallet[GOLD] ?? 0) > g(1));
+  const bidders = census(w).all.filter((c) => !c.player && c.level >= B.auctions.level && (c.wallet[GOLD] ?? 0) > g(1));
   for (const a of open) {
     let best: { c: Citizen; v: number } | null = null;
     for (const c of bidders) {
@@ -131,7 +132,7 @@ export function aiBidding(w: World) {
 
 /** AI citizens occasionally auction spare gear. */
 export function aiListings(w: World) {
-  for (const c of Object.values(w.citizens)) {
+  for (const c of census(w).all) {
     if (c.player || c.level < B.auctions.level || (c.wallet[GOLD] ?? 0) < g(B.auctions.listFee)) continue;
     const spare = Object.values(w.gear).filter((x) => x.owner?.k === 'cit' && x.owner.id === c.id && !isEquipped(c, x.id));
     if (!spare.length || (Math.floor(w.time / 1440) + c.id) % 5 !== 0) continue;

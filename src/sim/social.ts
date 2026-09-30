@@ -2,6 +2,7 @@
 // replies (agree, decline, negotiate, endorse, request help, assign order)
 // change relationships and trigger real actions.
 import type { Citizen, Id, Msg, World } from './types';
+import { census, invalidateCensus } from './census';
 import { B } from '../data/balance';
 import { fail, ok, type Result } from '../engine/result';
 import { moveItems } from '../engine/ledger';
@@ -69,6 +70,7 @@ export function inviteImmigrant(w: World, c: Citizen, target: Id): Result {
   const dest = w.regions.find((r) => r.owner === c.nation && r.id === w.nations[c.nation].capital) ?? w.regions.find((r) => r.owner === c.nation);
   if (!dest) return fail('Your nation has no territory to host immigrants.');
   t.loc = dest.id;
+  invalidateCensus(w);
   const r = applyCitizenship(w, t, c.nation);
   if (!r.ok) return fail(`${t.name} tried to apply but: ${r.msg}`);
   t.flags.recruitedBy = c.id;
@@ -79,7 +81,7 @@ export function inviteImmigrant(w: World, c: Citizen, target: Id): Result {
 /** Daily: recruits who stayed and worked a week reward their recruiter (retained contributors only). */
 export function recruitmentDaily(w: World) {
   const p = player(w);
-  for (const c of Object.values(w.citizens)) {
+  for (const c of census(w).all) {
     if (c.flags.recruitedBy !== p.id || c.flags.recruitRewarded) continue;
     if (w.time - (c.flags.recruitedAt ?? w.time) < 7 * DAY) continue;
     const settled = c.nation === p.nation && c.lastWorkDay >= Math.floor(w.time / DAY) - 2;
