@@ -12,6 +12,8 @@ import { ageOf, lifeYear } from '../src/sim/growth';
 import { fam } from '../src/sim/family';
 import { adoptPet, careForPet, conceive, expecting, giftCheck, giveGift, petsOf, siblingsOf } from '../src/sim/kinship';
 import { deserialize, serialize } from '../src/engine/save';
+import { hobbyCheck, pursueHobby } from '../src/sim/hobbies';
+import { lifeOf, routineOf } from '../src/sim/lifecycle';
 
 registerSystems();
 const fresh = (seed = 401) => generateWorld(seed, 'Tester', 0, { citizensPerRegion: 3 });
@@ -87,4 +89,20 @@ test('siblings are the other children of one’s parents', () => {
   const s = siblingsOf(w, kid);
   assert.ok(s.grown.length + s.young.length >= 1);
   assert.ok(!s.grown.some((x) => x.id === kid.id));
+});
+
+test('hobbies: learned by doing, once a day, and part of the routine', () => {
+  const w = fresh(405);
+  const p = player(w);
+  mint(w, cref(p.id), w.nations[p.nation].cur, cur(100), 'test');
+  p.energy = 100;
+  const r = pursueHobby(w, 'painting');
+  assert.ok(r.ok, r.msg);
+  const once = lifeOf(p).hobbies.painting;
+  assert.ok(once > 0);
+  assert.match(hobbyCheck(w, p, 'running') ?? '', /one hobby evening a day/i);
+  routineOf(w).hobby = 'painting';
+  advance(w, 3 * DAY, false);
+  assert.ok(lifeOf(p).hobbies.painting > once, 'the routine kept it up');
+  assert.ok(audit(w).ok, audit(w).problems.join('; '));
 });

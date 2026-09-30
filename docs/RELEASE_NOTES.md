@@ -3,6 +3,17 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.3.7: hobbies
+
+- **Eight hobbies** on the Life screen: running, reading, chess, music, painting, cooking, gardening and football.
+- **You get better by doing them**, quickly at first and slower later, from beginner to keen, skilled and
+  accomplished. Each new level is a milestone.
+- **What they give you.** One hobby evening a day costs 6 energy, plus a little for supplies. It eases stress and
+  lifts your mood. Running, gardening and football keep you fit. Chess and football are a chance to get to know
+  people.
+- **Keep them up.** A hobby comforts you only while you've done one in the last week. Choose a hobby in your daily
+  routine and it happens every evening at 20:00.
+
 ### New in 1.3.6: family life
 
 - **Pregnancy.** Trying for a child no longer makes a baby appear the same day. A baby is due about nine months

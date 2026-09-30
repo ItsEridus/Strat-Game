@@ -62,7 +62,7 @@ function parts(w: World, c: Citizen, friends: number): { happy: Part[]; stress: 
   const g = L.goods;
   if (g?.clothes && w.time - g.clothes.t < B.goods.clothesDays * DAY) happy.push(['new clothes', B.goods.clothes[g.clothes.q - 1]]);
   if (g?.gadget && w.time - g.gadget.t < B.goods.gadgetDays * DAY) happy.push(['a new gadget', B.goods.gadget[g.gadget.q - 1]]);
-  const hobbies = Object.values(L.hobbies).filter((v) => v >= 10).length;
+  const hobbies = L.lastHobby != null && d - L.lastHobby <= 7 ? Object.values(L.hobbies).filter((v) => v >= 10).length : 0; // kept up this week
   if (hobbies) { happy.push(['hobbies', Math.min(6, hobbies * 2)]); stress.push(['hobbies', -Math.min(9, hobbies * 3)]); }
   return { happy, stress };
 }

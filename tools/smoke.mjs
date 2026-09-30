@@ -224,6 +224,13 @@ try {
     check(await page.locator('text=No pets.').count() === 0, 'new campaign: the adopted cat is not on the Life screen');
     log('new campaign: adopted a cat');
   }
+  const hobby = page.locator('.btn:has-text("Try it"):not([disabled])');
+  if (await hobby.count()) {
+    await hobby.first().click();
+    await page.waitForTimeout(200);
+    check(await page.evaluate(() => Object.keys(window.meridian.w.citizens[window.meridian.w.playerId].life?.hobbies ?? {}).length > 0), 'new campaign: trying a hobby did nothing');
+    log('new campaign: tried a hobby');
+  }
   const pets = await page.evaluate(() => window.meridian.w.life.pets.length);
   await saveReloadContinue(page, 'new campaign');
   check(await page.evaluate(() => window.meridian.w.life.pets.length) >= pets, 'new campaign: pets were lost on reload');

@@ -12,6 +12,7 @@ import { STAGE_INFO, lifeOf, lifeStage, occupation, routineBudget, routineOf } f
 import { familyTime, familyTimeCheck, rest, restCheck, wellbeingLabel } from '../../sim/wellbeing';
 import { healthLabel } from '../../sim/population';
 import { PET_KINDS, adoptCheck, adoptPet, careCheck, careForPet, dueText, expecting, petAge, petsOf, siblingsOf } from '../../sim/kinship';
+import { HOBBIES, HOBBY_ENERGY, hobbyCheck, hobbyLevel, pursueHobby } from '../../sim/hobbies';
 import { STATUS_LABEL, breakUp, familyOf, goOnDate, marry, partnerOf, propose, romanceCheck, tryForChild } from '../../sim/family';
 
 export function Life({ w }: { w: World }) {
@@ -65,6 +66,8 @@ export function Life({ w }: { w: World }) {
 
       <Panel title="Pets"><Pets w={w} p={p} /></Panel>
 
+      <Panel title="Hobbies"><Hobbies w={w} p={p} /></Panel>
+
       <Panel title="Money this month"><Budget w={w} p={p} /></Panel>
 
       <Panel title="Daily routine"><RoutinePanel w={w} p={p} /></Panel>
@@ -79,6 +82,30 @@ export function Life({ w }: { w: World }) {
         </div>
       </Panel>
     </div>
+  );
+}
+
+function Hobbies({ w, p }: { w: World; p: Citizen }) {
+  const L = lifeOf(p);
+  const code = w.nations[p.nation].cur;
+  return (
+    <>
+      <table class="table compact">
+        <tbody>
+          {Object.entries(HOBBIES).map(([k, h]) => {
+            const v = L.hobbies[k] ?? 0;
+            return (
+              <tr>
+                <td>{h.icon} {h.label}{h.fit ? <small class="muted"> · keeps you fit</small> : h.social ? <small class="muted"> · meet people</small> : null}</td>
+                <td class="small">{v > 0 ? <>{hobbyLevel(v)} <span class="muted">({Math.floor(v)})</span></> : <span class="muted">never tried</span>}</td>
+                <td><ActBtn small why={hobbyCheck(w, p, k)} run={(w) => pursueHobby(w, k)}>{v > 0 ? 'Spend an evening' : 'Try it'}{h.cost ? <small class="muted"> {fmtAmt(code, cur(h.cost))}</small> : null}</ActBtn></td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      <Help>One hobby evening a day ({HOBBY_ENERGY} energy). You get better by doing it, quickly at first. Hobbies you keep up (10+) lift happiness and ease stress; set one in your daily routine.</Help>
+    </>
   );
 }
 
@@ -180,6 +207,10 @@ function RoutinePanel({ w, p }: { w: World; p: Citizen }) {
       <label class="check"><input type="checkbox" checked={!!r.jobHunt} onChange={() => toggle('jobHunt')} /> Look for work when unemployed (apply to the best offer nearby)</label>
       <label class="check"><input type="checkbox" checked={r.train} onChange={() => toggle('train')} /> Train at {hh(p.trainHour)}</label>
       <label class="check"><input type="checkbox" checked={r.family} onChange={() => toggle('family')} /> Evening with family at 19:00</label>
+      <label class="check">Hobby at 20:00: <select value={r.hobby ?? ''} onChange={(e) => { r.hobby = (e.target as HTMLSelectElement).value || null; store.emit(); }}>
+        <option value="">none</option>
+        {Object.entries(HOBBIES).map(([k, h]) => <option value={k}>{h.icon} {h.label}</option>)}
+      </select></label>
       <label class="check"><input type="checkbox" checked={r.rest} onChange={() => toggle('rest')} /> Rest at 21:00</label>
       <p class="small muted">{b.hours} of {b.free} waking hours planned. Routine actions are the same as doing them yourself: one paid shift a day, and only when you are able.</p>
       {b.clashes.map((c) => <p class="small bad">⚠ {c}</p>)}
