@@ -241,7 +241,7 @@ export function leaveAbroad(w: World, c: Citizen, why: string) {
 const PERSONAS: [Persona, number][] = [['worker', 42], ['soldier', 12], ['industrialist', 6], ['merchant', 9], ['politician', 8], ['builder', 10], ['journalist', 6], ['investor', 7]];
 
 /** A new adult resident (coming of age, moving in, arriving from abroad). */
-export function newResident(w: World, nation: Nation, rid: Id, opts: { name?: string; age?: number; ideo?: Ideology; persona?: Persona; savings?: number; origin?: string } = {}): Citizen {
+export function newResident(w: World, nation: Nation, rid: Id, opts: { name?: string; age?: number; ideo?: Ideology; persona?: Persona; savings?: number; origin?: string; funded?: boolean } = {}): Citizen {
   const pool = NAME_POOLS[nation.cur];
   const name = opts.name ?? `${pick(w, pool.first)} ${pick(w, pool.last)}`;
   const persona = opts.persona ?? weighted(w, PERSONAS, (x) => x[1])![0];
@@ -255,9 +255,11 @@ export function newResident(w: World, nation: Nation, rid: Id, opts: { name?: st
   c.family = { partner: null, status: 'single', since: w.time, parents: [], children: [], kids: [], exes: [] };
   w.citizens[c.id] = c;
   invalidateCensus(w);
-  const savings = opts.savings ?? randInt(w, 20, 90) * (1 + seniority(w, c) / 10);
-  mint(w, cref(c.id), nation.cur, cur(savings), 'Arrival savings');
-  mint(w, cref(c.id), GOLD, g(rand(w, 0.2, 1.5)), 'Arrival savings');
+  if (!opts.funded) { // a newcomer brings savings from outside; someone growing up here is given a start by family instead
+    const savings = opts.savings ?? randInt(w, 20, 90) * (1 + seniority(w, c) / 10);
+    mint(w, cref(c.id), nation.cur, cur(savings), 'Arrival savings');
+    mint(w, cref(c.id), GOLD, g(rand(w, 0.2, 1.5)), 'Arrival savings');
+  }
   produce(w, cref(c.id), 'food:1', randInt(w, 2, 6), 'arrival');
   return c;
 }

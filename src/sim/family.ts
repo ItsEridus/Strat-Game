@@ -101,7 +101,9 @@ export function bereave(w: World, c: Citizen) {
     if (partner.player) notify(w, 'personal', `🕯️ Your ${f.status === 'married' ? 'spouse' : 'partner'} ${c.name} has died. You are ${f.status === 'married' ? 'widowed' : 'alone again'}.`, { critical: true, link: 'character' });
   } else if (f.kids.length) {
     const kin = [...f.parents, ...f.children].map((id) => alive(w, id)).find(Boolean);
-    if (kin) fam(kin).kids.push(...f.kids); // raised by grandparents or an older sibling
+    if (kin) fam(kin).kids.push(...f.kids.map((k) => ({ ...k, how: f.parents.includes(kin.id) ? 'grandchild' as const : 'sibling' as const }))); // raised by grandparents or an older sibling
+    else for (const k of f.kids) w.life.orphans.push({ name: k.name, born: k.born, parents: [c.id], region: c.home }); // into care, waiting for a family
+    if (kin?.player) notify(w, 'personal', `🏠 ${f.kids.map((k) => k.name.split(' ')[0]).join(' and ')} ${f.kids.length > 1 ? 'come' : 'comes'} to live with you now. You are their guardian.`, { critical: true, link: 'life' });
     f.kids = [];
   }
   for (const id of [...f.parents, ...f.children]) { const k = alive(w, id); if (k) k.mood = Math.max(-10, k.mood - 3); if (k?.player) notify(w, 'personal', `🕯️ Your ${f.parents.includes(id) ? 'child' : 'parent'} ${c.name} has died.`, { critical: true }); }
@@ -113,8 +115,11 @@ export function kidComesOfAge(w: World, parent: Citizen, kid: { name: string; bo
   const f = fam(parent);
   f.kids = f.kids.filter((k) => k !== kid);
   const nation = w.nations[parent.nation];
-  const c = newResident(w, nation, parent.home, { name: kid.name, age: B.life.adultAge, ideo: chance(w, 0.7) ? parent.ideo : undefined, savings: randInt(w, 10, 40) });
+  const c = newResident(w, nation, parent.home, { name: kid.name, age: B.life.adultAge, ideo: chance(w, 0.7) ? parent.ideo : undefined, funded: true });
   c.born = kid.born;
+  // A start in life from the family (not from nowhere): a share of their savings, up to a cap.
+  const start = Math.min(cur(B.family.startMax), Math.floor((parent.wallet[nation.cur] ?? 0) * B.family.startInLife));
+  if (start > 0) pay(w, cref(parent.id), cref(c.id), nation.cur, start, `A start in life for ${kid.name.split(' ')[0]}`);
   const other = alive(w, f.partner);
   fam(c).parents = [parent.id, ...(other && f.status === 'married' ? [other.id] : [])];
   for (const id of fam(c).parents) { const x = w.citizens[id]; fam(x).children.push(c.id); bumpRel(x, c, 50); }

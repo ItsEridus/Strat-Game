@@ -163,13 +163,16 @@ export interface LifeState {
 }
 
 /** Family ties. Children under 18 are not yet citizens: they live in `kids` until they come of age. */
+/** A child growing up at home (a compact record until 18). `how` is set when they are not one's own by birth. */
+export interface Kid { name: string; born: number; how?: 'adopted' | 'grandchild' | 'sibling' | 'stepchild' | 'fostered' }
+
 export interface Family {
   partner: Id | null;
   status: 'single' | 'dating' | 'engaged' | 'married';
   since: number; // when the current relationship status began
   parents: Id[]; // biological parents (never rewritten by adoption or guardianship)
   children: Id[]; // children who are citizens (grown-up, or the player's family from birth)
-  kids: { name: string; born: number }[]; // children still growing up in a background family (compact records)
+  kids: Kid[]; // children still growing up in a background family (compact records)
   exes: Id[];
   adoptiveParents?: Id[]; // legal parents by adoption (ancestry stays in `parents` / `birthParents`)
   guardians?: Id[]; // who is responsible for a minor (may differ from parents)

@@ -3,6 +3,22 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.3.8: adoption, guardians and the cost of children
+
+- **Adopt a child.** Apply from the Life screen, on your own or as a married couple. The fees go to the state. A
+  social worker assesses you for about a month, then a child in care comes home, taking your family name.
+- **Children in care.** Children left with no parent or relative now go into care instead of vanishing. Families
+  nearby adopt some of them. The rest leave care at 18 with a small grant from the state.
+- **Guardians.** When a child's parents are gone, grandparents or a grown-up brother or sister raise them. If that's
+  you, you're told, and the Life screen shows whose child they are.
+- **Children cost money.** Each child at home costs a little every day, for food, clothes and school things. It
+  shows as "Raising children" in your monthly budget. Everyone else's children cost them the same.
+
+### Fixed in 1.3.8
+
+- A child who comes of age now gets their start in life from their family's savings. Before, their money appeared
+  from nowhere.
+
 ### New in 1.3.7: hobbies
 
 - **Eight hobbies** on the Life screen: running, reading, chess, music, painting, cooking, gardening and football.

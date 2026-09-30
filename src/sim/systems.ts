@@ -50,7 +50,7 @@ import { REPLY_LISTENERS } from './inbox';
 import { lifeDaily } from './life';
 import { goodsDaily } from './goods';
 import { warChronicleDaily } from './warChronicle';
-import { petsDaily, pregnanciesHourly } from './kinship';
+import { adoptionsDaily, petsDaily, pregnanciesHourly } from './kinship';
 
 let done = false;
 export function registerSystems() {
@@ -151,7 +151,7 @@ export function registerSystems() {
   dailyHooks.push(lifeDaily);
   dailyHooks.push(goodsDaily);
   dailyHooks.push(warChronicleDaily);
-  dailyHooks.push(petsDaily);
+  dailyHooks.push(petsDaily, adoptionsDaily);
   hourlyHooks.push(pregnanciesHourly);
   dailyHooks.push(populationDaily);
   dailyHooks.push(familyDaily);

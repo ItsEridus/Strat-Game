@@ -4,6 +4,7 @@ import { fmtDate } from '../../engine/calendar';
 import type { Citizen, World } from '../../sim/types';
 import { ActBtn, Bar, Btn, CitLink, Empty, Help, Panel, RegionLink, Stat } from '../common';
 import { store } from '../store';
+import { B } from '../../data/balance';
 import { DAY, fmtDur } from '../../engine/clock';
 import { c as cur, fmtAmt } from '../../engine/money';
 import { player, maxEnergy } from '../../sim/query';
@@ -11,7 +12,7 @@ import { ageOf, calendarPace, nextBirthday, reputation } from '../../sim/growth'
 import { STAGE_INFO, lifeOf, lifeStage, occupation, routineBudget, routineOf } from '../../sim/lifecycle';
 import { familyTime, familyTimeCheck, rest, restCheck, wellbeingLabel } from '../../sim/wellbeing';
 import { healthLabel } from '../../sim/population';
-import { PET_KINDS, adoptCheck, adoptPet, careCheck, careForPet, dueText, expecting, petAge, petsOf, siblingsOf } from '../../sim/kinship';
+import { KID_HOW, adoptChildCheck, adoptionOf, applyToAdopt, inCare, PET_KINDS, adoptCheck, adoptPet, careCheck, careForPet, dueText, expecting, petAge, petsOf, siblingsOf } from '../../sim/kinship';
 import { HOBBIES, HOBBY_ENERGY, hobbyCheck, hobbyLevel, pursueHobby } from '../../sim/hobbies';
 import { STATUS_LABEL, breakUp, familyOf, goOnDate, marry, partnerOf, propose, romanceCheck, tryForChild } from '../../sim/family';
 
@@ -61,6 +62,11 @@ export function Life({ w }: { w: World }) {
           </div>
         )}
         {expecting(w, p) && <p class="small">🤰 A baby is on the way, due around {dueText(expecting(w, p)!.due)}.</p>}
+        <div class="row">
+          {adoptionOf(w, p) ? <small class="muted">📝 Adoption application being assessed: a decision around {dueText(adoptionOf(w, p)!.ready)}.</small>
+            : <ActBtn small why={adoptChildCheck(w, p)} confirm={`Apply to adopt? The fees (${fmtAmt(w.nations[p.nation].cur, cur(B.family.adoptFee))}) go to the state; the assessment takes about a month. ${inCare(w, p.nation).length} ${inCare(w, p.nation).length === 1 ? 'child is' : 'children are'} in care in ${w.nations[p.nation].name}.`} run={(w) => applyToAdopt(w)}>🏠 Adopt a child</ActBtn>}
+        </div>
+        {fam.kids.length > 0 && <Help>Each child at home costs {fmtAmt(w.nations[p.nation].cur, cur(B.family.childPerDay))} a day (food, clothes, school things), paid with your living costs. When they turn {B.life.adultAge} they set out on their own with a start from your savings.</Help>}
         {!partner && <Help>Single. Get to know people in your Neighbourhood; once someone likes you (relationship 30+), you can ask them out from their profile.</Help>}
       </Panel>
 
@@ -166,7 +172,7 @@ function People({ w, p }: { w: World; p: Citizen }) {
             <td class="num small">{c.gone ? '' : `♥ ${Math.round(c.rel[p.id] ?? 0)}`}</td>
           </tr>
         ))}
-        {fam.kids.map((k) => <tr><td class="muted small">Child</td><td>{k.name} <small class="muted">· {ageOf(w, k)} · at home</small></td><td /></tr>)}
+        {fam.kids.map((k) => <tr><td class="muted small">Child</td><td>{k.name} <small class="muted">· {ageOf(w, k)} · at home{k.how ? ` · ${KID_HOW[k.how]}` : ''}</small></td><td /></tr>)}
         {sib.grown.map((c) => <tr><td class="muted small">Sibling</td><td><CitLink w={w} id={c.id} />{c.gone ? <small class="muted"> ({c.gone.why === 'died' ? 'died' : 'moved abroad'})</small> : <small class="muted"> · {ageOf(w, c)} · {occupation(w, c)}</small>}</td><td class="num small">{c.gone ? '' : `♥ ${Math.round(c.rel[p.id] ?? 0)}`}</td></tr>)}
         {sib.young.map((k) => <tr><td class="muted small">Sibling</td><td>{k.name} <small class="muted">· {ageOf(w, k)} · at home with your parents</small></td><td /></tr>)}
       </tbody>

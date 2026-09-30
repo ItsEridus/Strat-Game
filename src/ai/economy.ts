@@ -173,11 +173,14 @@ export function circulation(w: World) {
   for (const c of census(w).all) {
     const n = w.nations[c.nation];
     const cash = c.wallet[n.cur] ?? 0;
-    const due = cur(B.living.perDay);
+    const kids = c.family?.kids.length ?? 0;
+    const forKids = Math.min(Math.max(0, cash - cur(B.living.perDay)), cur(B.family.childPerDay * kids));
+    if (kids && c.player) pay(w, cref(c.id), hhref(c.nation), n.cur, forKids, 'Raising children');
+    const due = cur(B.living.perDay) + (c.player ? 0 : forKids);
     if (cash < due) c.mood = Math.max(-1, c.mood - 0.05);
     // Lifestyle spending: AI citizens spend part of comfortable savings; the player only pays the fixed cost.
     const extra = c.player ? 0 : Math.floor(Math.max(0, cash - due - cur(B.living.comfort)) * B.living.discretionary);
-    pay(w, cref(c.id), hhref(c.nation), n.cur, Math.min(cash, due + extra), 'Living costs');
+    pay(w, cref(c.id), hhref(c.nation), n.cur, Math.min(c.wallet[n.cur] ?? 0, due + extra), 'Living costs');
   }
   for (const n of w.nations) {
     if (n.exile) continue;

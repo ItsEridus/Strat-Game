@@ -8,9 +8,10 @@ import { DAY } from '../src/engine/clock';
 import { c as cur } from '../src/engine/money';
 import { census } from '../src/sim/census';
 import { cref, player } from '../src/sim/query';
-import { ageOf, lifeYear } from '../src/sim/growth';
-import { fam } from '../src/sim/family';
-import { adoptPet, careForPet, conceive, expecting, giftCheck, giveGift, petsOf, siblingsOf } from '../src/sim/kinship';
+import { ageOf, bornYearsAgo, lifeYear } from '../src/sim/growth';
+import { bereave, fam } from '../src/sim/family';
+import { populationDaily } from '../src/sim/population';
+import { adoptChildCheck, adoptionsDaily, applyToAdopt, adoptPet, careForPet, conceive, expecting, giftCheck, giveGift, petsOf, siblingsOf } from '../src/sim/kinship';
 import { deserialize, serialize } from '../src/engine/save';
 import { hobbyCheck, pursueHobby } from '../src/sim/hobbies';
 import { lifeOf, routineOf } from '../src/sim/lifecycle';
@@ -104,5 +105,59 @@ test('hobbies: learned by doing, once a day, and part of the routine', () => {
   routineOf(w).hobby = 'painting';
   advance(w, 3 * DAY, false);
   assert.ok(lifeOf(p).hobbies.painting > once, 'the routine kept it up');
+  assert.ok(audit(w).ok, audit(w).problems.join('; '));
+});
+
+test('adoption: fees to the state, a month of assessment, then a child comes home', () => {
+  const w = fresh(406);
+  const p = player(w);
+  const code = w.nations[p.nation].cur;
+  mint(w, cref(p.id), code, cur(400), 'test');
+  w.life.orphans.push({ name: 'Sam Waiting', born: bornYearsAgo(w, 6, 10), parents: [], region: p.home });
+  const r = applyToAdopt(w);
+  assert.ok(r.ok, r.msg);
+  assert.match(adoptChildCheck(w, p) ?? '', /already/);
+  const before = fam(p).kids.length;
+  advance(w, 31 * DAY, false);
+  assert.equal(fam(p).kids.length, before + 1);
+  const kid = fam(p).kids.at(-1)!;
+  assert.equal(kid.how, 'adopted');
+  assert.equal(kid.name.split(' ')[0], 'Sam');
+  assert.ok(!w.life.orphans.some((o) => o.name === 'Sam Waiting'), 'no longer in care');
+  assert.ok(audit(w).ok, audit(w).problems.join('; '));
+});
+
+test('children with nobody left go into care, and leave it at 18 with a grant, not minted money', () => {
+  const w = fresh(407);
+  const parent = census(w).all.find((c) => !c.player && c.family?.status === 'single' && !c.family.parents.some((id) => w.citizens[id] && !w.citizens[id].gone) && !c.family.children.length)!;
+  fam(parent).parents = [];
+  fam(parent).kids.push({ name: 'Alex Alone', born: bornYearsAgo(w, 17, 360) });
+  bereave(w, parent);
+  const o = w.life.orphans.find((x) => x.name === 'Alex Alone');
+  assert.ok(o, 'in care');
+  o!.born = bornYearsAgo(w, 18, 1);
+  const minted = () => w.ledger.filter((e) => /Arrival savings/.test(e.text)).length;
+  const m0 = minted();
+  adoptionsDaily(w);
+  const c = census(w).all.find((x) => x.name === 'Alex Alone');
+  assert.ok(c, 'came of age as a citizen');
+  assert.equal(minted(), m0, 'no money from nowhere');
+  assert.ok(audit(w).ok, audit(w).problems.join('; '));
+});
+
+test('a child coming of age gets a start from the family, and children cost money to raise', () => {
+  const w = fresh(408);
+  const p = player(w);
+  const code = w.nations[p.nation].cur;
+  mint(w, cref(p.id), code, cur(500), 'test');
+  fam(p).kids.push({ name: 'Kim Grown', born: bornYearsAgo(w, 18, 1) });
+  const cash = p.wallet[code]!;
+  populationDaily(w);
+  const c = census(w).all.find((x) => x.name === 'Kim Grown')!;
+  assert.ok(c);
+  assert.ok(p.wallet[code]! < cash, 'the parent paid for the start');
+  fam(p).kids.push({ name: 'Lee Small', born: bornYearsAgo(w, 4, 1) });
+  advance(w, 2 * DAY, false);
+  assert.ok(w.ledger.some((e) => e.text === 'Raising children'));
   assert.ok(audit(w).ok, audit(w).problems.join('; '));
 });

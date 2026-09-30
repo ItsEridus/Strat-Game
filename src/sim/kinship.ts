@@ -1,7 +1,7 @@
 // Family life beyond romance: pregnancies that end in a birth months later,
 // brothers and sisters, gifts that warm a relationship, and pets that need
 // looking after. Money and goods move through the ledger like everything else.
-import type { Citizen, Id, Pet, World } from './types';
+import type { Citizen, Id, Kid, Pet, World } from './types';
 import { B } from '../data/balance';
 import { gradeLc, itemName, kindOf, qualityOf } from '../data/items';
 import { DAY } from '../engine/clock';
@@ -9,10 +9,13 @@ import { fmtDate } from '../engine/calendar';
 import { moveItems, pay } from '../engine/ledger';
 import { c as cur, fmtAmt } from '../engine/money';
 import { nid, notify } from '../engine/events';
-import { chance, pick } from '../engine/rng';
+import { chance, pick, randInt } from '../engine/rng';
+import { NAME_POOLS } from '../data/names';
+import { census } from './census';
+import { newResident } from './population';
 import { fail, ok, type Result } from '../engine/result';
-import { controller, cref, hhref, jailed, player, today } from './query';
-import { lifeYear } from './growth';
+import { controller, cref, hhref, jailed, natref, player, today } from './query';
+import { ageOf, bornYearsAgo, lifeYear } from './growth';
 import { lifeOf, milestone } from './lifecycle';
 import { remember } from './story';
 import { adjustRel } from './social';
@@ -201,3 +204,87 @@ export function petsDaily(w: World) {
 export const petComfort = (w: World, c: Citizen) => petsOf(w, c).reduce((best, x) => Math.max(best, x.bond), 0);
 
 export const dueText = (due: number) => fmtDate(due, 'long');
+
+// ---------- adoption and children in care ----------
+
+/** Children in care in a country, waiting for a family. */
+export const inCare = (w: World, nation: Id) => w.life.orphans.filter((o) => controller(w.regions[o.region]) === nation);
+export const adoptionOf = (w: World, c: Citizen) => w.life.adoptions.find((a) => a.parents.includes(c.id));
+const surnameOf = (c: Citizen) => c.name.split(' ').slice(1).join(' ') || c.name;
+const renamed = (name: string, family: Citizen) => `${name.split(' ')[0]} ${surnameOf(family)}`;
+
+export function adoptChildCheck(w: World, p: Citizen): string | null {
+  if (jailed(w, p)) return 'You are in prison.';
+  if (ageOf(w, p) < 21) return 'Adoptive parents must be 21 or older.';
+  if (adoptionOf(w, p)) return 'Your application is already being assessed.';
+  const f = fam(p);
+  if (f.status === 'dating' || f.status === 'engaged') return 'Couples apply together once married (or apply on your own while single).';
+  if (f.kids.length >= 6) return 'A full house already.';
+  const code = w.nations[p.nation].cur;
+  if ((p.wallet[code] ?? 0) < cur(B.family.adoptFee)) return `The adoption fees come to ${fmtAmt(code, cur(B.family.adoptFee))}.`;
+  return null;
+}
+
+/** Apply to adopt: the fee goes to the state, and an assessment takes about a month. */
+export function applyToAdopt(w: World): Result {
+  const p = player(w);
+  const why = adoptChildCheck(w, p);
+  if (why) return fail(why);
+  const code = w.nations[p.nation].cur;
+  pay(w, cref(p.id), natref(p.nation), code, cur(B.family.adoptFee), 'Adoption fees');
+  const partner = fam(p).status === 'married' && fam(p).partner != null ? w.citizens[fam(p).partner!] : null;
+  w.life.adoptions.push({ id: nid(w), parents: [p.id, ...(partner ? [partner.id] : [])], ready: w.time + B.family.adoptDays * DAY, fee: cur(B.family.adoptFee), cur: code });
+  return ok(`📝 Application sent. A social worker will visit; a decision comes around ${dueText(w.time + B.family.adoptDays * DAY)}.`);
+}
+
+/** A child in care joins a family (the youngest waiting, or one from the wider care system). */
+function placeChild(w: World, parent: Citizen): Kid {
+  const waiting = inCare(w, parent.nation).sort((a, b) => b.born - a.born);
+  const o = waiting.find((x) => ageOf(w, x) < 12) ?? waiting[0];
+  let kid: Kid;
+  if (o) {
+    w.life.orphans.splice(w.life.orphans.indexOf(o), 1);
+    kid = { name: renamed(o.name, parent), born: o.born, how: 'adopted' };
+  } else {
+    const pool = NAME_POOLS[w.nations[parent.nation].cur];
+    kid = { name: `${pick(w, pool.first)} ${surnameOf(parent)}`, born: bornYearsAgo(w, randInt(w, 1, 9), randInt(w, 0, 300)), how: 'adopted' };
+  }
+  fam(parent).kids.push(kid);
+  return kid;
+}
+
+/** Daily: applications decided, children in care placed with families or leaving care at 18. */
+export function adoptionsDaily(w: World) {
+  for (const a of w.life.adoptions.filter((x) => x.ready <= w.time)) {
+    w.life.adoptions.splice(w.life.adoptions.indexOf(a), 1);
+    const parent = w.citizens[a.parents[0]];
+    if (!parent || parent.gone) continue;
+    if (jailed(w, parent)) { if (parent.player) notify(w, 'personal', '📝 Your adoption application was turned down: a parent in prison cannot adopt.', { critical: true, link: 'life' }); continue; }
+    const kid = placeChild(w, parent);
+    if (parent.player) {
+      notify(w, 'personal', `🏠 ${kid.name}, ${ageOf(w, kid)}, is coming home with you. Welcome to the family!`, { critical: true, link: 'life' });
+      milestone(w, parent, 'child', `adopted ${kid.name}`);
+      const other = a.parents[1] != null ? w.citizens[a.parents[1]] : null;
+      if (other && !other.gone) remember(w, other, 8, 'adopted a child with me', 'public');
+    }
+  }
+  // Families nearby adopt children in care now and then (married couples with room at home).
+  if (w.life.orphans.length && chance(w, 0.2)) {
+    const o = pick(w, w.life.orphans);
+    const nation = controller(w.regions[o.region]);
+    const home = census(w).all.find((c) => !c.player && !c.gone && c.nation === nation && c.home === o.region && c.family?.status === 'married' && c.family.kids.length < 3 && ageOf(w, c) >= 25 && ageOf(w, c) <= 50 && chance(w, 0.1));
+    if (home) { w.life.orphans.splice(w.life.orphans.indexOf(o), 1); fam(home).kids.push({ name: renamed(o.name, home), born: o.born, how: 'adopted' }); }
+  }
+  // Leaving care at 18: a citizen in their own right, with a small grant from the state.
+  for (const o of w.life.orphans.filter((x) => ageOf(w, x) >= B.life.adultAge)) {
+    w.life.orphans.splice(w.life.orphans.indexOf(o), 1);
+    const nation = w.nations[controller(w.regions[o.region])];
+    const c = newResident(w, nation, o.region, { name: o.name, age: B.life.adultAge, funded: true });
+    c.born = o.born;
+    fam(c).parents = o.parents.filter((id) => w.citizens[id]);
+    pay(w, natref(nation.id), cref(c.id), nation.cur, cur(B.family.careLeaver), 'Leaving-care grant');
+  }
+}
+
+/** Where a child at home came from, in words. */
+export const KID_HOW: Record<NonNullable<Kid['how']>, string> = { adopted: 'adopted', grandchild: 'grandchild, in your care', sibling: 'younger sibling, in your care', stepchild: 'stepchild', fostered: 'fostered' };
