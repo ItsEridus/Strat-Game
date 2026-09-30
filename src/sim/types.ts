@@ -117,6 +117,7 @@ export interface Company {
   shortage: string | null; // reason production last failed
   auto: { sell: boolean; buyInputs: boolean; hire: boolean }; // owner automation (AI owners enable all)
   state?: boolean; // state-owned (socialism)
+  locked?: Id; // held in escrow by an open contract
 }
 
 export interface Listing { id: Id; market: Id; item: ItemKey; qty: number; price: number; seller: AccountRef; created: number }
@@ -255,7 +256,7 @@ export interface Proposal {
   enactedAt?: number;
 }
 
-export interface Project { id: Id; region: Id; nation: Id; type: BuildingType; level: number; points: number; needPts: number; mats: Inventory; needMats: Inventory; contrib: Record<Id, number>; started: number; done?: number }
+export interface Project { id: Id; region: Id; nation: Id; type: BuildingType; level: number; points: number; needPts: number; mats: Inventory; needMats: Inventory; contrib: Record<Id, number>; started: number; done?: number; cancelled?: boolean }
 
 export interface RoundResult { a: number; d: number; ptsA: number; ptsD: number; winner: 'a' | 'd'; hero: Id | null }
 export interface Battle {
@@ -348,7 +349,7 @@ export interface Contract { id: Id; from: Id; to: Id; give: Consideration; want:
 
 export interface Auction { id: Id; seller: Id; gear: Id | null; item: { key: ItemKey; qty: number } | null; start: number; end: number; minBid: number; bid: { by: Id; amount: number } | null; status: 'open' | 'sold' | 'unsold'; fee: number; bids: number }
 
-export interface Newspaper { id: Id; name: string; owner: AccountRef; nation: Id; subs: Id[]; bgSubs: number; founded: number; revenue: number; articles: number }
+export interface Newspaper { id: Id; name: string; owner: AccountRef; nation: Id; subs: Id[]; bgSubs: number; founded: number; revenue: number; articles: number; locked?: Id }
 export interface Article {
   id: Id;
   paper: Id;

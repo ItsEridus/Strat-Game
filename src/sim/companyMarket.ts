@@ -14,6 +14,7 @@ export function listCompanyCheck(w: World, actor: Citizen, co: Company): string 
   const a = authorize(w, actor.id, coref(co.id), 'own');
   if (a) return a;
   if (co.forSale != null) return 'Already listed.';
+  if (co.locked != null) return 'Held in escrow by a contract.';
   return null;
 }
 
@@ -47,6 +48,7 @@ export function transferCompany(w: World, co: Company, to: AccountRef, price?: n
 export function buyCompanyCheck(w: World, actor: Id, buyer: AccountRef, co: Company | undefined): string | null {
   if (!co) return 'Company not found.';
   if (co.forSale == null) return 'Not for sale.';
+  if (co.locked != null) return 'Held in escrow by a contract.';
   const a = authorize(w, actor, buyer, 'money');
   if (a) return a;
   if (co.owner.k === buyer.k && co.owner.id === buyer.id) return 'You already own it.';

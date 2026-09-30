@@ -15,7 +15,7 @@ const t0 = Date.now();
 for (let d = 0; d < days; d++) {
   advance(w, DAY, false);
   const a = audit(w);
-  if (!a.ok) { console.error('AUDIT FAIL day', d, a.problems.slice(0, 10)); process.exit(1); }
+  if (!a.ok) { console.error('AUDIT FAIL day', d, JSON.stringify(a.problems.slice(0, 10))); process.exit(1); }
   if (d % 10 === 9 || d === days - 1) {
     const n = w.nations[0];
     console.log(`day ${Math.floor(w.time / DAY)} | ${summarize(w)} | N0 food1 ${refPrice(w, 0, 'food:1')} fx ${n.fxAnchor} pres ${w.citizens[n.president!]?.name} appr ${Math.round(n.approval)} tax ${n.taxes.work}/${n.taxes.vat} bld ${w.regions.reduce((s, r) => s + r.bld.hospital + r.bld.fields + r.bld.industrial + r.bld.base, 0)}`);

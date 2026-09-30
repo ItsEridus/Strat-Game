@@ -33,6 +33,8 @@ export function upcoming(w: World): Upcoming[] {
     out.push({ label: `${where}: round ${b.round} ends`, t: b.roundStart + 160, cat: 'war' });
   }
   for (const war of Object.values(w.wars)) if (war.status === 'active' && (war.att === p.nation || war.def === p.nation)) out.push({ label: `War deadline (${w.nations[war.att].name} vs ${w.nations[war.def].name})`, t: war.deadline, cat: 'war' });
-  // Later stages append auctions, mining, tournaments here.
+  for (const a of Object.values(w.auctions)) if (a.status === 'open' && (a.seller === p.id || a.bid?.by === p.id)) out.push({ label: `Auction ends`, t: a.end, cat: 'market' });
+  if (p.mining) out.push({ label: 'Mining shift complete', t: p.mining.end, cat: 'personal' });
+  // Later stages append tournaments and events here.
   return out.filter((u) => u.t > w.time).sort((a, b) => a.t - b.t);
 }

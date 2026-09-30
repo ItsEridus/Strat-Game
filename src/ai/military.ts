@@ -15,6 +15,7 @@ import { distribute, members, setOrder, unitRef } from '../sim/units';
 import { eatUp } from './citizens';
 import { buyBest, listingsFor } from '../sim/market';
 import { relation } from '../sim/congress';
+import { useSpecial } from '../sim/specials';
 
 /** Best weapon a citizen holds for this battle. */
 export function bestWeapon(c: Citizen, b: Battle): WeaponSel {
@@ -72,8 +73,11 @@ export function soldiersTick(w: World) {
     const base = c.persona === 'soldier' ? 0.45 : u ? 0.3 : 0.05;
     const p = base * styleMult(c.fightStyle, seg, u?.doctrine) * (u?.order?.battle === target.id ? 1.4 : 1) * (allyOnly ? 0.3 : 1) * c.traits.activity;
     if (!chance(w, Math.min(0.95, p))) continue;
-    // Late-surgers eat to fight hard in the final segment.
-    if (seg === 3 && (c.fightStyle === 'late' || u?.doctrine === 'surge')) eatUp(w, c, 90);
+    // Late-surgers eat (and take stimulants) to fight hard in the final segment.
+    if (seg === 3 && (c.fightStyle === 'late' || u?.doctrine === 'surge')) {
+      eatUp(w, c, 90);
+      if ((c.inv['sp:steroids'] ?? 0) > 0 && !c.buffs.some((x) => x.type === 'steroids')) useSpecial(w, c, 'steroids');
+    }
     const weapon = bestWeapon(c, target);
     const hits = Math.min(Math.floor(c.energy / B.cost.hit), seg === 3 ? 4 : 2);
     for (let i = 0; i < hits; i++) if (!hit(w, c, target.id, side, weapon && (c.inv[`${weapon.kind}:${weapon.q}`] ?? 0) > 0 ? weapon : bestWeapon(c, target)).ok) break;

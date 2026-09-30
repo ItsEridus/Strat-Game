@@ -16,6 +16,7 @@ import { controller, natref, player } from './query';
 import { relation, propose, eligibleVoters } from './congress';
 import type { ExtraProposal } from './congressExtra';
 import { partyOf } from './politics';
+import { cancelProject } from './construction';
 
 export const MAX_BATTLES_PER_SIDE = 2; // SOLO
 
@@ -276,7 +277,7 @@ export function settle(w: World, war: War, kind: Terms['kind'], offer?: PeaceOff
       r.owner = toAtt ? war.att : war.def;
       transferred.push(`${r.name} → ${w.nations[r.owner].name}`);
       for (const k of Object.keys(r.bld) as (keyof typeof r.bld)[]) r.bld[k] = Math.max(0, r.bld[k] - B.war.buildingDamage);
-      if (r.project != null) { const p = w.projects[r.project]; if (p && !p.done) { p.done = w.time; } r.project = null; }
+      if (r.project != null) { const p = w.projects[r.project]; if (p && !p.done) cancelProject(w, p, 'region changed hands'); r.project = null; }
     }
     r.occ = null;
   }

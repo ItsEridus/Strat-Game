@@ -21,6 +21,12 @@ import { Wars } from './Wars';
 import { BattleScreen } from './Battle';
 import { Units } from './Units';
 import { Equipment } from './Equipment';
+import { Holdings } from './Holdings';
+import { Auctions } from './Auctions';
+import { Contracts } from './Contracts';
+import { Academy } from './Academy';
+import { Mining } from './Mining';
+import { Shop, BusinessMarket } from './Shop';
 
 export interface ScreenDef { id: string; label: string; icon: string; group: string; comp: FunctionComponent<{ w: World }>; hidden?: boolean; badge?: (w: World) => number }
 
@@ -30,10 +36,17 @@ export const SCREENS: ScreenDef[] = [
   { id: 'inventory', label: 'Inventory & Bank', icon: '🎒', group: 'Citizen', comp: Inventory },
   { id: 'missions', label: 'Missions', icon: '🎯', group: 'Citizen', comp: Missions },
   { id: 'equipment', label: 'Equipment', icon: '🪖', group: 'Citizen', comp: Equipment },
+  { id: 'academy', label: 'Academy', icon: '🎓', group: 'Citizen', comp: Academy },
+  { id: 'mining', label: 'Gold Mining', icon: '⛏️', group: 'Citizen', comp: Mining },
   { id: 'jobs', label: 'Employment', icon: '💼', group: 'Economy', comp: Jobs },
   { id: 'companies', label: 'Companies', icon: '🏭', group: 'Economy', comp: Companies },
   { id: 'market', label: 'Goods Market', icon: '🛒', group: 'Economy', comp: Market },
   { id: 'fx', label: 'Currency Market', icon: '💱', group: 'Economy', comp: Currency },
+  { id: 'business', label: 'Business Market', icon: '🏪', group: 'Economy', comp: BusinessMarket },
+  { id: 'holdings', label: 'Holdings & Stocks', icon: '🏢', group: 'Economy', comp: Holdings },
+  { id: 'auctions', label: 'Auctions', icon: '🔨', group: 'Economy', comp: Auctions },
+  { id: 'contracts', label: 'Contracts', icon: '🤝', group: 'Economy', comp: Contracts, badge: (w) => Object.values(w.contracts).filter((c) => c.status === 'open' && c.to === w.playerId).length },
+  { id: 'shop', label: 'Bazaar', icon: '🛍️', group: 'Economy', comp: Shop },
   { id: 'politics', label: 'Parties & Elections', icon: '🗳️', group: 'Politics', comp: Politics },
   { id: 'congress', label: 'Congress', icon: '📜', group: 'Politics', comp: Congress, badge: (w) => Object.values(w.proposals).filter((p) => p.status === 'open' && p.nation === w.citizens[w.playerId].nation && (w.nations[p.nation].deputies.includes(w.playerId) || w.nations[p.nation].president === w.playerId) && !p.votes[w.playerId]).length },
   { id: 'construction', label: 'Construction', icon: '🏗️', group: 'Politics', comp: Construction },

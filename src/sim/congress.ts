@@ -315,9 +315,9 @@ export function aiProposals(w: World) {
     const ceil = taxCeilings(w, n);
     const days = (n.wallet[n.cur] ?? 0) / Math.max(1, avgSpend(n));
     const opts: [ProposalType, Record<string, any>, number][] = [];
-    if (days < 6 && n.taxes.work + 2 <= ceil.work) opts.push(['workTax', { value: n.taxes.work + 2 }, 3 + ideo.taxPref]);
-    if (days > 25 && n.taxes.work > 3) opts.push(['workTax', { value: n.taxes.work - 2 }, 2 - ideo.taxPref]);
-    if (days < 6 && n.taxes.vat + 2 <= ceil.vat) opts.push(['vat', { value: n.taxes.vat + 2 }, 2 + ideo.taxPref]);
+    if (days < 12 && n.taxes.work + 2 <= ceil.work) opts.push(['workTax', { value: n.taxes.work + 2 }, 3 + ideo.taxPref]);
+    if (days > 40 && n.approval < 55 && n.taxes.work > 5) opts.push(['workTax', { value: n.taxes.work - 2 }, 2 - ideo.taxPref]);
+    if (days < 12 && n.taxes.vat + 2 <= ceil.vat) opts.push(['vat', { value: n.taxes.vat + 2 }, 2 + ideo.taxPref]);
     if (n.taxes.work > ceil.work) opts.push(['workTax', { value: Math.floor(ceil.work) }, 5]);
     if (n.unemployment > 0.3 && n.minWage > cur(3)) opts.push(['minWage', { value: n.minWage - cur(1) }, 2]);
     const offers = Object.values(w.companies).filter((co) => co.offer && w.regions[co.region].owner === n.id).map((co) => co.offer!.wage);

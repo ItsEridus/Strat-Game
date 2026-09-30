@@ -68,8 +68,7 @@ export function hitPreview(w: World, c: Citizen, b: Battle | null, side: 'a' | '
   parts.push(`Rank ${rk.name} → ×${rk.mult.toFixed(1)}`);
   let pct = (gs.dmg ?? 0) / 100;
   if (b) pct += (gs[`t_${w.regions[b.region]?.terrain}`] ?? 0) / 100;
-  const ster = buffValue(w, c, 'steroids');
-  if (ster) pct += ster;
+  for (const buff of ['steroids', 'berserk', 'allin', 'uplink']) pct += buffValue(w, c, buff);
   if (pct) parts.push(`Gear & buffs → +${Math.round(pct * 100)}%`);
   mult *= 1 + pct;
   let hit = B.damage.hitChance + c.attrs.acc * B.attrs.acc + (gs.acc ?? 0);

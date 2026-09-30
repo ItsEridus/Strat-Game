@@ -181,10 +181,10 @@ export const BALANCE = {
   newspaper: { cost: 5, revenuePerReader: 0.02 }, // cost WIKI, revenue SOLO
   auctions: { level: 7, listFee: 0.1, sellerCut: 0.05, minHours: 1, maxHours: 48, snipeWindow: 10, snipeExtend: 10 }, // level/cut/durations WIKI; others SOLO
   contracts: { feeFlat: 0.05, feePct: 0.005, giftExemptLevel: 10, expiryDays: 3 }, // SOLO (fee existence DOC)
-  missions: { count: 8, gold: 0.4, prestige: 10, aiGold: 0.2 }, // WIKI; aiGold SOLO (AI citizens earn per completed activity type)
+  missions: { count: 8, gold: 0.4, prestige: 10, aiGold: 0.05 }, // WIKI; aiGold SOLO (AI citizens earn per completed activity type)
   season: { days: 60, tiers: 30, prestigePerTier: 100 }, // SOLO
   mining: { yields: { 1: 0.5, 2: 0.8 } as Record<number, number>, globalMult: 1 }, // WIKI yields
-  studies: { unlockAt: 75, decayPerHour: 1 }, // unlock DOC; decay SOLO (wiki: 4/h)
+  studies: { unlockAt: 75, decayPerHour: 0.25 }, // unlock DOC; decay SOLO (wiki: 4/h; set 0 to disable upkeep)
   travel: { energyPerHop: 5, ticketRange: [1, 2, 3, 4, 6], walkEnergy: 15, qualityDiscount: 0.1 }, // SOLO
   citizenship: { cost: 2 }, // SOLO gold
   nuke: { gold: 750, oil: 12500, iron: 2500, titanium: 5000, prodHours: 48, flightHours: 8 }, // DOC

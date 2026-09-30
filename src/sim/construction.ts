@@ -192,3 +192,17 @@ export function fundProject(w: World, actor: Id, pid: Id): Result {
 }
 
 void studyActive;
+
+/** Close a site without completing it: escrowed materials return to the nation's storage. */
+export function cancelProject(w: World, p: Project, why: string) {
+  if (p.done) return;
+  for (const [k, v] of Object.entries(p.mats)) itemsFromEscrow(w, natref(p.nation), k, v);
+  p.mats = {};
+  p.done = w.time;
+  p.cancelled = true;
+  const r = w.regions[p.region];
+  if (r.project === p.id) r.project = null;
+  const n = w.nations[p.nation];
+  if (n.priorities.project === p.id) n.priorities.project = null;
+  record(w, 'construction', `🏚️ Construction of ${BUILDINGS[p.type].name} L${p.level} in ${r.name} was abandoned (${why}); materials returned to ${n.name}.`, { nation: n.id, region: r.id });
+}

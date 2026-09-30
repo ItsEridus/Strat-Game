@@ -8,13 +8,18 @@ import { dailyOpinion, ministerOfferReply, onRegClose, partyRecruitment, payOffi
 import { aiProposals, congressHourly } from './congress';
 import { aiCitizenshipDecisions, decideCitizenship } from './travel';
 import { developmentAI, laborAI } from '../ai/government';
-import { expireBuffs } from './specials';
+import { aiShop, expireBuffs } from './specials';
 import { aiCompanyMarket } from './companyMarket';
 import { player } from './query';
 import { fail, ok } from '../engine/result';
 import { EXTRA_PROPOSALS } from './congressExtra';
 import { PEACE_PROPOSAL, WAR_PROPOSAL, onWarBattleWon, onWarDeadline, peaceHousekeeping, updateExile, computeSupply } from './war';
 import { battleWonHandlers } from './warHooks';
+import { aiBidding, aiListings, onAuctionEnd } from './auctions';
+import { holdingsDaily } from './holdings';
+import { acceptContract, closeContract, contractsHourly, npcOffers } from './contracts';
+import { academyHourly, aiStudies } from './academy';
+import { aiMining, onMineEnd } from './mining';
 import { aiClaimReserves, defenseBudget, diplomacyDaily, militaryHourly, soldiersTick } from '../ai/military';
 
 let done = false;
@@ -49,6 +54,22 @@ export function registerSystems() {
   tickHooks.push(soldiersTick);
   hourlyHooks.push((w: World) => { militaryHourly(w); peaceHousekeeping(w); });
   dailyHooks.push((w: World) => { diplomacyDaily(w); defenseBudget(w); aiClaimReserves(w); updateExile(w); computeSupply(w); });
+
+  // Stage 4: finance & progression
+  HANDLERS.auctionEnd = (w, p) => onAuctionEnd(w, p.id);
+  HANDLERS.mineEnd = (w, p) => onMineEnd(w, p.cit, p.end);
+  hourlyHooks.push((w: World) => {
+    const h = hourOf(w.time);
+    aiBidding(w);
+    contractsHourly(w);
+    academyHourly(w);
+    aiMining(w);
+    if (h === 7) aiStudies(w);
+    if (h === 16) { aiListings(w); holdingsDaily(w); }
+    if (h === 11) npcOffers(w);
+    if (h === 13) aiShop(w);
+  });
+  REPLY_HANDLERS.contract = (w, m, o) => (o === 'accept' ? acceptContract(w, player(w).id, m.payload!.id) : closeContract(w, player(w).id, m.payload!.id, 'rejected'));
 
   REPLY_HANDLERS.ministerOffer = (w, m, o) => ministerOfferReply(w, m.payload!, o);
   REPLY_HANDLERS.citizenship = (w, m, o) => {

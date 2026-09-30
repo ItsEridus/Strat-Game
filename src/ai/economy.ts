@@ -107,6 +107,9 @@ export function manageCompany(w: World, co: Company) {
   // 4. Owner cash management: keep a buffer, take the rest as profit, top up if short.
   const owner = co.owner.k === 'cit' ? w.citizens[co.owner.id] : null;
   const buffer = payroll * 5 + (ik ? cur(60) : 0);
+  if (co.owner.k === 'hold' && funds() > buffer * 2 && !w.citizens[w.holdings[co.owner.id]?.ceo ?? -1]?.player) {
+    pay(w, ref, co.owner, currency, Math.floor(funds() - buffer * 1.5), `Profit from ${co.name}`);
+  }
   if (owner && funds() > buffer * 2) pay(w, ref, cref(owner.id), currency, Math.floor(funds() - buffer * 1.5), `Profit from ${co.name}`);
   else if (owner && funds() < payroll * 2) {
     const top = Math.min(owner.wallet[currency] ?? 0, payroll * 3);

@@ -72,3 +72,20 @@ export function buySpecial(w: World, c: Citizen, id: string, n: number): Result 
 export function expireBuffs(w: World) {
   for (const c of Object.values(w.citizens)) if (c.buffs.length) c.buffs = c.buffs.filter((b) => b.until > w.time);
 }
+
+/** AI shoppers: soldiers at war buy combat consumables, builders hammers (a gold sink). */
+export function aiShop(w: World) {
+  for (const c of Object.values(w.citizens)) {
+    if (c.player || (c.wallet[GOLD] ?? 0) < g(4)) continue;
+    const atWar = Object.values(w.wars).some((x) => x.status === 'active' && (x.att === c.nation || x.def === c.nation));
+    if (c.persona === 'soldier' && atWar && (c.inv['sp:steroids'] ?? 0) < 1) buySpecial(w, c, 'steroids', 1);
+    else if (c.persona === 'builder' && (c.inv['sp:hammer'] ?? 0) < 1) buySpecial(w, c, 'hammer', 1);
+    else if (c.persona === 'investor' && (c.wallet[GOLD] ?? 0) > g(30) && (c.inv['sp:coffee'] ?? 0) < 1) buySpecial(w, c, 'coffee', 1);
+  }
+  // Use what they bought: builders hammer before labour, soldiers steroids during battles.
+  for (const c of Object.values(w.citizens)) {
+    if (c.player) continue;
+    if (c.persona === 'builder' && (c.inv['sp:hammer'] ?? 0) > 0 && !c.buffs.some((b) => b.type === 'hammer')) useSpecial(w, c, 'hammer');
+    if (c.persona === 'investor' && (c.inv['sp:coffee'] ?? 0) > 0) useSpecial(w, c, 'coffee');
+  }
+}

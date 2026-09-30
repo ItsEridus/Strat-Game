@@ -9,7 +9,7 @@ import { GOLD, g } from '../engine/money';
 import { dayOf } from '../engine/clock';
 import { notify, sendMsg } from '../engine/events';
 import { shuffle } from '../engine/rng';
-import { cref, player } from './query';
+import { cref, player, studyActive } from './query';
 import { addXp } from './citizen';
 import { counter } from './progress';
 import { itemName } from '../data/items';
@@ -167,7 +167,9 @@ export function claimDaily(w: World, id: string): Result {
   if (q.claimed) return fail('Already claimed.');
   if (metric(w, q.metric) - q.base < q.target) return fail('Not complete yet.');
   q.claimed = q.done = true;
-  return ok(`Mission reward: ${grant(w, q.reward, 'Daily mission reward')}.`);
+  const reward = { ...q.reward };
+  if (reward.gold && studyActive(w, player(w), 'biggerincome')) reward.gold = Math.round(reward.gold * 1.25);
+  return ok(`Mission reward: ${grant(w, reward, 'Daily mission reward')}.`);
 }
 
 export function claimSeason(w: World, tier: number): Result {
