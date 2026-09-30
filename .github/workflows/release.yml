@@ -1,0 +1,45 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to publish (e.g. v1.0.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - run: npm ci
+      - run: npm test
+      - name: Build the Windows launcher
+        run: ./launcher/build.sh "$TAG"
+      - name: Package the browser build
+        run: |
+          mkdir -p pkg/MeridianReach
+          cp -r index.html assets dist Play.bat README.md pkg/MeridianReach/
+          (cd pkg && zip -qr "../release/MeridianReach-$TAG-web.zip" MeridianReach)
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: Meridian Reach ${{ env.TAG }}
+          body_path: docs/RELEASE_NOTES.md
+          files: |
+            release/MeridianReach.exe
+            release/MeridianReach-${{ env.TAG }}-web.zip

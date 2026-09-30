@@ -10,9 +10,33 @@ journalists keep the world running whether or not you take part.
 
 No accounts, payments, servers or AI services. Everything runs locally in your browser.
 
+![World map](docs/screenshots/map-world.png)
+
+## Screenshots
+
+| | |
+|---|---|
+| ![Dashboard](docs/screenshots/dashboard.png) **Dashboard:** your citizen, daily actions, news and alerts | ![US states and governors](docs/screenshots/map-states.png) **Every US state and Canadian province** has its own government |
+| ![Military map](docs/screenshots/map-military.png) **Military map:** armies, fleets and air wings on land and at sea | ![Armed forces](docs/screenshots/armed-forces.png) **Armed forces:** service careers, ranks, defence ministry and order of battle |
+| ![Rankings](docs/screenshots/rankings.png) **Rankings:** world power index and citizen leaderboards | ![Intelligence](docs/screenshots/intelligence.png) **Intelligence:** networks, dossiers and covert operations |
+| ![Law & order](docs/screenshots/law-and-order.png) **Law & order:** policing, crime syndicates and courts | ![World situation](docs/screenshots/world-situation.png) **World situation:** wars, crises and diplomacy as they unfold |
+| ![Country](docs/screenshots/country.png) **Country:** government, budget, laws and approval | ![Goods market](docs/screenshots/market.png) **Goods market:** a player-and-AI economy with real supply chains |
+| ![People](docs/screenshots/people.png) **People:** hundreds of AI citizens with their own careers | ![New campaign](docs/screenshots/start.png) **New campaign:** seeded, reproducible worlds |
+
+Screenshots are regenerated with `node tools/screenshots.mjs` (needs Playwright).
+
+## Download (Windows)
+
+Grab **`MeridianReach.exe`** from the [latest release](https://github.com/ItsEridus/Strat-Game/releases/latest)
+and double-click it. It is a single self-contained file: it starts a tiny local server on `127.0.0.1` and opens
+the game in your default browser (saves persist between sessions). It closes itself a minute after you close
+the game tab. Windows SmartScreen may warn about an unsigned app: choose **More info → Run anyway**.
+
+The release also has a `.zip` of the plain browser build for any OS.
+
 ## Launch
 
-**Windows:** double-click `Play.bat`, or run this from the game folder:
+**Windows:** run `MeridianReach.exe` (see above), double-click `Play.bat`, or run this from the game folder:
 
 ```bat
 start "" "%CD%\index.html"
