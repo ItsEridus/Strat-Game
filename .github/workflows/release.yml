@@ -3,6 +3,10 @@ name: Release
 on:
   push:
     tags: ['v*']
+    # Pushing a new version or new release notes to the development branch also publishes a release,
+    # tagged v<package.json version>.
+    branches: [claude/brave-mccarthy-h4uawp]
+    paths: [package.json, docs/RELEASE_NOTES.md, launcher/**, .github/workflows/release.yml]
   workflow_dispatch:
     inputs:
       tag:
@@ -15,10 +19,14 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
-    env:
-      TAG: ${{ github.event.inputs.tag || github.ref_name }}
     steps:
       - uses: actions/checkout@v4
+      - name: Pick the release tag
+        run: |
+          if [ -n "${{ github.event.inputs.tag }}" ]; then TAG="${{ github.event.inputs.tag }}"
+          elif [ "${{ github.ref_type }}" = tag ]; then TAG="${{ github.ref_name }}"
+          else TAG="v$(node -p 'require("./package.json").version')"; fi
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -38,6 +46,8 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TAG }}
+          target_commitish: ${{ github.sha }}
+          make_latest: true
           name: Meridian Reach ${{ env.TAG }}
           body_path: docs/RELEASE_NOTES.md
           files: |
