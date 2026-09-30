@@ -1,6 +1,7 @@
 // Nations are real countries (see src/data/earth.ts); people, companies, parties
 // and papers are invented. Citizen names are drawn from per-country pools.
 import { EARTH } from './earth';
+import { EXTRA_NAMES } from './names-extra';
 
 export const NATION_DEFS = EARTH.nations;
 
@@ -94,3 +95,11 @@ export const SYNDICATE_STYLES: Record<string, { patterns: string[]; words: strin
   KRW: { patterns: ['{C}-pa', '{W}-pa', 'the {L} Faction'], words: ['Chilsung', 'Yangeun', 'Seobang'], kind: 'pa' },
   AUD: { patterns: ['{W} MC', 'the {L} Crew', '{C} Syndicate'], words: ['Rebels', 'Comancheros', 'Bandidos', 'Nomads'], kind: 'bikie gang' },
 };
+
+// Larger societies need more names: merge the extended lists (without duplicates).
+for (const [code, extra] of Object.entries(EXTRA_NAMES)) {
+  const pool = NAME_POOLS[code];
+  if (!pool) continue;
+  pool.first = [...new Set([...pool.first, ...extra.first])];
+  pool.last = [...new Set([...pool.last, ...extra.last])];
+}

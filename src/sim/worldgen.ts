@@ -76,7 +76,7 @@ function genRegions(w: World): Region[] {
  */
 export const residentsFor = (perRegion: number, popReal: number) => Math.max(1, Math.round(perRegion * Math.min(2, Math.max(1, (popReal / 4e6) ** 0.3))));
 
-import { census, invalidateCensus } from './census';
+import { census, invalidateCensus, referenceSociety } from './census';
 export { citizenScale, referenceSociety } from './census';
 
 function personName(w: World, cur: string, used: Set<string>) {
@@ -85,9 +85,12 @@ function personName(w: World, cur: string, used: Set<string>) {
     const n = `${pick(w, pool.first)} ${pick(w, pool.last)}`;
     if (!used.has(n)) { used.add(n); return n; }
   }
-  const n = `${pick(w, pool.first)} ${pick(w, pool.last)} ${used.size}`;
-  used.add(n);
-  return n;
+  // Common names repeat in real life too; a middle initial tells namesakes apart.
+  for (let i = 0; i < 50; i++) {
+    const n = `${pick(w, pool.first)} ${String.fromCharCode(65 + randInt(w, 0, 25))}. ${pick(w, pool.last)}`;
+    if (!used.has(n)) { used.add(n); return n; }
+  }
+  return `${pick(w, pool.first)} ${pick(w, pool.last)}`;
 }
 
 export function newCitizen(w: World, name: string, nation: Id, loc: Id, persona: Persona, ideo: Ideology): Citizen {
@@ -258,7 +261,7 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
   for (const n of w.nations) {
     const cits = census(w).all.filter((c) => c.nation === n.id).length;
     mint(w, natref(n.id), n.cur, cur(cits * B.treasury.startPerCitizen), 'Genesis endowment');
-    mint(w, natref(n.id), GOLD, g(400), 'Genesis endowment');
+    mint(w, natref(n.id), GOLD, g(Math.round(400 * Math.max(1, cits / referenceSociety(n.id)))), 'Genesis endowment'); // reserves sized to the society
     produce(w, natref(n.id), 'iron', 300, 'genesis');
     produce(w, natref(n.id), 'grain', 300, 'genesis');
     produce(w, natref(n.id), 'food:1', 200, 'genesis');

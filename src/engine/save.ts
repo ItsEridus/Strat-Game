@@ -34,6 +34,8 @@ function migrate(w: World, from: number): World {
     const s = w.settings as World['settings'] & { citizensPerNation?: number };
     if (s.citizensPerRegion == null) s.citizensPerRegion = 1;
     delete s.citizensPerNation;
+    if (s.pauseOn.encounter == null) s.pauseOn.encounter = true;
+    if (s.notifyFilter.encounter == null) s.notifyFilter.encounter = true;
   }
   w.version = SAVE_VERSION;
   return w;

@@ -15,6 +15,10 @@ import { activeCrises, KIND_ICON } from '../../sim/dynamics';
 import { crimeLabel } from '../../sim/crime';
 import { activityOf } from '../../sim/npc';
 import { govTemplate } from '../../sim/stategov';
+import { presentIn, residents } from '../../sim/census';
+import { ISSUE_INFO, localIssues, playerCandidacy, pledgeOf } from '../../sim/interact';
+import { Avatar } from '../Avatar';
+import type { Citizen } from '../../sim/types';
 
 export function Dashboard({ w }: { w: World }) {
   const p = player(w);
@@ -33,6 +37,7 @@ export function Dashboard({ w }: { w: World }) {
           <span class="muted small"> Step {w.player.tutorial + 1} of 10 · finishing the tutorial grants enough gold for a first company.</span>
         </Panel>
       )}
+      <YourPlace w={w} />
       <Panel title="Today" right={<small class="muted">{fmtClock(w)}</small>}>
         <div class="actions">
           <div class="action">
@@ -98,7 +103,7 @@ function AroundYou({ w }: { w: World }) {
   const since = w.time - 2 * DAY;
   const local = w.log.filter((e) => e.t >= since && (e.region === p.loc || e.cit === p.id || (e.nation === p.nation && e.important))).slice(-6).reverse();
   const crises = activeCrises(w).filter((c) => c.regions.includes(p.loc) || c.nation === p.nation).slice(0, 3);
-  const nearby = Object.values(w.citizens).filter((c) => c.loc === p.loc && !c.player).sort((a, b) => Math.abs(b.rel[p.id] ?? 0) - Math.abs(a.rel[p.id] ?? 0) || b.influence - a.influence).slice(0, 4);
+  const nearby = presentIn(w, p.loc).filter((c) => !c.player).sort((a, b) => Math.abs(b.rel[p.id] ?? 0) - Math.abs(a.rel[p.id] ?? 0) || b.influence - a.influence).slice(0, 4);
   const cases = Object.values(w.cases).filter((k) => k.status === 'open' && k.suspect === p.id);
   return (
     <Panel title={`📍 Around you: ${r.name}`} class="wide" right={<Btn small kind="ghost" onClick={() => store.go('people')}>People</Btn>}>
@@ -115,6 +120,30 @@ function AroundYou({ w }: { w: World }) {
         {nearby.map((c) => <li><CitLink w={w} id={c.id} /> — {activityOf(w, c)}{(c.rel[p.id] ?? 0) >= 30 ? ' 🤝' : (c.rel[p.id] ?? 0) <= -30 ? ' 😠' : ''}</li>)}
         {local.map((e) => <li class="muted">{e.text}</li>)}
       </ul>
+    </Panel>
+  );
+}
+
+/** The place you are in, the people around you and what is waiting for you. */
+function YourPlace({ w }: { w: World }) {
+  const p = player(w);
+  const r = w.regions[p.loc];
+  const here = presentIn(w, p.loc).filter((c) => !c.player);
+  const top = localIssues(w, p.loc).slice(0, 2);
+  const faces = here.slice().sort((a: Citizen, b: Citizen) => (b.rel[p.id] ?? 0) - (a.rel[p.id] ?? 0) || b.influence - a.influence).slice(0, 8);
+  const cand = playerCandidacy(w);
+  const pledged = cand ? residents(w, p.loc).filter((c) => pledgeOf(w, c) === p.id).length : 0;
+  const news = (r.news ?? []).slice(-2).reverse();
+  return (
+    <Panel title={`🏘️ Your day in ${r.name}`} class="wide around" right={<Btn small kind="primary" onClick={() => store.go('local')}>Go out →</Btn>}>
+      <div class="around-row">
+        <div class="faces">{faces.map((c) => <span class="link" onClick={() => store.go('citizen', { citizen: c.id })}><Avatar c={c} size={34} /></span>)}{here.length > faces.length ? <small class="muted">+{here.length - faces.length}</small> : null}</div>
+        <div class="small">
+          <div>{here.length} people around · worries: {top.map((x) => `${ISSUE_INFO[x.issue].icon} ${ISSUE_INFO[x.issue].name.toLowerCase()}`).join(', ')}</div>
+          {cand && <div class="good">🗳️ Running for {cand.label} · {pledged} residents here promised you their vote</div>}
+          {news.map((x) => <div class="muted">{x.text}</div>)}
+        </div>
+      </div>
     </Panel>
   );
 }

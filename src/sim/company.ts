@@ -2,6 +2,7 @@
 // and wage funds, and creates goods; it refuses to run (with a reason) when
 // labour, funds, inputs or storage capacity are missing.
 import type { AccountRef, Citizen, Company, DayRecord, Id, Industry, World } from './types';
+import { localNews } from './life';
 import { companiesOf, invalidateCensus } from './census';
 import { B } from '../data/balance';
 import { INDUSTRY_INFO, INPUT_OF, itemName, outputKey, weightOf } from '../data/items';
@@ -326,6 +327,7 @@ export function foundCompany(w: World, actor: Citizen, owner: AccountRef, ind: I
   burn(w, owner, GOLD, g(B.company.foundCost[0]), 'Company founding');
   const co = createCompany(w, owner, ind, 1, region, name?.trim() || undefined);
   record(w, 'company', `${actor.name} founded ${co.name} (${INDUSTRY_INFO[ind].name}) in ${w.regions[region].name}.`, { cit: actor.id, region, player: actor.player });
+  localNews(w, region, `🏗️ ${co.name} (${INDUSTRY_INFO[ind].name.toLowerCase()}) opened, founded by ${actor.name}.`);
   if (actor.player) bump(w, 'found');
   return ok(`Founded ${co.name}. Deposit wage funds and post a job offer to start production.`, { id: co.id });
 }

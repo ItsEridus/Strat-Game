@@ -19,6 +19,8 @@ await page.screenshot({ path: `${out}/00-start.png` });
 await page.fill('.form input[type=number]', '7');
 await page.click('text=Start campaign');
 await page.waitForSelector('.topbar');
+// Encounters are covered by tests/e2e-local.mjs; keep them out of the screen tour.
+await page.evaluate(() => { window.meridian.w.player.nextEncounter = 1e12; });
 async function tour(prefix) {
   const navs = await page.$$eval('.nav button', (els) => els.map((e) => e.getAttribute('data-id') || e.textContent.trim()));
   let i = 1;
@@ -41,6 +43,7 @@ const stops = await page.evaluate(() => {
   const s = window.meridian; s.w.settings.pauseOn = {};
   const end = s.w.time + 45 * 1440, reasons = [];
   for (let i = 0; i < 20 && s.w.time < end; i++) { s.jumpTo(end); if (s.w.time < end) reasons.push(s.pauseReason); }
+  s.w.player.encounter = null; s.emit();
   return reasons;
 });
 if (stops.length) console.log('advance paused for:', stops.join(' | '));

@@ -35,6 +35,8 @@ import { intelDaily, replySpyApproach, resolveOp } from './intel';
 import { dynamicsDaily, replyStrike } from './dynamics';
 import { npcDaily, replyBribe, replyDebate, replyInterview, replyLoan } from './npc';
 import { forcesDaily, forcesTick } from './forces';
+import { encountersHourly } from './encounters';
+import { lifeDaily } from './life';
 
 let done = false;
 export function registerSystems() {
@@ -126,6 +128,10 @@ export function registerSystems() {
   REPLY_HANDLERS.bribeOffer = (w, m, o) => replyBribe(w, m.payload!, o);
   REPLY_HANDLERS.interview = (w, m, o) => replyInterview(w, m.payload!, o);
   REPLY_HANDLERS.debate = (w, m, o) => replyDebate(w, m.payload!, o);
+
+  // Stage 8: a lived-in world: encounters with choices
+  hourlyHooks.push(encountersHourly);
+  dailyHooks.push(lifeDaily);
 
   REPLY_HANDLERS.ministerOffer = (w, m, o) => ministerOfferReply(w, m.payload!, o);
   REPLY_HANDLERS.citizenship = (w, m, o) => {

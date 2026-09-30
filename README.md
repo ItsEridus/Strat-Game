@@ -1,7 +1,8 @@
 # Meridian Reach
 
 A single-player society strategy game inspired by the systems of browser strategy MMOs such as Eclesiar
-(original names and writing). You live as **one citizen** among ~400 simulated people on an interactive map
+(original names and writing). You live as **one citizen** among about 12,500 simulated people (a local society of ~24 in every state and
+province) on an interactive map
 of **Earth**, split between sixteen real countries: the United States, Canada, Mexico, Brazil, Argentina, the
 United Kingdom, Germany, Russia, Turkey, Saudi Arabia, South Africa, India, China, Japan, South Korea and
 Australia. Work, trade, found companies and holdings, publish a newspaper, win elections, legislate,
@@ -21,7 +22,8 @@ No accounts, payments, servers or AI services. Everything runs locally in your b
 | ![Rankings](docs/screenshots/rankings.png) **Rankings:** world power index and citizen leaderboards | ![Intelligence](docs/screenshots/intelligence.png) **Intelligence:** networks, dossiers and covert operations |
 | ![Law & order](docs/screenshots/law-and-order.png) **Law & order:** policing, crime syndicates and courts | ![World situation](docs/screenshots/world-situation.png) **World situation:** wars, crises and diplomacy as they unfold |
 | ![Country](docs/screenshots/country.png) **Country:** government, budget, laws and approval | ![Goods market](docs/screenshots/market.png) **Goods market:** a player-and-AI economy with real supply chains |
-| ![People](docs/screenshots/people.png) **People:** hundreds of AI citizens with their own careers | ![New campaign](docs/screenshots/start.png) **New campaign:** seeded, reproducible worlds |
+| ![Neighbourhood](docs/screenshots/neighbourhood.png) **Neighbourhood:** the people where you live, what they're doing and what worries them | ![Conversation](docs/screenshots/conversation.png) **Conversations:** talk to anyone, learn what they care about, win their vote |
+| ![Encounter](docs/screenshots/encounter.png) **Situations:** decisions with visible consequences, about one a day | ![New campaign](docs/screenshots/start.png) **New campaign:** seeded, reproducible worlds |
 
 Screenshots are regenerated with `node tools/screenshots.mjs` (needs Playwright).
 
@@ -57,7 +59,7 @@ Requires Node.js 18+.
 ```sh
 npm install
 npm run build      # rebuild dist/game.js
-npm test           # 51 simulation & acceptance tests
+npm test           # 56 simulation & acceptance tests
 npm run sim -- 90  # 90-day headless world run with an asset audit
 npm run earth      # regenerate src/data/earth.json (downloads Natural Earth data to tools/ne/ on first run)
 ```
@@ -141,6 +143,23 @@ season; epidemics spread along borders until lockdowns stop them; underpaid work
 protests and riots that governments answer with concessions or crackdowns; people migrate and new citizens
 arrive. You can volunteer, donate, march, or (as governor) order lockdowns. (World Situation screen.)
 
+**Your neighbourhood.** Every state and province has its own society of AI citizens (about 24 by default,
+more in populous places) with homes, jobs, schedules, worries and opinions. The Neighbourhood screen shows who is
+around, what they're doing this hour (at work, training, out, asleep, at the front), what the place worries about
+(crime, jobs, prices, pollution, healthcare, taxes, war) and its local news. Walk up and **talk** to anyone: ask
+about their life and learn what they care about, hear local gossip drawn from the real world (who's hiring, who
+runs the rackets, when the election is), ask about their ambitions, argue politics and change their mind, buy them
+a coffee, recruit them to your party or your company, or ask for their vote. **Canvass** door to door and **hold
+rallies** on the issue that matters locally. Residents stand for their region's electorate, so the people you win
+over move real votes: half of every state election follows what the residents themselves decide, and national
+voters weigh relationships and promises. People move house to find work, and it makes the local paper.
+
+**Situations.** About once a day something happens to you and you decide: a lost wallet, a neighbour who can't
+afford food, your staff asking for a raise, a buyout offer, a friend's business pitch, a mugger, a crate of
+stolen rifles, a generous donor with strings attached, a question at a town hall, a protest, a recruiting
+sergeant in wartime, a disaster in your town. Every choice shows its likely consequences first, and every
+consequence is real (money, relationships, police cases, votes).
+
 **People who notice you.** AI citizens pursue ambitions (a governorship, the presidency, a business empire, the
 boss's chair…). Competitors become rivals who attack you in speeches, undercut your prices, poach workers and tip
 off the police; friends vouch for you, warn you and lend money. NPCs offer bribes when you hold office, ask for
@@ -165,8 +184,9 @@ index and citizen leaderboards.)
 **Wars** are declared by congress with goals and a deadline. Battles occupy regions, but ownership only changes
 at settlement. The **Wars** and **Battle** screens explain the scoring ticks, supply and win conditions.
 
-**Saves.** The game autosaves each simulated day, when the tab is hidden, and on close. Settings → Saves has
-three manual slots plus export and import of save files. The world is seeded and deterministic: the same seed
+**Saves.** The game autosaves every few minutes of play, when the window is hidden, and on close. Saves are
+stored compressed in the browser's database (a full world is tens of MB). Settings → Saves has three manual slots
+plus export and import of save files. The world is seeded and deterministic: the same seed
 and actions give the same history.
 
 **Where numbers come from.** Settings → *Balance & sources* marks every value as documented (**DOC**), older wiki

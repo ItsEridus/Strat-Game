@@ -3,6 +3,7 @@ import { store, useStore } from './store';
 import { TopBar } from './TopBar';
 import { SCREENS } from './screens';
 import { StartScreen } from './screens/Start';
+import { ConversationPanel, EncounterModal } from './Overlays';
 
 export function App() {
   const s = useStore();
@@ -48,6 +49,8 @@ export function App() {
           <screen.comp w={w} />
         </main>
       </div>
+      <ConversationPanel w={w} />
+      <EncounterModal w={w} />
       <div class="toasts">{s.toasts.map((t) => <div class={`toast ${t.ok ? 'ok' : 'err'}`}>{t.text}</div>)}</div>
     </div>
   );

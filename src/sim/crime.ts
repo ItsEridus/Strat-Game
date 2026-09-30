@@ -10,6 +10,7 @@
 // player) open cases; evidence builds with policing; arrests lead to trials with
 // fines and prison. AI and player use the same functions.
 import type { Case, Citizen, CrimeKind, Id, Syndicate, World } from './types';
+import { localNews } from './life';
 import { census, nationals, officersOf, presentIn, residents, invalidateCensus } from './census';
 import { B } from '../data/balance';
 import { EARTH } from '../data/earth';
@@ -146,11 +147,12 @@ export function crimeTarget(w: World, rid: Id): number {
 
 // ---------- cases and justice ----------
 
-function openCase(w: World, suspect: Citizen, kind: CrimeKind, rid: Id, evidence: number, loot: number): Case {
+export function openCase(w: World, suspect: Citizen, kind: CrimeKind, rid: Id, evidence: number, loot: number): Case {
   const existing = Object.values(w.cases).find((c) => c.status === 'open' && c.suspect === suspect.id && c.kind === kind && c.region === rid);
   if (existing) { existing.evidence = Math.min(100, existing.evidence + evidence); existing.loot += loot; return existing; }
   const k: Case = { id: nid(w), suspect: suspect.id, kind, region: rid, nation: controller(w.regions[rid]), evidence: Math.min(100, evidence), opened: w.time, status: 'open', detective: null, loot, syndicate: suspect.sec.syndicate };
   w.cases[k.id] = k;
+  localNews(w, rid, `🚨 Police are investigating a ${CRIME_NAME[kind]}.`);
   if (suspect.player) notify(w, 'personal', `🚨 ${policeName(w, rid)} opened a ${CRIME_NAME[kind]} investigation. Evidence ${Math.round(k.evidence)}%.`, { link: 'crime' });
   return k;
 }
@@ -408,6 +410,7 @@ function tryArrest(w: World, k: Case, by: Citizen | null): boolean {
   const s = w.citizens[k.suspect];
   if (!s || jailed(w, s) || controller(w.regions[s.loc]) !== k.nation) return false;
   s.sec.record.arrests++;
+  localNews(w, s.loc, `🚔 ${s.name} was arrested${by ? ` by ${by.name}` : ''} (${CRIME_NAME[k.kind]}).`);
   if (by) {
     by.sec.collars++;
     const next = B.police.rankAt[by.sec.prank + 1];

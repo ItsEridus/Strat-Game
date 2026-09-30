@@ -1,7 +1,24 @@
 ## Meridian Reach
 
-A single-player society strategy game on a map of Earth: live as one citizen among hundreds of simulated
+A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
+
+### New in 1.2: a lived-in world
+
+- **A local society everywhere.** About 24 AI citizens live in every state, province and region (more in
+  populous places): some 12,500 people in all, up from about 400. They have homes, local jobs, daily schedules,
+  worries and opinions, and they move house to find work.
+- **Neighbourhood screen.** See who is around, what they are doing this hour, what the place worries about and
+  its local news, and the businesses that are hiring.
+- **Talk to people.** Ask about their lives and learn what they care about, hear gossip drawn from the real world,
+  argue politics and change minds, buy a coffee, recruit them to your party or company, or ask for their vote.
+- **Campaign in person.** Canvass door to door and hold rallies on local issues. Residents stand for their
+  region's electorate: the people you win over move real votes in state and national elections.
+- **Situations with choices.** About once a day something happens to you (a lost wallet, a worker asking for a
+  raise, a buyout offer, a mugger, a donor with strings attached, a town-hall question, a wartime recruiter, a
+  disaster), and every choice shows its consequences first.
+- **Faster, bigger saves.** The simulation was rebuilt for the larger population, and saves now go to the
+  browser's database, compressed. Saves from 1.1 load and are upgraded.
 
 ### Fixed in 1.1.1
 

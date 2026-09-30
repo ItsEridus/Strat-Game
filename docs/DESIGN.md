@@ -18,8 +18,9 @@ invented. Where the brief marks a rule as **documented** (current announcements)
 ## Stack and architecture
 
 - **TypeScript + Preact**, bundled by **esbuild** into one classic script (`dist/game.js`), so `index.html`
-  runs from `file://` with no server. Saves use `localStorage`, compressed with lz-string, and can be exported
-  and imported as JSON.
+  runs from `file://` with no server. Saves go to IndexedDB, gzip-compressed (CompressionStream), with a
+  small description of each slot in `localStorage`; older lz-string saves in `localStorage` still load. Saves can
+  be exported and imported as JSON.
 - One serialisable `World` object holds all state (`src/sim/types.ts`): clock, RNG state, event queue,
   entities, escrows, pending votes and logs.
 - **Time** (`src/sim/tick.ts`) advances in 10-minute ticks. Scheduled events (elections, war deadlines,
@@ -44,11 +45,10 @@ invented. Where the brief marks a rule as **documented** (current announcements)
   climate zones; dense urban regions count as plains), national capitals and populations. **Hand-written:**
   names, government titles and selection methods, notable resource deposits and farm belts, and sea lanes.
   Shapes stay out of saves; region ids index the static data. Older saves (versions 1–4) are rejected with a
-  message.
+  message; version 5 saves are migrated (home regions, per-region setting).
 - **Procedural per seed** (where it adds replay value without contradicting geography): deposit richness and
   extra deposits (weighted by terrain), background population (each nation's total follows its real population,
-  compressed; regions share it by real urban population), full citizens per nation (0.75×–1.35× the setting by
-  population), each region's electorate leaning (the nation's citizen mix, tilted by how urban it is), election
+  compressed; regions share it by real urban population), full citizens per region (the setting, up to twice as many in populous regions), each region's electorate leaning (the nation's citizen mix, tilted by how urban it is), election
   cycles, generated officials and candidates, starting state taxes and budgets from the ruling ideology.
 - **State governments** (`src/sim/stategov.ts`): one per region with a real government (`null` for England).
   Treasury account `reg`, included in the audit. Revenue: state wage tax on shifts worked in the region,
@@ -112,12 +112,22 @@ invented. Where the brief marks a rule as **documented** (current announcements)
   enlist, earn service points from duty, war damage, victories, hero medals and command, and climb 15-rank
   ladders (command from index 10, flag ranks after 10 days in command). Fog of war hides foreign formations
   unless near your territory or seas, revealed by networks ≥ 50 or military reconnaissance.
+- **Scale** (`src/sim/census.ts`, `src/sim/market.ts`): a derived, unsaved census groups citizens by home region,
+  current region, nation and police force, and companies by region and nation; it is rebuilt at most hourly and
+  invalidated when people move or companies are created. The goods market keeps an order-book index per market
+  and item. AI energy regenerates hourly. Rates that were balanced for a ~24-person society (combat turnout,
+  editorial influence, central-bank reserve targets) scale by `representation` = reference society / actual.
+  A full world simulates a day in about 1.5–4 s headless.
+- **Local life** (`src/sim/life.ts`, `src/sim/interact.ts`, `src/sim/encounters.ts`): what each person is doing
+  this hour; regional news; migration for work; conversations, canvassing and rallies on local issues; pledges;
+  state elections that blend the region's standing lean with its residents' own votes; about one encounter a day
+  with visible consequences (all through the ledger and existing systems).
 - **Modules:** `sim/` (rules), `ai/` (behaviour), `ui/` (screens), `data/` (tables). Later systems plug in
   through `sim/systems.ts` hooks, so depth can be added without touching the loop.
 
 ## The simulated society
 
-- **Full AI citizens** (default 24 per nation scaled by population, 16/24/36 selectable) have identity, persona (worker, soldier, industrialist,
+- **Full AI citizens** (default 24 per region, up to 2× in populous regions; 8/16/24/32 selectable, about 12,500 people at the default) have identity, a home region, persona (worker, soldier, industrialist,
   merchant, politician, builder, journalist, investor), ideology, traits, relationships, skills, inventory,
   jobs, parties and units. They work, train, shop, eat, fight, vote, run for office, legislate, found and
   manage companies, invest, bid, study, mine, build and write.
@@ -157,7 +167,7 @@ invented. Where the brief marks a rule as **documented** (current announcements)
 
 ## Acceptance checklist (brief §17)
 
-All items are covered by automated tests (`npm test`, 51 passing) and the headless audit. The browser smoke
+All items are covered by automated tests (`npm test`, 56 passing) and the headless audit. The browser smoke
 tests `tests/e2e.mjs` and `tests/e2e-play.mjs` check every screen and the tutorial flow for console errors.
 
 | # | Item | Status | Evidence |
@@ -191,9 +201,10 @@ tests `tests/e2e.mjs` and `tests/e2e-play.mjs` check every screen and the tutori
 
 These are deliberate simplifications or gaps against the brief's full wish list:
 
-- **World scale:** sixteen playable countries on a 492-region Earth map, with about 400 full citizens by
-  default. Most regions therefore have few or no full citizens; their economies and electorates are the
-  aggregated background population. Other countries are unplayable neutral land, so some borders (e.g.
+- **World scale:** sixteen playable countries on a 492-region Earth map, with about 12,500 full citizens by
+  default (a local society in every region). Each region's wider economy and electorate is still the aggregated
+  background population, which the residents sample. The simulation runs in the page's main thread, so the
+  fastest speed plays at roughly one day per 1.5–4 real seconds on a full world. Other countries are unplayable neutral land, so some borders (e.g.
   Germany–Turkey) are modelled as corridors. Crimea and Sevastopol are left out of Russia and the Paracel
   Islands out of China; a few tiny remote territories (Jervis Bay, Macquarie Island) are omitted.
 - **Governments:** real titles and selection methods, but not real politicians or parties. National politics

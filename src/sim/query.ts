@@ -57,7 +57,17 @@ export function relationOf(c: Citizen, other: Id) {
 }
 
 /** Combined ideology effect for a nation weighted by congress seats. */
+// seatShare is read on every sale (tax rules), so it is memoised per nation for the current hour.
+const SEAT_MEMO = new WeakMap<Nation, { hour: number; seats: Nation['seats']; shares: Record<string, number> }>();
 export function seatShare(w: World, n: Nation): Record<string, number> {
+  const hour = Math.floor(w.time / 60);
+  const m = SEAT_MEMO.get(n);
+  if (m && m.hour === hour && m.seats === n.seats) return m.shares;
+  const shares = seatShareRaw(w, n);
+  SEAT_MEMO.set(n, { hour, seats: n.seats, shares });
+  return shares;
+}
+function seatShareRaw(w: World, n: Nation): Record<string, number> {
   const shares: Record<string, number> = {};
   let total = 0;
   for (const [pid, seats] of Object.entries(n.seats)) {

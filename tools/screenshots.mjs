@@ -24,6 +24,7 @@ await page.evaluate(() => {
   s.w.settings.pauseOn = {};
   const end = s.w.time + 60 * 1440;
   for (let i = 0; i < 40 && s.w.time < end; i++) s.jumpTo(end);
+  s.w.player.encounter = null; s.w.player.nextEncounter = 1e12; s.emit();
 });
 const shot = async (nav, file, prep, full = false) => {
   await page.click(`.nav button:has-text("${nav}")`);
@@ -48,7 +49,20 @@ await shot('Rankings', 'rankings');
 await shot('Law & Order', 'law-and-order');
 await shot('Intelligence', 'intelligence');
 await shot('World Situation', 'world-situation');
-await shot('People', 'people');
+await shot('Neighbourhood', 'neighbourhood');
+// A conversation with a local.
+await page.evaluate(() => { const s = window.meridian; s.w.player.encounter = null; s.emit(); });
+await page.click('.person .btn:has-text("Talk")');
+for (const label of ['How is life', 'Heard anything']) { const c = page.locator(`.convo .choice:has-text("${label}")`); if (await c.count()) await c.first().click(); await page.waitForTimeout(100); }
+await page.mouse.move(1435, 895);
+await page.screenshot({ path: `${out}/conversation.png` });
+await page.click('.convo .choice:has-text("Say goodbye")');
+// A situation that needs a decision.
+await page.evaluate(() => { const s = window.meridian; s.w.settings.pauseOn = { encounter: true }; s.w.player.nextEncounter = s.w.time; for (let i = 0; i < 72 && !s.w.player.encounter; i++) s.jump(60); s.emit(); });
+await page.waitForTimeout(200);
+await page.mouse.move(1435, 895);
+await page.screenshot({ path: `${out}/encounter.png` });
+await page.evaluate(() => { const s = window.meridian; s.w.player.encounter = null; s.emit(); });
 await shot('Country', 'country', null);
 await shot('Goods Market', 'market');
 console.log(errors.length ? `errors: ${errors.join('; ')}` : 'screenshots saved, no errors');

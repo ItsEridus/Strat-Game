@@ -2,7 +2,7 @@
 // stance and the current situation (not from parsing prose). NPC journalists
 // report real events. Revenue comes from background readers (households).
 import type { Article, Citizen, Id, Newspaper, World } from './types';
-import { census } from './census';
+import { census, nationals, representation } from './census';
 import { B } from '../data/balance';
 import { PAPER_WORDS } from '../data/names';
 import { IDEOLOGIES } from '../data/ideologies';
@@ -11,7 +11,7 @@ import { burn, pay } from '../engine/ledger';
 import { GOLD, c as cur, g } from '../engine/money';
 import { DAY } from '../engine/clock';
 import { nid, notify, record } from '../engine/events';
-import { chance, pick, rand } from '../engine/rng';
+import { chance, pick, rand, randInt } from '../engine/rng';
 import { addXp } from './citizen';
 import { citizensOf, cref, hhref, player } from './query';
 import { partiesOf, partyOf } from './politics';
@@ -87,15 +87,21 @@ export function publish(w: World, c: Citizen, paperId: Id, topic: Topic, stance:
   const effects: string[] = [];
   let votes = 0;
   const comments: { by: Id; text: string }[] = [];
-  const cits = citizensOf(w, p.nation).filter((x) => !x.player);
   const presParty = n.president != null ? w.citizens[n.president]?.party : null;
-  // Individual NPC readers react by their views.
+  // Individual NPC readers react by their views: a sample of the country (subscribers first).
+  const rep = representation(w, p.nation);
+  const all = nationals(w, p.nation);
+  const subs = new Set(p.subs);
+  const sample: Citizen[] = [];
+  for (const id of p.subs) { const x = w.citizens[id]; if (x && !x.player && x.nation === p.nation && sample.length < 50) sample.push(x); }
+  for (let i = 0; i < 30 && all.length; i++) { const x = all[randInt(w, 0, all.length - 1)]; if (!x.player && !subs.has(x.id)) sample.push(x); }
+  const cits = sample;
   for (const r of cits) {
-    if (!chance(w, Math.min(0.9, readers / 400 + (p.subs.includes(r.id) ? 0.6 : 0.1)))) continue;
+    if (!chance(w, Math.min(0.9, (readers * rep) / 400 + (subs.has(r.id) ? 0.6 : 0.1)))) continue;
     const agree = agrees(w, r, stance, c, presParty, target);
     r.rel[c.id] = (r.rel[c.id] ?? 0) + (agree > 0 ? 1.5 : agree < 0 ? -0.8 : 0.3);
     if (agree > 0 && chance(w, 0.5)) votes++;
-    if (agree > 0 && !p.subs.includes(r.id) && chance(w, 0.15)) p.subs.push(r.id);
+    if (agree > 0 && !subs.has(r.id) && chance(w, 0.15)) p.subs.push(r.id);
     if (comments.length < 3 && chance(w, 0.12)) comments.push({ by: r.id, text: comment(w, agree, topic) });
   }
   const influence = Math.round((readers / 60 + votes / 3) * 10) / 10;
@@ -103,7 +109,8 @@ export function publish(w: World, c: Citizen, paperId: Id, topic: Topic, stance:
   effects.push(`+${influence} influence`);
   p.bgSubs += Math.round(readers / 40 + (topic === 'guide' ? 2 : 0));
   // Political effects scale with readership.
-  const k = readers / 2500; // political weight of readership (SOLO)
+  // Political weight of readership (SOLO), relative to the size of the society reading it.
+  const k = Math.min(c.player ? 1.5 : 0.4, readers / 2500) * Math.max(rep, 0.25); // AI editorials: at most ~1 approval point
   if (stance === 'support-gov') { n.approval = Math.min(100, n.approval + 2 * k); effects.push(`approval +${(2 * k).toFixed(1)}`); }
   if (stance === 'oppose-gov') { n.approval = Math.max(0, n.approval - 2 * k); for (const pt of partiesOf(w, n.id)) if (pt.id !== presParty) pt.support += 1.5 * k; effects.push(`approval −${(2 * k).toFixed(1)}`); }
   if (stance === 'promote-party') { const pt = partyOf(w, c); if (pt) { pt.support += 3 * k; effects.push(`${pt.name} support +${(3 * k).toFixed(1)}`); } }
@@ -189,9 +196,13 @@ export function pressDaily(w: World) {
 export function npcJournalism(w: World) {
   const since = w.time - DAY;
   const events = w.log.filter((e) => e.t >= since && e.important);
+  // At most two AI editorials per country per day, however many papers there are.
+  const written: Record<Id, number> = {};
   for (const p of Object.values(w.papers).sort((a, b) => a.id - b.id)) {
     const owner = p.owner.k === 'cit' ? w.citizens[p.owner.id] : null;
     if (!owner || owner.player) continue;
+    if ((written[p.nation] ?? 0) >= 2) continue;
+    written[p.nation] = (written[p.nation] ?? 0) + 1;
     const local = events.filter((e) => e.nation === p.nation || e.nation == null);
     const n = w.nations[p.nation];
     let topic: Topic = 'economy', stance = 'report', title = '';

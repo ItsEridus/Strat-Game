@@ -48,7 +48,11 @@ export const freeCap = (w: World, ref: AccountRef) => {
   return a ? a.cap - usedCap(a.inv) : 0;
 };
 
+/** Diagnostics hook: called for every tracked flow when set (never saved, off in play). */
+export const ledgerTap: { fn: ((ref: AccountRef, why: string, amount: number, asset: AssetId) => void) | null } = { fn: null };
+
 function track(w: World, ref: AccountRef, text: string, amount: number, asset: AssetId) {
+  if (ledgerTap.fn) ledgerTap.fn(ref, text, amount, asset);
   if (ref.k === 'cit' && ref.id === w.playerId) {
     w.ledger.unshift({ t: w.time, text, amount, asset, ref: refKey(ref) });
     if (w.ledger.length > 300) w.ledger.length = 300;

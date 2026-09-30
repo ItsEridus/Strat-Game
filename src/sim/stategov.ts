@@ -11,6 +11,7 @@
 // production bonus) and business support (subsidies to local companies).
 // Heads are generated officials or full citizens, including the player.
 import type { Company, Id, Ideology, StateCandidate, StateGov, World } from './types';
+import { localNews } from './life';
 import { nationals, officersOf, residents } from './census';
 import { B } from '../data/balance';
 import { EARTH, type EarthGov } from '../data/earth';
@@ -190,8 +191,30 @@ function resolveElection(w: World, s: StateGov, announce = true) {
     return sc * rand(w, 0.85, 1.15);
   });
   const total = scores.reduce((a, b) => a + b, 0) || 1;
-  // Background electorate by standing; ballots cast by full citizens (voteState) are added on top.
-  s.candidates.forEach((c, i) => { c.votes = Math.round((electorate * scores[i]) / total) + (c.votes ?? 0); });
+  // The region's residents are a sample of its electorate: half the vote follows the standing mood,
+  // half follows what the residents themselves decide (views, relationships, promises made in person).
+  const locals = residents(w, r.id).filter((c) => !c.player && c.nation === r.owner && c.level >= B.politics.voteLevel && !jailed(w, c));
+  const localVotes = s.candidates.map(() => 0);
+  for (const v of locals) {
+    let best = 0, bestU = -Infinity;
+    s.candidates.forEach((cand, i) => {
+      let u = cand.ideo === v.ideo ? 30 : 12 * (1 - Math.abs(IDEOLOGIES[cand.ideo].hawk - IDEOLOGIES[v.ideo].hawk));
+      if (cand.cit != null) {
+        u += (v.rel[cand.cit] ?? 0) / 3;
+        if (v.flags.pledge === cand.cit && dayOf(w.time) - (v.flags.pledgeDay ?? -99) <= 30) u += 40;
+        if (cand.cit === v.id) u += 100;
+      }
+      if (s.head.name === cand.name) u += (s.approval - 50) / 4;
+      u += rand(w, -8, 8);
+      if (u > bestU) { bestU = u; best = i; }
+    });
+    localVotes[best]++;
+  }
+  const localShare = locals.length >= 3 ? 0.5 : 0;
+  s.candidates.forEach((c, i) => {
+    const share = (1 - localShare) * (scores[i] / total) + localShare * (localVotes[i] / Math.max(1, locals.length));
+    c.votes = Math.round(electorate * share) + (c.votes ?? 0); // ballots cast by the player (voteState) are on top
+  });
   const ranked = [...s.candidates].sort((a, b) => (b.votes ?? 0) - (a.votes ?? 0));
   const win = ranked[0];
   const prev = s.head;
@@ -211,6 +234,7 @@ function resolveElection(w: World, s: StateGov, announce = true) {
   s.candidates = [];
   s.voted = [];
   s.nextElection = w.time + B.state.termDays * DAY;
+  if (announce) localNews(w, r.id, `🗳️ ${win.name} won the election for ${govTemplate(w, r.id)!.title} with ${Math.round(((win.votes ?? 0) / Math.max(1, votesTotal)) * 100)}% of the vote.`);
   if (!announce) return;
   const tpl = govTemplate(w, r.id)!;
   const p = player(w);

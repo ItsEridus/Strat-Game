@@ -102,7 +102,7 @@ function createParty(w: World, nation: Id, ideo: Party['ideo'], leader: Id, name
   return party;
 }
 
-function joinPartyRaw(w: World, c: Citizen, p: Party) {
+export function joinPartyRaw(w: World, c: Citizen, p: Party) {
   if (c.party != null) leavePartyRaw(w, c);
   c.party = p.id;
   if (!p.members.includes(c.id)) p.members.push(c.id);
@@ -317,6 +317,7 @@ function candidateUtility(w: World, voter: Citizen | null, voterIdeo: Citizen['i
   parts.influence = cand.influence / 4;
   parts.party = (cp?.support ?? 0) / 6;
   if (voter) parts.relationship = (voter.rel[cand.id] ?? 0) / 4;
+  if (voter && voter.flags.pledge === cand.id && dayOf(w.time) - (voter.flags.pledgeDay ?? -99) <= 30) parts.pledge = 25; // promised in person
   const presParty = n.president != null ? w.citizens[n.president]?.party : null;
   const incumbentSide = cand.id === n.president || (cp != null && cp.id === presParty);
   if (incumbentSide) {

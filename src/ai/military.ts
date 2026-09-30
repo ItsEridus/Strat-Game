@@ -2,7 +2,7 @@
 // their own energy, food and weapons (bought on the market); commanders and
 // ministries plan battles, supply units and seek peace.
 import type { Battle, Citizen, Id, Nation, World } from '../sim/types';
-import { census } from '../sim/census';
+import { census, representation } from '../sim/census';
 import { B } from '../data/balance';
 import { IDEOLOGIES } from '../data/ideologies';
 import { chance } from '../engine/rng';
@@ -49,6 +49,12 @@ export function soldiersTick(w: World) {
       void side;
     }
   }
+  // Turnout: a nation fields about as many fighters per tick as a society of the reference size
+  // would (representation), drawn from its whole population; people at or next to the front are
+  // three times as likely to be among them.
+  const rep = w.nations.map((n) => representation(w, n.id));
+  const fronts = new Set<number>();
+  for (const b of live) { const r = w.regions[b.region]; if (!r) continue; fronts.add(r.id); for (const l of r.links) fronts.add(l); }
   for (const c of census(w).all) {
     if (c.player || c.mining || c.energy < B.cost.hit) continue;
     const mine = byNation[c.nation];
@@ -56,6 +62,7 @@ export function soldiersTick(w: World) {
       // Event battles (pirates): anyone may join.
       continue;
     }
+    if (rep[c.nation] < 1 && !chance(w, Math.min(1, rep[c.nation] * (fronts.has(c.loc) ? 3 : 0.8)))) continue;
     const u = c.unit != null ? w.units[c.unit] : null;
     const n = w.nations[c.nation];
     let target: Battle | undefined;

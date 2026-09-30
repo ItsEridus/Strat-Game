@@ -1,7 +1,7 @@
 // AI business management and background household demand. AI owners use the
 // same market/company actions (and permission checks) as the player.
 import type { Company, Id, World } from '../sim/types';
-import { census } from '../sim/census';
+import { census, companiesOf, nationals, representation } from '../sim/census';
 import { B } from '../data/balance';
 import { PRODUCTS, RAWS, kindOf, outputKey, qualityOf, refValue } from '../data/items';
 import { consume, mint, pay } from '../engine/ledger';
@@ -185,22 +185,26 @@ export function circulation(w: World) {
 
 /** AI entrepreneurs look for undersupplied goods and found companies to meet demand. */
 export function entrepreneurship(w: World) {
-  for (const n of w.nations) {
+  nations: for (const n of w.nations) {
     if (n.exile) continue;
+    // Producers of each good in this country (a bigger society supports more of them).
+    const byKey = new Map<string, Company[]>();
+    for (const co of companiesOf(w, n.id)) { if (!w.companies[co.id]) continue; const k = outputKey(co.industry, co.q); byKey.set(k, [...(byKey.get(k) ?? []), co]); }
+    const maxProducers = Math.round(8 / representation(w, n.id));
     for (const kind of [...PRODUCTS, ...RAWS] as string[]) {
       const keys = (RAWS as string[]).includes(kind) ? [kind] : [1, 2, 3].map((q) => `${kind}:${q}`);
       for (const key of keys) {
         const supply = listingsFor(w, n.id, key).reduce((s, l) => s + l.qty, 0);
         const traded = (w.trades[`${n.id}|${key}`] ?? []).slice(-3).reduce((s, x) => s + x.qty, 0);
-        const producers = Object.values(w.companies).filter((co) => controller(w.regions[co.region]) === n.id && outputKey(co.industry, co.q) === key).length;
-        const busy = Object.values(w.companies).filter((co) => controller(w.regions[co.region]) === n.id && outputKey(co.industry, co.q) === key)
-          .every((co) => (co.hist[co.hist.length - 1]?.produced ?? 0) > 0 && (!co.offer || co.workers.length >= co.offer.slots));
-        if (traded > 0 && supply < traded / 3 && producers < 8 && busy && chance(w, 0.3)) {
-          const founders = census(w).all.filter((c) => c.nation === n.id && !c.player && (c.persona === 'industrialist' || c.persona === 'investor' || c.persona === 'merchant') && (c.wallet.GOLD ?? 0) > B.company.foundCost[0] * 1000 * 1.5 && (c.wallet[n.cur] ?? 0) > cur(200));
+        const makers = byKey.get(key) ?? [];
+        const producers = makers.length;
+        const busy = makers.every((co) => (co.hist[co.hist.length - 1]?.produced ?? 0) > 0 && (!co.offer || co.workers.length >= co.offer.slots));
+        if (traded > 0 && supply < traded / 3 && producers < maxProducers && busy && chance(w, 0.3)) {
+          const founders = nationals(w, n.id).filter((c) => !c.player && (c.persona === 'industrialist' || c.persona === 'investor' || c.persona === 'merchant') && (c.wallet.GOLD ?? 0) > B.company.foundCost[0] * 1000 * 1.5 && (c.wallet[n.cur] ?? 0) > cur(200));
           const f = founders.sort((a, b) => b.traits.ambition - a.traits.ambition)[0];
           if (!f) continue;
           foundForDemand(w, f.id, kindOf(key), n.id);
-          return; // at most one new company per day world-wide keeps growth readable
+          continue nations; // at most one new company per country per day keeps growth readable
         }
       }
     }
@@ -241,7 +245,8 @@ export function centralBank(w: World) {
     // Anchor drifts toward recent trades by at most maxDailyMove per day.
     const traded = vwap(w, n.cur) ?? n.fxAnchor;
     let anchor = n.fxAnchor + Math.max(-1, Math.min(1, (traded - n.fxAnchor) / n.fxAnchor / B.fx.drift)) * n.fxAnchor * B.fx.drift;
-    const reserve = (n.wallet[GOLD] ?? 0) / (B.fx.reserveTarget * 1000);
+    // The reserve target grows with the society the bank serves (more citizens trade more gold).
+    const reserve = (n.wallet[GOLD] ?? 0) / ((B.fx.reserveTarget * 1000) / representation(w, n.id));
     if (reserve < 0.5) anchor *= 1 + B.fx.pressure; // running out of gold: let currency weaken
     else if (reserve > 1.5) anchor *= 1 - B.fx.pressure; // gold piling up: let currency strengthen
     n.fxAnchor = Math.round(anchor);

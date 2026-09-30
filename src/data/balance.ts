@@ -118,8 +118,14 @@ export const BALANCE = {
     startPerPop: 0.01, // SOLO starting household wallet per resident
     maxStockShare: 0.7, // SOLO households buy at most 70% of the listed stock per shopping round, leaving goods for citizens
   },
+  social: {
+    talkEnergy: 2, // SOLO energy per conversation
+    treatCost: 3, // SOLO currency for a coffee
+    rallyEnergy: 30, // SOLO
+    canvassEnergy: 15, // SOLO
+  },
   population: {
-    companiesPerCitizen: 0.6, // SOLO starting companies relative to the old 24-citizen industry plan (1 = same ratio)
+    companiesPerCitizen: 0.8, // SOLO starting companies relative to the old 24-citizen industry plan (1 = same ratio)
   },
   living: { perDay: 4, discretionary: 0.05, comfort: 150 }, // SOLO daily living costs + 5%/day of cash above 150 spent on lifestyle; paid to the background economy (closes the money loop)
   wages: { start: 8, min: 5 }, // SOLO starting offer and minimum wage (currency)

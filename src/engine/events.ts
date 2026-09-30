@@ -23,6 +23,7 @@ export const NOTICE_CATS: Record<string, { label: string; pauseDefault: boolean 
   personal: { label: 'Personal', pauseDefault: false },
   market: { label: 'Trades & auctions', pauseDefault: false },
   inbox: { label: 'Messages needing a reply', pauseDefault: true },
+  encounter: { label: 'Situations needing a decision', pauseDefault: true },
   progress: { label: 'Rewards & progression', pauseDefault: false },
 };
 

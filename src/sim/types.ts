@@ -253,6 +253,7 @@ export interface Region {
   crime: number; // 0..100 crime rate
   police: number; // 0..100 effective policing
   unrest: number; // 0..100 public unrest
+  news?: { t: number; text: string }[]; // local happenings, newest last (kept short)
   disrupted: number; // production disrupted until this time (disasters, riots, sabotage)
   blockade: Id | null; // nation whose navy blockades this coast
 }
@@ -556,6 +557,33 @@ export interface PlayerState {
   achievements: Record<string, number>;
   watch: Id | null; // battle being watched
   following: Id[];
+  convo?: Convo | null; // conversation in progress
+  talked?: Record<Id, number>; // day the player last talked with each person
+  lastRally?: number; // day of the player's last rally
+  lastCanvass?: number; // day of the player's last canvassing round
+  encounter?: Encounter | null; // situation waiting for the player's decision
+  nextEncounter?: number; // earliest time of the next encounter
+  encounterLog?: { t: number; title: string; outcome: string }[];
+}
+
+/** A conversation with an NPC: what has been said and what the player can say next. */
+export interface Convo {
+  npc: Id;
+  lines: { who: 'npc' | 'you' | 'note'; text: string }[];
+  choices: { id: string; label: string; why?: string }[];
+  used: string[]; // topics already raised
+}
+
+/** A situation the player runs into, with choices whose consequences are shown up front. */
+export interface Encounter {
+  id: Id;
+  kind: string;
+  t: number;
+  icon: string;
+  title: string;
+  text: string;
+  options: { id: string; label: string; hint: string; why?: string }[];
+  data: Record<string, any>;
 }
 
 /** Head of a state/provincial government: a full citizen (cit) or a generated official. */
