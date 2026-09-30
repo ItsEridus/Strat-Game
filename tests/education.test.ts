@@ -70,6 +70,8 @@ test('officer ranks need a commission: officer training for graduates, the acade
   // NPC graduates go to officer training on their own when they reach the bar.
   const npc = census(w).all.find((c) => !c.player && !c.mil.branch && !c.edu?.enrolled)!;
   npc.edu = { level: 'bachelor', field: 'law' };
+  npc.born = w.time - 26 * 24 * DAY; // 26 on this pace of life
+  npc.sec.record.convictions = 0;
   npc.mil = { branch: 'army', rank: 4, sp: 1e6, since: w.time - 5000 * DAY, lastDuty: -1, commands: 0 };
   addSp(w, npc, 1);
   assert.equal(npc.edu.enrolled?.course, 'ocs');

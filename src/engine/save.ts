@@ -18,6 +18,7 @@ import { applyBalance } from '../data/balance';
 import { SAVE_VERSION } from '../sim/worldgen';
 import { initEducation } from '../sim/education';
 import { initServices } from '../sim/services';
+import { initHousing } from '../sim/housing';
 import { newNarrative } from '../sim/story';
 
 const PREFIX = 'meridian-save:';
@@ -88,6 +89,10 @@ function migrate(w: World, from: number): World {
   if (from < 11) {
     // 11: public services (1.3.11): posts filled from qualified local people who are out of work.
     initServices(w);
+  }
+  if (from < 12) {
+    // 12: housing (1.3.13): tenants, owners and grown children at home, by country ownership rates (stable hash).
+    initHousing(w);
   }
   normalizeLife(w);
   w.version = SAVE_VERSION;

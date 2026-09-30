@@ -3,6 +3,22 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.3.13: a place to live
+
+- **Everyone has a home.** People rent, own, or (when young) live with family. Ownership rates follow each country:
+  nine in ten households in China, under half in Germany.
+- **Rents and prices by region.** A room, a flat or a house costs more where people want to live (jobs, safety,
+  good schools and clinics) and less where they're leaving or there's war. Prices drift slowly. A home costs about
+  twenty years of its rent.
+- **Rent, buy, sell.** The new Home panel on the Life screen lists what's available where you are. Renting needs a
+  deposit and the first month. Buying costs the price plus fees, and your old home is sold first. Renting or buying
+  in another region moves you there, and your spouse comes too.
+- **Living costs, split.** Daily costs are now essentials plus your housing: rent for tenants, upkeep and property
+  tax for owners (cheaper day to day), nothing extra while living with family. Your budget shows Housing
+  separately.
+- **Home comforts.** A house or a home of your own lifts happiness, and a shared room lowers it. Still living with
+  family at 28 or older weighs on you. Young adults move out once they work or marry.
+
 ### New in 1.3.12: the military academy
 
 - **Officers need a commission.** Service alone now takes a soldier, sailor or airman as far as the senior enlisted

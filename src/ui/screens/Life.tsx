@@ -18,6 +18,7 @@ import { courseDays, dropOut, eduOfCitizen, enroll, enrollCheck, hasUniversity, 
 import { COURSES, FIELDS, eduOf, type Course, type Field } from '../../data/education';
 import { nationPerm } from '../../sim/authority';
 import { controller } from '../../sim/query';
+import { SIZES, buyCheck, buyHome, housingCost, priceOf, rentCheck, rentHome, rentOf, sellHome, type HomeSize } from '../../sim/housing';
 import { HOBBIES, HOBBY_ENERGY, hobbyCheck, hobbyLevel, pursueHobby } from '../../sim/hobbies';
 import { STATUS_LABEL, breakUp, familyOf, goOnDate, marry, partnerOf, propose, romanceCheck, tryForChild } from '../../sim/family';
 
@@ -75,6 +76,8 @@ export function Life({ w }: { w: World }) {
         {!partner && <Help>Single. Get to know people in your Neighbourhood; once someone likes you (relationship 30+), you can ask them out from their profile.</Help>}
       </Panel>
 
+      <Panel title="Home"><HomePanel w={w} p={p} /></Panel>
+
       <Panel title="Education"><EducationPanel w={w} p={p} /></Panel>
 
       <Panel title="Pets"><Pets w={w} p={p} /></Panel>
@@ -94,6 +97,36 @@ export function Life({ w }: { w: World }) {
           {([['character', '🧍 Character'], ['jobs', '💼 Work'], ['local', '🏘️ Neighbourhood'], ['market', '🛒 Market'], ['companies', '🏭 Companies'], ['politics', '🗳️ Politics'], ['forces', '🎖️ Military'], ['journal', '📓 Journal']] as const).map(([id, label]) => <Btn small kind="ghost" onClick={() => store.go(id)}>{label}</Btn>)}
         </div>
       </Panel>
+    </div>
+  );
+}
+
+function HomePanel({ w, p }: { w: World; p: Citizen }) {
+  const h = p.dwelling;
+  const here = p.loc;
+  const code = w.nations[controller(w.regions[here])].cur;
+  const homeCode = h ? w.nations[controller(w.regions[h.region])].cur : code;
+  const sizes = Object.keys(SIZES) as HomeSize[];
+  return (
+    <div>
+      {h ? (
+        <p>{SIZES[h.size].icon} <b>{h.kind === 'family' ? 'Living with family' : `${h.kind === 'own' ? 'You own' : 'You rent'} a ${SIZES[h.size].label.toLowerCase()}`}</b> in <RegionLink w={w} id={h.region} />
+          {h.kind !== 'family' && <> · {fmtAmt(homeCode, housingCost(w, h))} a day {h.kind === 'rent' ? 'rent' : 'upkeep and property tax'}</>}
+          {h.kind === 'own' && <> · worth about {fmtAmt(homeCode, priceOf(w, h.region, h.size))}{h.paid ? ` (bought for ${fmtAmt(homeCode, h.paid)})` : ''}</>}</p>
+      ) : <Empty>No home on record.</Empty>}
+      <table class="table compact small">
+        <thead><tr><th>In {w.regions[here].name}</th><th class="num">Rent a day</th><th class="num">Price</th><th /></tr></thead>
+        <tbody>{sizes.map((s) => (
+          <tr>
+            <td>{SIZES[s].icon} {SIZES[s].label}</td>
+            <td class="num">{fmtAmt(code, rentOf(w, here, s))}</td>
+            <td class="num">{fmtAmt(code, priceOf(w, here, s))}</td>
+            <td class="row"><ActBtn small why={rentCheck(w, p, s)} run={(w) => rentHome(w, s)}>Rent</ActBtn><ActBtn small why={buyCheck(w, p, s)} run={(w) => buyHome(w, s)}>Buy</ActBtn></td>
+          </tr>
+        ))}</tbody>
+      </table>
+      {h?.kind === 'own' && <ActBtn small kind="ghost" confirm={`Sell your home for about ${fmtAmt(homeCode, Math.floor(priceOf(w, h.region, h.size) * (1 - B.housing.fees)))} after fees?`} run={(w) => sellHome(w)}>Sell your home</ActBtn>}
+      <Help>Renting or buying where you are now makes it your home region; a spouse moves with you. Prices follow how sought-after a region is and change slowly. Renting needs a deposit and the first month; buying costs the price plus {Math.round(B.housing.fees * 100)}% fees.</Help>
     </div>
   );
 }
@@ -237,7 +270,7 @@ function Budget({ w, p }: { w: World; p: Citizen }) {
   const out = cats.filter(([, v]) => v < 0).sort((a, b) => a[1] - b[1]);
   const total = (xs: [string, number][]) => xs.reduce((t, [, v]) => t + v, 0);
   const kids = p.family?.kids.length ?? 0;
-  const fixed = cur(B.living.perDay) + cur(B.family.childPerDay) * kids + petsOf(w, p).reduce((t, x) => t + cur(PET_KINDS[x.kind].upkeep), 0);
+  const fixed = cur(B.living.essentials) + housingCost(w, p.dwelling) + cur(B.family.childPerDay) * kids + petsOf(w, p).reduce((t, x) => t + cur(PET_KINDS[x.kind].upkeep), 0);
   const cash = p.wallet[code] ?? 0;
   const label = (key: string) => { const [y, mo] = key.split('-').map(Number); return `${MONTHS[mo - 1]} ${y}`; };
   const row = ([k, v]: [string, number]) => <tr><td>{k}</td><td class={`num ${v >= 0 ? 'good' : 'bad'}`}>{v >= 0 ? '+' : '−'}{fmtAmt(code, Math.abs(v))}</td></tr>;
@@ -255,7 +288,7 @@ function Budget({ w, p }: { w: World; p: Citizen }) {
         <Stat label="Net">{total(cats) >= 0 ? '+' : '−'}{fmtAmt(code, Math.abs(total(cats)))}</Stat>
       </div>
       {cats.length ? <table class="table compact small"><tbody>{inc.map(row)}{out.map(row)}</tbody></table> : <Empty>No money in or out yet this month.</Empty>}
-      <p class="small muted">Fixed costs: {fmtAmt(code, fixed)} a day (living{kids ? `, ${kids} child${kids > 1 ? 'ren' : ''}` : ''}{petsOf(w, p).length ? ', pets' : ''}). {fixed > 0 ? `Your cash covers about ${Math.floor(cash / fixed)} days of them.` : ''}</p>
+      <p class="small muted">Fixed costs: {fmtAmt(code, fixed)} a day (essentials{p.dwelling && p.dwelling.kind !== 'family' ? (p.dwelling.kind === 'rent' ? ', rent' : ', home upkeep') : ''}{kids ? `, ${kids} child${kids > 1 ? 'ren' : ''}` : ''}{petsOf(w, p).length ? ', pets' : ''}). {fixed > 0 ? `Your cash covers about ${Math.floor(cash / fixed)} days of them.` : ''}</p>
     </div>
   );
 }

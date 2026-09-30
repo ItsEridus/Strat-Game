@@ -14,6 +14,7 @@ import { ageOf } from './growth';
 import { lifeOf } from './lifecycle';
 import { adjustRel } from './social';
 import { petComfort } from './kinship';
+import { SIZES } from './housing';
 
 type Part = [string, number];
 
@@ -57,6 +58,12 @@ function parts(w: World, c: Citizen, friends: number): { happy: Part[]; stress: 
   const d = today(w);
   if (L.lastRest != null && d - L.lastRest <= 1) { happy.push(['rest', 2]); stress.push(['rest', -8]); }
   if (L.lastFamily != null && d - L.lastFamily <= 1) { happy.push(['time with family', 5]); stress.push(['time with family', -3]); }
+  const home = c.dwelling;
+  if (home) {
+    const comfort = SIZES[home.size].comfort + (home.kind === 'own' ? 2 : 0);
+    if (comfort) happy.push([home.kind === 'own' ? 'a home of your own' : SIZES[home.size].label.toLowerCase(), comfort]);
+    if (home.kind === 'family' && ageOf(w, c) >= 28) { happy.push(['still living with family', -2]); stress.push(['still living with family', 2]); }
+  }
   const pet = petComfort(w, c);
   if (pet >= 30) { happy.push(['a pet at home', pet >= 70 ? 4 : 2]); stress.push(['a pet at home', -3]); }
   const g = L.goods;

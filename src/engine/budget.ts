@@ -17,7 +17,7 @@ const RULES: [RegExp, string][] = [
   [/supplies|hobby/i, 'Hobbies'],
   [/flowers|gift/i, 'Gifts'],
   [/tax/i, 'Taxes'],
-  [/rent|mortgage|deposit on|house|home purchase/i, 'Housing'],
+  [/rent|mortgage|deposit|house|home |sale of your/i, 'Housing'],
   [/loan|repayment|debt/i, 'Loans'],
   [/tuition|school|course|university/i, 'Education'],
   [/clinic|treatment|medicine|hospital|doctor/i, 'Health'],

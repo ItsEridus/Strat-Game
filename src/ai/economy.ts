@@ -1,5 +1,6 @@
 // AI business management and background household demand. AI owners use the
 // same market/company actions (and permission checks) as the player.
+import { housingCost } from '../sim/housing';
 import type { Company, Id, World } from '../sim/types';
 import { census, companiesOf, nationals, representation } from '../sim/census';
 import { B } from '../data/balance';
@@ -174,9 +175,11 @@ export function circulation(w: World) {
     const n = w.nations[c.nation];
     const cash = c.wallet[n.cur] ?? 0;
     const kids = c.family?.kids.length ?? 0;
-    const forKids = Math.min(Math.max(0, cash - cur(B.living.perDay)), cur(B.family.childPerDay * kids));
+    const forKids = Math.min(Math.max(0, cash - cur(B.living.essentials)), cur(B.family.childPerDay * kids));
     if (kids && c.player) pay(w, cref(c.id), hhref(c.nation), n.cur, forKids, 'Raising children');
-    const due = cur(B.living.perDay) + (c.player ? 0 : forKids);
+    const home = housingCost(w, c.dwelling);
+    if (c.player && home > 0) pay(w, cref(c.id), hhref(c.nation), n.cur, Math.min(home, Math.max(0, (c.wallet[n.cur] ?? 0) - cur(B.living.essentials))), c.dwelling!.kind === 'rent' ? 'Rent' : 'Home upkeep and property tax');
+    const due = cur(B.living.essentials) + (c.player ? 0 : forKids + home);
     if (cash < due) c.mood = Math.max(-1, c.mood - 0.05);
     // Lifestyle spending: AI citizens spend part of comfortable savings; the player only pays the fixed cost.
     const extra = c.player ? 0 : Math.floor(Math.max(0, cash - due - cur(B.living.comfort)) * B.living.discretionary);

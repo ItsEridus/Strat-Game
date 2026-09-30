@@ -43,6 +43,7 @@ export interface Citizen {
   health?: number; // 0..100 (sim/population.ts); undefined = 90
   life?: LifeProfile; // personal life: wellbeing, milestones, hobbies, goals (sim/lifecycle.ts, sim/wellbeing.ts)
   family?: Family; // partner, parents, children (sim/family.ts)
+  dwelling?: import('./housing').Home; // where and how they live (sim/housing.ts)
   post?: import('./services').Post; // a public-service post (sim/services.ts)
   edu?: import('./education').Education; // qualifications and current course (sim/education.ts)
   retired?: boolean;
@@ -329,7 +330,8 @@ export interface Region {
   pop0?: number; // background population at genesis
   draw?: number; // how attractive the region is to live in, -1..1, smoothed (sim/population.ts)
   blockade: Id | null; // nation whose navy blockades this coast
-  staff?: { school: number; clinic: number; offices: number }; // public-service staffing 0..1 (sim/services.ts)
+  staff?: { school: number; clinic: number; offices: number };
+  housePx?: number; // housing price index, 0.5..2.5, drifts slowly (sim/housing.ts) // public-service staffing 0..1 (sim/services.ts)
 }
 
 export interface Relation { score: number; hist: { t: number; delta: number; why: string }[] }
