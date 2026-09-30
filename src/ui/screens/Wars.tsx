@@ -5,6 +5,7 @@ import { controller, player } from '../../sim/query';
 import { activeWars, enemyOf, invasionCheck, startInvasion, supplyRoute } from '../../sim/war';
 import { fmtWhen } from '../../engine/clock';
 import { B } from '../../data/balance';
+import { useSort } from '../sort';
 
 export function Wars({ w }: { w: World }) {
   const p = player(w);
@@ -12,6 +13,7 @@ export function Wars({ w }: { w: World }) {
   const ended = Object.values(w.wars).filter((x) => x.status === 'ended').sort((a, b) => b.declared - a.declared).slice(0, 10);
   const n = w.nations[p.nation];
   const unsupplied = w.regions.filter((r) => r.owner === p.nation && !r.supplied);
+  const past = useSort('past-wars', ended, { war: (x) => `${w.nations[x.att].name} ${w.nations[x.def].name}`, declared: (x) => x.declared, outcome: (x) => x.chronicle?.ending?.headline ?? x.outcome ?? '' }, { key: 'declared', dir: 'desc' });
   return (
     <div class="grid">
       <Panel title="Wars" class="wide">
@@ -24,8 +26,8 @@ export function Wars({ w }: { w: World }) {
       <Panel title="Past wars" class="wide">
         {ended.length ? (
           <table class="table compact">
-            <thead><tr><th>War</th><th>Declared</th><th>Why it started</th><th>How it ended</th><th /></tr></thead>
-            <tbody>{ended.map((x) => (
+            <thead><tr>{past.th('war', 'War')}{past.th('declared', 'Declared')}<th>Why it started</th>{past.th('outcome', 'How it ended')}<th /></tr></thead>
+            <tbody>{past.rows.map((x) => (
               <tr>
                 <td><NationChip w={w} id={x.att} /> vs <NationChip w={w} id={x.def} /></td>
                 <td class="small">{fmtWhen(w, x.declared)}</td>

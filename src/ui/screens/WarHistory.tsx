@@ -5,6 +5,7 @@ import { Btn, CitLink, Empty, Help, NationChip, Panel, RegionLink } from '../com
 import { store } from '../store';
 import { fmtDate, fmtTime } from '../../engine/calendar';
 import { fmtDur } from '../../engine/clock';
+import { useSort } from '../sort';
 
 const num = (x: number) => Math.round(x).toLocaleString('en-US');
 const when = (w: World, t: number) => `${fmtDate(t, 'medium')} · ${fmtTime(t, !!w.settings.clock24)}`;
@@ -136,18 +137,23 @@ function WhyItStarted({ w, war }: { w: World; war: War }) {
 /** Every war, newest first. */
 function WarArchive({ w }: { w: World }) {
   const wars = Object.values(w.wars).sort((a, b) => b.declared - a.declared);
+  const lasted = (x: War) => (x.chronicle?.ending?.t ?? (x.status === 'active' ? w.time : x.deadline)) - x.declared;
+  const sort = useSort('war-archive', wars, {
+    war: (x) => `${w.nations[x.att].name} ${w.nations[x.def].name}`, declared: (x) => x.declared, lasted, battles: (x) => x.battles.length,
+    outcome: (x) => (x.status === 'active' ? '' : x.chronicle?.ending?.headline ?? x.outcome ?? ''),
+  }, { key: 'declared', dir: 'desc' });
   return (
     <Panel title="War archive" class="wide">
       <Help>Every war since the campaign began: why it started, how it went and why it ended. Open one for its full history.</Help>
       {wars.length ? (
         <table class="table compact">
-          <thead><tr><th>War</th><th>Declared</th><th>Lasted</th><th>Why</th><th>Outcome</th><th /></tr></thead>
+          <thead><tr>{sort.th('war', 'War')}{sort.th('declared', 'Declared')}{sort.th('lasted', 'Lasted')}{sort.th('battles', 'Battles')}<th>Why</th>{sort.th('outcome', 'Outcome')}<th /></tr></thead>
           <tbody>
-            {wars.map((x) => (
+            {sort.rows.map((x) => (
               <tr>
                 <td><NationChip w={w} id={x.att} /> vs <NationChip w={w} id={x.def} /></td>
                 <td class="small">{fmtDate(x.declared, 'short')}</td>
-                <td class="small">{fmtDur((x.chronicle?.ending?.t ?? (x.status === 'active' ? w.time : x.deadline)) - x.declared)}</td>
+                <td class="small">{fmtDur(lasted(x))}</td><td class="small">{x.battles.length}</td>
                 <td class="small">{x.chronicle?.cause?.summary ?? <span class="muted">not recorded</span>}</td>
                 <td class="small">{x.status === 'active' ? 'being fought' : x.chronicle?.ending?.headline ?? x.outcome}</td>
                 <td><Btn small onClick={() => store.go('war', { war: x.id })}>Open</Btn></td>

@@ -115,6 +115,24 @@ async function backAndForward(page) {
   log('new campaign: back and forward retrace screens and profiles');
 }
 
+/** Tables sort by a column when its heading is clicked, and reverse on a second click. */
+async function sorting(page) {
+  await page.evaluate(() => window.meridian.go('jobs'));
+  await page.waitForTimeout(150);
+  const head = page.locator('table:has(th.sortable) th.sortable button', { hasText: 'Industry' }).first();
+  if (!(await head.count())) { log('new campaign: no job offers to sort'); return; }
+  const industries = () => page.$$eval('table:has(th.sortable) tbody tr td:nth-child(2)', (tds) => tds.map((td) => td.textContent.trim().replace(/^\S+\s/, '')));
+  const inOrder = (xs, dir) => xs.every((x, i) => i === 0 || dir * xs[i - 1].localeCompare(x, undefined, { numeric: true, sensitivity: 'base' }) <= 0);
+  await head.click();
+  const up = await industries();
+  check(up.length > 1 && inOrder(up, 1), `sorting: the job market is not A→Z by industry (${up.slice(0, 5).join(', ')})`);
+  await head.click();
+  const down = await industries();
+  check(inOrder(down, -1), `sorting: the job market is not Z→A by industry (${down.slice(0, 5).join(', ')})`);
+  check((await page.getAttribute('table:has(th.sortable) th.sorted', 'aria-sort')) === 'descending', 'sorting: the sorted column is not marked');
+  log(`new campaign: the job market sorts by industry (${up.length} offers)`);
+}
+
 /** Save, reload the page and continue the saved game from the title screen. */
 async function saveReloadContinue(page, where) {
   const before = await page.evaluate(async () => { const s = window.meridian; await s.save('autosave'); return { t: s.w.time, name: s.w.citizens[s.w.playerId].name }; });
@@ -184,6 +202,7 @@ try {
   // Story windows would cover the page from here on.
   await page.evaluate(() => { const s = window.meridian; s.w.story.settings.frequency = 'off'; for (const i of Object.values(s.w.story.instances)) if (i.status === 'offered' || i.status === 'active') i.status = 'declined'; s.emit(); });
   await backAndForward(page);
+  await sorting(page);
   // A conversation with someone in the neighbourhood, if anyone is free to talk.
   await page.evaluate(() => window.meridian.go('local'));
   await page.waitForTimeout(200);

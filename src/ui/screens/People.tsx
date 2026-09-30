@@ -1,5 +1,6 @@
 // People: rivals and allies, the notable figures of your country, and who is
 // around you right now — what they do and what they want.
+import { useSort } from '../sort';
 import { census } from '../../sim/census';
 import { ageOf } from '../../sim/growth';
 import type { Citizen, World } from '../../sim/types';
@@ -8,6 +9,20 @@ import { player } from '../../sim/query';
 import { IDEOLOGIES } from '../../data/ideologies';
 import { activityOf, goalText } from '../../sim/npc';
 import { govTemplate, headOf } from '../../sim/stategov';
+
+/** People, sortable by name, age, role or how they feel about you. */
+function PeopleTable({ w, id, list, role, goal }: { w: World; id: string; list: Citizen[]; role: string; goal: (c: Citizen) => boolean }) {
+  const p = player(w);
+  const sort = useSort(id, list, {
+    name: (c) => c.name, age: { get: (c) => ageOf(w, c), first: 'asc' }, role: (c) => activityOf(w, c), rel: (c) => c.rel[p.id] ?? 0, influence: (c) => c.influence,
+  }, { key: 'influence', dir: 'desc' });
+  return (
+    <table class="table compact">
+      <thead><tr>{sort.th('name', 'Person')}{sort.th('role', role)}{sort.th('rel', 'Toward you')}</tr></thead>
+      <tbody>{sort.rows.map((c) => <Row w={w} c={c} showGoal={goal(c)} />)}</tbody>
+    </table>
+  );
+}
 
 function Row({ w, c, showGoal }: { w: World; c: Citizen; showGoal: boolean }) {
   const p = player(w);
@@ -55,13 +70,11 @@ export function People({ w }: { w: World }) {
       </Panel>
 
       <Panel title={`⭐ Notable figures in ${n.name}`} class="wide">
-        <table class="table compact"><thead><tr><th>Person</th><th>Role · ambition</th><th>Toward you</th></tr></thead>
-          <tbody>{notable.map((c) => <Row w={w} c={c} showGoal={true} />)}</tbody></table>
+        <PeopleTable w={w} id="people-notable" list={notable} role="Role · ambition" goal={() => true} />
       </Panel>
 
       <Panel title={`📍 People in ${w.regions[p.loc].name} (${here.length})`} class="wide">
-        {here.length ? <table class="table compact"><thead><tr><th>Person</th><th>Doing</th><th>Toward you</th></tr></thead>
-          <tbody>{here.slice(0, 40).map((c) => <Row w={w} c={c} showGoal={known(c)} />)}</tbody></table> : <Empty>Nobody you know is here. Travel to cities to meet people (<RegionLink w={w} id={w.nations[p.nation].capital} />).</Empty>}
+        {here.length ? <PeopleTable w={w} id="people-here" list={here.slice(0, 40)} role="Doing" goal={known} /> : <Empty>Nobody you know is here. Travel to cities to meet people (<RegionLink w={w} id={w.nations[p.nation].capital} />).</Empty>}
       </Panel>
     </div>
   );

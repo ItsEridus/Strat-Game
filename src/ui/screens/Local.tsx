@@ -1,6 +1,7 @@
 // Neighbourhood: the place you are in right now — its people, what they are
 // doing this hour, what worries them, its businesses and its news — and the
 // things you can do here in person: talk, canvass, hold a rally.
+import { useSort } from '../sort';
 import { AppointmentsPanel, MeetControls, PlacesPanel } from './Places';
 import { SEASON_ICON, fmtDate, partOfDay, seasonAt } from '../../engine/calendar';
 import { latitudeOf } from '../../data/earth';
@@ -43,6 +44,9 @@ export function Local({ w }: { w: World }) {
   const per = 18;
   const shown = pool.slice(page * per, page * per + per);
   const cos = companiesIn(w, r.id).slice().sort((a, b) => (b.offer && b.workers.length < b.offer.slots ? 1 : 0) - (a.offer && a.workers.length < a.offer.slots ? 1 : 0) || b.workers.length - a.workers.length);
+  const bsort = useSort('local-businesses', cos, {
+    name: (co) => co.name, industry: (co) => INDUSTRY_INFO[co.industry].name, wage: (co) => (co.offer && co.workers.length < co.offer.slots ? co.offer.wage : null),
+  }, { key: 'wage', dir: 'desc' });
   const news = (r.news ?? []).slice().reverse();
   return (
     <div class="grid local">
@@ -80,9 +84,10 @@ export function Local({ w }: { w: World }) {
       </Panel>
 
       <Panel title={`🏪 Local businesses (${cos.length})`}>
-        {cos.length ? <table class="table compact small"><tbody>{cos.slice(0, 12).map((co) => {
+        {cos.length ? <table class="table compact small"><thead><tr>{bsort.th('name', 'Business')}{bsort.th('industry', 'Industry')}{bsort.th('wage', 'Hiring')}</tr></thead><tbody>{bsort.rows.slice(0, 12).map((co) => {
           const open = co.offer && co.workers.length < co.offer.slots;
-          return <tr><td>{INDUSTRY_INFO[co.industry].icon} {co.name} <small class="muted">{grade(co.q)}</small><br /><small class="muted">{co.owner.k === 'cit' ? <CitLink w={w} id={co.owner.id} /> : co.owner.k === 'nat' ? 'state-owned' : 'holding'} · {co.workers.length} staff</small></td>
+          return <tr><td>{co.name} <small class="muted">{grade(co.q)}</small><br /><small class="muted">{co.owner.k === 'cit' ? <CitLink w={w} id={co.owner.id} /> : co.owner.k === 'nat' ? 'state-owned' : 'holding'} · {co.workers.length} staff</small></td>
+            <td>{INDUSTRY_INFO[co.industry].icon} {INDUSTRY_INFO[co.industry].name}</td>
             <td>{open ? <span class="good">hiring · <Amt asset={n.cur} v={co.offer!.wage} /></span> : <span class="muted">full</span>}</td></tr>;
         })}</tbody></table> : <Empty>No businesses here yet — a gap in the market?</Empty>}
         <div class="row"><button class="btn sm" onClick={() => store.go('jobs')}>Find work</button><button class="btn sm" onClick={() => store.go('companies')}>Start a business</button></div>

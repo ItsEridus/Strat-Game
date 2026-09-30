@@ -3,6 +3,20 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.3.5: sort any list
+
+- **Click a column heading to sort.** Click again to reverse. Each table remembers how you left it.
+- **The job market** sorts by employer, industry, grade, place, owner, pay, required skill or openings. It shows
+  each industry by name, and an industry filter narrows it to the jobs you want.
+- **Also sortable:**
+  - your companies and your staff;
+  - offers on the goods market;
+  - the business market, holdings and the stock market, and auctions;
+  - the world power ranking (by army, navy, air force, economy, stability or intelligence);
+  - notable figures and the people around you;
+  - local businesses;
+  - past wars and the war archive.
+
 ### New in 1.3.4: why wars start, and how they end
 
 - **Every war explains itself.** When a country declares war, the game records why:

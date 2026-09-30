@@ -10,20 +10,25 @@ import {
 import { GOLD, c as cur, fmtAmt, g } from '../../engine/money';
 import { B } from '../../data/balance';
 import { INDUSTRY_INFO, grade } from '../../data/items';
+import { useSort } from '../sort';
 
 export function Holdings({ w }: { w: World }) {
   const p = player(w);
   const sel = store.sel.holding != null ? w.holdings[store.sel.holding] : undefined;
   const [name, setName] = useState('');
-  if (sel) return <HoldingDetail w={w} h={sel} />;
   const list = Object.values(w.holdings).sort((a, b) => b.valuation - a.valuation);
+  const sort = useSort('holdings', list, {
+    name: (h) => h.name, ceo: (h) => w.citizens[h.ceo]?.name ?? '', companies: (h) => holdingCompanies(w, h).length, value: (h) => valuation(w, h),
+    price: (h) => lastSharePrice(w, h.id) ?? null, stake: (h) => ownership(w, h, p.id),
+  }, { key: 'value', dir: 'desc' });
+  if (sel) return <HoldingDetail w={w} h={sel} />;
   return (
     <div class="grid">
       <Panel title="Holdings & stock market" class="wide">
         <Help>Holdings own companies, keep their own treasury and storage, and issue shares. Shareholder votes are weighted by the whole share base (a CEO change needs a majority of all shares). Holdings cannot buy shares themselves. Share prices below come from real trades.</Help>
         <table class="table">
-          <thead><tr><th>Holding</th><th>CEO</th><th>Companies</th><th class="num">Value</th><th class="num">Last price</th><th class="num">Your stake</th><th>Price</th></tr></thead>
-          <tbody>{list.map((h) => (
+          <thead><tr>{sort.th('name', 'Holding')}{sort.th('ceo', 'CEO')}{sort.th('companies', 'Companies')}{sort.th('value', 'Value', 'num')}{sort.th('price', 'Last price', 'num')}{sort.th('stake', 'Your stake', 'num')}<th>Price</th></tr></thead>
+          <tbody>{sort.rows.map((h) => (
             <tr class="link-row" onClick={() => store.go('holdings', { holding: h.id })}>
               <td><b>{h.name}</b> <small class="muted">{w.nations[h.nation].name}</small></td>
               <td><CitLink w={w} id={h.ceo} /></td><td>{holdingCompanies(w, h).length}</td>

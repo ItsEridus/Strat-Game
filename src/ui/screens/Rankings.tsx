@@ -2,6 +2,7 @@
 import { militaryTitle } from '../../sim/forces';
 import { census } from '../../sim/census';
 import { useState } from 'preact/hooks';
+import { useSort } from '../sort';
 import type { Citizen, World } from '../../sim/types';
 import { Bar, CitLink, Help, NationChip, Panel } from '../common';
 import { player } from '../../sim/query';
@@ -20,6 +21,11 @@ const wealthOf = (w: World, c: Citizen) => {
 export function Rankings({ w }: { w: World }) {
   const p = player(w);
   const scores = nationScores(w);
+  const ranked = scores.map((s, i) => ({ ...s, rank: i + 1 }));
+  const sort = useSort('power', ranked, {
+    rank: { get: (s) => s.rank, first: 'asc' }, nation: (s) => w.nations[s.id].name, total: (s) => s.total, army: (s) => s.army, navy: (s) => s.navy, air: (s) => s.air,
+    economy: (s) => s.economy, stability: (s) => s.stability, intel: (s) => s.intel,
+  }, { key: 'rank', dir: 'asc' });
   const [board, setBoard] = useState<Board>('military');
   const key: Record<Board, (c: Citizen) => number> = {
     military: (c) => (w.nations[c.nation].president === c.id ? 1e9 : c.mil.branch ? 1000 * c.mil.rank + c.mil.sp : -1), // Commanders-in-Chief head the chain of command
@@ -36,9 +42,9 @@ export function Rankings({ w }: { w: World }) {
     <div class="grid">
       <Panel title="🌍 World power ranking" class="wide">
         <div class="scroll-x"><table class="table compact small">
-          <thead><tr><th>#</th><th>Nation</th><th>Power index</th><th>🪖 Army</th><th>⚓ Navy</th><th>✈️ Air</th><th>Economy</th><th>Stability</th><th>Intelligence</th></tr></thead>
-          <tbody>{scores.map((s, i) => (
-            <tr class={s.id === p.nation ? 'me' : ''}><td>{i + 1}</td><td><NationChip w={w} id={s.id} /></td><td><Bar v={s.total} max={100} color="#e0a526" label={`${s.total}`} /></td>
+          <thead><tr>{sort.th('rank', '#')}{sort.th('nation', 'Nation')}{sort.th('total', 'Power index')}{sort.th('army', '🪖 Army')}{sort.th('navy', '⚓ Navy')}{sort.th('air', '✈️ Air')}{sort.th('economy', 'Economy')}{sort.th('stability', 'Stability')}{sort.th('intel', 'Intelligence')}</tr></thead>
+          <tbody>{sort.rows.map((s) => (
+            <tr class={s.id === p.nation ? 'me' : ''}><td>{s.rank}</td><td><NationChip w={w} id={s.id} /></td><td><Bar v={s.total} max={100} color="#e0a526" label={`${s.total}`} /></td>
               <td><Bar v={s.army} max={maxOf('army')} color="#46b873" label={`${Math.round(s.army)}`} /></td>
               <td><Bar v={s.navy} max={maxOf('navy')} color="#5b8def" label={`${Math.round(s.navy)}`} /></td>
               <td><Bar v={s.air} max={maxOf('air')} color="#8a63d2" label={`${Math.round(s.air)}`} /></td>

@@ -1,3 +1,4 @@
+import { useSort } from '../sort';
 import { useState } from 'preact/hooks';
 import type { World } from '../../sim/types';
 import { ActBtn, CitLink, Empty, Num, Panel, Select, Help } from '../common';
@@ -22,14 +23,18 @@ export function Auctions({ w }: { w: World }) {
   const [min, setMin] = useState(1);
   const [hours, setHours] = useState(24);
   const lotObj = lot.startsWith('g') ? { gear: Number(lot.slice(1)) } : { item: lot.slice(1), qty: 1 };
+  const sort = useSort('auctions', open, {
+    lot: (a) => lotName(w, a), seller: (a) => w.citizens[a.seller]?.name ?? '', ends: { get: (a) => a.end, first: 'asc' },
+    current: (a) => a.bid?.amount ?? a.minBid, bids: (a) => a.bids,
+  }, { key: 'ends', dir: 'asc' });
   return (
     <div class="grid">
       <Panel title="Auction house" class="wide">
         <Help>Equipment and special items sell to the highest gold bidder (adults). Your winning bid is held in escrow; if outbid you are refunded immediately. A bid in the last {B.auctions.snipeWindow} minutes extends the auction. Sellers pay a {B.auctions.listFee}-gold listing fee and {B.auctions.sellerCut * 100}% of the sale.</Help>
         {open.length ? (
           <table class="table">
-            <thead><tr><th>Lot</th><th>Seller</th><th>Ends</th><th class="num">Current</th><th>Bids</th><th /></tr></thead>
-            <tbody>{open.map((a) => {
+            <thead><tr>{sort.th('lot', 'Lot')}{sort.th('seller', 'Seller')}{sort.th('ends', 'Ends')}{sort.th('current', 'Current', 'num')}{sort.th('bids', 'Bids')}<th /></tr></thead>
+            <tbody>{sort.rows.map((a) => {
               const amt = bids[a.id] ?? nextMinBid(a) / 1000;
               return (
                 <tr><td>{lotName(w, a)}{a.gear != null && <small class="muted"> — {statText(w.gear[a.gear])}</small>}</td><td><CitLink w={w} id={a.seller} /></td><td>{fmtWhen(w, a.end)}</td>

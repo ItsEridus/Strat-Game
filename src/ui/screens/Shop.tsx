@@ -2,6 +2,7 @@ import type { World } from '../../sim/types';
 import { ActBtn, Amt, CitLink, Empty, Grade, Panel, RegionLink, Help } from '../common';
 import { cref, player, companyCurrency } from '../../sim/query';
 import { SPECIALS, INDUSTRY_INFO, outputKey, itemName } from '../../data/items';
+import { useSort } from '../sort';
 import { buySpecial, shopPrice } from '../../sim/specials';
 import { buyCompany, buyCompanyCheck, companyValue } from '../../sim/companyMarket';
 import { productionFactors, baseUnits } from '../../sim/company';
@@ -27,18 +28,23 @@ export function Shop({ w }: { w: World }) {
 export function BusinessMarket({ w }: { w: World }) {
   const p = player(w);
   const listed = Object.values(w.companies).filter((c) => c.forSale != null).sort((a, b) => a.forSale! - b.forSale!);
+  const profit14 = (c: (typeof listed)[number]) => c.hist.slice(-14).reduce((s, h) => s + h.profit, 0);
+  const sort = useSort('business-market', listed, {
+    company: (c) => c.name, industry: (c) => INDUSTRY_INFO[c.industry].name, grade: (c) => c.q, where: (c) => w.regions[c.region].name,
+    workers: (c) => c.workers.length, profit: profit14, value: (c) => companyValue(w, c), asking: { get: (c) => c.forSale!, first: 'asc' },
+  }, { key: 'asking', dir: 'asc' });
   return (
     <div class="grid">
       <Panel title="Business market" class="wide">
         <Help>Companies listed for gold. Listed companies produce {`20%`} less until sold (wiki: listing reduces production; size chosen). A purchase moves the gold and ownership atomically; workers, stock, funds and accounting history stay with the company.</Help>
         {listed.length ? (
           <table class="table">
-            <thead><tr><th>Company</th><th>Location</th><th>Owner</th><th>Workers</th><th>Output/shift</th><th class="num">14-day profit</th><th class="num">Est. value</th><th class="num">Asking</th><th /></tr></thead>
-            <tbody>{listed.map((c) => {
+            <thead><tr>{sort.th('company', 'Company')}{sort.th('industry', 'Industry')}{sort.th('grade', 'Grade')}{sort.th('where', 'Location')}<th>Owner</th>{sort.th('workers', 'Workers')}<th>Output/shift</th>{sort.th('profit', '14-day profit', 'num')}{sort.th('value', 'Est. value', 'num')}{sort.th('asking', 'Asking', 'num')}<th /></tr></thead>
+            <tbody>{sort.rows.map((c) => {
               const cur = companyCurrency(w, c);
               const units = baseUnits(c) * productionFactors(w, c, null).mult;
               return (
-                <tr><td>{INDUSTRY_INFO[c.industry].icon} {c.name} · <Grade q={c.q} /></td><td><RegionLink w={w} id={c.region} /></td>
+                <tr><td>{c.name}</td><td>{INDUSTRY_INFO[c.industry].icon} {INDUSTRY_INFO[c.industry].name}</td><td><Grade q={c.q} /></td><td><RegionLink w={w} id={c.region} /></td>
                   <td>{c.owner.k === 'cit' ? <CitLink w={w} id={c.owner.id} /> : c.owner.k}</td><td>{c.workers.length}</td>
                   <td>{units.toFixed(1)} {itemName(outputKey(c.industry, c.q))}</td>
                   <td class="num"><Amt asset={cur} v={c.hist.slice(-14).reduce((s, h) => s + h.profit, 0)} sign /></td>

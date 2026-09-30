@@ -7,6 +7,7 @@ import { bestAsk, buyCheck, buyListing, cancelListing, list, listCheck, listings
 import { GOOD_USE, MARKET_KEYS, itemName, kindOf } from '../../data/items';
 import { c as cur, fmtAmt } from '../../engine/money';
 import { B } from '../../data/balance';
+import { useSort } from '../sort';
 
 const CATS: [string, string][] = [
   ['raw', '🪨 Raw'], ['food', '🍲 Food'], ['wg', '🔫 Ground weapons'], ['wa', '🚀 Air weapons'], ['ticket', '🎫 Tickets'],
@@ -40,6 +41,7 @@ export function Market({ w }: { w: World }) {
   const gross = cur(sp) * sq;
   const tax = Math.round((gross * (taxes.vat + taxes.imp)) / 100);
   const myListings = Object.values(w.listings).filter((l) => l.seller.k === 'cit' && l.seller.id === p.id);
+  const offers = useSort('market-offers', book.slice(0, 40), { seller: (l) => sellerName(w, l.seller), qty: (l) => l.qty, price: { get: (l) => l.price, first: 'asc' } }, { key: 'price', dir: 'asc' });
   return (
     <div class="grid">
       <Panel title="Goods market" class="wide" right={
@@ -64,8 +66,8 @@ export function Market({ w }: { w: World }) {
         <div class="row"><label>Quantity <Num value={qty} min={1} onInput={setQty} /></label></div>
         {book.length ? (
           <table class="table compact">
-            <thead><tr><th>Seller</th><th>Qty</th><th class="num">Price</th><th /></tr></thead>
-            <tbody>{book.slice(0, 15).map((l) => {
+            <thead><tr>{offers.th('seller', 'Seller')}{offers.th('qty', 'Qty')}{offers.th('price', 'Price', 'num')}<th /></tr></thead>
+            <tbody>{offers.rows.slice(0, 15).map((l) => {
               const q = Math.min(qty, l.qty);
               return (
                 <tr><td>{sellerName(w, l.seller)}</td><td>{l.qty}</td><td class="num">{fmtAmt(n.cur, l.price)}</td>

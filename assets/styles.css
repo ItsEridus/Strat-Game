@@ -521,6 +521,17 @@ ul.news li { padding: .3rem 0; border-bottom: 1px solid var(--line); line-height
 .timeline li.def { background: linear-gradient(90deg, transparent, rgba(95, 150, 242, .05)); }
 .timeline .when { color: var(--text-2); font-size: .82rem; }
 @media (max-width: 700px) { .timeline li { grid-template-columns: 70px 22px 1fr; } .factors td.weight { width: 90px; min-width: 70px; } }
+/* sortable tables */
+th.sortable { padding: 0; }
+th.sortable button { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; gap: .3rem; width: 100%; padding: .42rem .5rem; cursor: pointer; font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; }
+.table.compact th.sortable button { padding: .26rem .45rem; }
+th.sortable.num button { justify-content: flex-end; }
+th.sortable button:hover { color: var(--text); }
+th.sortable button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; border-radius: 4px; }
+th.sortable .arrow { font-size: .7em; opacity: .35; }
+th.sortable.sorted { color: var(--gold-hi); }
+th.sortable.sorted .arrow { opacity: 1; }
+.table-tools { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin: .2rem 0 .5rem; }
 /* A part of the interface that failed (the rest of the game keeps running). */
 .ui-error { border-color: rgba(239, 95, 88, .45); margin: .6rem 0; }
 .ui-error h3 { color: var(--bad); margin: 0 0 .3rem; }

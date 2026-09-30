@@ -9,6 +9,7 @@ import {
 } from '../../sim/company';
 import { INDUSTRIES, INDUSTRY_INFO, grade, gradeLc, itemName, outputKey } from '../../data/items';
 import { B } from '../../data/balance';
+import { useSort } from '../sort';
 import { GOLD, c as cur, fmtAmt } from '../../engine/money';
 import { list, listingsFor, cancelListing, refPrice } from '../../sim/market';
 import { usedCap } from '../../engine/ledger';
@@ -20,6 +21,12 @@ export function Companies({ w }: { w: World }) {
   const p = player(w);
   const mine = Object.values(w.companies).filter((co) => !authorize(w, p.id, coref(co.id), 'manage'));
   const sel = store.sel.company != null ? w.companies[store.sel.company] : undefined;
+  const profit1 = (co: (typeof mine)[number]) => co.hist[co.hist.length - 1]?.profit ?? 0;
+  const sort = useSort('companies', mine, {
+    name: (co) => co.name, industry: (co) => INDUSTRY_INFO[co.industry].name, grade: (co) => co.q, region: (co) => w.regions[co.region].name,
+    workers: (co) => co.workers.length, funds: (co) => co.wallet[companyCurrency(w, co)] ?? 0, stock: (co) => co.inv[outputKey(co.industry, co.q)] ?? 0,
+    profit: profit1, status: { get: (co) => co.shortage ?? '', first: 'desc' },
+  }, { key: 'name', dir: 'asc' });
   if (sel && mine.includes(sel)) return <CompanyDetail w={w} co={sel} />;
   return (
     <div class="grid">
@@ -27,16 +34,16 @@ export function Companies({ w }: { w: World }) {
       <Panel title="Your companies" class="wide">
         {mine.length ? (
           <table class="table">
-            <thead><tr><th>Name</th><th>Industry</th><th>Region</th><th>Workers</th><th>Funds</th><th>Stock</th><th>Yesterday</th><th>Status</th></tr></thead>
+            <thead><tr>{sort.th('name', 'Name')}{sort.th('industry', 'Industry')}{sort.th('grade', 'Grade')}{sort.th('region', 'Region')}{sort.th('workers', 'Workers')}{sort.th('funds', 'Funds')}{sort.th('stock', 'Stock')}{sort.th('profit', 'Yesterday')}{sort.th('status', 'Status')}</tr></thead>
             <tbody>
-              {mine.map((co) => {
+              {sort.rows.map((co) => {
                 const c = companyCurrency(w, co);
                 const last = co.hist[co.hist.length - 1];
                 const key = outputKey(co.industry, co.q);
                 return (
                   <tr class="link-row" onClick={() => store.go('companies', { company: co.id })}>
                     <td><b>{co.name}</b>{co.owner.k === 'hold' ? <small class="muted"> (holding)</small> : null}</td>
-                    <td>{INDUSTRY_INFO[co.industry].icon} {INDUSTRY_INFO[co.industry].name} · <Grade q={co.q} /></td>
+                    <td>{INDUSTRY_INFO[co.industry].icon} {INDUSTRY_INFO[co.industry].name}</td><td><Grade q={co.q} /></td>
                     <td><RegionLink w={w} id={co.region} /></td>
                     <td>{co.workers.length}/{co.offer?.slots ?? 0}</td>
                     <td><Amt asset={c} v={co.wallet[c] ?? 0} /></td>
@@ -132,9 +139,7 @@ function CompanyDetail({ w, co }: { w: World; co: Company }) {
           <ActBtn run={(w) => setOffer(w, p.id, co.id, cur(wage), slots, minEco)}>Post offer</ActBtn>
         </div>
         <p class="small muted">Minimum wage {fmtAmt(n.cur, n.minWage)}. Max {B.company.maxWorkers[co.q - 1]} employees at {gradeLc(co.q)} grade. Workers switch employers for ≥15% better net pay; unfilled vacancies mean your wage is uncompetitive.</p>
-        <table class="table compact">
-          <tbody>{co.workers.map((id) => <tr><td><CitLink w={w} id={id} /></td><td>skill {w.citizens[id].eco.toFixed(1)}</td><td><ActBtn small kind="danger" run={(w) => fire(w, p.id, co.id, id)}>Dismiss</ActBtn></td></tr>)}</tbody>
-        </table>
+        {co.workers.length > 0 && <StaffTable w={w} co={co} />}
         {!co.workers.length && <Empty>No employees.</Empty>}
       </Panel>
       <Panel title="Funds">
@@ -193,5 +198,17 @@ function CompanyDetail({ w, co }: { w: World; co: Company }) {
         <p class="small muted">Lifetime: produced {co.lifetime.produced.toLocaleString()}, revenue {fmtAmt(c, co.lifetime.revenue)}, wages {fmtAmt(c, co.lifetime.wages)}. Ownership history: {co.ownerHist.map((h) => `${h.owner.k}#${h.owner.id}`).join(' → ')}.</p>
       </Panel>
     </div>
+  );
+}
+
+/** Employees, sortable by name or skill. */
+function StaffTable({ w, co }: { w: World; co: Company }) {
+  const p = player(w);
+  const sort = useSort('staff', co.workers.map((id) => w.citizens[id]).filter(Boolean), { name: (c) => c.name, skill: (c) => c.eco }, { key: 'skill', dir: 'desc' });
+  return (
+    <table class="table compact">
+      <thead><tr>{sort.th('name', 'Employee')}{sort.th('skill', 'Economic skill')}<th /></tr></thead>
+      <tbody>{sort.rows.map((c) => <tr><td><CitLink w={w} id={c.id} /></td><td>{c.eco.toFixed(1)}</td><td><ActBtn small kind="danger" run={(w) => fire(w, p.id, co.id, c.id)}>Dismiss</ActBtn></td></tr>)}</tbody>
+    </table>
   );
 }
