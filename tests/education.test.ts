@@ -10,6 +10,7 @@ import { census } from '../src/sim/census';
 import { cref, player } from '../src/sim/query';
 import { enroll, enrollCheck, eduOfCitizen, hasUniversity, study, studyCheck, courseDays } from '../src/sim/education';
 import { rank } from '../src/data/education';
+import { addSp } from '../src/sim/forces';
 import { deserialize, serialize } from '../src/engine/save';
 
 registerSystems();
@@ -46,4 +47,30 @@ test('enrol, pay fees to the state, study day by day, graduate', () => {
   assert.ok(audit(w).ok, audit(w).problems.join('; '));
   const w2 = deserialize(serialize(w));
   assert.equal(w2.citizens[p.id].edu!.level, 'vocational');
+});
+
+test('officer ranks need a commission: officer training for graduates, the academy for cadets', () => {
+  const w = fresh(503);
+  w.settings.lifeYearDays = 24;
+  const p = player(w);
+  p.edu = { level: 'school' };
+  p.mil = { branch: 'army', rank: 4, sp: 1e6, since: w.time - 5000 * DAY, lastDuty: -1, commands: 0 };
+  addSp(w, p, 1);
+  assert.equal(p.mil.rank, 4, 'no commission, no officer rank');
+  assert.ok(p.mil.hinted, 'told how to get one');
+  assert.match(enrollCheck(w, p, 'ocs', 'law') ?? '', /bachelor/i);
+  p.born = w.time - 20 * 24 * DAY; // 20 on this pace of life
+  const r = enroll(w, 'academy', 'engineering');
+  assert.ok(r.ok, r.msg);
+  p.loc = w.nations[p.nation].capital;
+  for (let i = 0; i < 200 && p.edu!.enrolled; i++) { advance(w, DAY, false); p.energy = 100; p.loc = w.nations[p.nation].capital; study(w); }
+  assert.equal(p.edu!.level, 'bachelor');
+  assert.ok(p.mil.commissioned);
+  assert.equal(p.mil.rank, 5, 'commissioned as a second lieutenant');
+  // NPC graduates go to officer training on their own when they reach the bar.
+  const npc = census(w).all.find((c) => !c.player && !c.mil.branch && !c.edu?.enrolled)!;
+  npc.edu = { level: 'bachelor', field: 'law' };
+  npc.mil = { branch: 'army', rank: 4, sp: 1e6, since: w.time - 5000 * DAY, lastDuty: -1, commands: 0 };
+  addSp(w, npc, 1);
+  assert.equal(npc.edu.enrolled?.course, 'ocs');
 });

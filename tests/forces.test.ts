@@ -46,6 +46,9 @@ test('service careers: enlist, report for duty, promotion by service and command
   assert.match(dutyCheck(w, p) ?? '', /already/);
   p.mil.since -= 100 * DAY; // long service
   addSp(w, p, 2000);
+  assert.equal(p.mil.rank, 4, 'service alone stops at the senior enlisted ranks');
+  p.mil.commissioned = true; // officer training passed
+  addSp(w, p, 1);
   const ladder = RANKS.navy;
   assert.ok(ladder[p.mil.rank].command && !ladder[p.mil.rank].flag, 'promoted up to command rank, flag ranks need command time');
   const fleet = formationsOf(w, p.nation).find((f) => f.branch === 'navy')!;
@@ -135,6 +138,7 @@ test('civilian control: office holders pass to the reserve; the head of governme
   // The player enlists, rises to command rank, then enters congress.
   assert.ok(enlist(w, p, 'army').ok);
   p.mil.since -= 200 * DAY;
+  p.mil.commissioned = true;
   addSp(w, p, 700);
   const fleet = formationsOf(w, p.nation).find((f) => f.branch === 'army')!;
   fleet.commander = null;

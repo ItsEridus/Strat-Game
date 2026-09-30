@@ -4,7 +4,7 @@
 // tuition is a year at a public university in game money (1.5.0 re-anchors
 // prices); funding is the default share of daily national revenue.
 export type EduLevel = 'none' | 'school' | 'vocational' | 'bachelor' | 'master' | 'doctorate';
-export type Course = 'vocational' | 'bachelor' | 'master' | 'doctorate';
+export type Course = 'vocational' | 'bachelor' | 'master' | 'doctorate' | 'academy' | 'ocs';
 export type Field = 'business' | 'engineering' | 'medicine' | 'law' | 'teaching' | 'science' | 'arts' | 'trades';
 
 export const LEVELS: EduLevel[] = ['none', 'school', 'vocational', 'bachelor', 'master', 'doctorate'];
@@ -18,6 +18,8 @@ export const COURSES: Record<Course, { label: string; years: number; needs: EduL
   bachelor: { label: "Bachelor's degree", years: 3, needs: 'school', uni: true, tuition: 1, icon: '🎓' },
   master: { label: "Master's degree", years: 2, needs: 'bachelor', uni: true, tuition: 1.2, icon: '📜' },
   doctorate: { label: 'Doctorate', years: 4, needs: 'master', uni: true, tuition: 0.3, icon: '🔬' },
+  academy: { label: 'Military academy', years: 4, needs: 'school', uni: false, tuition: 0, icon: '🎖️' }, // a degree and a commission; cadets pay no fees
+  ocs: { label: 'Officer training', years: 0.25, needs: 'bachelor', uni: false, tuition: 0, icon: '⭐' }, // a commission for graduates
 };
 
 export const FIELDS: Record<Field, { label: string; icon: string; skills: ('eco' | 'lead' | 'cons' | 'acc' | 'end')[] }> = {

@@ -36,7 +36,7 @@ stages go out in slices.
 | CLK | Clock overhaul: real calendar, descriptive date and time, seasons, slower time | Done |
 | N3 | Narrative stage 3: districts, venues, familiarity, availability, appointments | Done |
 | L2 | Family graph with real children, pregnancy, adoption, guardians, siblings; hobbies, pets, gifts; story protagonists and memory subjects; budgets | Done: groundwork 1.3.2; pregnancy, siblings, gifts, pets 1.3.6; hobbies 1.3.7; adoption, care, guardians, child costs 1.3.8; memory subjects, protagonists, budgets 1.3.9 |
-| L3 | Schools, universities, clinics and offices as funded institutions; education ladder; qualifications; service careers (teaching, clinical care, administration, technical); work history; promotions; military academy | In progress: schools, universities, education ladder 1.3.10; public-service careers, promotions, work history 1.3.11 |
+| L3 | Schools, universities, clinics and offices as funded institutions; education ladder; qualifications; service careers (teaching, clinical care, administration, technical); work history; promotions; military academy | Done: schools, universities, education ladder 1.3.10; public-service careers, promotions, work history 1.3.11; military academy and commissions 1.3.12 |
 | L4 | Housing (rent/buy/sell); obligations (loans, mortgages, student loans); conditions and treatment; leave; retirement and funded pensions (incl. veterans); living-cost split | Planned |
 | L5 | Birth start; childhood and parenting; player mortality; wills, trusts, estates, heirlooms | Planned |
 | L6 | Succession to heirs; legacy archive; 8 life chains + 16 standalone encounters; narrative stage 4's five chains; NPC AI parity | Planned |
@@ -184,6 +184,18 @@ and employment (1.5), policing, crime careers and prisons (1.7), and weather and
 - Memories carry a subject (`Memory.about`; `remember(…, about)`, `memoriesOf(w, id, about)`), stories a protagonist
   (`protagonist`, used by `Ctx.p`); `familyRegard` gives reputation by association. Succession (L6) switches both.
 - `src/engine/budget.ts`: every player money movement summed by category and calendar month (13 months kept).
+
+### L3: institutions, education and careers (1.3.10–1.3.12)
+- `src/data/education.ts`: levels, courses (vocational, bachelor, master, doctorate, military academy, officer
+  training), fields, and per-country tertiary shares, tuition and education funding.
+- `src/sim/education.ts`: universities in capitals and larger regions; school quality from national funding (paid
+  to households as teachers' pay), development and staffing; enrolment with prerequisites and yearly fees to the
+  state; daily study (skills of the field); graduation milestones; NPC students; funding lever for the government.
+- `src/sim/services.ts`: teachers, nurses, doctors, civil servants and public engineers with five-grade ladders,
+  qualifications per grade, treasury salaries with work tax, promotions on service and merit, vacancies filled by
+  qualified locals, staffing feeding schools and health; work history for every job.
+- Officer ranks need a commission (`MilService.commissioned`): the academy (cadets to 24, grants a bachelor's) or
+  officer training (graduates); NPCs take the same routes when they reach the bar.
 
 ## Tests
 - `tests/life.test.ts` (6): death/estate/offices, special election, emigration, coming of age, the player's romance,

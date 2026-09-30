@@ -94,6 +94,8 @@ export type Branch = 'army' | 'navy' | 'air';
 export interface MilService {
   branch: Branch | null;
   rank: number; // index into the branch's rank ladder
+  commissioned?: boolean; // passed the military academy or officer training (needed for officer ranks)
+  hinted?: boolean; // the player was told how to earn a commission
   sp: number; // service points (promotion)
   since: number; // enlistment time
   lastDuty: number;

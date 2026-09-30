@@ -3,6 +3,19 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.3.12: the military academy
+
+- **Officers need a commission.** Service alone now takes a soldier, sailor or airman as far as the senior enlisted
+  ranks (staff sergeant, chief petty officer, master sergeant). Officer ranks need a commission. The game tells you
+  when you reach that point.
+- **Two ways to earn one,** from Education on the Life screen, at your country's military academy in the capital:
+  - **Military academy:** four years for cadets aged 24 or under. You graduate with a bachelor's degree in your
+    chosen field and a commission. No fees.
+  - **Officer training:** about three months for anyone with a bachelor's degree.
+- **Enlisted when you pass?** You're commissioned straight away as a second lieutenant (or ensign).
+- **The same for everyone.** Soldiers across the world go to officer training or the academy when they reach the
+  officer ranks, so new officers keep coming as the old ones retire. Officers already serving keep their ranks.
+
 ### New in 1.3.11: careers in public service
 
 - **Five public-service careers.** Teacher, nurse, doctor, civil servant and public engineer, each with a ladder of

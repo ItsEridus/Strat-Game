@@ -13,6 +13,8 @@
 // through real rank ladders to command formations; the most senior officer
 // becomes chief of staff. AI defence ministries raise, supply, deploy and order
 // forces by the same rules the player's government uses.
+import { enroll, enrollCheck } from './education';
+import { rank } from '../data/education';
 import { lifeGate, milestone } from './lifecycle';
 import { ageOf, seniority, serviceDays } from './growth';
 import type { Battle, Branch, Citizen, Formation, FormationKind, Id, Ministry, World } from './types';
@@ -458,6 +460,14 @@ export function addSp(w: World, c: Citizen, sp: number) {
     const next = ladder[c.mil.rank + 1];
     if (c.mil.sp < next.sp || serviceDays(w, c) < next.days) break;
     if (next.flag && c.mil.commands < 10) break; // flag ranks need 10 days of formation command
+    if (c.mil.rank + 1 === 5 && !c.mil.commissioned) { // officer ranks need a commission (academy or officer training)
+      if (!c.player && !c.edu?.enrolled) {
+        const course = rank(c.edu?.level ?? 'school') >= rank('bachelor') ? 'ocs' : 'academy'; // graduates train as officers; young NCOs go to the academy
+        if (!enrollCheck(w, c, course, c.edu?.field ?? 'engineering')) enroll(w, course, c.edu?.field ?? 'engineering', c);
+      }
+      if (c.player && !c.mil.hinted) { c.mil.hinted = true; notify(w, 'progress', `🎖️ You have the service for an officer's rank. Officer ranks need a commission: officer training for graduates, or the military academy (Life → Education).`, { link: 'life' }); }
+      break;
+    }
     c.mil.rank++;
     if (c.player) notify(w, 'progress', `🎖️ Promoted to ${next.name}${next.command && !ladder[c.mil.rank - 1].command ? ' — you can now command a formation' : ''}.`, { link: 'forces' });
     else if (next.flag && c.nation === player(w).nation) record(w, 'military', `🎖️ ${c.name} was promoted to ${next.name}.`, { cit: c.id, nation: c.nation });

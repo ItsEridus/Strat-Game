@@ -16,6 +16,7 @@ import { controller, cref, hhref, jailed, natref, player, today } from './query'
 import { ageOf, lifeYear, practise } from './growth';
 import { lifeOf, milestone } from './lifecycle';
 import { nationPerm } from './authority';
+import { RANKS } from '../data/military';
 
 export interface Education {
   level: EduLevel;
@@ -57,8 +58,13 @@ export function enrollCheck(w: World, c: Citizen, course: Course, field: Field):
   const e = eduOfCitizen(c);
   if (e.enrolled) return `You are already studying for a ${COURSES[e.enrolled.course].label.toLowerCase()}.`;
   if (rank(e.level) < rank(k.needs)) return `Needs a ${LEVEL_LABEL[k.needs].toLowerCase()} first.`;
-  if (rank(e.level) >= rank(course) && e.field === field) return 'You already hold this qualification.';
-  const r = w.regions[c.home];
+  if (course === 'academy' || course === 'ocs') {
+    if (commissioned(c)) return 'You already hold a commission.';
+    if (course === 'academy' && ageOf(w, c) > 24) return 'Cadets enter the military academy by 24; graduates can take officer training instead.';
+    if (ageOf(w, c) > B.forces.maxEnlistAge) return `Officer candidates must be ${B.forces.maxEnlistAge} or younger.`;
+    if (c.sec.record.convictions > 0) return 'Officer candidates need a clean record.';
+  } else if (rank(e.level) >= rank(course) && e.field === field) return 'You already hold this qualification.';
+  const r = w.regions[courseRegion(w, c, course)];
   if (k.uni && !hasUniversity(w, r)) return `There is no university in ${r.name}; move to a larger city.`;
   const nat = controller(r);
   const fee = tuitionYear(w, nat, course);
@@ -71,14 +77,18 @@ export function enrollCheck(w: World, c: Citizen, course: Course, field: Field):
 export function enroll(w: World, course: Course, field: Field, c: Citizen = player(w)): Result {
   const why = enrollCheck(w, c, course, field);
   if (why) return fail(why);
-  const r = w.regions[c.home];
+  const r = w.regions[courseRegion(w, c, course)];
   const nat = controller(r);
   const fee = tuitionYear(w, nat, course);
   if (fee > 0) pay(w, cref(c.id), natref(nat), w.nations[nat].cur, fee, `Tuition: ${COURSES[course].label}`);
   eduOfCitizen(c).enrolled = { course, field, region: r.id, since: w.time, days: 0, need: courseDays(w, course), lastDay: -1, paidYears: 1 };
   if (c.player) { routineOfPlayer(w).school = true; }
-  return ok(`${COURSES[course].icon} Enrolled: ${COURSES[course].label} in ${FIELDS[field].label.toLowerCase()} at ${hasUniversity(w, r) && COURSES[course].uni ? `the University of ${r.name}` : `${r.name} College`}. Study days needed: ${courseDays(w, course)}.`);
+  return ok(`${COURSES[course].icon} Enrolled: ${COURSES[course].label} in ${FIELDS[field].label.toLowerCase()} at ${course === 'academy' || course === 'ocs' ? `the ${w.nations[c.nation].adj} military academy in ${r.name}` : hasUniversity(w, r) && COURSES[course].uni ? `the University of ${r.name}` : `${r.name} College`}. Study days needed: ${courseDays(w, course)}.`);
 }
+/** Military courses are held at the national academy in the capital; the rest locally. */
+const courseRegion = (w: World, c: Citizen, course: Course) => (course === 'academy' || course === 'ocs' ? w.nations[c.nation].capital : c.home);
+const commissionRank = (c: Citizen) => RANKS[c.mil.branch!][5].name;
+export const commissioned = (c: Citizen) => !!c.mil?.commissioned || (c.mil?.branch != null && c.mil.rank >= 5);
 const routineOfPlayer = (w: World) => (w.player.routine ??= { work: false, train: w.settings.autoTrain, family: false, rest: false, hobby: null, school: false });
 
 export function studyCheck(w: World, c: Citizen): string | null {
@@ -110,10 +120,16 @@ export function study(w: World, c: Citizen = player(w)): Result {
 function graduate(w: World, c: Citizen): string {
   const ed = eduOfCitizen(c);
   const e = ed.enrolled!;
-  if (rank(e.course) >= rank(ed.level)) { ed.level = e.course; ed.field = e.field; }
+  const military = e.course === 'academy' || e.course === 'ocs';
+  if (e.course === 'academy' && rank('bachelor') >= rank(ed.level)) { ed.level = 'bachelor'; ed.field = e.field; }
+  else if (!military && rank(e.course as EduLevel) >= rank(ed.level)) { ed.level = e.course as EduLevel; ed.field = e.field; }
   delete ed.enrolled;
+  if (military) {
+    c.mil.commissioned = true;
+    if (c.mil.branch && c.mil.rank < 5 && !c.mil.reserve) { c.mil.rank = 5; if (c.player) notify(w, 'progress', `⭐ Commissioned as ${commissionRank(c)}.`, { critical: true, link: 'forces' }); }
+  }
   c.influence += e.course === 'doctorate' ? 5 : e.course === 'master' ? 3 : 2;
-  const text = `graduated with a ${COURSES[e.course].label.toLowerCase()} in ${FIELDS[e.field].label.toLowerCase()}`;
+  const text = military ? `passed ${e.course === 'academy' ? `the military academy (a degree in ${FIELDS[e.field].label.toLowerCase()})` : 'officer training'} and earned a commission` : `graduated with a ${COURSES[e.course].label.toLowerCase()} in ${FIELDS[e.field].label.toLowerCase()}`;
   milestone(w, c, 'education', text);
   if (c.player) { notify(w, 'personal', `🎓 You ${text}!`, { critical: true, link: 'life' }); routineOfPlayer(w).school = false; }
   return `🎓 You ${text}!`;
