@@ -22,7 +22,21 @@ export function Wars({ w }: { w: World }) {
       {wars.map((war) => <WarCard w={w} war={war} />)}
       {!wars.length && <Panel title="Active wars"><Empty>The Reach is at peace.</Empty></Panel>}
       <Panel title="Past wars" class="wide">
-        {ended.length ? <table class="table compact"><tbody>{ended.map((x) => <tr><td><NationChip w={w} id={x.att} /> vs <NationChip w={w} id={x.def} /></td><td>{fmtWhen(w, x.declared)}</td><td class="small">{x.outcome}</td></tr>)}</tbody></table> : <Empty>None yet.</Empty>}
+        {ended.length ? (
+          <table class="table compact">
+            <thead><tr><th>War</th><th>Declared</th><th>Why it started</th><th>How it ended</th><th /></tr></thead>
+            <tbody>{ended.map((x) => (
+              <tr>
+                <td><NationChip w={w} id={x.att} /> vs <NationChip w={w} id={x.def} /></td>
+                <td class="small">{fmtWhen(w, x.declared)}</td>
+                <td class="small">{x.chronicle?.cause?.summary ?? <span class="muted">not recorded (before 1.3.4)</span>}</td>
+                <td class="small">{x.chronicle?.ending?.headline ?? x.outcome}</td>
+                <td><Btn small onClick={() => store.go('war', { war: x.id })}>History</Btn></td>
+              </tr>
+            ))}</tbody>
+          </table>
+        ) : <Empty>None yet.</Empty>}
+        <Btn small kind="ghost" onClick={() => store.go('war', { war: null })}>War archive →</Btn>
       </Panel>
     </div>
   );
@@ -38,6 +52,7 @@ function WarCard({ w, war }: { w: World; war: War }) {
   }) : [];
   return (
     <Panel title={<span><NationChip w={w} id={war.att} /> ⚔ <NationChip w={w} id={war.def} /></span>} right={<small class="muted">deadline {fmtWhen(w, war.deadline)}</small>}>
+      {war.chronicle?.cause && <p class="small war-why"><b>Why:</b> {war.chronicle.cause.summary}</p>}
       <p>Goals: {war.goals.length ? war.goals.map((g) => <><RegionLink w={w} id={g} />{war.occupied.includes(g) ? ' (held)' : ''} </>) : 'none (punitive war)'}</p>
       <p>Win condition: <b>{war.occupied.length}/{war.quota}</b> occupations held at once. Occupied by attacker: {war.occupied.map((r) => w.regions[r].name).join(', ') || 'none'}. Counter-occupied: {war.counter.map((r) => w.regions[r].name).join(', ') || 'none'}.</p>
       {war.occupied.some((r) => !war.goals.includes(r)) && <p class="small muted">Non-goal occupations count toward the quota but are returned at settlement.</p>}
@@ -47,6 +62,7 @@ function WarCard({ w, war }: { w: World; war: War }) {
           <Btn small onClick={() => { w.player.watch = b.id; store.go('battle', { battle: b.id }); }}>Open</Btn></div>
       )) : <Empty>No battles right now.</Empty>}
       {war.offers.filter((o) => o.status === 'open').map((o) => <p class="small">🕊️ Open offer from {w.nations[o.from].name}: {o.kind}.</p>)}
+      <Btn small onClick={() => store.go('war', { war: war.id })}>Full history: why, battles, offers →</Btn>
       {mySide != null && (
         <details>
           <summary class="small">Launch an invasion (requires defense authority)</summary>

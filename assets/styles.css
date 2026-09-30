@@ -505,6 +505,22 @@ ul.news li { padding: .3rem 0; border-bottom: 1px solid var(--line); line-height
 .modal.whatsnew summary { cursor: pointer; color: var(--gold-hi); }
 .modal.whatsnew footer { margin-top: 1rem; justify-content: flex-end; }
 .linkish { background: none; border: 0; padding: 0; color: var(--gold-hi); cursor: pointer; font: inherit; text-decoration: underline; text-underline-offset: 2px; }
+/* war history */
+.war-dates { color: var(--text-2); margin: 0 0 .3rem; }
+.war-headline { font: 600 1.1rem/1.35 var(--font-display); letter-spacing: .02em; color: var(--gold-hi); margin: .2rem 0 .6rem; }
+.war-summary { font-size: 1.02rem; line-height: 1.55; margin: 0 0 .6rem; }
+.war-why { border-left: 2px solid rgba(239, 95, 88, .5); padding-left: .6rem; }
+.factors td { vertical-align: top; }
+.factors td.weight { width: 150px; min-width: 110px; }
+.factors .bar { display: block; height: 7px; border-radius: 4px; margin: .35rem 0 .2rem; }
+.factors .bar.war { background: linear-gradient(90deg, #c2413b, var(--bad)); }
+.factors .bar.peace { background: linear-gradient(90deg, #2f9e67, var(--good)); }
+.timeline { list-style: none; margin: 0; padding: 0; }
+.timeline li { display: grid; grid-template-columns: 92px 26px 1fr; gap: .5rem; padding: .45rem 0; border-bottom: 1px solid var(--line); line-height: 1.45; }
+.timeline li.att .icon { filter: saturate(1.2); }
+.timeline li.def { background: linear-gradient(90deg, transparent, rgba(95, 150, 242, .05)); }
+.timeline .when { color: var(--text-2); font-size: .82rem; }
+@media (max-width: 700px) { .timeline li { grid-template-columns: 70px 22px 1fr; } .factors td.weight { width: 90px; min-width: 70px; } }
 /* A part of the interface that failed (the rest of the game keeps running). */
 .ui-error { border-color: rgba(239, 95, 88, .45); margin: .6rem 0; }
 .ui-error h3 { color: var(--bad); margin: 0 0 .3rem; }

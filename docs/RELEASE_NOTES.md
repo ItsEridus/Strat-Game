@@ -3,6 +3,22 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.3.4: why wars start, and how they end
+
+- **Every war explains itself.** When a country declares war, the game records why:
+  - who proposed it, and how each party voted;
+  - what the government weighed: the balance of power, relations and what soured them, how hawkish congress is,
+    the public mood, other wars, the prize at stake, old grievances, the border, opportunity and alliances;
+  - the war aims, and how the other side saw it.
+- **A full war history.** Open any war from the Wars screen for a dated timeline:
+  - every battle, with rounds, damage, fighters, formations, heroes and what it changed;
+  - peace offers, the reasons behind them, and the votes that accepted or rejected them;
+  - shifts in approval and war mood at home.
+- **Why it ended.** The deciding reason (conquest, deadline, armistice, surrender, demands or a trade), the exact
+  terms, and the aftermath: territory, relations before and after, war scores and approval.
+- **War archive.** Every war since the campaign began, with why it started and how it ended. Wars fought before
+  this version keep only their outcome.
+
 ### New in 1.3.3: seven new industries, plain-language grades, and the present day
 
 - **Seven new industries.** Logging camps, cotton farms and copper mines supply four new kinds of factory:

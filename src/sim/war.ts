@@ -21,6 +21,7 @@ import { bump } from './progress';
 import { cancelProject } from './construction';
 import { canLand, power, routeBlocked } from './forces';
 import { landNeighbour } from './travel';
+import { battleEnded, battleStarted, exiled, explainDeclaration, note, offerAnswered, offerMade, warDeclared, warEnded } from './warChronicle';
 
 export const MAX_BATTLES_PER_SIDE = 2; // SOLO
 
@@ -76,6 +77,7 @@ export function updateExile(w: World) {
     const owned = w.regions.some((r) => r.owner === n.id);
     if (!owned && !n.exile) {
       n.exile = true;
+      exiled(w, n);
       record(w, 'war', `🏳️ ${n.name} has lost all territory and continues as a nation in exile.`, { nation: n.id, important: true });
       if (player(w).nation === n.id) notify(w, 'warHome', `🏳️ ${n.name} is now a nation in exile. Citizenship, parties and leadership continue; hosts holding your rightful regions grant tax relief. Retake your cores to return.`, { critical: true });
     } else if (owned && n.exile) {
@@ -113,14 +115,17 @@ export function warCheck(w: World, n: Nation, params: Record<string, any>): stri
   return null;
 }
 
-export function declareWar(w: World, n: Nation, params: Record<string, any>): War {
+export function declareWar(w: World, n: Nation, params: Record<string, any>, p?: Proposal): War {
   const t = w.nations[params.target];
   const goals: Id[] = params.goals ?? [];
+  // The reasons are read before the declaration changes anything (relations, alliances' anger).
+  const cause = explainDeclaration(w, n, t, goals, params.days, [militaryPower(w, n.id), militaryPower(w, t.id)], p, eligibleVoters(n).length);
   const war: War = {
     id: nid(w), att: n.id, def: t.id, declared: w.time, deadline: w.time + params.days * DAY, goals,
     quota: quotaFor(w, t.id, goals, n.id), occupied: [], counter: [], maxOcc: 0, status: 'active', battles: [], offers: [],
   };
   w.wars[war.id] = war;
+  warDeclared(w, war, cause);
   schedule(w, war.deadline, 'warDeadline', { war: war.id });
   relation(w, n.id, t.id, -25, 'war declared');
   for (const other of w.nations) if (other.id !== n.id && other.id !== t.id && other.alliances.includes(t.id)) relation(w, other.id, n.id, -10, `attacked our ally ${t.name}`);
@@ -151,7 +156,7 @@ export const WAR_PROPOSAL: ExtraProposal = {
   enact(w, n, p) {
     const why = warCheck(w, n, p.params);
     if (why) return `Could not declare: ${why}`;
-    const war = declareWar(w, n, p.params);
+    const war = declareWar(w, n, p.params, p);
     return `War declared; deadline in ${p.params.days} days (quota ${war.quota}).`;
   },
   aiOptions(w, n, a) {
@@ -229,6 +234,7 @@ export function launchBattle(w: World, nat: Id, warId: Id, rid: Id) {
   const airOnly = !land && !amphibious && !exileCore;
   const b = createBattle(w, 'war', rid, nat, controller(r), war.id, airOnly);
   war.battles.push(b.id);
+  battleStarted(w, war, b, { airOnly, amphibious });
   const pl = player(w);
   record(w, 'war', `⚔️ ${w.nations[nat].name} attacks ${r.name}${amphibious ? ' with an amphibious landing' : airOnly ? ' (air assault: only air weapons count)' : ''}.`, { nation: nat, region: rid });
   if (controller(r) === pl.nation) notify(w, 'warHome', `⚔️ ${w.nations[nat].name} is attacking ${r.name}! Defend it.`, { link: 'wars', critical: false });
@@ -255,6 +261,7 @@ export function onWarBattleWon(w: World, b: Battle, winner: 'a' | 'd') {
   w.nations[loseNat].warScore = Math.max(-100, w.nations[loseNat].warScore - 8);
   if (!war || war.status !== 'active' || winner === 'd') {
     record(w, 'war', `🛡️ ${w.nations[b.def].name} held ${r.name} against ${w.nations[b.att].name}.`, { region: r.id, nation: b.def });
+    if (war) battleEnded(w, war, b, winner, `${w.nations[b.def].name} kept ${r.name}; ${w.nations[b.att].name}'s war score fell to ${Math.round(w.nations[b.att].warScore)}.`);
     return;
   }
   if (r.owner === b.att) {
@@ -263,6 +270,7 @@ export function onWarBattleWon(w: World, b: Battle, winner: 'a' | 'd') {
     war.occupied = war.occupied.filter((x) => x !== r.id);
     war.counter = war.counter.filter((x) => x !== r.id);
     record(w, 'war', `🎉 ${w.nations[b.att].name} liberated ${r.name}.`, { region: r.id, nation: b.att, important: true });
+    battleEnded(w, war, b, winner, `${w.nations[b.att].name} liberated its own region ${r.name}.`);
     const pl = player(w);
     if (b.att === pl.nation && (b.total[pl.id]?.a ?? 0) > 0) bump(w, 'liberations');
   } else {
@@ -270,6 +278,7 @@ export function onWarBattleWon(w: World, b: Battle, winner: 'a' | 'd') {
     if (b.att === war.att) war.occupied.push(r.id); else war.counter.push(r.id);
     war.maxOcc = Math.max(war.maxOcc, war.occupied.length);
     record(w, 'war', `🏴 ${w.nations[b.att].name} occupied ${r.name} (${w.nations[r.owner].name})${war.goals.includes(r.id) ? ' — a war goal' : ''}. Occupations: ${war.occupied.length}/${war.quota}.`, { region: r.id, nation: b.att, important: true });
+    battleEnded(w, war, b, winner, b.att === war.att ? `${w.nations[b.att].name} occupied ${r.name}${war.goals.includes(r.id) ? ', a war goal' : ''}: ${war.occupied.length} of ${war.quota} occupations needed.` : `${w.nations[b.att].name} counter-occupied ${r.name}.`);
     if (r.owner === player(w).nation) notify(w, 'warHome', `🏴 ${r.name} was occupied by ${w.nations[b.att].name}.`, { link: 'wars', critical: true });
   }
   computeSupply(w);
@@ -292,6 +301,7 @@ export function settle(w: World, war: War, kind: Terms['kind'], offer?: PeaceOff
   if (kind === 'demand' && offer && offer.from === war.def) keepDef = [...war.counter];
   if (kind === 'trade' && offer) { if (offer.take != null) keepAtt = [offer.take]; if (offer.give != null) keepDef = [offer.give]; }
   const transferred: string[] = [];
+  const relBefore = att.relations[def.id]?.score ?? 0;
   for (const rid of [...war.occupied, ...war.counter]) {
     const r = w.regions[rid];
     const toAtt = keepAtt.includes(rid) && war.occupied.includes(rid);
@@ -304,7 +314,7 @@ export function settle(w: World, war: War, kind: Terms['kind'], offer?: PeaceOff
     }
     r.occ = null;
   }
-  for (const bid of war.battles) { const b = w.battles[bid]; if (b && !b.done) finishBattle(w, b, null); }
+  for (const bid of war.battles) { const b = w.battles[bid]; if (b && !b.done) { finishBattle(w, b, null); battleEnded(w, war, b, null, 'called off by the peace'); } }
   war.status = 'ended';
   const label = { conquest: 'conquest', deadline: 'deadline', armistice: 'armistice', surrender: 'surrender', demand: 'demand', trade: 'territorial trade' }[kind];
   war.outcome = `${label}${transferred.length ? `: ${transferred.join(', ')}` : ': no territory changed hands'}`;
@@ -313,6 +323,7 @@ export function settle(w: World, war: War, kind: Terms['kind'], offer?: PeaceOff
   def.pacts[att.id] = until;
   relation(w, att.id, def.id, 8, `peace (${label})`);
   if (kind === 'conquest' || keepAtt.length) { att.warScore = Math.min(100, att.warScore + 20); def.warScore = Math.max(-100, def.warScore - 20); }
+  warEnded(w, war, kind, offer, transferred, keepAtt, relBefore);
   record(w, 'war', `🕊️ War between ${att.name} and ${def.name} ended by ${war.outcome}. ${B.war.pactDays}-day non-aggression pact.`, { nation: att.id, important: true });
   const pl = player(w);
   if (pl.nation === att.id || pl.nation === def.id) notify(w, 'warHome', `🕊️ War with ${pl.nation === att.id ? def.name : att.name} ended by ${war.outcome}.`, { link: 'wars', critical: true });
@@ -394,15 +405,21 @@ export const PEACE_PROPOSAL: ExtraProposal = {
     const why = peaceCheck(w, n, p.params);
     if (why) return `Not enacted: ${why}`;
     const war = w.wars[p.params.war];
-    if (p.params.kind === 'surrender') { settle(w, war, 'surrender', { id: 0, from: n.id, kind: 'surrender', t: w.time, status: 'accepted' }); return `Surrender: ${war.outcome}.`; }
+    if (p.params.kind === 'surrender') {
+      note(w, war, '🏳️', `${n.name}'s congress voted to ${n.id === war.def ? 'surrender' : 'withdraw'}${voteOf(p)}.`, { side: n.id === war.att ? 'att' : 'def' });
+      settle(w, war, 'surrender', { id: 0, from: n.id, kind: 'surrender', t: w.time, status: 'accepted' });
+      return `Surrender: ${war.outcome}.`;
+    }
     if (p.params.kind === 'accept') {
       const offer = war.offers.find((o) => o.id === p.params.offer)!;
       offer.status = 'accepted';
+      offerAnswered(w, war, offer, true, p);
       settle(w, war, offer.kind, offer);
       return `Peace accepted: ${war.outcome}.`;
     }
     const offer: PeaceOffer = { id: nid(w), from: n.id, kind: p.params.kind, give: p.params.give, take: p.params.take, t: w.time, status: 'open' };
     war.offers.push(offer);
+    offerMade(w, war, n, offer, p);
     const enemy = w.nations[enemyOf(war, n.id)];
     submitResponse(w, enemy, war, offer);
     return `Terms sent to ${enemy.name}; their congress will vote.`;
@@ -419,6 +436,8 @@ export const PEACE_PROPOSAL: ExtraProposal = {
     return out;
   },
 };
+
+const voteOf = (p: Proposal) => { const yes = Object.values(p.votes).filter((v) => v === 'y').length; return ` (${yes}–${Object.values(p.votes).length - yes})`; };
 
 /** The other side's congress gets an "accept" proposal authored by its head of government. */
 function submitResponse(w: World, enemy: Nation, war: War, offer: PeaceOffer) {
@@ -439,7 +458,11 @@ export function peaceHousekeeping(w: World) {
   for (const war of activeWars(w)) for (const o of war.offers) {
     if (o.status !== 'open') continue;
     const pending = Object.values(w.proposals).some((p) => p.status === 'open' && p.type === 'peace' && p.params.offer === o.id);
-    if (!pending && w.time - o.t > 2 * 60) o.status = 'rejected';
+    if (!pending && w.time - o.t > 2 * 60) {
+      o.status = 'rejected';
+      const vote = Object.values(w.proposals).find((p) => p.type === 'peace' && p.params.offer === o.id && p.status === 'failed');
+      offerAnswered(w, war, o, false, vote);
+    }
   }
 }
 

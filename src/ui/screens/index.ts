@@ -23,6 +23,7 @@ import { Politics } from './Politics';
 import { Congress } from './Congress';
 import { Construction } from './Construction';
 import { Wars } from './Wars';
+import { WarHistory } from './WarHistory';
 import { BattleScreen } from './Battle';
 import { Units } from './Units';
 import { Equipment } from './Equipment';
@@ -87,5 +88,6 @@ export const SCREENS: ScreenDef[] = [
   { id: 'inbox', label: 'Inbox', icon: '✉️', group: 'World', comp: Inbox },
   { id: 'settings', label: 'Settings & Saves', icon: '⚙️', group: 'Game', comp: Settings },
   { id: 'citizen', label: 'Citizen', icon: '👤', group: 'World', comp: CitizenProfile, hidden: true },
+  { id: 'war', label: 'War history', icon: '📜', group: 'Military', comp: WarHistory, hidden: true },
   { id: 'admin', label: 'Admin', icon: '🛠️', group: 'Game', comp: Admin, hidden: true },
 ];

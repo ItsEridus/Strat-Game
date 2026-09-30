@@ -49,6 +49,7 @@ import { MSG_HOOKS } from '../engine/events';
 import { REPLY_LISTENERS } from './inbox';
 import { lifeDaily } from './life';
 import { goodsDaily } from './goods';
+import { warChronicleDaily } from './warChronicle';
 
 let done = false;
 export function registerSystems() {
@@ -148,6 +149,7 @@ export function registerSystems() {
   REPLY_LISTENERS.push(onMessageAnswered);
   dailyHooks.push(lifeDaily);
   dailyHooks.push(goodsDaily);
+  dailyHooks.push(warChronicleDaily);
   dailyHooks.push(populationDaily);
   dailyHooks.push(familyDaily);
   dailyHooks.push(wellbeingDaily);

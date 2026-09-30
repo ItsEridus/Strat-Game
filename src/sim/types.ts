@@ -475,7 +475,35 @@ export interface War {
   outcome?: string;
   battles: Id[];
   offers: PeaceOffer[];
+  chronicle?: WarChronicle; // why it started, what happened, why it ended (wars from before 1.3.4 have none)
 }
+
+/** The war chronicle (sim/warChronicle.ts): written as the war happens and kept afterwards. */
+export interface WarChronicle {
+  cause?: WarCause;
+  events: WarEvent[];
+  battles: Record<Id, WarBattleRecord>;
+  home: Record<Id, { approval: number; mood: number }>; // last home-front readings noted, per side
+  ending?: WarEnding;
+}
+/** One consideration behind the decision: weight > 0 pushed toward war, < 0 held it back. */
+export interface WarFactor { label: string; detail: string; weight: number }
+export interface WarCause {
+  summary: string;
+  by: { id: Id; name: string; role: string; party: string | null } | null; // who proposed it
+  vote: { yes: number; no: number; eligible: number; parties: { name: string; yes: number; no: number }[] } | null;
+  factors: WarFactor[];
+  aims: string[];
+  defender: string[]; // how the other side saw it
+  snapshot: { power: [number, number]; relation: number; approval: [number, number]; mood: [number, number]; regions: [number, number] };
+}
+export interface WarEvent { t: number; icon: string; text: string; side?: 'att' | 'def'; region?: Id; battle?: Id }
+export interface WarBattleRecord {
+  region: Id; att: Id; def: Id; started: number; airOnly: boolean; amphibious: boolean;
+  ended?: number; winner?: Id | null; rounds?: [number, number]; damage?: [number, number]; fighters?: [number, number];
+  heroes?: { id: Id; name: string; nation: Id; dmg: number }[]; formations?: [string[], string[]]; result?: string;
+}
+export interface WarEnding { t: number; kind: string; headline: string; why: string[]; terms: string[]; aftermath: string[]; winner: Id | null }
 
 export interface PeaceOffer { id: Id; from: Id; kind: 'armistice' | 'surrender' | 'demand' | 'trade'; give?: Id; take?: Id; t: number; status: 'open' | 'accepted' | 'rejected' }
 

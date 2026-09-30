@@ -73,18 +73,19 @@ async function everyScreen(page, where) {
     const text = await page.evaluate(() => document.querySelector('main.main')?.textContent.trim().length ?? 0);
     check(text > 20, `${where}: the ${label} screen is blank`);
   }
-  for (const [tab, sel] of [['citizen', 'npc'], ['admin', null]]) {
+  for (const [tab, sel] of [['citizen', 'npc'], ['admin', null], ['war', 'war'], ['war', 'archive']]) {
     await page.evaluate(([tab, sel]) => {
       const s = window.meridian;
       const npc = Object.values(s.w.citizens).find((c) => !c.player && !c.gone);
-      s.go(tab, sel ? { citizen: npc.id } : {});
+      const war = Object.values(s.w.wars).sort((a, b) => b.declared - a.declared)[0];
+      s.go(tab, sel === 'npc' ? { citizen: npc.id } : sel === 'war' ? { war: war?.id ?? null } : sel === 'archive' ? { war: null } : {});
     }, [tab, sel]);
     await page.waitForTimeout(150);
     const text = await page.evaluate(() => document.querySelector('main.main')?.textContent.trim().length ?? 0);
     check(text > 20, `${where}: the ${tab} screen is blank`);
   }
   await page.evaluate(() => window.meridian.go('dashboard'));
-  log(`${where}: opened ${n + 2} screens`);
+  log(`${where}: opened ${n + 4} screens (with a person's profile, the admin panel, a war's history and the war archive)`);
 }
 
 /** The back and forward buttons (and Alt+arrows) retrace screens and profiles, and restore where the page was scrolled. */

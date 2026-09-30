@@ -3,7 +3,7 @@
 // text and news keep their emoji.
 import {
   Anchor, ArrowLeftRight, Backpack, ChevronLeft, ChevronRight, Bell, BookOpen, Briefcase, Building, Earth, Eye, Factory, Flag, Flame, Gavel, GraduationCap,
-  Handshake, HardHat, House, Inbox, Landmark, LibraryBig, Map as MapIcon, MapPinned, Medal, Menu, Newspaper, Pickaxe, Settings, ShieldHalf,
+  Handshake, HardHat, House, Inbox, Landmark, LibraryBig, Map as MapIcon, MapPinned, Medal, Menu, Newspaper, Pickaxe, ScrollText, Settings, ShieldHalf,
   ShoppingBag, ShoppingCart, Siren, Sprout, Store, Swords, Target, Trophy, UserCog, UserRound, Users, UsersRound, Utensils, Vote, Zap,
 } from 'lucide-preact';
 import type { LucideIcon } from 'lucide-preact';
@@ -16,7 +16,7 @@ export const SCREEN_ICONS: Record<string, Lucide> = {
   fx: ArrowLeftRight, business: Store, holdings: Building, auctions: Gavel, contracts: Handshake, shop: ShoppingBag, politics: Vote,
   congress: Landmark, construction: HardHat, wars: Flame, forces: Medal, rankings: Trophy, battle: Swords, units: UsersRound,
   events: Anchor, stadium: Trophy, people: Users, crime: Siren, intel: Eye, world: Earth, map: MapIcon, country: Flag, press: Newspaper,
-  library: LibraryBig, news: Bell, inbox: Inbox, settings: Settings, citizen: UserRound, admin: UserCog,
+  library: LibraryBig, news: Bell, inbox: Inbox, settings: Settings, citizen: UserRound, admin: UserCog, war: ScrollText,
 };
 
 export const HUD_ICONS = { menu: Menu, energy: Zap, meals: Utensils, back: ChevronLeft, forward: ChevronRight };
