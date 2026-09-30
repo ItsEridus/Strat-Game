@@ -29,7 +29,7 @@ Requires Node.js 18+.
 ```sh
 npm install
 npm run build      # rebuild dist/game.js
-npm test           # 35 simulation & acceptance tests
+npm test           # 46 simulation & acceptance tests
 npm run sim -- 90  # 90-day headless world run with an asset audit
 npm run earth      # regenerate src/data/earth.json (downloads Natural Earth data to tools/ne/ on first run)
 ```
@@ -92,6 +92,32 @@ welfare, infrastructure (+2% production per level) and business support. Live in
 run for its governorship: register, campaign, vote, then set the tax (the legislature must agree) and the
 budget. As national leader you appoint heads where they are appointed. Country → *States, provinces & regions*
 lists every government; the map's *Governments* view colours regions by the ideology in power.
+
+**Law & order.** Every region has a crime rate driven by unemployment, poverty, the economy, city size, unrest and
+organised crime, held down by policing (state police budgets, national police funding and citizen officers).
+Syndicates — named in each country's style: mafia families, cartels, bratvas, triads, yakuza clans, bikie gangs —
+hold turf, extort businesses (including yours, through the inbox), recruit the jobless, feud and get raided.
+You can commit street crimes, join an organisation and rise to boss, or join the police and rise to chief.
+Detected crimes open cases; evidence builds; arrests lead to trials (lawyer, or a risky bribe), fines and prison.
+Ministers of the Interior fund the national police and order raids. (Law & Order screen.)
+
+**Intelligence.** Each nation runs its real service (CIA, MI6, BND, SVR, MSS, R&AW…). Budgets build spy networks
+abroad and counter-intelligence at home. Operations gather dossiers, sabotage industry, steal from treasuries,
+incite unrest, spread propaganda, plant scandals, recruit assets or sweep for spies; exposed ones cause
+diplomatic incidents and arrests. Join as an analyst and climb to deputy director, direct the service as
+Director of Intelligence — or accept a foreign service's offer and become a double agent. (Intelligence screen.)
+
+**A living world.** The world economy moves through booms and recessions; commodity shocks change output;
+hurricanes, typhoons, earthquakes, floods, wildfires, blizzards and droughts strike their real hazard zones in
+season; epidemics spread along borders until lockdowns stop them; underpaid workers strike; unrest turns into
+protests and riots that governments answer with concessions or crackdowns; people migrate and new citizens
+arrive. You can volunteer, donate, march, or (as governor) order lockdowns. (World Situation screen.)
+
+**People who notice you.** AI citizens pursue ambitions (a governorship, the presidency, a business empire, the
+boss's chair…). Competitors become rivals who attack you in speeches, undercut your prices, poach workers and tip
+off the police; friends vouch for you, warn you and lend money. NPCs offer bribes when you hold office, ask for
+interviews when you're famous, challenge you to debates, and journalists investigate the notorious. (People
+screen; the dashboard shows what's happening around you.)
 
 **Wars** are declared by congress with goals and a deadline. Battles occupy regions, but ownership only changes
 at settlement. The **Wars** and **Battle** screens explain the scoring ticks, supply and win conditions.

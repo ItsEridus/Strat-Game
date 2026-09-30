@@ -57,3 +57,40 @@ export const PARTY_NAMES: Record<string, string[]> = {
 export const PAPER_WORDS = ['Herald', 'Tribune', 'Gazette', 'Courier', 'Sentinel', 'Chronicle', 'Observer', 'Dispatch', 'Ledger', 'Voice'];
 export const UNIT_WORDS = ['Wolves', 'Iron Brigade', 'Lancers', 'Rangers', 'Vanguard', 'Hussars', 'Sentinels', 'Falcons', 'Legion', 'Grenadiers'];
 export const ENVOY_NAME = 'Mara Voss';
+
+/** Real national intelligence services (by currency code). */
+export const AGENCY_NAMES: Record<string, string> = {
+  USD: 'Central Intelligence Agency', CAD: 'Canadian Security Intelligence Service', MXN: 'National Intelligence Centre (CNI)',
+  BRL: 'Brazilian Intelligence Agency (ABIN)', ARS: 'Federal Intelligence Agency', GBP: 'Secret Intelligence Service (MI6)',
+  EUR: 'Federal Intelligence Service (BND)', RUB: 'Foreign Intelligence Service (SVR)', TRY: 'National Intelligence Organization (MİT)',
+  SAR: 'General Intelligence Presidency', ZAR: 'State Security Agency', INR: 'Research and Analysis Wing (R&AW)',
+  CNY: 'Ministry of State Security', JPY: 'Cabinet Intelligence and Research Office', KRW: 'National Intelligence Service', AUD: 'Australian Secret Intelligence Service',
+};
+
+/** Real national police forces (by currency code). */
+export const POLICE_NAMES: Record<string, string> = {
+  USD: 'Federal Bureau of Investigation', CAD: 'Royal Canadian Mounted Police', MXN: 'National Guard', BRL: 'Federal Police',
+  ARS: 'Argentine Federal Police', GBP: 'National Crime Agency', EUR: 'Federal Criminal Police Office (BKA)', RUB: 'Ministry of Internal Affairs (MVD)',
+  TRY: 'General Directorate of Security', SAR: 'Public Security', ZAR: 'South African Police Service', INR: 'Central Bureau of Investigation',
+  CNY: 'Ministry of Public Security', JPY: 'National Police Agency', KRW: 'Korean National Police Agency', AUD: 'Australian Federal Police',
+};
+
+/** Organised-crime naming styles per nation; {L} surname, {C} city, {N} number, {W} word. */
+export const SYNDICATE_STYLES: Record<string, { patterns: string[]; words: string[]; kind: string }> = {
+  USD: { patterns: ['the {L} Family', '{C} Outfit', 'the {L} Crew'], words: [], kind: 'mafia family' },
+  CAD: { patterns: ['the {L} Family', '{C} Crew', '{W} Riders MC'], words: ['Hells', 'Iron', 'North'], kind: 'crime family' },
+  MXN: { patterns: ['Cártel de {C}', 'Los {W}', 'Cártel del {W}'], words: ['Zetas', 'Golfo', 'Pacífico', 'Norte', 'Halcones'], kind: 'cartel' },
+  BRL: { patterns: ['Comando {W}', 'Primeiro Comando de {C}', 'Família do {W}'], words: ['Vermelho', 'Norte', 'Capital', 'Sul'], kind: 'faction' },
+  ARS: { patterns: ['Banda de {C}', 'Los {W}', 'Clan {L}'], words: ['Monos', 'Gordos', 'Porteños'], kind: 'gang' },
+  GBP: { patterns: ['the {L} Firm', '{C} Firm', 'the {L} Brothers'], words: [], kind: 'firm' },
+  EUR: { patterns: ['Clan {L}', '{C} Syndikat', '{W} MC'], words: ['Rhein', 'Nord', 'Stahl'], kind: 'clan' },
+  RUB: { patterns: ['{C} Bratva', '{W} Brotherhood', 'the {L} Group'], words: ['Solntsevo', 'Tambov', 'Volga', 'Ural'], kind: 'bratva' },
+  TRY: { patterns: ['{L} Clan', '{C} Gang', 'the {L} Family'], words: [], kind: 'clan' },
+  SAR: { patterns: ['{C} Smuggling Ring', '{L} Network'], words: [], kind: 'ring' },
+  ZAR: { patterns: ['the {N}s', '{C} {W}', 'the {L} Syndicate'], words: ['Americans', 'Hard Livings', 'Mongrels'], kind: 'gang' },
+  INR: { patterns: ['{L} Company', '{C} Gang', 'the {L} Syndicate'], words: [], kind: 'company' },
+  CNY: { patterns: ['{N}K Triad', '{W} Lotus Society', '{W} Dragon Society'], words: ['Red', 'Black', 'Golden', 'Jade', 'White'], kind: 'triad' },
+  JPY: { patterns: ['{L}-gumi', '{L}-kai', '{C} Rengō'], words: [], kind: 'yakuza clan' },
+  KRW: { patterns: ['{C}-pa', '{W}-pa', 'the {L} Faction'], words: ['Chilsung', 'Yangeun', 'Seobang'], kind: 'pa' },
+  AUD: { patterns: ['{W} MC', 'the {L} Crew', '{C} Syndicate'], words: ['Rebels', 'Comancheros', 'Bandidos', 'Nomads'], kind: 'bikie gang' },
+};

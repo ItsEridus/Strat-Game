@@ -10,6 +10,11 @@ import { fmtClock } from '../../engine/clock';
 import { itemName } from '../../data/items';
 import { ENVOY_NAME } from '../../data/names';
 import { tracks } from './Character';
+import { DAY } from '../../engine/clock';
+import { activeCrises, KIND_ICON } from '../../sim/dynamics';
+import { crimeLabel } from '../../sim/crime';
+import { activityOf } from '../../sim/npc';
+import { govTemplate } from '../../sim/stategov';
 
 export function Dashboard({ w }: { w: World }) {
   const p = player(w);
@@ -75,11 +80,41 @@ export function Dashboard({ w }: { w: World }) {
           {!w.notices.length && <li class="muted">Nothing yet.</li>}
         </ul>
       </Panel>
+      <AroundYou w={w} />
       <Panel title="World news" class="wide" right={<Btn small kind="ghost" onClick={() => store.go('news', { newsTab: 'world' })}>More</Btn>}>
         <ul class="feed">
           {w.log.slice(-8).reverse().map((e) => <li>{e.text}</li>)}
         </ul>
       </Panel>
     </div>
+  );
+}
+
+/** What's happening near the player: local conditions, people nearby, crises, rivals. */
+function AroundYou({ w }: { w: World }) {
+  const p = player(w);
+  const r = w.regions[p.loc];
+  const s = w.govs[p.loc];
+  const since = w.time - 2 * DAY;
+  const local = w.log.filter((e) => e.t >= since && (e.region === p.loc || e.cit === p.id || (e.nation === p.nation && e.important))).slice(-6).reverse();
+  const crises = activeCrises(w).filter((c) => c.regions.includes(p.loc) || c.nation === p.nation).slice(0, 3);
+  const nearby = Object.values(w.citizens).filter((c) => c.loc === p.loc && !c.player).sort((a, b) => Math.abs(b.rel[p.id] ?? 0) - Math.abs(a.rel[p.id] ?? 0) || b.influence - a.influence).slice(0, 4);
+  const cases = Object.values(w.cases).filter((k) => k.status === 'open' && k.suspect === p.id);
+  return (
+    <Panel title={`📍 Around you: ${r.name}`} class="wide" right={<Btn small kind="ghost" onClick={() => store.go('people')}>People</Btn>}>
+      <div class="stats">
+        <Stat label="Crime">{Math.round(r.crime)} ({crimeLabel(r.crime)})</Stat>
+        <Stat label="Police">{Math.round(r.police)}</Stat>
+        <Stat label="Unrest">{Math.round(r.unrest)}</Stat>
+        {s && <Stat label={govTemplate(w, p.loc)?.title ?? 'Head'}>{s.head.cit != null ? <CitLink w={w} id={s.head.cit} /> : s.head.name} · {Math.round(s.approval)}%</Stat>}
+        <Stat label="Economy">{w.econ.phase}</Stat>
+        {cases.length > 0 && <Stat label="Police interest"><span class="warn">{cases.length} open case{cases.length > 1 ? 's' : ''}</span></Stat>}
+      </div>
+      {crises.map((c) => <p class="small"><span class="link" onClick={() => store.go('world')}>{KIND_ICON[c.kind]} {c.name}</span></p>)}
+      <ul class="feed">
+        {nearby.map((c) => <li><CitLink w={w} id={c.id} /> — {activityOf(w, c)}{(c.rel[p.id] ?? 0) >= 30 ? ' 🤝' : (c.rel[p.id] ?? 0) <= -30 ? ' 😠' : ''}</li>)}
+        {local.map((e) => <li class="muted">{e.text}</li>)}
+      </ul>
+    </Panel>
   );
 }

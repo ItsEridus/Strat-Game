@@ -492,6 +492,8 @@ export function appointCabinetAI(w: World, n: Nation) {
     labor: (c) => c.eco * 2 + (c.persona === 'industrialist' ? 20 : 0),
     pr: (c) => c.influence + (c.persona === 'journalist' ? 30 : 0),
     recruitment: (c) => c.influence / 2 + c.traits.loyalty * 10,
+    interior: (c) => c.sec.collars * 3 + c.sec.prank * 10 + (c.persona === 'soldier' ? 15 : 0) + c.traits.loyalty * 10 - c.sec.notoriety,
+    intelligence: (c) => c.sec.tradecraft * 2 + c.sec.arank * 10 + c.traits.loyalty * 15 - c.sec.notoriety,
   };
   const taken = new Set<Id>(Object.values(n.cabinet).filter((x): x is number => x != null));
   for (const m of Object.keys(fit) as Ministry[]) {

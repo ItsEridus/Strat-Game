@@ -10,7 +10,7 @@ import { GOLD, fmtAmt, g } from '../engine/money';
 import { HOUR } from '../engine/clock';
 import { notify, schedule } from '../engine/events';
 import { pick } from '../engine/rng';
-import { cref, effEco, studyActive } from './query';
+import { cref, effEco, studyActive, jailed } from './query';
 import { gearStats } from './combatMath';
 import { rollDrop } from './gear';
 import { distance } from './travel';
@@ -26,6 +26,7 @@ export function miningPreview(w: World, c: Citizen, hours: 1 | 2) {
 }
 
 export function mineCheck(w: World, c: Citizen): string | null {
+  if (jailed(w, c)) return 'You are in prison.';
   if (c.mining) return 'Already mining.';
   if (c.loc !== c.mineSite) return `Your assigned site is ${w.regions[c.mineSite].name} (${distance(w, c.loc, c.mineSite)} regions away) — travel there first.`;
   if (c.energy < B.cost.mineStart) return `Needs ${B.cost.mineStart} energy.`;

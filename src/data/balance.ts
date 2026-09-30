@@ -190,6 +190,74 @@ export const BALANCE = {
   citizenship: { cost: 2 }, // SOLO gold
   nuke: { gold: 750, oil: 12500, iron: 2500, titanium: 5000, prodHours: 48, flightHours: 8 }, // DOC
   spy: { recon: [0.7, 0.2, 0.1], defuse: [0.25, 0.25, 0.5], cooldownHours: 24, defuseGold: 5, defuseTickets: 5, defuseIntel: 10 }, // DOC outcomes; costs SOLO
+  crime: {
+    base: 22, // SOLO crime floor (0..100 scale)
+    unemployment: 60, // SOLO points per 100% national unemployment
+    poverty: 12, // SOLO points when households cannot meet demand
+    syndicate: 14, // SOLO points per controlling syndicate (scaled by strength)
+    policeFactor: 0.5, // SOLO crime change per police point above/below 30
+    urban: 14, // SOLO extra crime in big cities
+    recession: 10, // SOLO extra crime at the bottom of the cycle
+    drift: 0.12, // SOLO daily move toward target
+    theftShare: 0.0015, // SOLO share of the region's household money lost to crime per 100 crime per day
+    approvalHit: 0.05, // SOLO state approval lost per crime point above 40, per day
+  },
+  police: {
+    base: 20, // SOLO baseline policing everywhere
+    nationalPerShare: 300, // SOLO police points per unit share of revenue for the national police (3% → 9 points, capped 25)
+    officer: 4, // SOLO police points per citizen officer serving in the region
+    salary: 7, // SOLO officer daily salary (currency) paid from the police budget
+    patrolEnergy: 20, // SOLO
+    patrolCd: 20, // SOLO hours between patrols
+    evidencePerDay: 4, // SOLO base evidence gathered per day on an open case (× police/50)
+    arrestAt: 60, // SOLO evidence needed to arrest
+    rankAt: [0, 5, 15, 35, 70], // SOLO collars needed for officer/sergeant/detective/captain/chief
+    level: 4, // SOLO level to join the police
+  },
+  justice: {
+    finePerLoot: 2, // SOLO fine = 2× what was taken (min 20 currency)
+    jailDaysPerSeverity: 1.5, // SOLO days of prison per severity point
+    lawyer: 40, // SOLO currency for a lawyer (−25% conviction chance)
+    bribeBase: 60, // SOLO currency needed to attempt a bribe at arrest
+    heatDecay: 3, // SOLO heat lost per day
+    coldAfterDays: 20, // SOLO cases with little evidence close after this long
+  },
+  syndicate: {
+    perNation: [1, 3], // SOLO syndicates at genesis
+    joinChance: 0.03, // SOLO daily chance a disaffected AI citizen joins
+    racketFee: 0.004, // SOLO share of a company's cash demanded per day in protection
+    payoutShare: 0.25, // SOLO share of daily income paid to members
+    expandChance: 0.08, // SOLO daily chance to push into a neighbouring region
+    raidAt: 1.2, // SOLO police/strength ratio at which authorities raid
+    level: 3, // SOLO level to be offered membership
+  },
+  intel: {
+    budget: 0.025, // SOLO default share of daily revenue for the intelligence service
+    networkGain: 0.6, // SOLO network points per 100 currency invested per day
+    networkDecay: 0.4, // SOLO daily network decay
+    opHours: { intel: 8, sabotage: 18, theft: 24, unrest: 20, propaganda: 16, scandal: 30, recruit: 20, counter: 12 }, // SOLO
+    opCost: { intel: 30, sabotage: 80, theft: 60, unrest: 60, propaganda: 50, scandal: 70, recruit: 40, counter: 30 }, // SOLO currency
+    minNetwork: { intel: 0, sabotage: 25, theft: 35, unrest: 20, propaganda: 10, scandal: 30, recruit: 15, counter: 0 }, // SOLO
+    level: 6, // SOLO level to join an intelligence service
+    energy: 25, // SOLO field agent energy per operation
+    agentCd: 12, // SOLO hours between a citizen agent's operations
+    salary: 8, // SOLO daily salary of a citizen in the intelligence service (currency)
+    maxActive: 3, // SOLO concurrent operations per service
+    rankAt: [0, 2, 6, 14, 30], // SOLO successful operations needed per rank
+  },
+  dynamics: {
+    cycleVol: 0.06, // SOLO daily volatility of the world business cycle
+    cycleRevert: 0.03, // SOLO mean reversion
+    hhSpendSwing: 0.3, // SOLO household spending ±30% across the cycle
+    disasterChance: 0.9, // SOLO scale on seasonal hazard odds
+    epidemicEveryDays: 70, // SOLO average days between outbreaks
+    strikeBelowAvg: 0.8, // SOLO companies paying below 80% of the national average wage risk strikes
+    protestAt: 55, // SOLO unrest for protests
+    riotAt: 78, // SOLO unrest for riots
+    migration: 0.004, // SOLO share of population that can move per day between regions
+    arrivalEveryDays: 3, // SOLO a new AI citizen arrives in some nation about this often
+    maxCitizensFactor: 1.3, // SOLO cap on AI population growth
+  },
   state: {
     termDays: 60, // SOLO state/provincial election cycle (staggered across regions)
     regDays: 5, // SOLO candidate registration window before an election
@@ -263,6 +331,9 @@ export const PROVENANCE: { key: string; src: Source; note: string }[] = [
   { key: 'taxes.occupierShare', src: 'DOC', note: 'Occupied regions: 80% work tax to occupier, 20% to owner' },
   { key: 'households / living', src: 'SOLO', note: 'Aggregated background consumers funded by citizens’ living costs and treasury transfers (closed money loop); they leave 30% of listed stock for citizens each round' },
   { key: 'world map', src: 'SOLO', note: 'Sixteen real countries and their 492 real first-level subdivisions (Natural Earth). Seats, terrain and population weights derive from the data; notable deposits are hand-listed, other deposits, richness and background population are rolled per seed; sea lanes and corridors link nations with no land border' },
+  { key: 'crime & justice', src: 'SOLO', note: 'Regional crime from unemployment, poverty, the cycle, city size, unrest and gangs vs policing; cases, evidence, arrests, trials, fines and prison; syndicates with turf, rackets, feuds and raids; police careers (balance: crime, police, justice, syndicate)' },
+  { key: 'intelligence', src: 'SOLO', note: 'Real agency names; budgets build networks and counter-intelligence; eight operation types with network thresholds, costs, durations and exposure; agent careers and double agents (balance: intel)' },
+  { key: 'dynamic world', src: 'SOLO', note: 'Business cycle, commodity shocks, seasonal disasters in real hazard zones, epidemics spreading along borders, strikes, protests/riots, migration, new arrivals (balance: dynamics; data/hazards.ts)' },
   { key: 'state governments', src: 'SOLO', note: 'Real titles and elected/appointed heads; wage tax 0–12% (0% in US no-wage-tax states), resident levy, block grants, welfare/infrastructure/business budgets and 60-day election cycles are chosen defaults (balance: state)' },
   { key: 'politics.days', src: 'WIKI', note: 'President ~1st, party ~10th, congress ~25th of month' },
   { key: 'politics.congressMin/Max', src: 'WIKI', note: '3–20 deputies by population' },

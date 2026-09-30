@@ -130,7 +130,8 @@ export function householdsDaily(w: World, half: number) {
     if (n.exile) continue;
     const market = n.id;
     const cash = h.wallet[n.cur] ?? 0;
-    let budget = Math.floor((cash * B.households.spendRate) / 2);
+    // Spending swings with the world business cycle.
+    let budget = Math.floor((cash * B.households.spendRate * (1 + B.dynamics.hhSpendSwing * w.econ.cycle)) / 2);
     const ref = hhref(h.nation);
     let unmet = 0;
     for (const [kind, share] of Object.entries(B.households.shares)) {

@@ -17,11 +17,11 @@ export type Ideology = 'capitalism' | 'nationalism' | 'centralism' | 'socialism'
 export type BuildingType = 'hospital' | 'fields' | 'industrial' | 'base';
 export type Persona = 'worker' | 'merchant' | 'politician' | 'soldier' | 'industrialist' | 'builder' | 'journalist' | 'investor';
 export type Attr = 'str' | 'acc' | 'luck' | 'end' | 'lead' | 'eco' | 'cons';
-export type Ministry = 'vp' | 'development' | 'defense' | 'economy' | 'labor' | 'pr' | 'recruitment';
+export type Ministry = 'vp' | 'development' | 'defense' | 'economy' | 'labor' | 'pr' | 'recruitment' | 'interior' | 'intelligence';
 export type GearSlot = 'helmet' | 'vest' | 'elbows' | 'gloves' | 'pants' | 'boots';
 export type GearFamily = 'combat' | 'construction' | 'mining' | 'plains' | 'mountains' | 'forest' | 'desert';
 
-export type AccountKind = 'cit' | 'co' | 'nat' | 'hh' | 'hold' | 'unit' | 'paper' | 'party' | 'reg';
+export type AccountKind = 'cit' | 'co' | 'nat' | 'hh' | 'hold' | 'unit' | 'paper' | 'party' | 'reg' | 'synd';
 export interface AccountRef { k: AccountKind; id: Id }
 
 export interface Buff { type: string; until: number; value: number; source?: string }
@@ -78,6 +78,68 @@ export interface Citizen {
   lastIncome: number; // yesterday's income in home currency minor units
   incomeToday: number;
   flags: Record<string, number>;
+  sec: CitizenSec;
+}
+
+/** Law, underworld, intelligence and public-profile state of a citizen. */
+export interface CitizenSec {
+  heat: number; // police attention 0..100
+  jailUntil: number; // in prison until this time (0 = free)
+  record: { crimes: number; arrests: number; convictions: number; fines: number };
+  syndicate: Id | null;
+  srank: number; // 0 associate, 1 soldier, 2 capo, 3 underboss, 4 boss
+  police: Id | null; // region whose police force they serve in
+  prank: number; // 0 officer, 1 sergeant, 2 detective, 3 captain, 4 chief
+  collars: number; // arrests made
+  agency: Id | null; // nation whose intelligence service employs them
+  arank: number; // 0 analyst, 1 case officer, 2 field agent, 3 station chief, 4 deputy director
+  tradecraft: number;
+  asset: Id | null; // foreign service secretly paying them (double agent)
+  fame: number; // public profile
+  notoriety: number; // criminal reputation
+  goal: { kind: string; target?: Id; since: number } | null; // the NPC's current ambition
+  rivals: Id[];
+  last: Record<string, number>; // cooldowns: time of last crime, patrol, op, …
+}
+
+export type CrimeKind = 'pickpocket' | 'burglary' | 'fraud' | 'smuggling' | 'extortion' | 'bribery' | 'assault' | 'corruption' | 'espionage' | 'votebuying' | 'heist' | 'taxevasion';
+export interface Case {
+  id: Id; suspect: Id; kind: CrimeKind; region: Id; nation: Id; evidence: number; opened: number;
+  status: 'open' | 'closed'; detective: Id | null; loot: number; outcome?: string; syndicate?: Id | null;
+}
+export interface Syndicate {
+  id: Id; name: string; nation: Id; style: string; boss: Id | null; members: Id[]; turf: Id[]; home: Id;
+  wallet: Wallet; inv: Inventory; strength: number; heat: number; founded: number;
+  rackets: Record<Id, number>; // company id -> daily protection fee (minor units)
+  feuds: Id[]; // rival syndicates at war
+  income: number[]; // daily income history
+}
+export interface Agency {
+  name: string; budget: number; // share of daily revenue funding the service
+  network: Record<Id, number>; // penetration of each foreign nation 0..100
+  counter: number; // counter-intelligence 0..100
+  dossiers: Record<Id, { t: number; lines: string[] }>;
+  focus: Id[]; // nations the service prioritises
+  opsRun: number; caught: number; exposed: number;
+}
+export type OpKind = 'intel' | 'sabotage' | 'theft' | 'unrest' | 'propaganda' | 'scandal' | 'recruit' | 'counter';
+export interface SpyOp {
+  id: Id; nation: Id; target: Id; region: Id | null; kind: OpKind; agent: Id | null; subject?: Id | null;
+  start: number; ends: number; status: 'active' | 'success' | 'failed' | 'exposed'; result?: string;
+}
+export type CrisisKind = 'hurricane' | 'earthquake' | 'flood' | 'wildfire' | 'blizzard' | 'drought' | 'epidemic' | 'strike' | 'protest' | 'riot' | 'boom' | 'shock';
+export interface Crisis {
+  id: Id; kind: CrisisKind; name: string; regions: Id[]; nation: Id | null; start: number; end: number; severity: number;
+  status: 'active' | 'over'; relief: number; // money spent on relief
+  company?: Id; item?: string; mult?: number; lockdown?: Id[]; deaths?: number;
+  infectedAt?: Record<Id, number>; recovered?: Id[]; // epidemics
+}
+export interface EconState {
+  cycle: number; // -1 (deep recession) .. 1 (boom)
+  trend: number;
+  phase: 'boom' | 'expansion' | 'slowdown' | 'recession';
+  hist: number[];
+  commodity: Record<string, number>; // world supply multipliers for raw goods
 }
 
 export interface DayRecord {
@@ -117,6 +179,7 @@ export interface Company {
   shortage: string | null; // reason production last failed
   auto: { sell: boolean; buyInputs: boolean; hire: boolean }; // owner automation (AI owners enable all)
   state?: boolean; // state-owned (socialism)
+  halt?: { until: number; why: string }; // production stopped (strike, vandalism, sabotage)
   locked?: Id; // held in escrow by an open contract
 }
 
@@ -153,6 +216,10 @@ export interface Region {
   project: Id | null;
   depot?: number;
   supplied: boolean;
+  crime: number; // 0..100 crime rate
+  police: number; // 0..100 effective policing
+  unrest: number; // 0..100 public unrest
+  disrupted: number; // production disrupted until this time (disasters, riots, sabotage)
 }
 
 export interface Relation { score: number; hist: { t: number; delta: number; why: string }[] }
@@ -198,6 +265,8 @@ export interface Nation {
   unemployment: number; // share of citizens without a job (0..1)
   procure: Record<ItemKey, number>; // government demand not met by the market (signals producers)
   warMood: number; // public appetite for war shaped by the press (-5..5)
+  agency: Agency; // intelligence service
+  policeFunding: number; // share of daily revenue for national police (regions without their own government, federal crimes)
 }
 
 export interface Households { nation: Id; wallet: Wallet; inv: Inventory; pop: number; unmet: number }
@@ -464,8 +533,9 @@ export interface StateGov {
   size: number; // legislature seats
   lean: Record<Ideology, number>; // electorate's ideological leaning (sums to 1)
   tax: number; // state wage tax, % on shifts worked in the region
-  budget: { welfare: number; infra: number; business: number }; // shares of daily spending
+  budget: { welfare: number; infra: number; business: number; police: number }; // shares of daily spending
   spendRate: number; // share of the treasury spent each day
+  policeSpend: number; // yesterday's police spending (drives police strength)
   dev: number; // infrastructure level 0–5 (production bonus)
   devPts: number;
   approval: number;
@@ -489,6 +559,11 @@ export interface World {
   player: PlayerState;
   regions: Region[];
   govs: (StateGov | null)[]; // indexed by region id; null where there is no regional government
+  syndicates: Record<Id, Syndicate>;
+  cases: Record<Id, Case>;
+  ops: Record<Id, SpyOp>;
+  crises: Record<Id, Crisis>;
+  econ: EconState;
   nations: Nation[];
   households: Households[];
   citizens: Record<Id, Citizen>;
@@ -523,5 +598,5 @@ export interface World {
   queue: ScheduledEvent[];
   stats: Stats;
   ledger: { t: number; text: string; amount: number; asset: AssetId; ref: string }[]; // player's transaction history
-  calendar: { nextDaily: number; terrainDone?: Id[] };
+  calendar: { nextDaily: number; terrainDone?: Id[]; baseCitizens?: number };
 }

@@ -17,17 +17,21 @@ export type Perm =
   | 'diplomacy'
   | 'recruit'
   | 'pr'
-  | 'nuke';
+  | 'nuke'
+  | 'police' // national police operations: raids, funding, pardons
+  | 'intel'; // intelligence operations and agency budget
 
 /** Which ministries can exercise each national permission (president always can). */
 export const MINISTRY_PERMS: Record<Ministry, Perm[]> = {
-  vp: ['build', 'war', 'exchange', 'publicTrade', 'diplomacy', 'recruit', 'pr', 'propose', 'money'],
+  vp: ['build', 'war', 'exchange', 'publicTrade', 'diplomacy', 'recruit', 'pr', 'propose', 'money', 'police', 'intel'],
   development: ['build'],
   defense: ['war', 'nuke'],
   economy: ['exchange', 'money'],
   labor: ['publicTrade', 'trade'],
   pr: ['pr'],
   recruitment: ['recruit'],
+  interior: ['police'],
+  intelligence: ['intel'],
 };
 
 export const MINISTRY_INFO: Record<Ministry, { name: string; desc: string }> = {
@@ -38,6 +42,8 @@ export const MINISTRY_INFO: Record<Ministry, { name: string; desc: string }> = {
   labor: { name: 'Minister of Labor', desc: 'Trades national storage on markets' },
   pr: { name: 'Minister of Public Relations', desc: 'Government communications' },
   recruitment: { name: 'Minister of Recruitment', desc: 'Immigration and citizenship approvals' },
+  interior: { name: 'Minister of the Interior', desc: 'National police: funding, raids on organised crime, federal investigations' },
+  intelligence: { name: 'Director of Intelligence', desc: 'Runs the intelligence service: budget, operations, counter-intelligence' },
 };
 
 export function nationPerm(w: World, actor: Id, nation: Id, perm: Perm): boolean {

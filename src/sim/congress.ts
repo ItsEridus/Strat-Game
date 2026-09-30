@@ -10,7 +10,7 @@ import { GOLD, c as cur, fmtAmt } from '../engine/money';
 import { HOUR } from '../engine/clock';
 import { nid, notify, record } from '../engine/events';
 import { chance, pick, weighted } from '../engine/rng';
-import { natref, player } from './query';
+import { natref, player, jailed } from './query';
 import { taxCeilings } from './taxes';
 import { callSpecialElection, partyOf } from './politics';
 import { bump } from './progress';
@@ -63,6 +63,7 @@ function estRevenue(w: World, n: Nation, _k: string, v: number) {
 }
 
 export function proposeCheck(w: World, c: Citizen, type: ProposalType, params: Record<string, any>): string | null {
+  if (jailed(w, c)) return 'You are in prison.';
   const n = w.nations[c.nation];
   if (!n.deputies.includes(c.id) && n.president !== c.id) return 'Only deputies and the president can draft proposals.';
   if ((n.propCount[c.id] ?? 0) >= B.politics.proposalsPerDeputy) return `Limit of ${B.politics.proposalsPerDeputy} proposals per mandate reached.`;

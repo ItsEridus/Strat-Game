@@ -30,6 +30,10 @@ import { terrainDaily } from './terrainEvents';
 import { propose } from './congress';
 import { aiClaimReserves, defenseBudget, diplomacyDaily, militaryHourly, soldiersTick } from '../ai/military';
 import { stateDaily } from './stategov';
+import { crimeDaily, crimeHourly, playerRackets, policeRecruitment, replyArrest, replyExtortion, replySyndInvite } from './crime';
+import { intelDaily, replySpyApproach, resolveOp } from './intel';
+import { dynamicsDaily, replyStrike } from './dynamics';
+import { npcDaily, replyBribe, replyDebate, replyInterview, replyLoan } from './npc';
 
 let done = false;
 export function registerSystems() {
@@ -103,6 +107,20 @@ export function registerSystems() {
   REPLY_HANDLERS.helpReq = replyHelp;
   REPLY_HANDLERS.order = replyOrder;
   REPLY_HANDLERS.diplo = (w, m, o) => replyDiplo(w, m, o, (type, params) => propose(w, player(w), type as any, params));
+
+  // Stage 6: law & order, intelligence, a dynamic world and a responsive society
+  HANDLERS.opResolve = (w, p) => resolveOp(w, p.id);
+  hourlyHooks.push(crimeHourly);
+  dailyHooks.push((w: World) => { dynamicsDaily(w); crimeDaily(w); playerRackets(w); policeRecruitment(w); intelDaily(w); npcDaily(w); });
+  REPLY_HANDLERS.arrest = (w, m, o) => replyArrest(w, m.payload!.case, o);
+  REPLY_HANDLERS.extortion = (w, m, o) => replyExtortion(w, m.payload!, o);
+  REPLY_HANDLERS.syndInvite = (w, m, o) => replySyndInvite(w, m.payload!, o);
+  REPLY_HANDLERS.spyApproach = (w, m, o) => replySpyApproach(w, m.payload!, o);
+  REPLY_HANDLERS.strike = (w, m, o) => replyStrike(w, m.payload!, o);
+  REPLY_HANDLERS.loanOffer = (w, m, o) => replyLoan(w, m.payload!, o);
+  REPLY_HANDLERS.bribeOffer = (w, m, o) => replyBribe(w, m.payload!, o);
+  REPLY_HANDLERS.interview = (w, m, o) => replyInterview(w, m.payload!, o);
+  REPLY_HANDLERS.debate = (w, m, o) => replyDebate(w, m.payload!, o);
 
   REPLY_HANDLERS.ministerOffer = (w, m, o) => ministerOfferReply(w, m.payload!, o);
   REPLY_HANDLERS.citizenship = (w, m, o) => {

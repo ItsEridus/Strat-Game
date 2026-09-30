@@ -31,6 +31,10 @@ import { Press } from './Press';
 import { Library } from './Library';
 import { Stadium } from './Stadium';
 import { Events } from './Events';
+import { Crime } from './Crime';
+import { Intel } from './Intel';
+import { WorldState } from './WorldState';
+import { People } from './People';
 
 export interface ScreenDef { id: string; label: string; icon: string; group: string; comp: FunctionComponent<{ w: World }>; hidden?: boolean; badge?: (w: World) => number }
 
@@ -59,6 +63,10 @@ export const SCREENS: ScreenDef[] = [
   { id: 'units', label: 'Military Unit', icon: '🎖️', group: 'Military', comp: Units },
   { id: 'events', label: 'Events & Strategic', icon: '🏴‍☠️', group: 'Military', comp: Events, badge: (w) => Object.values(w.events).filter((e) => e.status === 'active').length },
   { id: 'stadium', label: 'Stadium', icon: '🏟️', group: 'Military', comp: Stadium },
+  { id: 'people', label: 'People', icon: '👥', group: 'Society', comp: People },
+  { id: 'crime', label: 'Law & Order', icon: '⚖️', group: 'Society', comp: Crime, badge: (w) => Object.values(w.cases).filter((k) => k.status === 'open' && k.suspect === w.playerId).length },
+  { id: 'intel', label: 'Intelligence', icon: '🕵️', group: 'Society', comp: Intel },
+  { id: 'world', label: 'World Situation', icon: '🌐', group: 'Society', comp: WorldState, badge: (w) => Object.values(w.crises).filter((c) => c.status === 'active' && c.nation === w.citizens[w.playerId].nation && c.kind !== 'strike').length },
   { id: 'map', label: 'World Map', icon: '🗺️', group: 'World', comp: MapScreen },
   { id: 'country', label: 'Country', icon: '🏛️', group: 'World', comp: Country },
   { id: 'press', label: 'Newspapers', icon: '🗞️', group: 'World', comp: Press },

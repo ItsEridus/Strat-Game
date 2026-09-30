@@ -12,7 +12,7 @@ import { nid, notify, record } from '../engine/events';
 import { authorize } from './authority';
 import { addXp } from './citizen';
 import { builderRank, gearStats } from './combatMath';
-import { buffValue, controller, cref, natref, player, seatShare, studyActive, today } from './query';
+import { buffValue, controller, cref, natref, player, seatShare, studyActive, today, jailed } from './query';
 import { bump } from './progress';
 import { rollDrop } from './gear';
 
@@ -75,6 +75,7 @@ export function laborPoints(w: World, c: Citizen, p: Project): number {
 }
 
 export function laborCheck(w: World, c: Citizen, p: Project | undefined): string | null {
+  if (jailed(w, c)) return 'You are in prison.';
   if (!p) return 'Project not found.';
   if (p.done) return 'This project is complete.';
   if (controller(w.regions[c.loc]) !== controller(w.regions[p.region])) return `Travel to ${w.nations[controller(w.regions[p.region])].name} to work on this site.`;

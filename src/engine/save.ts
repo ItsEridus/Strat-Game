@@ -24,7 +24,7 @@ export function deserialize(text: string): World {
 /** Upgrade older saves in place. */
 function migrate(w: World, from: number): World {
   if (from > SAVE_VERSION) throw new Error(`Save is from a newer version (${from}).`);
-  if (from < 3) throw new Error('This save was made on an older map (before real states and provinces) and cannot be loaded. Start a new campaign.');
+  if (from < 4) throw new Error('This save predates law & order, intelligence and the living world, and cannot be loaded. Start a new campaign.');
   w.version = SAVE_VERSION;
   return w;
 }

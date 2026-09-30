@@ -97,7 +97,7 @@ test('a citizen can run for governor, campaign, vote and then govern', () => {
   advanceTo(w, s.nextElection + DAY, false);
   assert.equal(s.head.cit, p.id, 'player elected');
   // Govern: budget changes are executive; tax changes need the legislature.
-  assert.ok(setStateBudget(w, p.id, co.id, { welfare: 0.2, infra: 0.7, business: 0.1 }, 0.4).ok);
+  assert.ok(setStateBudget(w, p.id, co.id, { welfare: 0.2, infra: 0.6, business: 0.1, police: 0.1 }, 0.4).ok);
   const before = s.tax;
   const dir = before < 3 ? 1 : -1;
   for (const i of IDEOLOGY_LIST) s.seats[i] = 0;
@@ -113,7 +113,7 @@ test('infrastructure spending raises the production bonus; travel uses real dist
   const p = player(w);
   const ca = region(w, 'California');
   const s = w.govs[ca.id]!;
-  s.budget = { welfare: 0, infra: 1, business: 0 };
+  s.budget = { welfare: 0, infra: 1, business: 0, police: 0 };
   s.spendRate = 0.6;
   mint(w, regref(ca.id), 'USD', cur(20000), 'test');
   advance(w, 5 * DAY, false);

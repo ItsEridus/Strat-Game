@@ -1,8 +1,9 @@
 import type { World } from '../../sim/types';
 import { Amt, NationChip, Panel, RegionLink, Stat } from '../common';
 import { store } from '../store';
-import { player } from '../../sim/query';
+import { player, jailed } from '../../sim/query';
 import { rankOf } from '../../sim/combatMath';
+import { activityOf, goalText } from '../../sim/npc';
 import { IDEOLOGIES } from '../../data/ideologies';
 import { GOLD } from '../../engine/money';
 import { CitizenExtras } from './CitizenExtras';
@@ -35,6 +36,11 @@ export function CitizenProfile({ w }: { w: World }) {
           <Stat label="Employer">{job ? job.name : 'unemployed'}</Stat>
           <Stat label="Companies owned">{owned.length}</Stat>
           {!c.player && <Stat label="Relationship with you">{Math.round(c.rel[p.id] ?? 0)}</Stat>}
+          <Stat label="Doing">{activityOf(w, c)}</Stat>
+          {!c.player && c.sec.goal && (Math.abs(c.rel[p.id] ?? 0) >= 20 || c.sec.fame > 5 || c.influence > 30) && <Stat label="Ambition">{goalText(w, c)}</Stat>}
+          <Stat label="Fame">{c.sec.fame.toFixed(0)}</Stat>
+          <Stat label="Public record">{c.sec.record.convictions ? `${c.sec.record.convictions} conviction${c.sec.record.convictions > 1 ? 's' : ''}` : 'clean'}{jailed(w, c) ? ' · in prison' : ''}</Stat>
+          {p.sec.rivals.includes(c.id) && <Stat label="Status">😠 your rival</Stat>}
           {c.player && <Stat label="Gold"><Amt asset={GOLD} v={c.wallet[GOLD] ?? 0} /></Stat>}
         </div>
       </Panel>

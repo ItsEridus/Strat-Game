@@ -12,9 +12,10 @@ import { DAY } from '../engine/clock';
 import { nid, notify, record } from '../engine/events';
 import { authorize } from './authority';
 import { addXp } from './citizen';
-import { companyCurrency, controller, coref, cref, effEco, natref, seatShare, studyActive, today } from './query';
+import { companyCurrency, controller, coref, cref, effEco, natref, seatShare, studyActive, today, jailed } from './query';
 import { remitWorkTax, workTaxFor } from './taxes';
 import { infraBonus } from './stategov';
+import { crisisFactor } from './dynamics';
 import { bump } from './progress';
 import { pick } from '../engine/rng';
 import { addPoints } from './construction';
@@ -64,6 +65,12 @@ export function productionFactors(w: World, co: Company, worker: Citizen | null)
   const share = seatShare(w, n);
   const ideo = co.state ? (share.socialism ?? 0) * IDEOLOGIES.socialism.fx.stateProduction : (share.capitalism ?? 0) * IDEOLOGIES.capitalism.fx.production;
   if (ideo) f.push({ label: co.state ? 'Socialist state production' : 'Capitalist production', mult: 1 + ideo });
+  if (r.crime > 50) f.push({ label: `Crime ${Math.round(r.crime)}`, mult: 1 - (r.crime - 50) / 250 });
+  if (r.disrupted > w.time) f.push({ label: 'Regional disruption (disaster, riot or sabotage)', mult: 0.6 });
+  const shock = raw ? w.econ.commodity[co.industry] ?? 1 : 1;
+  if (shock !== 1) f.push({ label: shock > 1 ? `World ${co.industry} boom` : `World ${co.industry} supply shock`, mult: shock });
+  const crisis = crisisFactor(w, co.region, co.industry);
+  if (crisis) f.push(crisis);
   const infra = infraBonus(w, co.region);
   if (infra > 1 && !r.occ) f.push({ label: `State infrastructure L${w.govs[co.region]!.dev}`, mult: infra });
   const depotLvl = depotBonusFor(w, co);
@@ -106,6 +113,7 @@ export function shiftPreview(w: World, co: Company, worker: Citizen | null, extr
 
 /** Reasons a shift cannot run (null = OK). */
 export function productionBlock(w: World, co: Company, units: number): string | null {
+  if (co.halt && co.halt.until > w.time) return `${co.halt.why} (until day ${Math.floor(co.halt.until / 1440)}, ${String(Math.floor((co.halt.until % 1440) / 60)).padStart(2, '0')}:00).`;
   const whole = Math.max(1, Math.floor(units + co.frac));
   const ik = inputKey(co);
   if (ik) {
@@ -152,6 +160,7 @@ export function netWage(w: World, co: Company, worker: Citizen) {
 }
 
 export function shiftCheck(w: World, c: Citizen): string | null {
+  if (jailed(w, c)) return 'You are in prison.';
   if (c.job == null) return 'You have no job. Find one on the job market.';
   const co = w.companies[c.job];
   if (!co) return 'Your employer no longer exists.';
@@ -193,6 +202,7 @@ export function workShift(w: World, c: Citizen): Result {
 }
 
 export function applyCheck(w: World, c: Citizen, co: Company | undefined): string | null {
+  if (jailed(w, c)) return 'You are in prison.';
   if (!co) return 'Company not found.';
   if (!co.offer || co.offer.slots <= co.workers.length) return 'No open positions.';
   if (effEco(w, c) < co.offer.minEco) return `Requires economic skill ${co.offer.minEco} (you have ${effEco(w, c).toFixed(1)}).`;
@@ -416,6 +426,7 @@ export function publicWorksWage(w: World, nation: Id) {
 }
 
 export function publicWorksCheck(w: World, c: Citizen): string | null {
+  if (jailed(w, c)) return 'You are in prison.';
   const nat = controller(w.regions[c.loc]);
   const n = w.nations[nat];
   if (c.nation !== nat) return 'Public works only employ citizens in their own country.';

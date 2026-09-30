@@ -14,7 +14,7 @@ import { nid, notify } from '../engine/events';
 import { chance } from '../engine/rng';
 import { addXp } from './citizen';
 import { hitPreview, sideNation, type WeaponSel } from './combatMath';
-import { controller, cref, player, today } from './query';
+import { controller, cref, player, today, jailed } from './query';
 import { rollDrop } from './gear';
 import { bump } from './progress';
 import { onBattleWon } from './warHooks';
@@ -39,6 +39,7 @@ export const activeBattles = (w: World) => Object.values(w.battles).filter((b) =
 
 /** Can this citizen fight for `side`? Location rule (SOLO): be in territory controlled by that side or an ally. */
 export function fightCheck(w: World, c: Citizen, b: Battle | undefined, side: 'a' | 'd', weapon: WeaponSel): string | null {
+  if (jailed(w, c)) return 'You are in prison.';
   if (!b) return 'Battle not found.';
   if (b.done) return 'This battle is over.';
   if (b.kind === 'tournament') return 'Tournament bouts are fought from the Stadium.';

@@ -16,6 +16,7 @@ export function acct(w: World, ref: AccountRef): Account | null {
     case 'hh': { const h = w.households[ref.id]; return h ? { wallet: h.wallet, inv: h.inv, cap: Infinity } : null; }
     case 'hold': { const h = w.holdings[ref.id]; return h ? { wallet: h.wallet, inv: h.inv, cap: B.storage.holding } : null; }
     case 'unit': { const u = w.units[ref.id]; return u ? { wallet: u.wallet, inv: u.inv, cap: B.storage.unit } : null; }
+    case 'synd': { const s = w.syndicates[ref.id]; return s ? { wallet: s.wallet, inv: s.inv, cap: B.storage.nation } : null; }
     case 'reg': { const s = w.govs[ref.id]; return s ? { wallet: s.wallet, inv: s.inv, cap: B.storage.nation } : null; }
     default: return null;
   }
@@ -182,6 +183,7 @@ export function audit(w: World): { ok: boolean; problems: string[] } {
   for (const h of Object.values(w.holdings)) scan(h.wallet, h.inv, `hold${h.id}`);
   for (const u of Object.values(w.units)) scan(u.wallet, u.inv, `unit${u.id}`);
   for (const s of w.govs) if (s) scan(s.wallet, s.inv, `reg${s.region}`);
+  for (const s of Object.values(w.syndicates)) scan(s.wallet, s.inv, `synd${s.id}`);
   // escrows
   for (const l of Object.values(w.listings)) items[l.item] = (items[l.item] ?? 0) + l.qty;
   for (const o of Object.values(w.fx)) {

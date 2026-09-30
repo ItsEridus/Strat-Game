@@ -229,3 +229,8 @@ pre { overflow: auto; max-height: 400px; background: var(--bg); padding: .6rem; 
   .vitals { margin-left: 0; }
   .quest { grid-template-columns: 1fr 90px auto; }
 }
+
+/* intelligence & society screens */
+.netgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: .35rem .8rem; }
+.netgrid > div { display: grid; grid-template-columns: auto 1fr; gap: .4rem; align-items: center; }
+.checks.small label { margin-right: .6rem; }

@@ -21,7 +21,7 @@ import { c as cur, fmtAmt } from '../engine/money';
 import { DAY, dayOf } from '../engine/clock';
 import { notify, record } from '../engine/events';
 import { chance, pick, rand, randInt } from '../engine/rng';
-import { controller, coref, cref, hhref, natref, player, regref, seatShare } from './query';
+import { controller, coref, cref, hhref, natref, player, regref, seatShare, jailed } from './query';
 
 // ---------- templates and rules ----------
 
@@ -63,12 +63,12 @@ const normalize = (m: Record<Ideology, number>) => {
   return m;
 };
 
-function budgetFor(ideo: Ideology) {
+export function budgetFor(ideo: Ideology): StateGov['budget'] {
   switch (ideo) {
-    case 'capitalism': return { welfare: 0.2, infra: 0.35, business: 0.45 };
-    case 'socialism': case 'communism': return { welfare: 0.55, infra: 0.3, business: 0.15 };
-    case 'centralism': return { welfare: 0.25, infra: 0.55, business: 0.2 };
-    default: return { welfare: 0.35, infra: 0.4, business: 0.25 };
+    case 'capitalism': return { welfare: 0.15, infra: 0.3, business: 0.4, police: 0.15 };
+    case 'socialism': case 'communism': return { welfare: 0.5, infra: 0.25, business: 0.1, police: 0.15 };
+    case 'centralism': return { welfare: 0.2, infra: 0.45, business: 0.15, police: 0.2 };
+    default: return { welfare: 0.25, infra: 0.3, business: 0.2, police: 0.25 };
   }
 }
 
@@ -118,7 +118,7 @@ export function initGovs(w: World) {
     const s: StateGov = {
       region: r.id, wallet: {}, inv: {}, cur: n.cur,
       head: { name: '', ideo: 'capitalism', cit: null, since: w.time }, seats: {}, size, lean,
-      tax: 0, budget: budgetFor('capitalism'), spendRate: 0.25, dev: 0, devPts: 0, approval: 55,
+      tax: 0, budget: budgetFor('capitalism'), policeSpend: 0, spendRate: 0.25, dev: 0, devPts: 0, approval: 55,
       // Staggered cycles so a few regions vote each day.
       nextElection: w.time + randInt(w, 8, B.state.termDays) * DAY, candidates: [], voted: [], lastTaxChange: -1e9,
       stats: { revToday: 0, spendToday: 0, revHist: [], spendHist: [] },
@@ -173,7 +173,11 @@ function resolveElection(w: World, s: StateGov, announce = true) {
   const scores = s.candidates.map((c) => {
     let sc = s.lean[c.ideo] + 0.03;
     if (s.head.name === c.name) sc *= 0.7 + (s.approval / 100) * 0.6;
-    if (c.cit != null) sc *= 1 + Math.min(0.5, (w.citizens[c.cit]?.influence ?? 0) / 200);
+    if (c.cit != null) {
+      const x = w.citizens[c.cit];
+      sc *= 1 + Math.min(0.5, (x?.influence ?? 0) / 200) + Math.min(0.2, (x?.sec.fame ?? 0) / 100);
+      sc *= 1 - Math.min(0.6, (x?.sec.record.convictions ?? 0) * 0.15); // voters punish convictions
+    }
     sc *= 1 + Math.min(1, c.campaign / campaignRef);
     return sc * rand(w, 0.85, 1.15);
   });
@@ -241,6 +245,7 @@ export function eligibleCandidate(w: World, cid: Id, rid: Id): string | null {
   const s = w.govs[rid];
   const tpl = govTemplate(w, rid);
   if (!s || !tpl) return `${r.name} has no regional government.`;
+  if (jailed(w, c)) return 'Prisoners cannot stand for office.';
   if (tpl.mode !== 'elected') return `The ${tpl.title} of ${r.name} is appointed by the national government.`;
   if (r.occ) return `${r.name} is under occupation; elections are postponed.`;
   if (c.nation !== r.owner) return `Only ${w.nations[r.owner].adj} citizens can run.`;
@@ -329,7 +334,7 @@ export function setStateTax(w: World, actor: Id | 'npc', rid: Id, value: number)
 export function setStateBudget(w: World, actor: Id, rid: Id, budget: StateGov['budget'], spendRate: number): Result {
   const s = w.govs[rid];
   if (!s || s.head.cit !== actor) return fail('Only the head of this government sets its budget.');
-  const vals = [budget.welfare, budget.infra, budget.business];
+  const vals = [budget.welfare, budget.infra, budget.business, budget.police];
   if (vals.some((v) => !(v >= 0)) || Math.abs(vals.reduce((a, b) => a + b, 0) - 1) > 0.011) return fail('Budget shares must add up to 100%.');
   if (!(spendRate >= 0.05 && spendRate <= 0.6)) return fail('Spend between 5% and 60% of the treasury per day.');
   s.budget = { ...budget };
@@ -471,7 +476,9 @@ function spend(w: World, s: StateGov, amount: number, local: Company[]) {
   const code = s.cur;
   const welfare = Math.floor(amount * s.budget.welfare);
   const infra = Math.floor(amount * s.budget.infra);
-  let business = amount - welfare - infra;
+  const police = Math.floor(amount * s.budget.police);
+  let business = amount - welfare - infra - police;
+  s.policeSpend = police > 0 ? payPolice(w, s, police) : 0;
   const ref = regref(s.region);
   const cos = controller(r) === r.owner ? local : [];
   const workers = cos.reduce((t, co) => t + co.workers.length, 0);
@@ -486,7 +493,19 @@ function spend(w: World, s: StateGov, amount: number, local: Company[]) {
   // Welfare and infrastructure contracts flow to residents (the background economy).
   const toHh = welfare + infra;
   if (toHh > 0 && pay(w, ref, hhref(r.owner), code, toHh, `${r.name} public spending`)) s.devPts += infra;
-  s.stats.spendToday += toHh + business;
+  s.stats.spendToday += toHh + business + s.policeSpend;
+}
+
+/** Police spending: salaries for citizen officers serving here, the rest to local employment (households). */
+function payPolice(w: World, s: StateGov, amount: number): number {
+  const ref = regref(s.region);
+  const officers = Object.values(w.citizens).filter((c) => c.sec.police === s.region && !c.sec.jailUntil);
+  let paid = 0;
+  const each = officers.length ? Math.min(cur(B.police.salary) * 2, Math.floor((amount * 0.5) / officers.length)) : 0;
+  for (const o of officers) if (each > 0 && pay(w, ref, cref(o.id), s.cur, each, `Police salary (${w.regions[s.region].name})`)) paid += each;
+  const rest = amount - paid;
+  if (rest > 0 && pay(w, ref, hhref(w.regions[s.region].owner), s.cur, rest, `${w.regions[s.region].name} policing`)) paid += rest;
+  return paid;
 }
 
 function rollStats(s: StateGov) {
@@ -509,6 +528,9 @@ function aiPolicy(w: World, s: StateGov) {
   }
   const b = budgetFor(s.head.ideo);
   if (s.approval < 40) { b.welfare += 0.1; b.business -= 0.05; b.infra -= 0.05; }
+  // Crime-ridden regions shift money into policing.
+  const crime = w.regions[s.region].crime;
+  if (crime > 45) { const shift = Math.min(b.infra - 0.05, (crime - 45) / 200); b.police += shift; b.infra -= shift; }
   s.budget = b;
   s.spendRate = 0.25;
 }

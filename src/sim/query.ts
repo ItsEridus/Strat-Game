@@ -9,6 +9,9 @@ export const coref = (id: Id): AccountRef => ({ k: 'co', id });
 export const natref = (id: Id): AccountRef => ({ k: 'nat', id });
 export const hhref = (id: Id): AccountRef => ({ k: 'hh', id });
 export const regref = (id: Id): AccountRef => ({ k: 'reg', id });
+export const syndref = (id: Id): AccountRef => ({ k: 'synd', id });
+/** In prison right now. */
+export const jailed = (w: World, c: Citizen) => c.sec.jailUntil > w.time;
 export const today = (w: World) => dayOf(w.time);
 
 /** Nation currently administering a region (occupier if occupied, else owner). */

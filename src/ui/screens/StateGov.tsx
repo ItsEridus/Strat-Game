@@ -44,7 +44,7 @@ export function StateGovPanel({ w, r }: { w: World; r: Region }) {
         <tr><td>{tpl.legislature}</td><td><SeatBar seats={s.seats} size={s.size} /> <small class="muted">{s.size} seats</small></td></tr>
         <tr><td>State wage tax</td><td>{s.tax}%{taxCap(w, r.id) === 0 ? <small class="muted"> (no wage tax by law)</small> : null} <small class="muted">on shifts worked here, on top of national {w.nations[r.owner].taxes.work}%</small></td></tr>
         <tr><td>Treasury</td><td><Amt asset={code} v={s.wallet[code] ?? 0} /> <Sparkline values={s.stats.revHist} width={80} height={18} /></td></tr>
-        <tr><td>Budget</td><td class="small">welfare {Math.round(s.budget.welfare * 100)}% · infrastructure {Math.round(s.budget.infra * 100)}% · business {Math.round(s.budget.business * 100)}% · spends {Math.round(s.spendRate * 100)}%/day</td></tr>
+        <tr><td>Budget</td><td class="small">welfare {Math.round(s.budget.welfare * 100)}% · infrastructure {Math.round(s.budget.infra * 100)}% · business {Math.round(s.budget.business * 100)}% · police {Math.round(s.budget.police * 100)}% · spends {Math.round(s.spendRate * 100)}%/day</td></tr>
         <tr><td>Infrastructure</td><td>level {s.dev}/{B.state.devMax} <small class="muted">(+{Math.round(s.dev * B.state.devBonus * 100)}% production)</small></td></tr>
         <tr><td>{tpl.mode === 'elected' ? 'Next election' : 'Term review'}</td><td>day {dayOf(s.nextElection)}</td></tr>
         <tr><td>Electorate leans</td><td class="small">{IDEOLOGY_LIST.filter((i) => s.lean[i] > 0.08).sort((a, b) => s.lean[b] - s.lean[a]).map((i) => `${IDEOLOGIES[i].name} ${Math.round(s.lean[i] * 100)}%`).join(' · ')}</td></tr>
@@ -107,8 +107,9 @@ function HeadControls({ w, r }: { w: World; r: Region }) {
   const [tax, setTax] = useState(s.tax);
   const [wel, setWel] = useState(Math.round(s.budget.welfare * 100));
   const [inf, setInf] = useState(Math.round(s.budget.infra * 100));
+  const [pol, setPol] = useState(Math.round(s.budget.police * 100));
   const [rate, setRate] = useState(Math.round(s.spendRate * 100));
-  const bus = 100 - wel - inf;
+  const bus = 100 - wel - inf - pol;
   const dir = Math.sign(tax - s.tax);
   const support = dir ? Math.round(legislatureSupport(s, dir) * 100) : null;
   return (
@@ -117,8 +118,8 @@ function HeadControls({ w, r }: { w: World; r: Region }) {
       <div class="row small">Wage tax <Num value={tax} onInput={setTax} min={0} max={taxCap(w, r.id)} width={60} />%
         <ActBtn small run={(w) => setStateTax(w, p.id, r.id, tax)}>Put to the {tpl.legislature}</ActBtn>
         {support != null && <span class="muted">{tpl.mode === 'appointed' ? '' : `~${support}% of seats favour this direction`}</span>}</div>
-      <div class="row small">Welfare <Num value={wel} onInput={setWel} min={0} max={100} width={55} />% · Infrastructure <Num value={inf} onInput={setInf} min={0} max={100} width={55} />% · Business {bus}% · Spend <Num value={rate} onInput={setRate} min={5} max={60} width={55} />%/day
-        <ActBtn small why={bus < 0 ? 'Shares exceed 100%.' : null} run={(w) => setStateBudget(w, p.id, r.id, { welfare: wel / 100, infra: inf / 100, business: bus / 100 }, rate / 100)}>Set budget</ActBtn></div>
+      <div class="row small">Welfare <Num value={wel} onInput={setWel} min={0} max={100} width={55} />% · Infrastructure <Num value={inf} onInput={setInf} min={0} max={100} width={55} />% · Police <Num value={pol} onInput={setPol} min={0} max={100} width={55} />% · Business {bus}% · Spend <Num value={rate} onInput={setRate} min={5} max={60} width={55} />%/day
+        <ActBtn small why={bus < 0 ? 'Shares exceed 100%.' : null} run={(w) => setStateBudget(w, p.id, r.id, { welfare: wel / 100, infra: inf / 100, business: bus / 100, police: pol / 100 }, rate / 100)}>Set budget</ActBtn></div>
       <ActBtn small kind="danger" confirm="Resign your office?" run={(w) => resignHead(w, p.id)}>Resign</ActBtn>
       <Help>Welfare goes to residents and lifts approval where the electorate leans left; infrastructure builds toward the next level (+{B.state.devBonus * 100}% production each); business support is paid to local companies per worker. Tax changes need a majority of the legislature and can move {B.state.taxStep} points every {B.state.taxCooldownDays} days.</Help>
     </div>

@@ -6,7 +6,7 @@ import { fail, ok, type Result } from '../engine/result';
 import { consume, mint } from '../engine/ledger';
 import { GOLD, g } from '../engine/money';
 import { notify } from '../engine/events';
-import { cref, maxEnergy, studyActive, today, xpToNext } from './query';
+import { cref, maxEnergy, studyActive, today, xpToNext, jailed } from './query';
 import { bump } from './progress';
 
 export const ATTRS: Record<Attr, { name: string; effect: string }> = {
@@ -106,6 +106,7 @@ export function powerGain(w: World, c: Citizen): number {
 export type TrainMode = 'normal' | 'food' | 'weapons';
 
 export function trainCheck(w: World, c: Citizen, mode: TrainMode): string | null {
+  if (jailed(w, c)) return 'You are in prison (the yard has no gym).';
   if (mode === 'food' && (c.inv['food:1'] ?? 0) < 5) return 'Donation training needs 5 Q1 food.';
   if (mode === 'weapons' && (c.inv['wg:1'] ?? 0) < 20) return 'Donation training needs 20 Q1 ground weapons.';
   if (c.energy < B.cost.train) return `Not enough energy (${Math.floor(c.energy)}/${B.cost.train}).`;

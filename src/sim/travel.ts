@@ -6,11 +6,12 @@ import { fail, ok, type Result } from '../engine/result';
 import { burn, consume } from '../engine/ledger';
 import { GOLD, g } from '../engine/money';
 import { notify, record, sendMsg } from '../engine/events';
-import { controller, cref, player, studyActive } from './query';
+import { controller, cref, player, studyActive, jailed } from './query';
 import { bump } from './progress';
 import { authorize } from './authority';
 import { leaveParty } from './politics';
 import { EARTH } from '../data/earth';
+import { inLockdown } from './dynamics';
 
 /** Hops through the region graph (land borders, straits and sea lanes). */
 export function distance(w: World, from: Id, to: Id): number {
@@ -49,7 +50,7 @@ export function travelOptions(w: World, c: Citizen, dest: Id): TravelOption[] {
   const km = kmBetween(c.loc, dest);
   const light = studyActive(w, c, 'packinglight') ? 0.75 : 1;
   const opts: TravelOption[] = [];
-  const base = c.mining ? 'Travel is blocked while mining.' : c.loc === dest ? 'You are already here.' : null;
+  const base = jailed(w, c) ? 'You are in prison.' : inLockdown(w, c.loc) || inLockdown(w, dest) ? 'Travel is blocked by an epidemic lockdown.' : c.mining ? 'Travel is blocked while mining.' : c.loc === dest ? 'You are already here.' : null;
   if (landNeighbour(w, c.loc, dest)) {
     const e = Math.round(B.travel.walkEnergy * light);
     opts.push({ id: 'walk', label: 'Go overland (bordering region)', ticket: null, energy: e, why: base ?? (c.energy < e ? `Needs ${e} energy.` : null) });

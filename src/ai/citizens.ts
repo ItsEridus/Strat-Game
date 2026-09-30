@@ -11,7 +11,7 @@ import { contributeLabor } from '../sim/construction';
 import { restockWeapons } from './military';
 import { buyBest, listingsFor } from '../sim/market';
 import { buyGold, sellGold, midRate } from '../sim/fx';
-import { controller, cref, effEco, maxEnergy, today } from '../sim/query';
+import { controller, cref, effEco, maxEnergy, today, jailed } from '../sim/query';
 
 /** Best job the citizen qualifies for, by net wage. */
 export function bestOffer(w: World, c: Citizen) {
@@ -67,6 +67,7 @@ export function eatUp(w: World, c: Citizen, upTo: number) {
 }
 
 export function citizenHourly(w: World, c: Citizen) {
+  if (jailed(w, c)) return;
   const h = hourOf(w.time);
   const d = today(w);
   const home = w.nations[c.nation];

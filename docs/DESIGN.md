@@ -43,7 +43,7 @@ invented. Where the brief marks a rule as **documented** (current announcements)
   populated places), terrain (sampled points against Natural Earth deserts and mountain ranges, then broad
   climate zones; dense urban regions count as plains), national capitals and populations. **Hand-written:**
   names, government titles and selection methods, notable resource deposits and farm belts, and sea lanes.
-  Shapes stay out of saves; region ids index the static data. Older saves (versions 1–2) are rejected with a
+  Shapes stay out of saves; region ids index the static data. Older saves (versions 1–3) are rejected with a
   message.
 - **Procedural per seed** (where it adds replay value without contradicting geography): deposit richness and
   extra deposits (weighted by terrain), background population (each nation's total follows its real population,
@@ -61,6 +61,40 @@ invented. Where the brief marks a rule as **documented** (current announcements)
   (AI: a loyal official of their ideology; the player chooses). Tax changes need legislature support (seats
   whose ideology favours that direction, neutral ideologies counting half), at most 3 points per 7 days.
   Occupation suspends a government; annexation replaces it with an appointed administrator.
+- **Law & order** (`src/sim/crime.ts`): region `crime`, `police` and `unrest` (0–100) move daily toward targets.
+  Crime target = base + unemployment + poverty (unmet household demand) + city size + recession + unrest +
+  syndicate presence − 0.5 × (police − 30) − welfare/infrastructure. Police = base + state police spending per
+  resident relative to the national average + national police funding + citizen officers (halved under
+  occupation). Crimes (AI and player share the same functions) raise heat and may be seen, opening a `Case`;
+  evidence grows with policing and heat; at 60% the suspect is arrested where that nation's police reach, then
+  tried (conviction chance = evidence, ×0.75 with a lawyer; bribes succeed more where policing is weak).
+  Convictions: fine (to the state or national treasury), prison (blocks work, travel, training, fighting,
+  mining, construction, proposals, candidacy), dismissal from the police, a voter penalty. Syndicates are
+  accounts (`synd`, audited): they skim households on their turf, collect protection from companies (the
+  player's via the inbox), pay their members, recruit disaffected citizens, expand into weakly policed
+  neighbours, feud over shared turf, get raided (assets seized to the treasury) and collapse or emerge.
+- **Intelligence** (`src/sim/intel.ts`): `Nation.agency` holds budget, networks per foreign nation, counter-
+  intelligence, dossiers and focus. The budget is spent daily (to households) and builds networks in focus
+  countries with diminishing returns against the target's counter-intelligence; networks decay. Operations are
+  scheduled events (`opResolve`): success = 0.35 + network/150 + agent tradecraft/100 − counter/200; exposure
+  costs relations, network and possibly the agent. AI directors pick operations by war, relations and exposure.
+  Citizens can serve (analyst → deputy director, paid) or be turned into foreign assets (paid daily by the
+  foreign treasury; caught by counter-intelligence sweeps).
+- **Dynamic world** (`src/sim/dynamics.ts`, `src/data/hazards.ts`): a mean-reverting business cycle drives
+  household spending (±30%), crime and unrest; commodity events scale raw output worldwide; hazards fire by
+  season in real zones with severity 1–3 (disruption, deaths, building damage, looting, halted companies) and
+  draw automatic state and national relief; epidemics spread along links, recover after ~12 days, and are
+  stopped by lockdowns (AI by ideology, the player as governor); companies paying under 80% of the national
+  average wage strike (the player decides in the inbox); unrest becomes protests and riots with AI concessions
+  or crackdowns; background population migrates toward safer, better-governed regions; new AI citizens arrive
+  (capped at 1.3× the starting population).
+- **Responsive AI** (`src/sim/npc.ts`): every AI citizen has an agenda that steers behaviour (e.g. would-be
+  governors stand and campaign) and is announced when achieved. Rivals (opponents in your races, competitors in
+  your industries, feuding gangs, people you've wronged) and allies (relationship ≥ 40) act on the player; NPCs
+  send bribe offers to office-holders, loans, interview requests and debate challenges; journalists investigate
+  notorious citizens; NPCs clash, mentor and invest among themselves; and a daily snapshot comparison makes the
+  world react to the player's new companies, offices and convictions. Secret affiliations (syndicate, agency)
+  are hidden from the player unless they'd plausibly know.
 - **Modules:** `sim/` (rules), `ai/` (behaviour), `ui/` (screens), `data/` (tables). Later systems plug in
   through `sim/systems.ts` hooks, so depth can be added without touching the loop.
 
@@ -106,7 +140,7 @@ invented. Where the brief marks a rule as **documented** (current announcements)
 
 ## Acceptance checklist (brief §17)
 
-All items are covered by automated tests (`npm test`, 35 passing) and the headless audit. The browser smoke
+All items are covered by automated tests (`npm test`, 46 passing) and the headless audit. The browser smoke
 tests `tests/e2e.mjs` and `tests/e2e-play.mjs` check every screen and the tutorial flow for console errors.
 
 | # | Item | Status | Evidence |
@@ -148,6 +182,12 @@ These are deliberate simplifications or gaps against the brief's full wish list:
 - **Governments:** real titles and selection methods, but not real politicians or parties. National politics
   uses the same election/congress rules everywhere. Regional legislatures are modelled by their composition only
   (they vote on tax changes); regional elections are single-round; terrain is a coarse four-way classification.
+- **Crime & intelligence:** no assassinations or violent attacks on individuals (deliberately left out); crimes
+  are abstracted into a handful of kinds with severity. Courts are a single trial with no appeals or plea deals.
+  Foreign assets are paid in the foreign currency. AI governments do not negotiate prisoner exchanges.
+- **Living world:** disasters and epidemics are regional abstractions (population, production, buildings,
+  unrest); there is no health-care system beyond hospitals reducing epidemic deaths. Migration moves the
+  background population only; AI citizens arrive but never die or retire.
 - **Holdings:** role assignment in the UI is basic ("assign to top shareholder"). There is no UI for holding
   storage transfers or holding-level currency exchange. Public/private disclosure is simplified.
 - **Contracts and negotiation:** NPCs accept or reject with a stated reason. They make no counter-offers.
