@@ -1,4 +1,5 @@
 // Deterministic world generation from a seed.
+import { civilianControl } from './forces';
 import { lifeOf, newLifeState } from './lifecycle';
 import { initFamilies, initPlayerFamily } from './family';
 import { initPopulation } from './population';
@@ -346,6 +347,7 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
   initForces(w);
   seedOfficers(w);
   seedLate(w);
+  civilianControl(w);
   initFamilies(w);
   initPlayerFamily(w);
   initPopulation(w);

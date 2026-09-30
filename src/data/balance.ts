@@ -269,6 +269,9 @@ export const BALANCE = {
     maxCitizensFactor: 1.3, // SOLO cap on AI population growth
   },
   forces: {
+    retireAge: 62, // SOLO serving personnel retire at this age
+    retireAgeFlag: 64, // SOLO generals and admirals
+    maxEnlistAge: 44, // SOLO oldest new recruit
     budget: 0.15, // SOLO default military budget: share of daily revenue (upkeep and duty pay draw on it)
     upkeepScale: 0.07, // SOLO converts a formation type's upkeep weight into currency per day
     careerShare: 0.03, // SOLO share of a nation's citizens seeded as career officers and NCOs

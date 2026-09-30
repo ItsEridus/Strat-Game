@@ -1,5 +1,8 @@
 // Armed Forces: your nation's army, navy and air force, your service career,
 // command of formations, the defence ministry's controls and the war at sea.
+import { appointChief, appointChiefCheck, commanderInChief, publicOffice, returnToDuty, returnToDutyCheck } from '../../sim/forces';
+import { nationals } from '../../sim/census';
+import { serviceDays } from '../../sim/growth';
 import { useState } from 'preact/hooks';
 import type { Branch, Formation, FormationKind, Id, World } from '../../sim/types';
 import { ActBtn, Bar, CitLink, Empty, Help, NationChip, Panel, RegionLink, Select } from '../common';
@@ -31,6 +34,7 @@ export function Forces({ w }: { w: World }) {
       <Panel title={`🎖️ ${n.adj} Armed Forces`} class="wide">
         <div class="stats">
           {(['army', 'navy', 'air'] as Branch[]).map((b) => <div class="stat"><small>{BRANCH_ICON[b]} {BRANCH_NAME[b]}</small><b>{total(b).length} formations · power {Math.round(total(b).reduce((s, f) => s + power(w, f), 0) * 10)}</b></div>)}
+          <div class="stat"><small>Commander-in-Chief</small><b>{n.president != null ? <><CitLink w={w} id={n.president} /> <small class="muted">({n.leader})</small></> : 'vacant'}</b></div>
           <div class="stat"><small>Chief of Staff</small><b>{n.defense.chief != null ? <>{rankName(w.citizens[n.defense.chief])} <CitLink w={w} id={n.defense.chief} /></> : 'vacant'}</b></div>
           <div class="stat"><small>Military budget</small><b>{Math.round(n.defense.budget * 100)}% of revenue{n.defense.unpaid ? <span class="bad"> · unpaid {n.defense.unpaid}d</span> : ''}</b></div>
           <div class="stat"><small>Security alert</small><b class={n.alert >= 4 ? 'bad' : n.alert >= 3 ? 'warn' : ''}>{n.alert} · {ALERT_NAMES[n.alert]}</b></div>
@@ -38,6 +42,7 @@ export function Forces({ w }: { w: World }) {
         <Help>Formations fight in battles alongside citizens: divisions in or next to the battle region (defenders garrisoned there fight automatically), air wings within {B.forces.airRangeKm.toLocaleString()} km on strike or superiority missions, fleets in a sea that touches the coast. Invasions need a land border — or naval superiority for an amphibious landing; otherwise they are air assaults. Upkeep comes from the military budget; unpaid forces lose morale and readiness; equipment wears and is repaired from national stocks.</Help>
       </Panel>
 
+      <CommandPanel w={w} />
       <ServicePanel w={w} />
       {ministry && <MinistryPanel w={w} />}
 
@@ -108,9 +113,48 @@ function OrderForm({ w, f }: { w: World; f: Formation }) {
   );
 }
 
+/** The chain of command: civilian leadership over the uniformed chiefs. */
+function CommandPanel({ w }: { w: World }) {
+  const p = player(w);
+  const n = w.nations[p.nation];
+  const cinc = commanderInChief(w, n.id);
+  const isCinc = cinc?.id === p.id;
+  const [pick, setPick] = useState<number | null>(null);
+  const candidates = isCinc ? nationals(w, n.id).filter((c) => !appointChiefCheck(w, p.id, n.id, c.id)).sort((a, b) => b.mil.rank - a.mil.rank || b.mil.sp - a.mil.sp).slice(0, 12) : [];
+  return (
+    <Panel title="🏛️ Chain of command">
+      <table class="table compact small"><tbody>
+        <tr><td>Commander-in-Chief</td><td>{cinc ? <><CitLink w={w} id={cinc.id} /> <small class="muted">· {n.leader}, civilian</small></> : <span class="muted">vacant</span>}</td></tr>
+        <tr><td>Minister of Defense</td><td>{n.cabinet.defense != null ? <CitLink w={w} id={n.cabinet.defense} /> : <span class="muted">none</span>}</td></tr>
+        <tr><td>Chief of Staff</td><td>{n.defense.chief != null ? <>{rankName(w.citizens[n.defense.chief])} <CitLink w={w} id={n.defense.chief} /> <small class="muted">· {n.defense.appointed ? 'appointed by the Commander-in-Chief' : 'most senior officer'}</small></> : <span class="muted">vacant</span>}</td></tr>
+        <tr><td>Formation commanders</td><td>{formationsOf(w, n.id).filter((f) => f.commander != null).length} of {formationsOf(w, n.id).length} formations</td></tr>
+      </tbody></table>
+      <Help>The armed forces answer to civilian government: the {n.leader} is Commander-in-Chief while in office and can order any formation. Anyone holding public office ({n.leader}, ministers, members of the {n.legislature}, governors) passes to the reserve and keeps their rank until they leave office.</Help>
+      {isCinc && (
+        <div class="row">
+          <Select value={pick ?? -1} options={[[-1, 'Appoint a Chief of Staff…'], ...candidates.map((c) => [c.id, `${rankName(c)} ${c.name}`] as [number, string])]} onChange={(v) => setPick(v < 0 ? null : v)} />
+          <ActBtn small kind="primary" why={pick == null ? 'Choose an officer.' : appointChiefCheck(w, p.id, n.id, pick)} run={(w) => appointChief(w, p.id, n.id, pick!)}>Appoint</ActBtn>
+        </div>
+      )}
+    </Panel>
+  );
+}
+
 function ServicePanel({ w }: { w: World }) {
   const p = player(w);
   const n = w.nations[p.nation];
+  if (p.mil.branch && p.mil.reserve) {
+    const office = publicOffice(w, p);
+    return (
+      <Panel title={`${BRANCH_ICON[p.mil.branch]} ${rankName(p)} (reserve), ${n.adj} ${BRANCH_NAME[p.mil.branch]}`}>
+        <p class="small">{office ? `You are in the reserve while you serve as ${office}: no duty, pay, command or promotion, but your rank and record are kept.` : 'You are in the reserve. Your rank and record are kept; time in the reserve does not count toward promotion.'} Service {serviceDays(w, p)} days · {Math.floor(p.mil.sp)} SP.</p>
+        <div class="row">
+          <ActBtn kind="primary" why={returnToDutyCheck(w, p)} run={(w) => returnToDuty(w, p)}>Return to active duty</ActBtn>
+          <ActBtn small kind="ghost" confirm="Leave the armed forces for good?" run={(w) => discharge(w, p)}>Discharge</ActBtn>
+        </div>
+      </Panel>
+    );
+  }
   if (!p.mil.branch) {
     return (
       <Panel title="🪖 Enlist">
@@ -132,7 +176,7 @@ function ServicePanel({ w }: { w: World }) {
         <ActBtn small kind="ghost" confirm="Leave the armed forces?" run={(w) => discharge(w, p)}>Discharge</ActBtn>
       </div>
       {!cmd && eligible.length > 0 && <p class="small">You can take command: {eligible.slice(0, 4).map((f) => <ActBtn small run={(w) => takeCommand(w, p, f.id)}>{f.name}</ActBtn>)}</p>}
-      <details><summary class="small">Rank ladder</summary><ol class="small">{ladder.map((r, i) => <li class={i === p.mil.rank ? 'good' : i < p.mil.rank ? 'muted' : ''}>{r.name} — {r.sp} SP, {r.days} days' service{r.command ? ' · command' : ''}{r.flag ? ' · flag rank' : ''}</li>)}</ol></details>
+      <details><summary class="small">Rank ladder</summary><p class="small muted">Above every rank: the Commander-in-Chief — the {n.leader}, a civilian office held only while in power.</p><ol class="small">{ladder.map((r, i) => <li class={i === p.mil.rank ? 'good' : i < p.mil.rank ? 'muted' : ''}>{r.name} — {r.sp} SP, {r.days} days' service{r.command ? ' · command' : ''}{r.flag ? ' · flag rank' : ''}</li>)}</ol></details>
     </Panel>
   );
 }

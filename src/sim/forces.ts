@@ -13,9 +13,9 @@
 // through real rank ladders to command formations; the most senior officer
 // becomes chief of staff. AI defence ministries raise, supply, deploy and order
 // forces by the same rules the player's government uses.
-import { lifeGate } from './lifecycle';
-import { seniority, serviceDays } from './growth';
-import type { Battle, Branch, Citizen, Formation, FormationKind, Id, World } from './types';
+import { lifeGate, milestone } from './lifecycle';
+import { ageOf, seniority, serviceDays } from './growth';
+import type { Battle, Branch, Citizen, Formation, FormationKind, Id, Ministry, World } from './types';
 import { census, nationals, referenceSociety } from './census';
 import { B } from '../data/balance';
 import { EARTH } from '../data/earth';
@@ -27,7 +27,8 @@ import { DAY, dayOf } from '../engine/clock';
 import { nid, notify, record } from '../engine/events';
 import { chance, rand } from '../engine/rng';
 import { controller, cref, hhref, jailed, natref, player } from './query';
-import { nationPerm } from './authority';
+import { MINISTRY_INFO, nationPerm } from './authority';
+import { govTemplate } from './stategov';
 import { activeWars, enemyOf, launchBattle, warBetween } from './war';
 import { kmBetween } from './travel';
 import { buyBest } from './market';
@@ -253,6 +254,7 @@ export function commandCheck(w: World, c: Citizen, fid: Id): string | null {
   const f = w.forces[fid];
   if (!f || f.nation !== c.nation) return 'Command formations of your own nation.';
   if (c.mil.branch !== f.branch) return `Only ${BRANCH_NAME[f.branch]} officers command it.`;
+  if (c.mil.reserve) return publicOffice(w, c) ? `As ${publicOffice(w, c)} you give orders as Commander-in-Chief or minister, not as a field commander.` : 'Reservists do not command formations: return to active duty first.';
   const r = RANKS[f.branch][c.mil.rank];
   if (!r.command) return `Requires the rank of ${RANKS[f.branch].find((x) => x.command)!.name}.`;
   if (jailed(w, c)) return 'You are in prison.';
@@ -273,12 +275,129 @@ export function takeCommand(w: World, c: Citizen, fid: Id): Result {
 
 // ---------- service and ranks ----------
 
+// Civilian control of the armed forces: a public office and active service do not
+// mix. Office holders go to the reserve (rank and record kept) and may return to
+// active duty when they leave office. The head of government is Commander-in-Chief
+// for as long as they hold office: supreme command, not a service rank.
+
+/** The public office someone holds that is incompatible with active duty, if any. */
+export function publicOffice(w: World, c: Citizen): string | null {
+  const n = w.nations[c.nation];
+  if (!n) return null;
+  if (n.president === c.id) return n.leader;
+  for (const [m, id] of Object.entries(n.cabinet)) if (id === c.id) return MINISTRY_INFO[m as Ministry].name;
+  if (n.deputies.includes(c.id)) return `member of the ${n.legislature}`;
+  const s = w.govs.find((g) => g?.head.cit === c.id);
+  if (s) return `${govTemplate(w, s.region)?.title ?? 'head of government'} of ${w.regions[s.region].name}`;
+  return null;
+}
+
+export const onActiveDuty = (c: Citizen) => !!c.mil.branch && !c.mil.reserve;
+
+/** The nation's Commander-in-Chief (its head of government), if any. */
+export const commanderInChief = (w: World, nation: Id): Citizen | null => {
+  const id = w.nations[nation]?.president;
+  return id != null && w.citizens[id] && !w.citizens[id].gone ? w.citizens[id] : null;
+};
+
+/** How someone appears in the chain of command. */
+export function militaryTitle(w: World, c: Citizen): string {
+  if (w.nations[c.nation]?.president === c.id) return 'Commander-in-Chief';
+  if (!c.mil.branch) return 'Civilian';
+  return c.mil.reserve ? `${rankName(c)} (reserve)` : rankName(c);
+}
+
+/** Move someone to the reserve: commands and the chief of staff post are handed over. */
+export function toReserve(w: World, c: Citizen, why: string) {
+  if (!c.mil.branch || c.mil.reserve) return;
+  c.mil.reserve = true;
+  c.mil.reserveSince = w.time;
+  for (const f of Object.values(w.forces)) if (f.commander === c.id) f.commander = null;
+  const n = w.nations[c.nation];
+  if (n.defense.chief === c.id) { n.defense.chief = null; n.defense.appointed = false; }
+  if (c.player) notify(w, 'office', `🎖️ Civilian control: as ${why} you pass to the reserve as ${rankName(c)}. Your rank and record are kept; you can return to active duty after leaving office.`, { link: 'forces' });
+}
+
+export function returnToDutyCheck(w: World, c: Citizen): string | null {
+  if (!c.mil.branch) return 'You are not in the armed forces.';
+  if (!c.mil.reserve) return 'Already on active duty.';
+  const office = publicOffice(w, c);
+  if (office) return `A serving ${office} cannot be on active duty: leave office first.`;
+  if (jailed(w, c)) return 'You are in prison.';
+  return null;
+}
+
+export function returnToDuty(w: World, c: Citizen): Result {
+  const why = returnToDutyCheck(w, c);
+  if (why) return fail(why);
+  c.mil.since += w.time - (c.mil.reserveSince ?? w.time); // time in the reserve does not count as service
+  c.mil.reserve = false;
+  delete c.mil.reserveSince;
+  return ok(`Back on active duty as ${rankName(c)}.`);
+}
+
+/** Serving personnel retire at the service age limit (flag officers a little later), as veterans. */
+export function serviceRetirements(w: World) {
+  for (const c of census(w).all) {
+    if (!c.mil.branch) continue;
+    const limit = RANKS[c.mil.branch][c.mil.rank].flag ? B.forces.retireAgeFlag : B.forces.retireAge;
+    if (ageOf(w, c) < limit) continue;
+    const title = rankName(c);
+    discharge(w, c);
+    milestone(w, c, 'service', `Retired from the armed forces as ${title} after ${c.veteran?.days ?? 0} days of service.`);
+    if (c.player) notify(w, 'personal', `🎖️ At ${ageOf(w, c)} you retire from the armed forces as ${title}: a veteran now.`, { critical: true, link: 'forces' });
+  }
+}
+
+/** Hourly: anyone holding public office who is still on active duty passes to the reserve. */
+export function civilianControl(w: World) {
+  const holders = new Set<Id>();
+  for (const n of w.nations) {
+    if (n.president != null) holders.add(n.president);
+    for (const id of Object.values(n.cabinet)) if (id != null) holders.add(id);
+    for (const id of n.deputies) holders.add(id);
+  }
+  for (const s of w.govs) if (s?.head.cit != null) holders.add(s.head.cit);
+  for (const id of holders) {
+    const c = w.citizens[id];
+    if (c && !c.gone && onActiveDuty(c)) toReserve(w, c, publicOffice(w, c) ?? 'an office holder');
+  }
+}
+
+/** The Commander-in-Chief chooses the Chief of Staff from serving officers of command rank. */
+export function appointChiefCheck(w: World, actor: Id, nation: Id, cid: Id): string | null {
+  const n = w.nations[nation];
+  if (!n || n.president !== actor) return `Only the Commander-in-Chief (the ${n?.leader ?? 'head of government'}) appoints the Chief of Staff.`;
+  const c = w.citizens[cid];
+  if (!c || c.gone || c.nation !== nation) return 'Choose a serving officer of this nation.';
+  if (!onActiveDuty(c)) return `${c.name} is not on active duty.`;
+  if (!RANKS[c.mil.branch!][c.mil.rank].command) return `${c.name} (${rankName(c)}) does not hold a command rank.`;
+  if (jailed(w, c)) return `${c.name} is in prison.`;
+  if (n.defense.chief === cid) return `${c.name} already is Chief of Staff.`;
+  return null;
+}
+
+export function appointChief(w: World, actor: Id, nation: Id, cid: Id): Result {
+  const why = appointChiefCheck(w, actor, nation, cid);
+  if (why) return fail(why);
+  const n = w.nations[nation];
+  const c = w.citizens[cid];
+  n.defense.chief = cid;
+  n.defense.appointed = true;
+  record(w, 'military', `🎖️ ${w.citizens[actor].name}, Commander-in-Chief, appointed ${rankName(c)} ${c.name} Chief of Staff of the ${n.adj} armed forces.`, { nation, cit: cid, important: true });
+  if (c.player) notify(w, 'progress', `🎖️ You have been appointed Chief of Staff of the ${n.adj} armed forces (+${B.forces.chiefBonus * 100}% to every formation).`, { link: 'forces', critical: true });
+  return ok(`${c.name} is now Chief of Staff.`);
+}
+
 export const rankName = (c: Citizen) => (c.mil.branch ? RANKS[c.mil.branch][c.mil.rank].name : 'Civilian');
 
 export function enlistCheck(w: World, c: Citizen, branch: Branch): string | null {
   const tooYoung = lifeGate(w, c, 18, 'Enlisting');
   if (tooYoung) return tooYoung;
-  if (c.mil.branch) return `You already serve in the ${BRANCH_NAME[c.mil.branch]}.`;
+  if (c.mil.branch) return c.mil.reserve ? `You are in the ${BRANCH_NAME[c.mil.branch]} reserve.` : `You already serve in the ${BRANCH_NAME[c.mil.branch]}.`;
+  const office = publicOffice(w, c);
+  if (office) return `As ${office} you cannot enlist: public office and active service do not mix.`;
+  if (ageOf(w, c) > B.forces.maxEnlistAge) return `The armed forces take new recruits up to age ${B.forces.maxEnlistAge}.`;
   if (jailed(w, c)) return 'You are in prison.';
   if (c.sec.record.convictions > 1) return 'Repeat offenders are not accepted.';
   if (w.nations[c.nation].exile && branch !== 'army') return 'A government in exile only has its army.';
@@ -295,7 +414,11 @@ export function enlist(w: World, c: Citizen, branch: Branch): Result {
 export function discharge(w: World, c: Citizen): Result {
   if (!c.mil.branch) return fail('You are not in the armed forces.');
   for (const f of Object.values(w.forces)) if (f.commander === c.id) f.commander = null;
+  const n = w.nations[c.nation];
+  if (n.defense.chief === c.id) { n.defense.chief = null; n.defense.appointed = false; }
   const was = rankName(c);
+  const days = serviceDays(w, c);
+  if (days >= 30) c.veteran = { branch: c.mil.branch, rank: c.mil.rank, title: was, days: days + (c.veteran?.days ?? 0), until: w.time };
   c.mil = { branch: null, rank: 0, sp: 0, since: 0, lastDuty: -1, commands: 0 };
   return ok(`Honourably discharged (${was}).`);
 }
@@ -304,6 +427,7 @@ export function dutyCheck(w: World, c: Citizen): string | null {
   const tooYoung = lifeGate(w, c, 18, 'Military duty');
   if (tooYoung) return tooYoung;
   if (!c.mil.branch) return 'Enlist first.';
+  if (c.mil.reserve) return publicOffice(w, c) ? `You are in the reserve while serving as ${publicOffice(w, c)}.` : 'You are in the reserve: return to active duty first.';
   if (jailed(w, c)) return 'You are in prison.';
   if (c.mil.lastDuty === dayOf(w.time)) return 'You already reported for duty today.';
   if (c.energy < B.forces.dutyEnergy) return `Needs ${B.forces.dutyEnergy} energy.`;
@@ -478,16 +602,20 @@ export function forcesDaily(w: World) {
       const target = 45 + (n.alert - 1) * 8 + (funded > 0.8 ? 15 : -20) + (f.commander != null ? 5 : 0);
       f.readiness = Math.max(0, Math.min(100, f.readiness + (target - f.readiness) * B.forces.readinessDrift));
       f.morale = Math.max(0, Math.min(100, f.morale + (funded < 0.8 ? -3 : 1) + (n.warScore > 0 ? 0.5 : n.warScore < -20 ? -1 : 0)));
-      if (f.commander != null) { const c = w.citizens[f.commander]; if (!c || c.nation !== n.id || !c.mil.branch) f.commander = null; else { c.mil.commands++; addSp(w, c, B.forces.commandSp); } }
+      if (f.commander != null) { const c = w.citizens[f.commander]; if (!c || c.gone || c.nation !== n.id || !onActiveDuty(c)) f.commander = null; else { c.mil.commands++; addSp(w, c, B.forces.commandSp); } }
       if (f.strength < 1) { record(w, 'military', `💀 The ${f.name} (${n.name}) was destroyed.`, { nation: n.id, important: n.id === p.nation }); delete w.forces[f.id]; }
     }
     if (n.defense.unpaid === 3 && n.id === p.nation) notify(w, 'politics', `⚠️ The armed forces have gone unpaid for 3 days: morale and readiness are falling.`, { link: 'forces' });
     // Security alert effects.
     if (n.alert > 1) n.approval = Math.max(5, n.approval - (n.alert - 1) * 0.15);
     n.agency.counter = Math.min(100, n.agency.counter + (n.alert - 1) * B.forces.alertCounter * 0.08);
-    // Chief of staff: the most senior serving officer.
-    const officers = nationals(w, n.id).filter((c) => c.mil.branch && RANKS[c.mil.branch][c.mil.rank].command && !jailed(w, c));
-    const chief = officers.sort((a, b) => b.mil.rank - a.mil.rank || b.mil.sp - a.mil.sp || a.id - b.id)[0];
+    // Chief of staff: whom the Commander-in-Chief appointed, while they remain eligible;
+    // otherwise the most senior officer on active duty.
+    const officers = nationals(w, n.id).filter((c) => onActiveDuty(c) && RANKS[c.mil.branch!][c.mil.rank].command && !jailed(w, c));
+    const current = n.defense.chief != null ? w.citizens[n.defense.chief] : null;
+    const keep = n.defense.appointed && current && officers.includes(current);
+    if (!keep) n.defense.appointed = false;
+    const chief = keep ? current : officers.sort((a, b) => b.mil.rank - a.mil.rank || b.mil.sp - a.mil.sp || a.id - b.id)[0];
     if ((chief?.id ?? null) !== n.defense.chief) {
       n.defense.chief = chief?.id ?? null;
       if (chief?.player) notify(w, 'progress', `🎖️ You are now Chief of Staff of the ${n.adj} armed forces (+${B.forces.chiefBonus * 100}% to every formation).`, { link: 'forces' });
@@ -585,7 +713,7 @@ export function seedOfficers(w: World) {
   for (const n of w.nations) {
     // About 3% of the population serves as career officers and NCOs (at least 7).
     const people = nationals(w, n.id);
-    const pool = people.filter((c) => !c.player && (c.persona === 'soldier' || (c.traits.loyalty > 0.7 && seniority(w, c) > 15))).sort((a, b) => seniority(w, b) - seniority(w, a) || a.id - b.id).slice(0, Math.max(7, Math.round(people.length * B.forces.careerShare)));
+    const pool = people.filter((c) => !c.player && !publicOffice(w, c) && ageOf(w, c) < B.forces.retireAge - 2 && (c.persona === 'soldier' || (c.traits.loyalty > 0.7 && seniority(w, c) > 15))).sort((a, b) => seniority(w, b) - seniority(w, a) || a.id - b.id).slice(0, Math.max(7, Math.round(people.length * B.forces.careerShare)));
     pool.forEach((c, i) => {
       const branch: Branch = i % 4 === 1 && formationsOf(w, n.id).some((f) => f.branch === 'navy') ? 'navy' : i % 4 === 3 ? 'air' : 'army';
       const ladder = RANKS[branch];
@@ -596,6 +724,8 @@ export function seedOfficers(w: World) {
       c.mil = { branch, rank, sp: ladder[rank].sp, since: w.time - served * DAY, lastDuty: -1, commands: ladder[rank].flag ? 30 : 0 };
     });
     assignCommanders(w, n.id);
+    const chief = nationals(w, n.id).filter((c) => onActiveDuty(c) && RANKS[c.mil.branch!][c.mil.rank].command).sort((a, b) => b.mil.rank - a.mil.rank || b.mil.sp - a.mil.sp || a.id - b.id)[0];
+    n.defense.chief = chief?.id ?? null;
   }
 }
 
@@ -603,7 +733,7 @@ export function seedOfficers(w: World) {
 function assignCommanders(w: World, nation: Id) {
   const vacant = formationsOf(w, nation).filter((f) => f.commander == null);
   if (!vacant.length) return;
-  const officers = nationals(w, nation).filter((x) => !x.player && x.mil.branch && RANKS[x.mil.branch][x.mil.rank].command).sort((a, b) => b.mil.rank - a.mil.rank || a.id - b.id);
+  const officers = nationals(w, nation).filter((x) => !x.player && onActiveDuty(x) && RANKS[x.mil.branch!][x.mil.rank].command).sort((a, b) => b.mil.rank - a.mil.rank || a.id - b.id);
   for (const f of vacant) {
     const c = officers.find((x) => !commandCheck(w, x, f.id));
     if (c) f.commander = c.id;
@@ -685,6 +815,7 @@ function militaryCareersAI(w: World) {
       if (fit > 0.55 && !enlistCheck(w, c, 'army') && ++serving[c.nation]) enlist(w, c, c.traits.risk > 0.7 ? 'air' : c.id % 3 === 0 && formationsOf(w, c.nation).some((f) => f.branch === 'navy') ? 'navy' : 'army');
       continue;
     }
+    if (c.mil.reserve) { if ((c.id + dayOf(w.time)) % 10 === 0 && !returnToDutyCheck(w, c)) returnToDuty(w, c); continue; }
     if (c.energy >= B.forces.dutyEnergy + 20 && !dutyCheck(w, c)) reportForDuty(w, c);
   }
 }

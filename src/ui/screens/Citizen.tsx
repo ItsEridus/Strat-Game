@@ -1,4 +1,5 @@
 import type { World } from '../../sim/types';
+import { militaryTitle } from '../../sim/forces';
 import { askOut, romanceCheck } from '../../sim/family';
 import { ageOf, reputation } from '../../sim/growth';
 import { Amt, NationChip, Panel, RegionLink, Stat } from '../common';
@@ -37,7 +38,8 @@ export function CitizenProfile({ w }: { w: World }) {
           <Stat label="Influence">{Math.round(c.influence)}</Stat>
           <Stat label="Training power">{c.power.toFixed(1)}</Stat>
           <Stat label="Economic skill">{c.eco.toFixed(1)}</Stat>
-          <Stat label="Rank">{rankOf(c.dmgTotal).name}</Stat>
+          <Stat label="Military">{militaryTitle(w, c)}</Stat>
+          <Stat label="Combat rank">{rankOf(c.dmgTotal).name}</Stat>
           <Stat label="Employer">{job ? job.name : 'unemployed'}</Stat>
           <Stat label="Companies owned">{owned.length}</Stat>
           {!c.player && <Stat label="Relationship with you">{Math.round(c.rel[p.id] ?? 0)}</Stat>}

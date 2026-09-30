@@ -44,6 +44,7 @@ export interface Citizen {
   life?: LifeProfile; // personal life: wellbeing, milestones, hobbies, goals (sim/lifecycle.ts, sim/wellbeing.ts)
   family?: Family; // partner, parents, children (sim/family.ts)
   retired?: boolean;
+  veteran?: { branch: Branch; rank: number; title: string; days: number; until: number }; // past military service (pensions, standing)
   trip?: { until: number; why: string } | null; // travelling away from home (AI)
   gone?: { t: number; why: 'died' | 'emigrated'; note: string }; // no longer part of the world (kept for names in history)
   power: number; // training power
@@ -95,6 +96,8 @@ export interface MilService {
   since: number; // enlistment time
   lastDuty: number;
   commands: number; // days in command of a formation (general/flag rank requirement)
+  reserve?: boolean; // in the reserve: rank kept, no duty, pay, command or promotion (e.g. while holding public office)
+  reserveSince?: number;
 }
 
 export type FormationKind = 'infantry' | 'armored' | 'mountain' | 'marines' | 'fleet' | 'carrier' | 'submarine' | 'fighter' | 'bomber';
@@ -355,7 +358,7 @@ export interface Nation {
   warMood: number; // public appetite for war shaped by the press (-5..5)
   agency: Agency; // intelligence service
   policeFunding: number;
-  defense: { budget: number; chief: Id | null; unpaid: number }; // military budget (share of revenue), chief of staff, days unpaid
+  defense: { budget: number; chief: Id | null; unpaid: number; appointed?: boolean }; // appointed: chosen by the Commander-in-Chief // military budget (share of revenue), chief of staff, days unpaid
   alert: number; // national security alert 1 (normal) .. 5 (maximum) // share of daily revenue for national police (regions without their own government, federal crimes)
 }
 

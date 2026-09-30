@@ -9,7 +9,7 @@ import { controller, cref, natref, player } from '../src/sim/query';
 import { createCompany, productionFactors } from '../src/sim/company';
 import { declareWar, launchBattle } from '../src/sim/war';
 import {
-  addSp, coastal, commandCheck, dutyCheck, enlist, formationsOf, forcesDaily, forcesTick, nationScores, raiseFormation, rankName, reportForDuty, seasOf, setOrder, superiority, takeCommand,
+  addSp, appointChief, appointChiefCheck, civilianControl, coastal, commandCheck, commanderInChief, dutyCheck, enlist, enlistCheck, formationsOf, militaryTitle, onActiveDuty, publicOffice, returnToDuty, returnToDutyCheck, forcesDaily, forcesTick, nationScores, raiseFormation, rankName, reportForDuty, seasOf, setOrder, superiority, takeCommand,
 } from '../src/sim/forces';
 import { opCheck } from '../src/sim/intel';
 import { RANKS } from '../src/data/military';
@@ -124,4 +124,43 @@ test('armies march overland one region a day; raising forces costs money and sto
   advance(w, 2 * HOUR, false);
   assert.ok(audit(w).ok, audit(w).problems.join('; '));
   void controller;
+});
+
+test('civilian control: office holders pass to the reserve; the head of government is Commander-in-Chief', () => {
+  const w = fresh();
+  const p = player(w);
+  const n = w.nations[p.nation];
+  // Nobody holds office and active service at once after world generation.
+  for (const c of Object.values(w.citizens)) if (publicOffice(w, c)) assert.ok(!onActiveDuty(c), `${c.name} holds office on active duty`);
+  // The player enlists, rises to command rank, then enters congress.
+  assert.ok(enlist(w, p, 'army').ok);
+  p.mil.since -= 200 * DAY;
+  addSp(w, p, 700);
+  const fleet = formationsOf(w, p.nation).find((f) => f.branch === 'army')!;
+  fleet.commander = null;
+  assert.ok(takeCommand(w, p, fleet.id).ok);
+  const rank = p.mil.rank;
+  n.deputies.push(p.id);
+  civilianControl(w);
+  assert.ok(p.mil.reserve, 'in the reserve while in office');
+  assert.equal(p.mil.rank, rank, 'rank kept');
+  assert.equal(fleet.commander, null, 'command handed over');
+  assert.match(dutyCheck(w, p) ?? '', /reserve/);
+  assert.match(enlistCheck(w, p, 'navy') ?? '', /reserve/);
+  assert.match(returnToDutyCheck(w, p) ?? '', /leave office/);
+  const days = Math.floor((w.time - p.mil.since) / DAY);
+  advance(w, 5 * DAY, false);
+  n.deputies = n.deputies.filter((x) => x !== p.id);
+  assert.ok(returnToDuty(w, p).ok);
+  assert.ok(Math.abs(Math.floor((w.time - p.mil.since) / DAY) - days) <= 1, 'time in the reserve does not count as service');
+  // The head of government commands in chief and appoints the chief of staff.
+  const pres = commanderInChief(w, n.id)!;
+  assert.equal(militaryTitle(w, pres), 'Commander-in-Chief');
+  const general = Object.values(w.citizens).find((c) => !c.gone && c.nation === n.id && onActiveDuty(c) && c.id !== n.defense.chief && !appointChiefCheck(w, pres.id, n.id, c.id));
+  if (general) {
+    assert.match(appointChiefCheck(w, p.id === pres.id ? -1 : p.id, n.id, general.id) ?? '', /Commander-in-Chief/);
+    assert.ok(appointChief(w, pres.id, n.id, general.id).ok);
+    advance(w, DAY, false);
+    assert.equal(n.defense.chief, general.id, 'the appointment stands while the officer remains eligible');
+  }
 });

@@ -4,6 +4,7 @@
 // a small description of each slot is kept in localStorage so menus can list
 // saves instantly. Saves made by older versions in localStorage still load.
 // Saves can also be exported and imported as files.
+import { civilianControl } from '../sim/forces';
 import { newLifeState } from '../sim/lifecycle';
 import { initFamilies, initPlayerFamily } from '../sim/family';
 import { initPopulation } from '../sim/population';
@@ -66,6 +67,7 @@ function migrate(w: World, from: number): World {
     initPlayerFamily(w);
     initPopulation(w);
     w.life = newLifeState();
+    civilianControl(w); // office holders pass to the reserve (civilian control)
     w.player.routine = { work: false, train: w.settings.autoTrain, family: false, rest: false, hobby: null, school: false };
     if (w.settings.pauseOn.life == null) w.settings.pauseOn.life = true;
     if (w.settings.notifyFilter.life == null) w.settings.notifyFilter.life = true;

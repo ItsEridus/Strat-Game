@@ -12,8 +12,8 @@ what remains, and the known limitations, so work can resume from here.
 | – | Population foundation: ageing, health, deaths with estates, families, migration, regions of 24–100 | Done |
 | – | No levels: skills by practice, reputation, life gates | Done |
 | L1 | Lifecycle: pace of life, stages, age gates, birthdays, annual review, long advances, routine, Life hub | Done (see below) |
-| M1 | Military: civilian control (office holders go to the reserve), head of government as Commander-in-Chief | Next |
-| UI1 | Premium design system and game shell | Planned |
+| M1 | Military: civilian control (office holders go to the reserve), head of government as Commander-in-Chief, service age limits, veterans | Done |
+| UI1 | Premium design system and game shell | Next |
 | N3 | Narrative stage 3: districts, venues, familiarity, availability, appointments | Planned |
 | L2 | Family graph with real children, pregnancy, adoption, guardians, siblings; hobbies, pets, gifts; story protagonists and memory subjects; budgets | Planned |
 | L3 | Schools, universities, clinics and offices as funded institutions; education ladder; qualifications; service careers (teaching, clinical care, administration, technical); work history; promotions; military academy | Planned |
@@ -73,9 +73,26 @@ what remains, and the known limitations, so work can resume from here.
   happiness, stress and energy with reasons; family and close friends with relationship actions; the month's money
   from actual transactions; routine; milestones; links.
 
+### M1: military careers
+- **Civilian control** (`forces.ts`): a public office (head of government, minister, member of the legislature,
+  governor) and active duty do not mix. `civilianControl` (hourly, at genesis and on migration) moves office holders
+  to the reserve: rank and record kept, formation command and the chief of staff post handed over, no duty, pay or
+  promotion, and reserve time does not count as service. `enlistCheck`, `dutyCheck` and `commandCheck` refuse office
+  holders; after leaving office people return to active duty (`returnToDuty`; the AI does so too).
+- **Commander-in-Chief**: the head of government, while in office — shown atop the chain of command on the Forces
+  screen, in rankings and on profiles; can order any formation and appoints the Chief of Staff from officers of
+  command rank on active duty (`appointChief`); the appointment stands while the officer stays eligible, otherwise the
+  most senior officer serves. AI heads of government keep the seniority rule.
+- **Career limits**: recruits up to 44, retirement at 62 (flag officers 64) with a veteran record
+  (`Citizen.veteran`: branch, rank, days served) that later stages use for pensions and standing. Seeded officers are
+  of serving age and every nation has a Chief of Staff from day one.
+- Still to come with later stages: officer training and a military academy (L3), service pensions and battle
+  injuries (L4), the "Duty and family" story (L6), long-run officer supply checks (L7).
+
 ## Tests
 - `tests/life.test.ts` (6): death/estate/offices, special election, emigration, coming of age, the player's romance,
   population churn with the audit.
+- `tests/forces.test.ts`: civilian control, reserve and return, Commander-in-Chief appointments.
 - `tests/lifecycle.test.ts` (7): birthdays before the epoch and across save/load, one review per birthday, coming of
   age at 18, age gates for direct calls and the AI, no double shift pay, chunked vs single advance identical, pace
   change keeps ages.

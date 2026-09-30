@@ -93,4 +93,4 @@ export function seniority(w: World, c: Citizen) {
 }
 
 /** Days served in the armed forces. */
-export const serviceDays = (w: World, c: Citizen) => (c.mil.branch ? Math.floor((w.time - c.mil.since) / DAY) : 0);
+export const serviceDays = (w: World, c: Citizen) => (c.mil.branch ? Math.floor(((c.mil.reserve ? (c.mil.reserveSince ?? w.time) : w.time) - c.mil.since) / DAY) : 0); // time in the reserve does not count
