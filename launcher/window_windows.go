@@ -25,6 +25,7 @@ var (
 	procSetWindowLong  = user32.NewProc("SetWindowLongPtrW")
 	procCallWindowProc = user32.NewProc("CallWindowProcW")
 	procCreateMutex    = windows.NewLazySystemDLL("kernel32.dll").NewProc("CreateMutexW")
+	procPostMessage    = user32.NewProc("PostMessageW")
 )
 
 const (
@@ -40,12 +41,30 @@ const (
 // show opens the game in a native window, or in the browser when the WebView2
 // runtime is not installed (e.g. Windows 7/8 without Edge).
 func show() {
+	afterUpdate := len(os.Args) > 1 && os.Args[1] == "--after-update"
 	name, _ := windows.UTF16PtrFromString("Local\\MeridianReachGame")
 	// One game at a time: a second launch brings the open window to the front.
-	if h, _, err := procCreateMutex.Call(0, 0, uintptr(unsafe.Pointer(name))); h != 0 && err == windows.ERROR_ALREADY_EXISTS {
-		focusRunning()
-		return
+	// Right after an update the old copy is still closing, so wait for it instead.
+	for i := 0; ; i++ {
+		h, _, err := procCreateMutex.Call(0, 0, uintptr(unsafe.Pointer(name)))
+		if h == 0 || err != windows.ERROR_ALREADY_EXISTS {
+			break
+		}
+		if !afterUpdate || i > 80 {
+			focusRunning()
+			return
+		}
+		windows.CloseHandle(windows.Handle(h))
+		time.Sleep(250 * time.Millisecond)
 	}
+	cleanupOld()
+	// An update downloaded last time is installed before the game opens.
+	if !afterUpdate && autoUpdates() {
+		if p, _ := readyUpdate(); p != "" && installUpdate() == nil {
+			return
+		}
+	}
+	go checkForUpdate()
 	if v, err := webviewloader.GetInstalledVersion(); err != nil || v == "" {
 		runInBrowser()
 		return
@@ -73,7 +92,8 @@ func show() {
 	defer w.Destroy()
 	hwnd := uintptr(w.Window())
 	procShowWindow.Call(hwnd, swMaximize)
-	saveOnClose(w, hwnd)
+	quit := saveOnClose(w, hwnd)
+	bindUpdater(w, quit)
 	if c := chromium(w); c != nil && c.GetICoreWebView2_3() != nil &&
 		c.GetICoreWebView2_3().SetVirtualHostNameToFolderMapping(gameHost, gameDir, edge.COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_ALLOW) == nil {
 		w.Navigate("https://" + gameHost + "/index.html")
@@ -122,7 +142,7 @@ func chromium(w webview2.WebView) *edge.Chromium {
 // saveOnClose makes the window's close button autosave the campaign before the
 // window goes away: the game saves on 'beforeunload', which WebView2 does not
 // fire when its host window is destroyed.
-func saveOnClose(w webview2.WebView, hwnd uintptr) {
+func saveOnClose(w webview2.WebView, hwnd uintptr) func() {
 	var once sync.Once
 	quit := func() {
 		once.Do(func() {
@@ -144,6 +164,25 @@ func saveOnClose(w webview2.WebView, hwnd uintptr) {
 		return r
 	})
 	prev, _, _ = procSetWindowLong.Call(hwnd, gwlpWndProc, proc)
+	return func() { procPostMessage.Call(hwnd, wmClose, 0, 0) }
+}
+
+// bindUpdater lets the game page read the update status, switch automatic
+// updates on or off, restart into a ready update, or open the download page.
+func bindUpdater(w webview2.WebView, closeWindow func()) {
+	_ = w.Bind("__meridianUpdate", func() string { return statusJSON() })
+	_ = w.Bind("__meridianSetAutoUpdate", func(on bool) string { setAutoUpdates(on); return statusJSON() })
+	_ = w.Bind("__meridianOpenDownloads", func() { openBrowser(releasesPage) })
+	_ = w.Bind("__meridianCheckUpdate", func() string { go checkForUpdate(); return statusJSON() })
+	_ = w.Bind("__meridianRestartToUpdate", func() string {
+		// Install first (the game saves on close); if that fails, stay open and report why.
+		if err := installUpdate(); err != nil {
+			setStatus(func(s *UpdateStatus) { s.State = "manual"; s.Error = err.Error() })
+			return statusJSON()
+		}
+		closeWindow()
+		return statusJSON()
+	})
 }
 
 // focusRunning brings the already-open game window to the front.

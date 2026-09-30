@@ -561,9 +561,6 @@ export interface PlayerState {
   talked?: Record<Id, number>; // day the player last talked with each person
   lastRally?: number; // day of the player's last rally
   lastCanvass?: number; // day of the player's last canvassing round
-  encounter?: Encounter | null; // situation waiting for the player's decision
-  nextEncounter?: number; // earliest time of the next encounter
-  encounterLog?: { t: number; title: string; outcome: string }[];
 }
 
 /** A conversation with an NPC: what has been said and what the player can say next. */
@@ -574,17 +571,6 @@ export interface Convo {
   used: string[]; // topics already raised
 }
 
-/** A situation the player runs into, with choices whose consequences are shown up front. */
-export interface Encounter {
-  id: Id;
-  kind: string;
-  t: number;
-  icon: string;
-  title: string;
-  text: string;
-  options: { id: string; label: string; hint: string; why?: string }[];
-  data: Record<string, any>;
-}
 
 /** Head of a state/provincial government: a full citizen (cit) or a generated official. */
 export interface StateHead { name: string; ideo: Ideology; cit: Id | null; since: number }
@@ -625,6 +611,7 @@ export interface World {
   settings: Settings;
   playerId: Id;
   player: PlayerState;
+  story: NarrativeState; // stories, journal, relationship memories, places (see sim/story.ts)
   regions: Region[];
   govs: (StateGov | null)[]; // indexed by region id; null where there is no regional government
   syndicates: Record<Id, Syndicate>;
@@ -669,4 +656,42 @@ export interface World {
   stats: Stats;
   ledger: { t: number; text: string; amount: number; asset: AssetId; ref: string }[]; // player's transaction history
   calendar: { nextDaily: number; terrainDone?: Id[]; baseCitizens?: number };
+}
+
+// ---------- narrative (sim/story.ts, data/stories) ----------
+
+export type StoryStatus = 'offered' | 'active' | 'waiting' | 'completed' | 'declined' | 'expired' | 'invalidated';
+/** A running story: which definition, who and what it is about, where it stands and what was decided. */
+export interface StoryInstance {
+  id: Id;
+  def: string; // stable definition id, e.g. 'chain.wage.dispute'
+  ver: number; // content version the instance started with
+  bind: Record<string, number | string>; // role -> entity id (citizens, companies, crises, cases…) or a string key
+  data: Record<string, number | string>; // small story-local values fixed when bound or decided
+  key: string; // source identity; the same source never starts the same story twice
+  status: StoryStatus;
+  stage: string;
+  stageAt: number; // when the current stage began
+  created: number;
+  updated: number;
+  deadline?: number; // current stage expires at
+  waitUntil?: number; // waiting stages resume at
+  waitWhy?: string;
+  msg?: Id; // linked inbox message (legacy decision)
+  decisions: { t: number; stage: string; choice: string; label: string; outcome: string }[];
+  ending?: string;
+}
+export interface JournalEntry { id: Id; t: number; story?: Id; title: string; text: string; kind: 'lead' | 'outcome' | 'note' | 'promise' | 'fact'; npc?: Id }
+/** Why someone feels the way they do about you. */
+export interface Memory { t: number; text: string; delta: number; visibility: 'private' | 'witnessed' | 'public'; story?: Id }
+export interface NarrativeState {
+  instances: Record<Id, StoryInstance>;
+  claims: Record<string, number>; // source keys already used (time claimed)
+  cooldowns: Record<string, number>; // definition id -> earliest next offer
+  journal: JournalEntry[];
+  memories: Record<Id, Memory[]>; // NPC id -> what they remember about the player
+  nextAmbient: number; // earliest time for the next everyday situation
+  settings: { frequency: 'off' | 'rare' | 'normal' | 'frequent' };
+  local: { familiarity: Record<Id, number>; discovered: Record<string, number>; district: string | null; venue: string | null; region: Id | null };
+  appointments: { id: Id; npc: Id; at: number; venue: string | null; region: Id; story?: Id; what: string }[];
 }

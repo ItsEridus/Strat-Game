@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { UpdateSettings } from '../Updates';
 import type { World } from '../../sim/types';
 import { Btn, Panel, Tabs, Help, Select } from '../common';
 import { store } from '../store';
@@ -12,9 +13,10 @@ export function Settings({ w }: { w: World }) {
   const tab = store.sel.setTab ?? 'saves';
   return (
     <div class="grid">
-      <Panel class="wide" title="Settings" right={<Tabs tabs={[['saves', 'Saves'], ['game', 'Game'], ['alerts', 'Alerts & pausing'], ['economy', 'Money supply'], ['balance', 'Balance & sources']]} value={tab} onChange={(t) => store.go('settings', { setTab: t })} />}>
+      <Panel class="wide" title="Settings" right={<Tabs tabs={[['saves', 'Saves'], ['game', 'Game'], ['updates', 'Updates'], ['alerts', 'Alerts & pausing'], ['economy', 'Money supply'], ['balance', 'Balance & sources']]} value={tab} onChange={(t) => store.go('settings', { setTab: t })} />}>
         {tab === 'saves' && <Saves w={w} />}
         {tab === 'game' && <Game w={w} />}
+        {tab === 'updates' && <UpdateSettings />}
         {tab === 'alerts' && <Alerts w={w} />}
         {tab === 'economy' && <Economy w={w} />}
         {tab === 'balance' && <Balance w={w} />}

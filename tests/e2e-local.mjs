@@ -21,7 +21,7 @@ let t = Date.now();
 await page.click('text=Start campaign');
 await page.waitForSelector('.topbar', { timeout: 60000 });
 console.log('generated in', Date.now() - t, 'ms');
-await page.evaluate(() => { const s = window.meridian; s.w.player.nextEncounter = 1e12; s.jump(12 * 60); });
+await page.evaluate(() => { const s = window.meridian; s.w.story.settings.frequency = 'off'; for (const i of Object.values(s.w.story.instances)) if (i.status === 'offered' || i.status === 'active') i.status = 'declined'; s.emit(); s.jump(12 * 60); });
 await page.click('.nav button:has-text("Neighbourhood")');
 await page.waitForTimeout(200);
 await page.screenshot({ path: `${out}/1-neighbourhood.png` });
@@ -38,11 +38,15 @@ await page.click('text=Canvass door to door');
 await page.waitForTimeout(150);
 await page.screenshot({ path: `${out}/3-canvass.png` });
 // Let an encounter happen.
-const got = await page.evaluate(() => { const s = window.meridian; s.w.player.nextEncounter = s.w.time; for (let i = 0; i < 48 && !s.w.player.encounter; i++) s.jump(60); return s.w.player.encounter?.title ?? null; });
+const got = await page.evaluate(() => { const s = window.meridian; s.w.story.settings.frequency = 'normal'; s.w.settings.pauseOn = { encounter: true }; s.w.story.nextAmbient = s.w.time; const open = () => Object.values(s.w.story.instances).find((i) => i.status === 'offered'); for (let i = 0; i < 72 && !open(); i++) s.jump(60); s.emit(); return open()?.def ?? null; });
 console.log('encounter:', got);
 await page.waitForTimeout(200);
 await page.screenshot({ path: `${out}/4-encounter.png` });
 if (got) { await page.locator('.enc-opt:not([disabled])').first().click(); await page.waitForTimeout(150); await page.screenshot({ path: `${out}/5-outcome.png` }); await page.click('.modal button:has-text("Continue")'); }
+await page.evaluate(() => { const s = window.meridian; s.w.story.settings.frequency = 'off'; for (const i of Object.values(s.w.story.instances)) if (i.status === 'offered' || i.status === 'active') i.status = 'declined'; s.emit(); });
+await page.click('.nav button:has-text("Journal")');
+await page.waitForTimeout(150);
+await page.screenshot({ path: `${out}/5b-journal.png` });
 await page.keyboard.press('Control+Shift+A');
 await page.waitForTimeout(150);
 await page.screenshot({ path: `${out}/6-admin.png` });

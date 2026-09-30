@@ -20,7 +20,7 @@ await page.fill('.form input[type=number]', '7');
 await page.click('text=Start campaign');
 await page.waitForSelector('.topbar');
 // Encounters are covered by tests/e2e-local.mjs; keep them out of the screen tour.
-await page.evaluate(() => { window.meridian.w.player.nextEncounter = 1e12; });
+await page.evaluate(() => { const s = window.meridian; s.w.story.settings.frequency = 'off'; for (const i of Object.values(s.w.story.instances)) if (i.status === 'offered' || i.status === 'active') i.status = 'declined'; s.emit(); });
 async function tour(prefix) {
   const navs = await page.$$eval('.nav button', (els) => els.map((e) => e.getAttribute('data-id') || e.textContent.trim()));
   let i = 1;
@@ -43,7 +43,7 @@ const stops = await page.evaluate(() => {
   const s = window.meridian; s.w.settings.pauseOn = {};
   const end = s.w.time + 45 * 1440, reasons = [];
   for (let i = 0; i < 20 && s.w.time < end; i++) { s.jumpTo(end); if (s.w.time < end) reasons.push(s.pauseReason); }
-  s.w.player.encounter = null; s.emit();
+  s.w.story.settings.frequency = 'off'; for (const i of Object.values(s.w.story.instances)) if (i.status === 'offered' || i.status === 'active') i.status = 'declined'; s.emit();
   return reasons;
 });
 if (stops.length) console.log('advance paused for:', stops.join(' | '));

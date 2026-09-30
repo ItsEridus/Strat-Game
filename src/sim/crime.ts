@@ -735,6 +735,7 @@ export function replyExtortion(w: World, payload: Record<string, any>, option: s
   const co = w.companies[payload.co];
   if (!s || !co) return ok('It no longer matters.');
   const p = player(w);
+  if (!(co.owner.k === 'cit' && co.owner.id === p.id)) return ok(`${co.name} is no longer yours; the demand is its new owner's problem.`);
   if (option === 'pay') {
     s.rackets[co.id] = payload.fee;
     // Player-paid rackets are collected here daily via their company wallet.

@@ -10,7 +10,7 @@ import { cref, player } from '../src/sim/query';
 import { census, invalidateCensus, residents } from '../src/sim/census';
 import { listingsFor } from '../src/sim/market';
 import { canvass, converse, holdRally, localIssues, pledgeOf, startTalk } from '../src/sim/interact';
-import { ENCOUNTER_KINDS, resolveEncounter, triggerEncounter } from '../src/sim/encounters';
+import { STORIES, chooseStory, triggerStory, urgentStories, viewStage } from '../src/sim/story';
 import { adminGiveItem, adminSetLevel, adminSetMoney, adminTeleport } from '../src/sim/admin';
 import { runForHead } from '../src/sim/stategov';
 import { deserialize, serialize } from '../src/engine/save';
@@ -83,9 +83,9 @@ test('conversations, canvassing and rallies win people over; pledges decide a st
   assert.ok(audit(w).ok, audit(w).problems.join('; '));
 });
 
-test('every encounter can be presented and every choice resolves without breaking the books', () => {
+test('every everyday situation can be presented and every choice resolves without breaking the books', () => {
   let tried = 0;
-  for (const kind of ENCOUNTER_KINDS) {
+  for (const def of Object.values(STORIES).filter((d) => d.ambient)) {
     for (let optIdx = 0; optIdx < 4; optIdx++) {
       const w = fresh(94 + optIdx);
       const p = player(w);
@@ -93,25 +93,29 @@ test('every encounter can be presented and every choice resolves without breakin
       mint(w, cref(p.id), 'USD', cur(800), 'test');
       mint(w, cref(p.id), GOLD, g(40), 'test');
       adminGiveItem(w, 'food:1', 6);
-      if (!triggerEncounter(w, kind).ok) break;
-      const e = w.player.encounter!;
-      const opt = e.options[optIdx];
+      const t = triggerStory(w, def.id);
+      if (!t.ok) break;
+      const inst = w.story.instances[t.data.id];
+      const opt = viewStage(w, inst).choices[optIdx];
       if (!opt) break;
       if (opt.why) continue;
-      const r = resolveEncounter(w, opt.id);
-      assert.ok(r.ok, `${kind}/${opt.id}: ${r.msg}`);
-      assert.equal(w.player.encounter, null);
+      const r = chooseStory(w, inst.id, opt.id, inst.stage);
+      assert.ok(r.ok, `${def.id}/${opt.id}: ${r.msg}`);
+      assert.equal(chooseStory(w, inst.id, opt.id, 'main').ok, false, 'decided once');
       advance(w, DAY, false);
-      assert.ok(audit(w).ok, `${kind}/${opt.id}: ${audit(w).problems.join('; ')}`);
+      assert.ok(audit(w).ok, `${def.id}/${opt.id}: ${audit(w).problems.join('; ')}`);
       tried++;
     }
   }
-  assert.ok(tried >= 12, `${tried} encounter choices exercised`);
-  // Encounters also arise on their own while time passes.
+  assert.ok(tried >= 12, `${tried} choices exercised`);
+  // Situations also arise on their own while time passes.
   const w = fresh(99);
   let seen = 0;
-  for (let d = 0; d < 6; d++) { advance(w, DAY, false); if (w.player.encounter) { seen++; resolveEncounter(w, w.player.encounter.options.find((o) => !o.why)!.id); } }
-  assert.ok(seen >= 2, `encounters happen (${seen} in 6 days)`);
+  for (let d = 0; d < 6; d++) {
+    advance(w, DAY, false);
+    for (const inst of urgentStories(w)) { seen++; const c = viewStage(w, inst).choices.find((o) => !o.why); if (c) chooseStory(w, inst.id, c.id, inst.stage); }
+  }
+  assert.ok(seen >= 2, `situations happen (${seen} in 6 days)`);
 });
 
 test('admin panel edits go through the ledger; saves migrate and round-trip', () => {

@@ -20,9 +20,10 @@ import { seedLate } from './seedLate';
 import { initGovs } from './stategov';
 import { initCrime } from './crime';
 import { initForces, seedOfficers } from './forces';
+import { newNarrative } from './story';
 import { AGENCY_NAMES } from '../data/names';
 
-export const SAVE_VERSION = 6; // 5: armed forces; 6: per-region population, home regions
+export const SAVE_VERSION = 7; // 5: armed forces; 6: per-region population, home regions; 7: stories, journal, memories, places
 
 export function defaultSettings(): Settings {
   const pauseOn: Record<string, boolean> = {};
@@ -162,7 +163,7 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
   applyBalance(settings.balance);
   const w: World = {
     version: SAVE_VERSION, seed, rng: seed | 0, time: DAY + 8 * HOUR, nextId: 1, seq: 1, settings,
-    playerId: -1, player: null as any,
+    playerId: -1, player: null as any, story: newNarrative(),
     regions: [], govs: [], syndicates: {}, cases: {}, ops: {}, crises: {},
     forces: {}, navalLog: [],
     econ: { cycle: 0.2, trend: 0, phase: 'expansion', hist: [], commodity: { grain: 1, iron: 1, titanium: 1, oil: 1 } },

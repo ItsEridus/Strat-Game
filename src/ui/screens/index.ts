@@ -1,4 +1,5 @@
 import type { FunctionComponent } from 'preact';
+import { Journal } from './Journal';
 import { Local } from './Local';
 import { Admin } from './Admin';
 import type { World } from '../../sim/types';
@@ -44,7 +45,8 @@ export interface ScreenDef { id: string; label: string; icon: string; group: str
 
 export const SCREENS: ScreenDef[] = [
   { id: 'dashboard', label: 'Dashboard', icon: '🏠', group: 'Citizen', comp: Dashboard },
-  { id: 'local', label: 'Neighbourhood', icon: '🏘️', group: 'Citizen', comp: Local, badge: (w) => (w.player.encounter ? 1 : 0) },
+  { id: 'local', label: 'Neighbourhood', icon: '🏘️', group: 'Citizen', comp: Local, },
+  { id: 'journal', label: 'Journal', icon: '📖', group: 'Citizen', comp: Journal, badge: (w) => Object.values(w.story.instances).filter((i) => i.status === 'offered' || i.status === 'active').length },
   { id: 'character', label: 'Character', icon: '🧍', group: 'Citizen', comp: Character, badge: (w) => w.citizens[w.playerId].attrPts },
   { id: 'inventory', label: 'Inventory & Bank', icon: '🎒', group: 'Citizen', comp: Inventory },
   { id: 'missions', label: 'Missions', icon: '🎯', group: 'Citizen', comp: Missions },

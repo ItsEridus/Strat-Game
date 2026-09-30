@@ -1,49 +1,62 @@
-// Things that come to you: encounters waiting for a decision, and the
+// Things that come to you: stories waiting for a decision, and the
 // conversation you are having. Shown over whatever screen is open.
 import { useState } from 'preact/hooks';
 import type { World } from '../sim/types';
 import { store } from './store';
-import { resolveEncounter } from '../sim/encounters';
+import { chooseStory, memoriesOf, storyIcon, storyTitle, urgentStories, viewStage } from '../sim/story';
 import { converse } from '../sim/interact';
 import { Avatar } from './Avatar';
 import { attitude } from '../sim/interact';
 import { player } from '../sim/query';
 import { IDEOLOGIES } from '../data/ideologies';
 
-export function EncounterModal({ w }: { w: World }) {
+/** A story waiting for your decision: the one you opened from the journal, else the oldest urgent one. */
+export function StoryModal({ w }: { w: World }) {
   const [outcome, setOutcome] = useState<{ title: string; icon: string; text: string } | null>(null);
-  const e = w.player.encounter;
+  const [later, setLater] = useState<number[]>([]);
   if (outcome) {
     return (
       <div class="modal-back">
-        <div class="modal encounter">
+        <div class="modal encounter" role="dialog" aria-label={outcome.title}>
           <div class="enc-icon">{outcome.icon}</div>
           <h2>{outcome.title}</h2>
           <p class="enc-text">{outcome.text}</p>
-          <div class="enc-opts"><button class="btn primary" onClick={() => setOutcome(null)}>Continue</button></div>
+          <div class="enc-opts"><button class="btn primary" autoFocus onClick={() => setOutcome(null)}>Continue</button></div>
         </div>
       </div>
     );
   }
-  if (!e) return null;
+  const opened = store.sel.story != null ? w.story.instances[store.sel.story] : undefined;
+  const inst = opened && (opened.status === 'offered' || opened.status === 'active') ? opened : urgentStories(w).find((i) => !later.includes(i.id));
+  if (!inst) return null;
+  const view = viewStage(w, inst);
+  const title = storyTitle(w, inst);
+  const icon = storyIcon(inst);
+  const close = () => { if (store.sel.story === inst.id) store.go(store.tab, { story: null }); else setLater([...later, inst.id]); };
+  const past = inst.decisions.slice(-2);
   return (
     <div class="modal-back">
-      <div class="modal encounter">
-        <div class="enc-icon">{e.icon}</div>
-        <h2>{e.title}</h2>
-        <p class="enc-text">{e.text}</p>
+      <div class="modal encounter" role="dialog" aria-label={title}>
+        <div class="enc-icon">{icon}</div>
+        <h2>{title}</h2>
+        {past.length > 0 && <p class="small muted">{past.map((d) => `You chose: ${d.label.replace(/^“|”$/g, '')}. ${d.outcome}`).join(' ')}</p>}
+        <p class="enc-text">{view.text}</p>
+        {view.stale && <p class="warn small">{view.stale}</p>}
         <div class="enc-opts">
-          {e.options.map((o) => (
-            <button class="enc-opt" disabled={!!o.why} title={o.why} onClick={() => {
-              const r = store.act((w) => resolveEncounter(w, o.id));
-              if (r && r.ok) setOutcome({ title: e.title, icon: e.icon, text: r.msg });
+          {view.choices.map((o, i) => (
+            <button class="enc-opt" autoFocus={i === 0} disabled={!!o.why || !!view.stale} onClick={() => {
+              const r = store.act((w) => chooseStory(w, inst.id, o.id, inst.stage));
+              if (r && r.ok) { setOutcome({ title, icon, text: r.msg }); if (store.sel.story === inst.id) store.sel.story = null; }
             }}>
               <b>{o.label}</b>
-              <small>{o.why ?? o.hint}</small>
+              <small>{o.why ? `🚫 ${o.why}` : o.hint}{o.chance != null && !o.why ? ` · ${Math.round(o.chance * 100)}% chance` : ''}</small>
             </button>
           ))}
         </div>
-        <p class="muted small">Time is paused. If you don’t decide within a day, the moment passes.</p>
+        <div class="row small">
+          <span class="muted">{inst.deadline ? `Decide by day ${Math.floor(inst.deadline / 1440)}, ${String(Math.floor((inst.deadline % 1440) / 60)).padStart(2, '0')}:00. ` : ''}Time is paused while you decide.</span>
+          <button class="btn sm ghost" onClick={close}>Decide later (Journal)</button>
+        </div>
       </div>
     </div>
   );
@@ -67,6 +80,7 @@ export function ConversationPanel({ w }: { w: World }) {
         </div>
         <button class="btn sm ghost" onClick={() => store.act((w) => converse(w, 'bye'))}>✕</button>
       </header>
+      {memoriesOf(w, npc.id).length > 0 && <p class="small muted convo-mem">Remembers: you {memoriesOf(w, npc.id).at(-1)!.text}</p>}
       <div class="convo-lines">
         {convo.lines.map((l) => <p class={`line ${l.who}`}>{l.text}</p>)}
       </div>

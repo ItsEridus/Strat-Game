@@ -38,11 +38,15 @@ export function notify(w: World, cat: string, text: string, opts: { link?: strin
 /** Set by notify(); the time loop checks and clears it to stop advancement. */
 export const pauseRequest = { flag: false };
 
+/** Listeners for new inbox messages (the story engine adopts decisions it presents). */
+export const MSG_HOOKS: ((w: World, m: Msg) => void)[] = [];
+
 export function sendMsg(w: World, m: Omit<Msg, 'id' | 't'>) {
   const msg: Msg = { ...m, id: nid(w), t: w.time };
   w.inbox.unshift(msg);
   if (w.inbox.length > 200) w.inbox.length = 200;
   if (m.options?.length) notify(w, 'inbox', `✉️ ${m.subject}`, { link: 'inbox' });
+  for (const h of MSG_HOOKS) h(w, msg);
   return msg;
 }
 

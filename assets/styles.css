@@ -285,3 +285,10 @@ ul.news li { padding: .25rem 0; border-bottom: 1px solid var(--line); }
 .around-row { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
 .faces { display: flex; gap: .3rem; align-items: center; }
 .warn-card { border-color: var(--accent); }
+.story-row { display: flex; flex-direction: column; gap: .2rem; }
+.story-row p { margin: .1rem 0; }
+.enc-icon.sm { font-size: 1.2rem; margin: 0; }
+.memories { list-style: none; padding: 0; margin: .3rem 0; }
+.memories li { padding: .2rem 0; border-bottom: 1px solid var(--line); font-size: .85rem; }
+.convo-mem { margin: 0; padding: .3rem .8rem; border-bottom: 1px solid var(--line); }
+.update-banner { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; padding: .4rem 1rem; background: #2a2310; border-bottom: 1px solid var(--accent); font-size: .85rem; }

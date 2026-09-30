@@ -3,6 +3,7 @@
 // requests and threats through the inbox; journalists investigate; NPCs build
 // their own relationships and feuds; and everyone reacts to what the player does.
 import type { Citizen, Id, World } from './types';
+import { remember } from './story';
 import { census, nationals, residents } from './census';
 import { B } from '../data/balance';
 import { IDEOLOGIES } from '../data/ideologies';
@@ -186,7 +187,8 @@ export function replyLoan(w: World, payload: Record<string, any>, option: string
   if (!f || !pay(w, cref(f.id), cref(p.id), code, payload.amount, `Loan from ${f.name}`)) return fail(`${f?.name ?? 'They'} can no longer lend.`);
   p.flags[`loan_${f.id}`] = Math.round(payload.amount * 1.1);
   p.flags[`loanDue_${f.id}`] = w.time + 10 * DAY;
-  f.rel[p.id] = Math.min(100, (f.rel[p.id] ?? 0) + 5);
+  delete p.flags[`loanResult_${f.id}`];
+  remember(w, f, 5, `borrowed ${fmtAmt(code, payload.amount)}, to repay ${fmtAmt(code, Math.round(payload.amount * 1.1))}`);
   return ok(`Borrowed ${fmtAmt(code, payload.amount)} from ${f.name}. Repay ${fmtAmt(code, Math.round(payload.amount * 1.1))} by day ${dayOf(w.time + 10 * DAY)} (automatic).`);
 }
 
@@ -200,8 +202,8 @@ function loansDaily(w: World) {
     if (w.time < due) continue;
     const f = w.citizens[id];
     const amount = p.flags[k];
-    if (f && pay(w, cref(p.id), cref(f.id), code, amount, `Loan repaid to ${f.name}`)) notify(w, 'personal', `💸 You repaid ${f.name} ${fmtAmt(code, amount)}.`);
-    else if (f) { f.rel[p.id] = Math.max(-100, (f.rel[p.id] ?? 0) - 40); notify(w, 'personal', `💢 You defaulted on ${f.name}'s loan. They won't forget it.`, { link: 'people' }); }
+    if (f && pay(w, cref(p.id), cref(f.id), code, amount, `Loan repaid to ${f.name}`)) { notify(w, 'personal', `💸 You repaid ${f.name} ${fmtAmt(code, amount)}.`); remember(w, f, 4, `repaid the ${fmtAmt(code, amount)} loan on time`); p.flags[`loanResult_${id}`] = 1; }
+    else if (f) { remember(w, f, -40, `defaulted on the ${fmtAmt(code, amount)} they lent you`); notify(w, 'personal', `💢 You defaulted on ${f.name}'s loan. They won't forget it.`, { link: 'people' }); p.flags[`loanResult_${id}`] = -amount; }
     delete p.flags[k];
     delete p.flags[`loanDue_${id}`];
   }

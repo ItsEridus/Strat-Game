@@ -17,6 +17,7 @@ import { chance, pick, rand, randInt } from '../engine/rng';
 import { controller, cref, hhref, jailed, player, today } from './query';
 import { companiesIn, presentIn, residents } from './census';
 import { adjustRel } from './social';
+import { remember } from './story';
 import { goalText } from './npc';
 import { joinPartyRaw, partyOf } from './politics';
 import { govTemplate } from './stategov';
@@ -242,6 +243,7 @@ export function converse(w: World, choice: string): Result {
       const agree = 20 - ideoDistance(npc.ideo, p.ideo) * 30 + rel * 0.6 + p.influence / 10 + (npc.flags.toldIssue != null ? 5 : 0);
       if (agree > 10 + rand(w, 0, 20)) {
         pledge(w, npc, p.id);
+        remember(w, npc, 0, 'asked for their vote, and they promised it');
         say(convo, 'npc', rel > 30 ? '“For you? Of course. You have my vote.”' : '“Alright. You’ve convinced me — you have my vote.”');
         say(convo, 'note', `🗳️ ${npc.name} promised to vote for you${cand ? ` (${cand.label})` : ''}. Their neighbours listen to them.`);
         // A pledged resident brings a few of their neighbours along.
@@ -259,7 +261,7 @@ export function converse(w: World, choice: string): Result {
         joinPartyRaw(w, npc, party);
         say(convo, 'npc', `“You know what? Sign me up.”`);
         say(convo, 'note', `🎉 ${npc.name} joined the ${party.name}.`);
-        adjustRel(npc, p.id, 5);
+        remember(w, npc, 5, `brought them into the ${party.name}`);
       } else if (npc.party != null && npc.party !== party.id) say(convo, 'npc', `“I’m with the ${w.parties[npc.party]?.name}. Always have been.”`);
       else say(convo, 'npc', d >= 0.35 ? `“Your lot? We don’t see eye to eye.”` : '“Maybe one day. I’m not much of a joiner.”');
       break;
@@ -272,7 +274,7 @@ export function converse(w: World, choice: string): Result {
         co.workers.push(npc.id);
         npc.job = co.id;
         npc.jobSince = w.time;
-        adjustRel(npc, p.id, 8);
+        remember(w, npc, 8, `hired them at ${co.name}`);
         say(convo, 'npc', `“You’ve got yourself a worker. When do I start?”`);
         say(convo, 'note', `${npc.name} now works at ${co.name}.`);
       } else say(convo, 'npc', '“Thanks, but I’m better off where I am.”');
@@ -308,6 +310,7 @@ export function converse(w: World, choice: string): Result {
         npc.ideo = p.ideo;
         npc.ideoStr = Math.max(0.2, npc.ideoStr * 0.7);
         say(convo, 'npc', '“Huh. I never thought of it that way. Maybe you’re right.”');
+        remember(w, npc, 2, `talked them round to ${IDEOLOGIES[p.ideo].name.toLowerCase()}`);
         say(convo, 'note', `💡 ${npc.name} came round to ${IDEOLOGIES[p.ideo].name.toLowerCase()} (was ${IDEOLOGIES[old].name.toLowerCase()}).`);
         addXp(w, p, 3);
       } else if (chance(w, 0.4 + d * 0.3)) {
@@ -318,7 +321,7 @@ export function converse(w: World, choice: string): Result {
       break;
     }
     case 'insult': {
-      adjustRel(npc, p.id, -15);
+      remember(w, npc, -15, 'insulted them to their face');
       say(convo, 'npc', pick(w, ['“How dare you!”', '“Get out of my sight.”', '“You’ll regret that.”']));
       if ((npc.rel[p.id] ?? 0) < -40 && !p.sec.rivals.includes(npc.id) && chance(w, 0.5)) {
         p.sec.rivals.push(npc.id);

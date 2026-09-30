@@ -3,6 +3,29 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.3: stories, a journal, and automatic updates
+
+- **Automatic updates (Windows).** From this version on, `MeridianReach.exe` checks for new releases when it
+  starts, downloads them in the background (verified against a published checksum) and installs them when you
+  restart — the game saves first. A banner tells you when an update is ready; Settings → Updates has an on/off
+  switch and "Check now". (You need to download 1.3 by hand once; after that it updates itself.)
+- **Stories.** Situations are now stories that remember the people involved and continue over days: they have
+  stages, deadlines, several routes and real endings, and every choice acts through the normal game systems.
+- **The wage dispute.** A strike at your company becomes a story: meet the strike committee, open the books,
+  settle, or wait them out — and keep (or break) the promise you make afterwards. As an employee you can join
+  the picket or broker a deal; as a journalist or politician you can report on it or speak at the picket.
+- **The price of a meal.** When food prices jump, a neighbour feels it first. Buy them groceries on the real
+  market, find out the real reasons (shut factories, grain prices, disasters), help at the community kitchen or
+  give from your own company's stock, then see whether prices eased.
+- **Borrowed trust.** A friend's loan is now a story: ask whether they can spare it, repay early, ask for more
+  time, or face the consequences of defaulting — and make it right later.
+- **Journal.** Every open story with its next step, deadlines, what it's waiting for, your promises, and a
+  history of what happened. "Everyday situations" frequency can be set to off, rare, normal or frequent.
+- **Memories.** People remember why they feel the way they do about you ("repaid my loan early", "broke their
+  promise of a pay review"); see it on their profile and when you talk to them.
+- **One place to decide.** Strikes, loans, bribes, arrests, interviews and debates show up as stories as well
+  as in the inbox; answering in either place settles it once.
+
 ### New in 1.2: a lived-in world
 
 - **A local society everywhere.** About 24 AI citizens live in every state, province and region (more in

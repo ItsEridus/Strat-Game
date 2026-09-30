@@ -1,5 +1,8 @@
 // Bundles the game into dist/game.js (a classic script, so index.html works from file://).
 import * as esbuild from 'esbuild';
+import { readFileSync } from 'node:fs';
+
+const version = JSON.parse(readFileSync('package.json', 'utf8')).version;
 
 const watch = process.argv.includes('--watch');
 const options = {
@@ -14,6 +17,7 @@ const options = {
   sourcemap: watch ? 'inline' : false,
   legalComments: 'none',
   logLevel: 'info',
+  define: { __VERSION__: JSON.stringify(version) },
 };
 
 if (watch) {

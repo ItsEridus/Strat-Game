@@ -8,6 +8,7 @@ import LZ from 'lz-string';
 import type { World } from '../sim/types';
 import { applyBalance } from '../data/balance';
 import { SAVE_VERSION } from '../sim/worldgen';
+import { newNarrative } from '../sim/story';
 
 const PREFIX = 'meridian-save:';
 export const SLOTS = ['autosave', 'slot1', 'slot2', 'slot3'] as const;
@@ -36,6 +37,13 @@ function migrate(w: World, from: number): World {
     delete s.citizensPerNation;
     if (s.pauseOn.encounter == null) s.pauseOn.encounter = true;
     if (s.notifyFilter.encounter == null) s.notifyFilter.encounter = true;
+  }
+  if (from < 7) {
+    // 7: the story engine replaces one-off encounters; nothing else changes (no new money or people).
+    w.story = newNarrative();
+    const ps = w.player as World['player'] & { encounter?: unknown; nextEncounter?: unknown; encounterLog?: { t: number; title: string; outcome: string }[] };
+    for (const e of ps.encounterLog ?? []) w.story.journal.push({ id: -1, t: e.t, title: e.title, text: e.outcome, kind: 'outcome' });
+    delete ps.encounter; delete ps.nextEncounter; delete ps.encounterLog;
   }
   w.version = SAVE_VERSION;
   return w;

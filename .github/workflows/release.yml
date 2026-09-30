@@ -42,6 +42,8 @@ jobs:
       - run: npm test
       - name: Build the Windows game
         run: ./launcher/build.sh "$TAG"
+      - name: Checksum for the auto-updater
+        run: (cd release && sha256sum MeridianReach.exe | cut -d' ' -f1 > MeridianReach.exe.sha256)
       - name: Package the browser build
         run: |
           mkdir -p pkg/MeridianReach
@@ -52,6 +54,7 @@ jobs:
           name: release
           path: |
             release/MeridianReach.exe
+            release/MeridianReach.exe.sha256
             release/MeridianReach-*-web.zip
 
   # Runs the EXE on real Windows: the game window must open (even with the old
@@ -93,6 +96,26 @@ jobs:
           if (-not $p.WaitForExit(15000)) { throw "the game did not close from its close button" }
           $blocker.Stop()
           Write-Host "closed cleanly"
+      - name: Auto-update installs a downloaded update and restarts
+        shell: pwsh
+        run: |
+          Add-Type @"
+          using System; using System.Runtime.InteropServices;
+          public static class U2 { [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr h, uint m, IntPtr w, IntPtr l); }
+          "@
+          $u = "$env:LOCALAPPDATA\MeridianReach\update"
+          New-Item -ItemType Directory -Force $u | Out-Null
+          Copy-Item .\MeridianReach.exe "$u\MeridianReach-v99.0.0.exe"
+          Start-Process -FilePath .\MeridianReach.exe | Out-Null
+          Start-Sleep -Seconds 25
+          if (Test-Path "$u\MeridianReach-v99.0.0.exe") { throw "the downloaded update was not installed" }
+          $procs = @(Get-Process -Name MeridianReach -ErrorAction SilentlyContinue)
+          if ($procs.Count -ne 1) { throw "expected the updated game to be running once, found $($procs.Count)" }
+          if ($procs[0].MainWindowTitle -ne 'Meridian Reach') { throw "no game window after the update" }
+          if (Test-Path .\MeridianReach.exe.old) { throw "the previous version was not cleaned up" }
+          [U2]::PostMessage($procs[0].MainWindowHandle, 0x10, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null
+          if (-not $procs[0].WaitForExit(20000)) { throw "the updated game did not close" }
+          Write-Host "update installed and restarted"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -117,4 +140,5 @@ jobs:
           body_path: docs/RELEASE_NOTES.md
           files: |
             release/MeridianReach.exe
+            release/MeridianReach.exe.sha256
             release/MeridianReach-${{ needs.build.outputs.tag }}-web.zip

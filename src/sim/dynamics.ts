@@ -68,7 +68,7 @@ function economyDaily(w: World) {
   }
 }
 
-function addCrisis(w: World, kind: CrisisKind, name: string, regions: Id[], nation: Id | null, days: number, severity: number): Crisis {
+export function addCrisis(w: World, kind: CrisisKind, name: string, regions: Id[], nation: Id | null, days: number, severity: number): Crisis {
   const c: Crisis = { id: nid(w), kind, name, regions, nation, start: w.time, end: w.time + days * DAY, severity, status: 'active', relief: 0 };
   w.crises[c.id] = c;
   return c;
@@ -278,6 +278,9 @@ export function replyStrike(w: World, payload: Record<string, any>, option: stri
   const co = w.companies[payload.co];
   const k = w.crises[payload.crisis];
   if (!co || !co.offer) return ok('The company is gone.');
+  // A stale request cannot let a former owner change wages at a company they sold.
+  if (!(co.owner.k === 'cit' && co.owner.id === w.playerId)) return fail(`${co.name} is no longer yours; its new owner deals with the strike.`);
+  if (k && k.status !== 'active') return ok('The strike has already ended.');
   if (option === 'refuse') {
     for (const id of co.workers) { const x = w.citizens[id]; if (x) x.rel[w.playerId] = Math.max(-100, (x.rel[w.playerId] ?? 0) - 15); }
     return ok('The strike goes on. Your workers are bitter.');

@@ -35,7 +35,9 @@ it uses the WebView2 component built into Windows 10 and 11, and your saves are 
 `%LOCALAPPDATA%\MeridianReach`. Closing the window autosaves and quits. Windows SmartScreen may warn about an
 unsigned app: choose **More info → Run anyway**.
 
-On a PC without WebView2 (e.g. Windows 7/8), the EXE opens the game in your default browser instead.
+The EXE keeps itself up to date: it checks for new releases when it starts, downloads them in the background
+and installs them when you restart (Settings → Updates can switch this off). On a PC without WebView2 (e.g.
+Windows 7/8), the EXE opens the game in your default browser instead.
 
 The release also has a `.zip` of the plain browser build for any OS. Saves don't move between the browser
 build and the EXE automatically: use **Settings & Saves → Export save file** in one and **Import save file** in the other.
@@ -59,7 +61,7 @@ Requires Node.js 18+.
 ```sh
 npm install
 npm run build      # rebuild dist/game.js
-npm test           # 56 simulation & acceptance tests
+npm test           # simulation, story & acceptance tests
 npm run sim -- 90  # 90-day headless world run with an asset audit
 npm run earth      # regenerate src/data/earth.json (downloads Natural Earth data to tools/ne/ on first run)
 ```
@@ -159,6 +161,12 @@ afford food, your staff asking for a raise, a buyout offer, a friend's business 
 stolen rifles, a generous donor with strings attached, a question at a town hall, a protest, a recruiting
 sergeant in wartime, a disaster in your town. Every choice shows its likely consequences first, and every
 consequence is real (money, relationships, police cases, votes).
+
+**Stories and your journal.** Situations are stories that remember who is involved and carry on over days: a
+strike at your company (meet the committee, open the books, keep the promise you made), a neighbour who can't
+afford bread when prices jump (and the real reasons why), a friend's loan (repay early, ask for time, or default
+and make it right). Urgent decisions pause the game; others wait in the **Journal** with their next step and
+deadline. People remember what you did and why they feel the way they do (see their profile).
 
 **People who notice you.** AI citizens pursue ambitions (a governorship, the presidency, a business empire, the
 boss's chair…). Competitors become rivals who attack you in speeches, undercut your prices, poach workers and tip

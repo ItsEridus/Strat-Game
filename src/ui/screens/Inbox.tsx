@@ -24,6 +24,7 @@ export function Inbox({ w }: { w: World }) {
           {msg.options && !msg.resolved && (
             <div class="row">{msg.options.map((o) => <ActBtn run={(w) => respond(w, msg.id, o.id)}>{o.label}</ActBtn>)}</div>
           )}
+          {(() => { const st = Object.values(w.story.instances).find((i) => i.msg === msg.id); return st ? <p class="small">📖 Part of a story: <span class="link" onClick={() => store.go('journal', st.status === 'offered' || st.status === 'active' ? { story: st.id } : {})}>{st.status === 'offered' || st.status === 'active' ? 'open it as a story' : 'see it in your journal'}</span>{st.status === 'waiting' ? ' (waiting for what happens next)' : st.status === 'completed' ? ' (settled)' : ''}</p> : null; })()}
           {msg.resolved && <p class="muted">You replied: {msg.options?.find((o) => o.id === msg.resolved)?.label ?? msg.resolved}</p>}
         </Panel>
       )}
