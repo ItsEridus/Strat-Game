@@ -106,6 +106,8 @@ export function playerCandidacy(w: World): { kind: 'state' | 'national'; region?
 
 // ---------- conversations ----------
 
+const greeting = (w: World) => { const h = Math.floor((w.time % 1440) / 60); return h < 12 ? 'Morning' : h < 18 ? 'Afternoon' : 'Evening'; };
+
 const say = (c: Convo, who: Convo['lines'][number]['who'], text: string) => { c.lines.push({ who, text }); if (c.lines.length > 40) c.lines.splice(0, c.lines.length - 40); };
 
 export function talkCheck(w: World, p: Citizen, npc: Citizen | undefined): string | null {
@@ -131,7 +133,7 @@ export function startTalk(w: World, npcId: Id): Result {
   const convo: Convo = { npc: npc.id, lines: [], choices: [], used: [] };
   const greet = rel <= -30 ? `${npc.name} folds their arms. “What do you want?”`
     : rel >= 30 ? `${npc.name} brightens. “${p.name.split(' ')[0]}! Good to see you.”`
-    : pick(w, [`“Hello there,” says ${npc.name}.`, `${npc.name} nods at you. “Can I help you?”`, `“Afternoon,” says ${npc.name}, looking up from ${npc.job != null ? 'work' : 'the paper'}.`]);
+    : pick(w, [`“Hello there,” says ${npc.name}.`, `${npc.name} nods at you. “Can I help you?”`, `“${greeting(w)},” says ${npc.name}, looking up from ${npc.job != null ? 'work' : 'the paper'}.`]);
   say(convo, 'npc', greet);
   if (first) {
     const warmth = Math.round(2 + p.attrs.lead * 0.3 + (npc.ideo === p.ideo ? 2 : 0) + (p.sec.fame > 10 ? 1 : 0) - (p.sec.notoriety > 10 ? 2 : 0));
