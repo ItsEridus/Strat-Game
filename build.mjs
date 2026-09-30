@@ -4,6 +4,20 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 
 const version = JSON.parse(readFileSync('package.json', 'utf8')).version;
 
+/** The in-game "What's new": each "### New in X" / "### Fixed in X" section of the release notes. */
+function releaseNotes(md) {
+  const out = [];
+  let cur = null;
+  for (const line of md.split('\n')) {
+    const m = line.match(/^### (New|Fixed) in (\d+\.\d+(?:\.\d+)?)(?::\s*(.*))?$/);
+    if (m) { cur = { version: m[2], title: m[3] || (m[1] === 'Fixed' ? 'Fixes' : ''), body: [] }; out.push(cur); continue; }
+    if (/^#{1,3} /.test(line)) { cur = null; continue; } // any other heading (Download, Highlights) ends a section
+    if (cur) cur.body.push(line);
+  }
+  return out.map((x) => ({ ...x, body: x.body.join('\n').trim() }));
+}
+const notes = releaseNotes(readFileSync('docs/RELEASE_NOTES.md', 'utf8'));
+
 const watch = process.argv.includes('--watch');
 const options = {
   entryPoints: ['src/main.tsx'],
@@ -17,7 +31,7 @@ const options = {
   sourcemap: watch ? 'inline' : false,
   legalComments: 'none',
   logLevel: 'info',
-  define: { __VERSION__: JSON.stringify(version) },
+  define: { __VERSION__: JSON.stringify(version), __NOTES__: JSON.stringify(notes) },
 };
 
 // Bundled fonts as data URIs (browsers refuse font files from file:// pages, and the game must work offline).

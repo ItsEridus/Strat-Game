@@ -138,6 +138,11 @@ try {
     const saved = await page.evaluate(async () => { const s = window.meridian; s.advanceSyncTo(s.w.time + 1440); await s.save('autosave'); return { t: s.w.time, name: s.w.citizens[s.w.playerId].name }; });
     log(`previous release: campaign saved on day ${Math.floor(saved.t / 1440)}`);
     await page.goto(`${origin}/new/index.html`);
+    // Someone updating sees what changed, once.
+    await page.waitForSelector('.modal.whatsnew', { timeout: 15_000 });
+    check((await page.textContent('.modal.whatsnew')).includes(VERSION), `upgrade: What's new does not show ${VERSION}`);
+    await page.click('.modal.whatsnew button:has-text("Got it")');
+    log(`upgrade: What's new showed ${VERSION}`);
     await page.waitForSelector('.slot button', { timeout: 30_000 });
     await page.click('.slot button');
     await inGame(page);
@@ -153,6 +158,8 @@ try {
   await page.goto(`${origin}/new/index.html`);
   await page.waitForSelector('text=Start campaign');
   check((await page.textContent('body')).includes(VERSION), `title screen: version ${VERSION} is not shown`);
+  await page.waitForTimeout(300);
+  check((await page.locator('.modal.whatsnew').count()) === 0, "a new player is shown What's new");
   await page.fill('.form input', 'Smoke Test');
   await page.click('text=Start campaign');
   await inGame(page);
@@ -197,7 +204,11 @@ try {
   await disk.goto(`file://${ROOT}/index.html`);
   await disk.waitForSelector('text=Start campaign');
   check((await disk.textContent('h1')).includes('MERIDIAN REACH'), 'file://: the title screen did not draw');
-  log('file://: the title screen draws');
+  await disk.click('.start-footer .linkish');
+  await disk.waitForSelector('.modal.whatsnew', { timeout: 5_000 });
+  check((await disk.textContent('.modal.whatsnew')).includes(VERSION), "file://: What's new does not open from the title screen");
+  await disk.click('.modal.whatsnew button:has-text("Got it")');
+  log("file://: the title screen draws, and What's new opens from it");
 } catch (e) {
   errors.push(`smoke test stopped: ${e.message.split('\n')[0]}`);
 } finally {

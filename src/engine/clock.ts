@@ -17,7 +17,7 @@ export function monthOf(w: World, t = w.time) {
   return { month: Math.floor(d / len) + 1, dom: (d % len) + 1 };
 }
 
-/** Date and time for logs and panels, e.g. "Tue 14 Mar 2030 · 9:40 am". */
+/** Date and time for logs and panels, e.g. "Fri 14 Mar 2025 · 9:40 am". */
 export function fmtClock(w: World, t = w.time): string {
   return `${fmtDate(t, 'medium')} · ${fmtTime(t, !!w.settings.clock24)}`;
 }

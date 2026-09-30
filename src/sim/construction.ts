@@ -5,7 +5,7 @@ import { lifeGate } from './lifecycle';
 import type { AccountRef, BuildingType, Citizen, Id, Nation, Project, World } from './types';
 import { B } from '../data/balance';
 import { IDEOLOGIES } from '../data/ideologies';
-import { itemName } from '../data/items';
+import { itemName, kindOf, qualityOf } from '../data/items';
 import { fail, ok, type Result } from '../engine/result';
 import { acct, consume, itemsFromEscrow, itemsToEscrow, pay } from '../engine/ledger';
 import { GOLD, g } from '../engine/money';
@@ -25,6 +25,25 @@ export const BUILDINGS: Record<BuildingType, { name: string; icon: string; effec
 };
 
 function popFactor(pop: number) { return 0.5 + pop / 100000; }
+
+/** Building materials are needed by grade: a delivered unit counts as its grade (premium = 4 basic). */
+export const GRADED = 'materials';
+/** The need a delivered item fills: its own key, or `materials` for building materials of any grade. */
+export const needFor = (key: string) => (kindOf(key) === GRADED && key.includes(':') ? GRADED : key);
+/** How much of a need has been delivered (building materials counted by grade). */
+export function delivered(p: Project, need: string): number {
+  if (need !== GRADED) return p.mats[need] ?? 0;
+  let s = 0;
+  for (const [k, v] of Object.entries(p.mats)) if (needFor(k) === GRADED) s += v * qualityOf(k);
+  return s;
+}
+/** Items of this key still useful to the project (building materials: enough units to cover what is missing). */
+export function stillNeeded(p: Project, key: string): number {
+  const need = needFor(key);
+  if (!(need in p.needMats)) return 0;
+  const left = p.needMats[need] - delivered(p, need);
+  return left <= 0 ? 0 : need === GRADED ? Math.ceil(left / Math.max(1, qualityOf(key))) : left;
+}
 
 export function projectNeeds(w: World, rid: Id, type: BuildingType, level: number, n: Nation) {
   const r = w.regions[rid];
@@ -121,9 +140,10 @@ export function donateCheck(w: World, actor: Id, from: AccountRef, p: Project | 
   if (p.done) return 'This project is complete.';
   const auth = authorize(w, actor, from, from.k === 'nat' ? 'build' : 'trade');
   if (auth) return auth;
-  if (!(key in p.needMats)) return `${itemName(key)} is not needed here.`;
-  const missing = p.needMats[key] - (p.mats[key] ?? 0);
-  if (missing <= 0) return `Enough ${itemName(key)} already delivered.`;
+  const need = needFor(key);
+  if (!(need in p.needMats) || key === GRADED) return `${itemName(key)} is not needed here.`;
+  const missing = stillNeeded(p, key);
+  if (missing <= 0) return `Enough ${need === GRADED ? 'building materials' : itemName(key)} already delivered.`;
   if (!Number.isInteger(n) || n < 1) return 'Enter a quantity.';
   if ((acct(w, from)?.inv[key] ?? 0) < Math.min(n, missing)) return `Not enough ${itemName(key)} in storage.`;
   if (from.k === 'cit') {
@@ -138,7 +158,7 @@ export function donateMaterials(w: World, actor: Id, from: AccountRef, pid: Id, 
   const p = w.projects[pid];
   const why = donateCheck(w, actor, from, p, key, n);
   if (why) return fail(why);
-  const amount = Math.min(n, p.needMats[key] - (p.mats[key] ?? 0));
+  const amount = Math.min(n, stillNeeded(p, key));
   itemsToEscrow(w, from, key, amount);
   p.mats[key] = (p.mats[key] ?? 0) + amount;
   if (from.k === 'cit') {
@@ -153,7 +173,7 @@ export function donateMaterials(w: World, actor: Id, from: AccountRef, pid: Id, 
 
 function checkComplete(w: World, p: Project) {
   if (p.done || p.points < p.needPts) return;
-  for (const [k, v] of Object.entries(p.needMats)) if ((p.mats[k] ?? 0) < v) return;
+  for (const [k, v] of Object.entries(p.needMats)) if (delivered(p, k) < v) return;
   // Complete exactly once: consume materials held in the site, raise the level.
   const site: AccountRef = natref(p.nation);
   for (const [k, v] of Object.entries(p.mats)) { itemsFromEscrow(w, site, k, v); consume(w, site, k, v, 'construction'); }
@@ -186,10 +206,11 @@ export function fundProject(w: World, actor: Id, pid: Id): Result {
   const p = w.projects[pid];
   if (!p) return fail('Project not found.');
   let moved = 0;
-  for (const k of Object.keys(p.needMats)) {
-    const missing = p.needMats[k] - (p.mats[k] ?? 0);
-    const have = w.nations[p.nation].inv[k] ?? 0;
-    const n = Math.min(missing, have);
+  const store = w.nations[p.nation].inv;
+  // Deliverable keys: each need, or for building materials every grade in storage (best grade first).
+  const keys = Object.keys(p.needMats).flatMap((k) => (k === GRADED ? Object.keys(store).filter((x) => needFor(x) === GRADED).sort((a, b) => qualityOf(b) - qualityOf(a)) : [k]));
+  for (const k of keys) {
+    const n = Math.min(stillNeeded(p, k), store[k] ?? 0);
     if (n > 0) { const r = donateMaterials(w, actor, natref(p.nation), pid, k, n); if (r.ok) moved += n; else return r; }
   }
   return moved ? ok(`Delivered ${moved} units from national storage.`) : fail('National storage has none of the missing materials.');

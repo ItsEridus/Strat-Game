@@ -8,6 +8,7 @@ import { ConversationPanel, StoryModal } from './Overlays';
 import { UpdateBanner } from './Updates';
 import { AdvanceBanner, AnnualReviewModal } from './LifeOverlays';
 import { ScreenIcon } from './icons';
+import { WhatsNew } from './WhatsNew';
 
 /** Screens that carry their own title. */
 const NO_HEAD = new Set(['life', 'local', 'citizen']);
@@ -42,7 +43,7 @@ export function App() {
   }, []);
   // Each new screen opens at its top; going back returns to where you were on it.
   useEffect(() => { window.scrollTo(0, store.scrollTo); }, [s.page, !!s.w]);
-  if (!s.w) return <StartScreen />;
+  if (!s.w) return <><StartScreen /><WhatsNew /></>;
   const w = s.w;
   const screen = SCREENS.find((x) => x.id === s.tab) ?? SCREENS[0];
   const groups = [...new Set(SCREENS.filter((x) => !x.hidden).map((x) => x.group))];
@@ -74,6 +75,7 @@ export function App() {
       <Guard name="the conversation" quiet><ConversationPanel w={w} /></Guard>
       <Guard name="the story window" quiet><StoryModal w={w} /></Guard>
       <Guard name="the annual review" quiet><AnnualReviewModal w={w} /></Guard>
+      <Guard name="what's new" quiet><WhatsNew /></Guard>
       <div class="toasts">{s.toasts.map((t) => <div class={`toast ${t.ok ? 'ok' : 'err'}`}>{t.text}</div>)}</div>
     </div>
   );

@@ -31,8 +31,8 @@ export function Character({ w }: { w: World }) {
           (wiki baseline; log base chosen). Every session also builds strength and endurance, less with each extra session in a day.</p>
         <div class="row">
           <ActBtn kind="primary" why={trainCheck(w, p, 'normal')} run={(w) => train(w, p, 'normal')}>Train (−{B.cost.train}⚡)</ActBtn>
-          <ActBtn why={trainCheck(w, p, 'food')} run={(w) => train(w, p, 'food')}>Train and donate 5 Q1 food (+standing)</ActBtn>
-          <ActBtn why={trainCheck(w, p, 'weapons')} run={(w) => train(w, p, 'weapons')}>Train and donate 20 Q1 weapons (+standing)</ActBtn>
+          <ActBtn why={trainCheck(w, p, 'food')} run={(w) => train(w, p, 'food')}>Train and donate 5 basic food (+standing)</ActBtn>
+          <ActBtn why={trainCheck(w, p, 'weapons')} run={(w) => train(w, p, 'weapons')}>Train and donate 20 basic ground weapons (+standing)</ActBtn>
         </div>
         <p class="muted small">{p.lastTrainDay === today(w) ? `Power already raised today (${p.trainsToday} session${p.trainsToday > 1 ? 's' : ''}).` : `Next power gain: +${powerGain(w, p).toFixed(3)}.`}</p>
         <label class="check"><input type="checkbox" checked={routineOf(w).train} onChange={() => { const r = routineOf(w); r.train = !r.train; w.settings.autoTrain = r.train; }} /> Automatically do my first training each day (at {String(p.trainHour).padStart(2, '0')}:00 when energy allows)</label>

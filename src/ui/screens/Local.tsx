@@ -17,7 +17,7 @@ import { DOING_INFO, activityCounts, nowDoing } from '../../sim/life';
 import { ISSUES, ISSUE_INFO, attitude, canvass, canvassCheck, holdRally, localIssues, playerCandidacy, pledgeOf, rallyCheck, rallyCost, startTalk, talkCheck, type Issue } from '../../sim/interact';
 import { govTemplate } from '../../sim/stategov';
 import { IDEOLOGIES } from '../../data/ideologies';
-import { INDUSTRY_INFO } from '../../data/items';
+import { INDUSTRY_INFO, grade } from '../../data/items';
 
 type Filter = 'here' | 'residents' | 'friends' | 'pledged';
 
@@ -82,7 +82,7 @@ export function Local({ w }: { w: World }) {
       <Panel title={`🏪 Local businesses (${cos.length})`}>
         {cos.length ? <table class="table compact small"><tbody>{cos.slice(0, 12).map((co) => {
           const open = co.offer && co.workers.length < co.offer.slots;
-          return <tr><td>{INDUSTRY_INFO[co.industry].icon} {co.name} <small class="muted">Q{co.q}</small><br /><small class="muted">{co.owner.k === 'cit' ? <CitLink w={w} id={co.owner.id} /> : co.owner.k === 'nat' ? 'state-owned' : 'holding'} · {co.workers.length} staff</small></td>
+          return <tr><td>{INDUSTRY_INFO[co.industry].icon} {co.name} <small class="muted">{grade(co.q)}</small><br /><small class="muted">{co.owner.k === 'cit' ? <CitLink w={w} id={co.owner.id} /> : co.owner.k === 'nat' ? 'state-owned' : 'holding'} · {co.workers.length} staff</small></td>
             <td>{open ? <span class="good">hiring · <Amt asset={n.cur} v={co.offer!.wage} /></span> : <span class="muted">full</span>}</td></tr>;
         })}</tbody></table> : <Empty>No businesses here yet — a gap in the market?</Empty>}
         <div class="row"><button class="btn sm" onClick={() => store.go('jobs')}>Find work</button><button class="btn sm" onClick={() => store.go('companies')}>Start a business</button></div>

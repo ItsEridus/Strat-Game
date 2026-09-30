@@ -1,5 +1,5 @@
 import type { World } from '../../sim/types';
-import { ActBtn, Amt, CitLink, Empty, Panel, RegionLink, Help } from '../common';
+import { ActBtn, Amt, CitLink, Empty, Grade, Panel, RegionLink, Help } from '../common';
 import { cref, player, companyCurrency } from '../../sim/query';
 import { SPECIALS, INDUSTRY_INFO, outputKey, itemName } from '../../data/items';
 import { buySpecial, shopPrice } from '../../sim/specials';
@@ -38,7 +38,7 @@ export function BusinessMarket({ w }: { w: World }) {
               const cur = companyCurrency(w, c);
               const units = baseUnits(c) * productionFactors(w, c, null).mult;
               return (
-                <tr><td>{INDUSTRY_INFO[c.industry].icon} {c.name} Q{c.q}</td><td><RegionLink w={w} id={c.region} /></td>
+                <tr><td>{INDUSTRY_INFO[c.industry].icon} {c.name} · <Grade q={c.q} /></td><td><RegionLink w={w} id={c.region} /></td>
                   <td>{c.owner.k === 'cit' ? <CitLink w={w} id={c.owner.id} /> : c.owner.k}</td><td>{c.workers.length}</td>
                   <td>{units.toFixed(1)} {itemName(outputKey(c.industry, c.q))}</td>
                   <td class="num"><Amt asset={cur} v={c.hist.slice(-14).reduce((s, h) => s + h.profit, 0)} sign /></td>

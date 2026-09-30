@@ -135,6 +135,7 @@ export function householdsDaily(w: World, half: number) {
     let budget = Math.floor((cash * B.households.spendRate * (1 + B.dynamics.hhSpendSwing * w.econ.cycle)) / 2);
     const ref = hhref(h.nation);
     let unmet = 0;
+    const by: Record<string, number> = {};
     for (const [kind, share] of Object.entries(B.households.shares)) {
       let b = Math.floor(budget * share);
       // Choose the cheapest quality per unit of value (energy for food).
@@ -152,8 +153,10 @@ export function householdsDaily(w: World, half: number) {
         if (r.ok) b -= r.data.spent;
       }
       unmet += b;
+      by[kind] = (half === 0 ? 0 : h.unmetBy?.[kind] ?? 0) + b;
     }
     h.unmet = half === 0 ? unmet : h.unmet + unmet;
+    h.unmetBy = by; // money households meant to spend on each good today but could not
     // Background consumption destroys the goods.
     for (const [k, q] of Object.entries(h.inv)) consume(w, ref, k, q, 'household consumption');
   }
@@ -191,7 +194,13 @@ export function entrepreneurship(w: World) {
     const byKey = new Map<string, Company[]>();
     for (const co of companiesOf(w, n.id)) { if (!w.companies[co.id]) continue; const k = outputKey(co.industry, co.q); byKey.set(k, [...(byKey.get(k) ?? []), co]); }
     const maxProducers = Math.round(8 / representation(w, n.id));
+    const founder = () => nationals(w, n.id).filter((c) => !c.player && (c.persona === 'industrialist' || c.persona === 'investor' || c.persona === 'merchant') && (c.wallet.GOLD ?? 0) > B.company.foundCost[0] * 1000 * 1.5 && (c.wallet[n.cur] ?? 0) > cur(200)).sort((a, b) => b.traits.ambition - a.traits.ambition)[0];
     for (const kind of [...PRODUCTS, ...RAWS] as string[]) {
+      // Nobody in the country makes this at all (a new industry, or the last maker failed): someone may start.
+      if (![...byKey.keys()].some((k) => kindOf(k) === kind) && chance(w, 0.1)) {
+        const f = founder();
+        if (f) { foundForDemand(w, f.id, kind, n.id); continue nations; }
+      }
       const keys = (RAWS as string[]).includes(kind) ? [kind] : [1, 2, 3].map((q) => `${kind}:${q}`);
       for (const key of keys) {
         const supply = listingsFor(w, n.id, key).reduce((s, l) => s + l.qty, 0);
@@ -200,8 +209,7 @@ export function entrepreneurship(w: World) {
         const producers = makers.length;
         const busy = makers.every((co) => (co.hist[co.hist.length - 1]?.produced ?? 0) > 0 && (!co.offer || co.workers.length >= co.offer.slots));
         if (traded > 0 && supply < traded / 3 && producers < maxProducers && busy && chance(w, 0.3)) {
-          const founders = nationals(w, n.id).filter((c) => !c.player && (c.persona === 'industrialist' || c.persona === 'investor' || c.persona === 'merchant') && (c.wallet.GOLD ?? 0) > B.company.foundCost[0] * 1000 * 1.5 && (c.wallet[n.cur] ?? 0) > cur(200));
-          const f = founders.sort((a, b) => b.traits.ambition - a.traits.ambition)[0];
+          const f = founder();
           if (!f) continue;
           foundForDemand(w, f.id, kindOf(key), n.id);
           continue nations; // at most one new company per country per day keeps growth readable
@@ -214,7 +222,7 @@ export function entrepreneurship(w: World) {
 function foundForDemand(w: World, founderId: Id, kind: string, nation: Id) {
   const f = w.citizens[founderId];
   const regions = w.regions.filter((r) => controller(r) === nation);
-  const raw = ['grain', 'iron', 'titanium', 'oil'].includes(kind);
+  const raw = (RAWS as string[]).includes(kind);
   const region = raw
     ? regions.slice().sort((a, b) => ((b.res as any)[kind] ?? 0) - ((a.res as any)[kind] ?? 0) || a.pollution - b.pollution)[0]
     : regions.slice().sort((a, b) => a.pollution - b.pollution || b.pop - a.pop)[0];

@@ -3,6 +3,7 @@
 import { lifeGate } from './lifecycle';
 import type { Attr, Citizen, World } from './types';
 import { B } from '../data/balance';
+import { gradeLc } from '../data/items';
 import { fail, ok, type Result } from '../engine/result';
 import { consume } from '../engine/ledger';
 import { cref, maxEnergy, studyActive, today, jailed } from './query';
@@ -57,7 +58,7 @@ export function eatPreview(w: World, c: Citizen, q: number) {
 
 export function eat(w: World, c: Citizen, q: number): Result {
   const key = `food:${q}`;
-  if ((c.inv[key] ?? 0) < 1) return fail(`You have no Q${q} food.`);
+  if ((c.inv[key] ?? 0) < 1) return fail(`You have no ${gradeLc(q)} food.`);
   if (c.allowance < 1) return fail('No eating allowance left — it regenerates every 45 minutes.');
   const p = eatPreview(w, c, q);
   if (p.gained <= 0) return fail('Energy is already full.');
@@ -65,7 +66,7 @@ export function eat(w: World, c: Citizen, q: number): Result {
   c.allowance--;
   c.energy += p.gained;
   if (c.player) bump(w, 'eat');
-  return ok(`Ate Q${q} food: +${p.gained} energy${p.wasted ? ` (${p.wasted} wasted)` : ''}.`);
+  return ok(`Ate ${gradeLc(q)} food: +${p.gained} energy${p.wasted ? ` (${p.wasted} wasted)` : ''}.`);
 }
 
 /** A study manual: a few evenings of reading improve your weakest skill. */
@@ -89,8 +90,8 @@ export function trainCheck(w: World, c: Citizen, mode: TrainMode): string | null
   const tooYoung = lifeGate(w, c, 13, 'Training at the grounds');
   if (tooYoung) return tooYoung;
   if (jailed(w, c)) return 'You are in prison (the yard has no gym).';
-  if (mode === 'food' && (c.inv['food:1'] ?? 0) < 5) return 'Donation training needs 5 Q1 food.';
-  if (mode === 'weapons' && (c.inv['wg:1'] ?? 0) < 20) return 'Donation training needs 20 Q1 ground weapons.';
+  if (mode === 'food' && (c.inv['food:1'] ?? 0) < 5) return 'Donation training needs 5 basic food.';
+  if (mode === 'weapons' && (c.inv['wg:1'] ?? 0) < 20) return 'Donation training needs 20 basic ground weapons.';
   if (c.energy < B.cost.train) return `Not enough energy (${Math.floor(c.energy)}/${B.cost.train}).`;
   if (c.mining && mode !== 'normal') return 'Donations are blocked while mining.';
   return null;

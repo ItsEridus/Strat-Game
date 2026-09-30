@@ -1,5 +1,5 @@
 // Stadium tournaments on the simulated calendar. Entrants (AI and player) fight
-// bracket bouts with organiser-issued Q2 weapons (not consumed) and a fixed
+// bracket bouts with organiser-issued standard-grade weapons (not consumed) and a fixed
 // hit budget, so supplies are equal and builds decide. Fees fund the prize pool.
 import { lifeGate } from './lifecycle';
 import { repNeed, standing } from './growth';

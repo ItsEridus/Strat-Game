@@ -5,6 +5,9 @@ around the player. The main thread is the geopolitical simulation requested on 3
 AI actors advance over time: militaries and intelligence services get better, companies expand or disband,
 nations rise and fall, and wars happen, all realistically. The earlier after-1.4.0 requests are included where
 they belong: careers and employment, policing and crime careers, prisons, weather and natural disasters.
+It opens with a deep economic overhaul (requested the same day), because wages and prices must be realistic before
+anything is built on them. The calendar now starts on 1 January 2025 (from 1.3.3), so the economy can be anchored to
+real present-day data.
 
 Parts marked **GEO** are the geopolitical simulation. Every version ships as a series of playable patch
 releases (every push is a release); the minor version marks its theme complete.
@@ -13,7 +16,7 @@ releases (every push is a release); the minor version marks its theme complete.
 
 | Version | Theme | What the player sees |
 | --- | --- | --- |
-| 1.5.0 | **Work & enterprise** (GEO 1: companies expand or disband) | A real working life in any occupation; firms that are founded, grow into new regions and countries, merge, go public and go bust |
+| 1.5.0 | **The real economy** (ECON: a deep economic overhaul) + **Work & enterprise** (GEO 1: companies expand or disband) | Prices, wages, rents, taxes and interest that match each real country; payslips and household budgets; a working life in any occupation; firms that are founded, grow, merge, go public and go bust |
 | 1.6.0 | **The strategic engine** (GEO 2: nations advance over time) | Economies grow or stall, budgets shift, capabilities improve or decay, and the power ranking moves for reasons you can read; years pass in minutes |
 | 1.7.0 | **Law & order** | Police, crime, courts and prisons as full careers and institutions |
 | 1.8.0 | **Arsenal** (GEO 3: militaries get better) | Defence budgets, R&D programmes, equipment generations, procurement from real defence firms, arms trade, doctrine that learns |
@@ -26,7 +29,8 @@ releases (every push is a release); the minor version marks its theme complete.
 | 2.5.0 | **A world of consequences** (GEO 9: world economy, climate, soft power) | Debt crises, central banks, climate over decades, soft power; the decades-long campaign and the World Almanac |
 
 **Why this order.** Each part builds on the ones before it:
-- Companies and jobs come first because national wealth, the defence industry and technology are produced by them.
+- A realistic economy comes first: money, prices, wages and costs underpin every later part.
+- Companies and jobs come next, because national wealth, the defence industry and technology are produced by them.
 - The strategic engine turns that output into national trajectories.
 - Law and order comes before intelligence, because both use internal security, the courts and prisons (for spies too).
 - Weather and disasters come before climate and resources.
@@ -89,13 +93,114 @@ releases (every push is a release); the minor version marks its theme complete.
   - Agencies (`intel.ts`), formations (`forces.ts`), crises (`dynamics.ts`), companies (`company.ts`) and
     regional governments (`stategov.ts`).
 - **Saves.** Every version migrates older saves, checked by the upgrade test in the release pipeline. New state
-  starts from real-world baselines for the 16 nations (2030 projections).
+  starts from real-world baselines for the 16 nations (real 2024–2025 data; the calendar starts on 1 January 2025).
 
 ---
 
-## 1.5.0 — Work & enterprise (GEO 1: companies expand or disband)
+## 1.5.0 — The real economy (ECON) and work & enterprise (GEO 1)
 
-*Includes the careers and employment overhaul requested earlier. It builds on the industries added in 1.3.3.*
+### Part A: the real economy (a deep economic overhaul)
+
+*Requested on 30 September 2026: wages, prices and the rest of the economy should be realistic.*
+
+**What is unrealistic today.**
+- Every currency starts at 100 per gold, so a dollar, a rupee and a yen are worth the same.
+- Starting wages are 8 per shift in every currency, and living costs are 4 a day everywhere.
+- Prices are a fixed markup on the cost of a few raw inputs. There are no rents, energy or capital costs, and
+  productivity does not set pay.
+- Money is created at the start in round amounts, so price levels drift with nothing to anchor them.
+
+**Goal.** Prices, wages and costs a player recognises:
+- a coffee costs roughly what it costs in that country;
+- a nurse earns a nurse's wage, and rent takes a realistic share of a low income;
+- differences between nations follow real price levels and incomes.
+
+- **Money and price levels anchored to reality.**
+  - Each currency starts at its real exchange rate (early 2025), with real minor units (cents, paise; the yen and
+    won have none).
+  - Each nation's price level comes from real purchasing-power data (World Bank ICP), so the same basket costs
+    very different amounts in the United States, India and Argentina.
+  - A national consumer price index follows a real basket (food, housing, energy, transport, clothing,
+    electronics, health, services), tracked monthly.
+  - Inflation comes from money growth, demand and costs, not from a drift.
+- **Wages from productivity and the labour market.**
+  - Pay by occupation, skill and region, anchored to national statistics (ILO, OECD): minimum wages at their real
+    levels, realistic medians, and a realistic gap between a cleaner and a surgeon.
+  - Wages move with productivity, unemployment (tight markets push pay up), inflation (indexation, contracts),
+    unions and minimum-wage laws. Nominal wages are sticky, with annual raises.
+  - Hourly and salaried work, overtime, and payslips showing gross pay, income tax, social contributions and net
+    pay.
+- **Households and the cost of living.**
+  - Every household has a real budget: rent or mortgage (with housing from L4), food, utilities and energy,
+    transport, clothing, health, education, leisure and savings. The shares follow national household-budget
+    surveys.
+  - Background households become real consumers. Their income comes from wages, pensions and benefits, and their
+    spending responds to prices and confidence.
+  - Poverty, comfort and wealth are defined by each nation's income distribution, and inequality (Gini) is
+    measured.
+- **Companies' economics.**
+  - A full cost structure: wages and payroll taxes, inputs, energy, rent for premises, equipment and
+    depreciation, interest and taxes.
+  - Prices are set from costs, demand and competition. Firms in concentrated industries have market power, and
+    prices are sticky, with sales and promotions.
+  - Productivity comes from capital, technology, management and scale, up to capacity limits.
+  - Profits go to dividends, retained earnings and investment decisions based on expected returns.
+  - Services become industries too: retail, hospitality, transport, finance, health, education, housing
+    (landlords) and utilities.
+- **Markets and trade.**
+  - Regional prices with transport costs.
+  - National markets linked by trade: imports and exports by companies, tariffs and quotas, exchange rates that
+    change competitiveness, and supply chains across borders.
+  - World commodity prices (oil, grain, metals) with realistic volatility.
+- **Taxes and public finance.**
+  - Income tax brackets, social contributions, VAT/GST or sales tax, corporate tax, property tax, excise and
+    tariffs, at each nation's real 2025 rates (OECD, IMF), simplified to a few brackets.
+  - Public spending on the wages of teachers, nurses, police and soldiers, on pensions, benefits, infrastructure
+    and defence.
+  - Budgets, deficits, and public debt with interest.
+- **Banks, credit and interest.**
+  - Commercial banks, as companies, take deposits and lend to households and firms.
+  - Interest rates follow the central bank's policy rate plus risk.
+  - Mortgages and business loans; defaults, bank failures and deposit insurance.
+  - A first version of central banks: a policy rate that responds to inflation and unemployment. 2.5 extends
+    them.
+- **Economic statistics.**
+  - Each nation reports monthly GDP (by spending and by income), prices, unemployment, wages, productivity, the
+    trade balance and interest rates, with charts.
+  - All of them are computed from the simulated transactions in the ledger, not invented.
+- **Start year.**
+  - The calendar begins on 1 January 2025 (from 1.3.3), so starting values come from real 2024–2025 data.
+  - Later, selectable start years with period-accurate prices and wages: 2000, 2008, 2020 or the present (see
+    2.5).
+- **Upgrading saves.** Each currency is re-denominated once, like a currency reform. Balances, prices and wages
+  are scaled to real levels, keeping everyone's relative position.
+- **AI.** Firms, households, banks and governments respond to prices, wages and interest rates by visible rules.
+  The player sees the same information: price histories, wage offers and rates.
+- **UI.**
+  - Payslips and a household budget.
+  - Prices in local currency, and a cost-of-living comparison between nations.
+  - Company profit-and-loss and balance sheet.
+  - A national economy dashboard.
+- **Realism.** Calibrated to the IMF World Economic Outlook, World Bank ICP, ILO and OECD wage data, national
+  household-budget surveys, the OECD tax database, and central bank rates (2024–2025).
+- **Done when:**
+  - in five-year headless runs, each nation's price level, wages, inflation and unemployment stay within their
+    real ranges;
+  - household budgets balance;
+  - the ledger audit shows no money created or lost outside the recorded sources.
+- **Releases, in order:**
+  1. money and price levels;
+  2. wages and payslips;
+  3. households and the cost of living;
+  4. company costs and pricing;
+  5. taxes and public finance;
+  6. banks and interest;
+  7. statistics and dashboards.
+
+### Part B: work & enterprise (GEO 1: companies expand or disband)
+
+*Includes the careers and employment overhaul requested earlier. It builds on Part A and on the industries added
+in 1.3.3.*
 
 **Goal.** Every adult has a working life that makes sense: a trade, a profession, a public-sector job, a small
 business, or unemployment. Companies live and die: they are founded, grow into new regions and countries,
@@ -209,7 +314,7 @@ improve or decay, and the power ranking moves for reasons the player can read.
   - Rankings with history.
   - The State of the World at each New Year.
 - **Realism.**
-  - 2030 baselines for all 16 nations: shares of world GDP, growth potential, debt ratios, R&D intensity and
+  - 2025 baselines for all 16 nations: shares of world GDP, growth potential, debt ratios, R&D intensity and
     education, from IMF and World Bank projections.
   - Yearly growth stays within historical ranges, and long-run growth between 1% and 6% a year.
 - **Done when:**
@@ -453,6 +558,28 @@ improve or decay, and the power ranking moves for reasons the player can read.
   can feed the next war.
 - **The old model is replaced.** The deadline-and-quota war model gives way to this one; the battle system stays
   as the tactical layer.
+- **The war chronicle.** Requested on 30 September 2026; a first version ships in 1.3.4 for the current war
+  model. Every war keeps an extremely detailed record that can be read during and after it:
+  - **Why it started.** The decision in full:
+    - who proposed it, and how congress voted;
+    - each factor the government weighed: balance of power, relations and their history, grievances and
+      claims, ideology, border tension, resources at stake, public mood, alliances, what intelligence believed;
+    - what the war aims were;
+    - how the other side saw it.
+  - **How it went.** A dated timeline:
+    - mobilisation and every battle (rounds, damage, losses, commanders, heroes);
+    - occupations and counter-occupations;
+    - supply lines cut and blockades;
+    - offers of peace, and who accepted or refused them and why;
+    - allies joining or staying out;
+    - the home front: approval, war mood, prices, protests;
+    - casualties among real citizens, and the cost in money and equipment.
+  - **Why it ended.** What decided it (a war aim achieved, exhaustion, collapse at home, mediation, a deadline,
+    exile), the exact terms, and who gained and lost what.
+  - **Aftermath.** Territory and buildings, reparations, pacts, veterans and memorials, how relations changed,
+    and grievances that may start the next war.
+  - **Browsing.** Every past war is kept in a searchable archive with statistics, and linked from the chronicle,
+    each nation's history and the Almanac.
 - **Careers:** front-line soldier (in the existing battles), officer commanding formations, war correspondent,
   medic, negotiator, resistance member, refugee.
 - **Stories:** "The call-up", "Letters from the front", "Ceasefire", "Coming home".
@@ -504,7 +631,7 @@ improve or decay, and the power ranking moves for reasons the player can read.
 
 ## 2.4.0 — Frontiers (GEO 8: technology, cyber and space)
 
-- **A near-future technology tree for 2030–2070,** grounded in current research:
+- **A near-future technology tree for 2025–2075,** grounded in current research:
   - AI and automation, robotics, drones and swarms;
   - hypersonics and directed energy;
   - quantum computing and cryptography;
@@ -552,8 +679,10 @@ improve or decay, and the power ranking moves for reasons the player can read.
 - **Demography at national scale.** Ageing and the cost of pensions (L4), immigration policy, refugee crises and
   diasporas.
 - **The decades campaign.**
-  - Start in 2030 and play to 2070 and beyond; generations (L6 succession) meet national histories.
-  - Starting scenarios: the 2030 baseline, a new cold war, a multipolar world, or custom.
+  - Start in 2025 (or an earlier year) and play to 2070 and beyond; generations (L6 succession) meet national
+    histories.
+  - Starting points: the present day (2025), earlier start years with period-accurate economies (2000, 2008,
+    2020), a new cold war, a multipolar world, or custom.
   - The **World Almanac**: every nation, leader, war, treaty, company and notable person, with statistics.
 - **Done when:** 40-year headless runs match historical base rates for growth, wars, coups, regime changes, firm
   turnover and disasters, and the results are tuned where they don't.
@@ -570,6 +699,8 @@ improve or decay, and the power ranking moves for reasons the player can read.
   browser play-test.
 - **Performance.** Every system has a time budget, measured in the headless simulations.
 - **Saves.** Migrations for older saves, checked by the upgrade test on every release.
+- **What's new.** From 1.3.3, the game shows each update's release notes the first time it starts after an
+  update: every release notes section is also the in-game "What's new".
 - **Docs.** Release notes for every patch, and this roadmap is updated as parts land.
 
 ## Links to the life plan (1.4)

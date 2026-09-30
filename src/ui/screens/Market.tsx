@@ -4,11 +4,14 @@ import { ActBtn, Amt, Empty, Item, Num, Panel, Select, Sparkline, Tabs, Help } f
 import { store } from '../store';
 import { controller, cref, player } from '../../sim/query';
 import { bestAsk, buyCheck, buyListing, cancelListing, list, listCheck, listingsFor, refPrice, saleTaxes, supplyOf } from '../../sim/market';
-import { MARKET_KEYS, itemName, kindOf } from '../../data/items';
+import { GOOD_USE, MARKET_KEYS, itemName, kindOf } from '../../data/items';
 import { c as cur, fmtAmt } from '../../engine/money';
 import { B } from '../../data/balance';
 
-const CATS: [string, string][] = [['raw', '🪨 Raw'], ['food', '🍲 Food'], ['wg', '🔫 Ground weapons'], ['wa', '🚀 Air weapons'], ['ticket', '🎫 Tickets']];
+const CATS: [string, string][] = [
+  ['raw', '🪨 Raw'], ['food', '🍲 Food'], ['wg', '🔫 Ground weapons'], ['wa', '🚀 Air weapons'], ['ticket', '🎫 Tickets'],
+  ['materials', '🧱 Building materials'], ['clothing', '👕 Clothing'], ['electronics', '📱 Electronics'], ['medicine', '💊 Medicine'],
+];
 
 function sellerName(w: World, r: AccountRef) {
   switch (r.k) {
@@ -44,6 +47,7 @@ export function Market({ w }: { w: World }) {
       }>
         <Help>You can browse any market; buying and selling require being located in that country (travel on the Map). Prices are set by sellers’ listings — AI firms reprice from their sales and costs.</Help>
         <Tabs tabs={CATS} value={cat} onChange={(c) => store.go('market', { mcat: c, mitem: null })} />
+        {GOOD_USE[kindOf(item)] && <p class="small muted">{GOOD_USE[kindOf(item)]} Grades run basic, standard, good, premium, top-grade.</p>}
         <div class="item-grid">
           {keys.map((k) => {
             const a = bestAsk(w, market, k);

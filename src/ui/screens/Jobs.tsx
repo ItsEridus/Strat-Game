@@ -1,5 +1,5 @@
 import type { World } from '../../sim/types';
-import { ActBtn, Amt, Empty, Panel, RegionLink, Help, CitLink } from '../common';
+import { ActBtn, Amt, Empty, Grade, Panel, RegionLink, Help, CitLink } from '../common';
 import { controller, companyCurrency, effEco, player } from '../../sim/query';
 import { applyCheck, applyJob, netWage, publicWorksCheck, publicWorksShift, publicWorksWage, quitJob, shiftCheck, shiftPreview, workShift } from '../../sim/company';
 import { INDUSTRY_INFO, itemName } from '../../data/items';
@@ -19,7 +19,7 @@ export function Jobs({ w }: { w: World }) {
       <Panel title="Your employment">
         {job ? (
           <>
-            <p><b>{job.name}</b> — {INDUSTRY_INFO[job.industry].icon} {INDUSTRY_INFO[job.industry].name} Q{job.q} in <RegionLink w={w} id={job.region} /></p>
+            <p><b>{job.name}</b> — {INDUSTRY_INFO[job.industry].icon} {INDUSTRY_INFO[job.industry].name} (<Grade q={job.q} />) in <RegionLink w={w} id={job.region} /></p>
             {(() => {
               const nw = netWage(w, job, p);
               const pv = shiftPreview(w, job, p);
@@ -48,7 +48,7 @@ export function Jobs({ w }: { w: World }) {
             <tbody>
               {offers.map(({ co, nw, why, open }) => (
                 <tr class={why ? 'dim' : ''}>
-                  <td>{co.name}</td><td>{INDUSTRY_INFO[co.industry].icon} Q{co.q}</td><td><RegionLink w={w} id={co.region} /></td>
+                  <td>{co.name}</td><td>{INDUSTRY_INFO[co.industry].icon} <Grade q={co.q} /></td><td><RegionLink w={w} id={co.region} /></td>
                   <td>{co.owner.k === 'cit' ? <CitLink w={w} id={co.owner.id} /> : co.owner.k === 'nat' ? 'State' : 'Holding'}</td>
                   <td class="num"><Amt asset={n.cur} v={nw.gross} /></td><td class="num"><b><Amt asset={n.cur} v={nw.net} /></b></td>
                   <td>{co.offer!.minEco}</td><td>{open > 0 ? open : 'full'}</td>

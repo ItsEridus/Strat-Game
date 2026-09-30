@@ -10,7 +10,8 @@ what remains, and the known limitations, so work can resume from here.
 Standing rule from the player (30 Sep 2026): every push to GitHub ships a working release they can play. Each push:
 
 1. Bump the version: `npm version patch --no-git-tag-version` (1.3.2, 1.3.3, …; 1.4.0 when the life plan is done).
-2. Add a `### New in X.Y.Z` section at the top of `docs/RELEASE_NOTES.md` (the release page shows this file).
+2. Add a `### New in X.Y.Z` section at the top of `docs/RELEASE_NOTES.md`. The release page shows this file, and the
+   build embeds each section as the in-game "What's new" shown after the update, so write it for players.
 3. Check locally: `npm run typecheck`, `npm test`, `npm run build`, then the browser play-test
    `PLAYWRIGHT_PATH=$(npm root -g)/playwright PREV_DIR=<previous release's web build> node tools/smoke.mjs`
    (unzip the latest release's `-web.zip`; the upgrade test loads a game saved by it). Launcher changes: `go test`
@@ -43,12 +44,13 @@ stages go out in slices.
 | L7 | Calibration, performance, docs, tests, e2e, release 1.4.0 (with narrative stage 5) | Planned |
 
 After 1.4.0: the plan continues in `ROADMAP.md` (1.5.0 → 2.5.0). Its main thread is a realistic geopolitical
-simulation, in which nations and AI actors advance over time. The earlier requests have their places there: careers
+simulation, in which nations and AI actors advance over time, opening with a deep economic overhaul (realistic wages
+and prices). The earlier requests have their places there: careers
 and employment (1.5), policing, crime careers and prisons (1.7), and weather and natural disasters (1.9).
 
 | Version | Theme |
 | --- | --- |
-| 1.5.0 | Work & enterprise (GEO 1: companies expand or disband; careers and employment) |
+| 1.5.0 | The real economy (deep economic overhaul: prices, wages, costs, taxes, banks) + work & enterprise (GEO 1) |
 | 1.6.0 | The strategic engine (GEO 2: nations advance over time; level-of-detail simulation) |
 | 1.7.0 | Law & order (policing, crime careers, courts, prisons) |
 | 1.8.0 | Arsenal (GEO 3: militaries get better) |
@@ -137,8 +139,8 @@ and employment (1.5), policing, crime careers and prisons (1.7), and weather and
 - The release workflow no longer republishes an existing version on branch pushes (tests still run).
 
 ### CLK: clock overhaul
-- `src/engine/calendar.ts`: world day 1 is Tuesday 1 January 2030; one world day is one calendar day (Gregorian,
-  leap years). Descriptive dates ("Tuesday, 14 March 2030"), 12- or 24-hour times, parts of the day (dawn, morning,
+- `src/engine/calendar.ts`: world day 1 is Wednesday 1 January 2025 (until 1.3.2 it was 1 January 2030); one world day is one calendar day (Gregorian,
+  leap years). Descriptive dates ("Friday, 14 March 2025"), 12- or 24-hour times, parts of the day (dawn, morning,
   midday, afternoon, evening, late evening, night) and seasons by hemisphere (`latitudeOf` from the map's
   projection; wet and dry seasons in the tropics). Seasonal hazards follow calendar months.
 - The top bar shows the time, the full date, the part of the day and the local season; the clock shows each minute

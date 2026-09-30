@@ -9,7 +9,7 @@ import {
 } from '../../sim/holdings';
 import { GOLD, c as cur, fmtAmt, g } from '../../engine/money';
 import { B } from '../../data/balance';
-import { INDUSTRY_INFO } from '../../data/items';
+import { INDUSTRY_INFO, grade } from '../../data/items';
 
 export function Holdings({ w }: { w: World }) {
   const p = player(w);
@@ -70,7 +70,7 @@ function HoldingDetail({ w, h }: { w: World; h: Holding }) {
         <p class="small">Roles: vice {w.citizens[h.roles.vice ?? -1]?.name ?? '—'}, accountant {w.citizens[h.roles.accountant ?? -1]?.name ?? '—'}, manager {w.citizens[h.roles.manager ?? -1]?.name ?? '—'}, salesman {w.citizens[h.roles.salesman ?? -1]?.name ?? '—'}. Dividends paid: {h.divHist.length}.</p>
       </Panel>
       <Panel title="Companies">
-        {holdingCompanies(w, h).map((c) => <div class="small">{INDUSTRY_INFO[c.industry].icon} {c.name} Q{c.q} · {c.workers.length} workers · 7d profit {fmtAmt(n.cur, c.hist.slice(-7).reduce((s, x) => s + x.profit, 0))}</div>)}
+        {holdingCompanies(w, h).map((c) => <div class="small">{INDUSTRY_INFO[c.industry].icon} {c.name} · {grade(c.q)} · {c.workers.length} workers · 7d profit {fmtAmt(n.cur, c.hist.slice(-7).reduce((s, x) => s + x.profit, 0))}</div>)}
         {!holdingCompanies(w, h).length && <Empty>No companies yet.</Empty>}
         {isCeo && myCos.length > 0 && <div class="form row"><Select value={coId} options={myCos.map((c) => [c.id, c.name])} onChange={setCo} /><ActBtn small run={(w) => contributeCompany(w, p, h.id, coId)}>Move my company into holding</ActBtn></div>}
       </Panel>

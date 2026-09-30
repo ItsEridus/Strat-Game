@@ -9,8 +9,8 @@ export type Wallet = Record<AssetId, number>;
 export type ItemKey = string;
 export type Inventory = Record<ItemKey, number>;
 
-export type RawRes = 'grain' | 'iron' | 'titanium' | 'oil';
-export type Product = 'food' | 'wg' | 'wa' | 'ticket';
+export type RawRes = 'grain' | 'iron' | 'titanium' | 'oil' | 'timber' | 'cotton' | 'copper';
+export type Product = 'food' | 'wg' | 'wa' | 'ticket' | 'materials' | 'clothing' | 'electronics' | 'medicine';
 export type Industry = RawRes | Product;
 export type Terrain = 'plains' | 'mountains' | 'forest' | 'desert';
 export type Ideology = 'capitalism' | 'nationalism' | 'centralism' | 'socialism' | 'imperialism' | 'communism';
@@ -131,6 +131,8 @@ export interface LifeProfile {
   hobbies: Record<string, number>; // hobby key -> skill 0..100
   lastAge?: number; // age at the last birthday processed
   lastRest?: number; lastFamily?: number; lastHobby?: number; // cooldowns (day numbers)
+  treated?: number; // day of the last dose of medicine (better recovery for a few days)
+  goods?: { clothes?: { t: number; q: number }; gadget?: { t: number; q: number } }; // latest new clothes and gadget (time, grade)
   why?: { happiness: string[]; stress: string[] }; // the main reasons for the current values
   grief?: number; // recent loss, fades over time
 }
@@ -369,7 +371,7 @@ export interface Nation {
   alert: number; // national security alert 1 (normal) .. 5 (maximum) // share of daily revenue for national police (regions without their own government, federal crimes)
 }
 
-export interface Households { nation: Id; wallet: Wallet; inv: Inventory; pop: number; unmet: number }
+export interface Households { nation: Id; wallet: Wallet; inv: Inventory; pop: number; unmet: number; unmetBy?: Record<string, number> }
 
 export interface Party {
   id: Id;

@@ -49,7 +49,7 @@ export const TUTORIAL: { text: string; metric: string; target: number; hint: str
   { text: 'Exchange currency for gold (or gold for currency)', metric: 'fx', target: 1, hint: 'Currency Market: asks sell gold, bids buy gold.', tab: 'fx', gold: 0.5 },
   { text: 'Join a political party', metric: 'inParty', target: 1, hint: 'Parties → Join. Members vote in party elections and can run for office.', tab: 'politics', gold: 0.5 },
   { text: 'Make a hit in any battle', metric: 'hit', target: 1, hint: 'Wars → choose a battle → Attack. Each hit uses a weapon if one is selected.', tab: 'wars', gold: 0.5 },
-  { text: 'Found your first company', metric: 'found', target: 1, hint: 'Companies → Found. The tutorial reward covers a Q1 company.', tab: 'companies', gold: 2 },
+  { text: 'Found your first company', metric: 'found', target: 1, hint: 'Companies → Found. The tutorial reward covers a basic-grade company.', tab: 'companies', gold: 2 },
 ];
 export const TUTORIAL_COMPLETION_GOLD = 12; // SOLO: enough to found a first business
 

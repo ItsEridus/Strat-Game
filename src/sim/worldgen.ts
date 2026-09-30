@@ -9,6 +9,7 @@ import { NAME_POOLS, NATION_DEFS } from '../data/names';
 import { EARTH } from '../data/earth';
 import { IDEOLOGY_LIST } from '../data/ideologies';
 import { RAWS, outputKey, refValue } from '../data/items';
+import { HOTSPOTS, NEW_INDUSTRIES, NEW_RAWS, depositChance } from '../data/resources';
 import { chance, next, pick, rand, randInt, shuffle, weighted } from '../engine/rng';
 import { GOLD, c as cur, g } from '../engine/money';
 import { mint, produce } from '../engine/ledger';
@@ -28,7 +29,7 @@ import { newNarrative } from './story';
 import { bornYearsAgo, seniority } from './growth';
 import { AGENCY_NAMES } from '../data/names';
 
-export const SAVE_VERSION = 8; // 5: armed forces; 6: per-region population, home regions; 7: stories, journal, memories, places; 8: no levels (skills, age, reputation)
+export const SAVE_VERSION = 9; // 5: armed forces; 6: per-region population, home regions; 7: stories, journal, memories, places; 8: no levels (skills, age, reputation); 9: timber, cotton, copper
 
 export function defaultSettings(): Settings {
   const pauseOn: Record<string, boolean> = {};
@@ -52,10 +53,10 @@ function genRegions(w: World): Region[] {
   const regions = EARTH.regions.map((e, i): Region => {
     const res: Region['res'] = {};
     for (const k of e.res) res[k] = randInt(w, 2, 3); // notable real deposits and farm belts
-    const byTerrain = (x: RawRes) => ({ grain: e.terrain === 'plains' ? 5 : e.terrain === 'forest' ? 1.5 : 0.8, iron: e.terrain === 'mountains' ? 4 : 1.2, titanium: e.terrain === 'mountains' ? 2 : 0.6, oil: e.terrain === 'desert' ? 4 : 0.8 }[x]);
+    const byTerrain = (x: RawRes) => ({ grain: e.terrain === 'plains' ? 5 : e.terrain === 'forest' ? 1.5 : 0.8, iron: e.terrain === 'mountains' ? 4 : 1.2, titanium: e.terrain === 'mountains' ? 2 : 0.6, oil: e.terrain === 'desert' ? 4 : 0.8 } as Record<string, number>)[x] ?? 0;
     for (const p of [0.5, 0.12]) {
       if (!chance(w, p)) continue;
-      const extra = weighted(w, RAWS.filter((k) => !res[k]), byTerrain);
+      const extra = weighted(w, ORIGINAL_RAWS.filter((k) => !res[k]), byTerrain);
       if (extra) res[extra] = randInt(w, 1, 2);
     }
     return {
@@ -73,7 +74,36 @@ function genRegions(w: World): Region[] {
     const sum = own.reduce((t, r) => t + weight(r), 0);
     for (const r of own) r.pop = Math.max(3000, Math.round((total * weight(r)) / sum / 100) * 100);
   });
+  placeNewDeposits(regions, () => next(w));
   return regions;
+}
+
+/** The four raw materials of the original economy (placed first, as they always were). */
+const ORIGINAL_RAWS: RawRes[] = ['grain', 'iron', 'titanium', 'oil'];
+
+/**
+ * Timber, cotton and copper: rich deposits where the real producers are, small
+ * ones where terrain and climate suit, and at least a small one in every
+ * nation so its factories can start. `roll` gives numbers in [0, 1): the
+ * world's dice for a new world, a stable hash when an older save is upgraded.
+ */
+export function placeNewDeposits(regions: Region[], roll: (r: Region, salt: number) => number) {
+  for (const r of regions) {
+    const e = EARTH.regions[r.id];
+    NEW_RAWS.forEach((k, i) => {
+      if (r.res[k]) return;
+      if (HOTSPOTS[k]?.includes(r.name)) r.res[k] = roll(r, 10 + i) < 0.5 ? 2 : 3;
+      else if (roll(r, 20 + i) < depositChance(k, r.terrain, e.lat)) r.res[k] = roll(r, 30 + i) < 0.7 ? 1 : 2;
+    });
+  }
+  for (const nation of new Set(regions.map((r) => r.core))) {
+    const own = regions.filter((r) => r.core === nation);
+    for (const k of NEW_RAWS) {
+      if (own.some((r) => r.res[k])) continue;
+      const best = own.slice().sort((a, b) => depositChance(k, b.terrain, EARTH.regions[b.id].lat) - depositChance(k, a.terrain, EARTH.regions[a.id].lat) || a.id - b.id)[0];
+      if (best) best.res[k] = 1;
+    }
+  }
 }
 
 /**
@@ -224,7 +254,11 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
   // Companies: the national industry mix (balanced for about 24 citizens) scaled to the nation's
   // population, spread over its regions (raw producers where the deposits are, the rest where people
   // live) and owned by business people from that region where possible.
-  const plan: [Industry, number][] = [['grain', 5], ['iron', 3], ['titanium', 1], ['oil', 1], ['food', 4], ['wg', 2], ['wa', 1], ['ticket', 1]];
+  const plan: [Industry, number][] = [
+    ['grain', 5], ['iron', 3], ['titanium', 1], ['oil', 1], ['food', 4], ['wg', 2], ['wa', 1], ['ticket', 1],
+    // Smaller industries, as in real economies (each a few percent of firms); entrepreneurs grow them with demand.
+    ['timber', 0.3], ['cotton', 0.3], ['copper', 0.3], ['materials', 0.3], ['clothing', 0.3], ['electronics', 0.2], ['medicine', 0.2],
+  ];
   for (const n of w.nations) {
     const own = regions.filter((r) => r.owner === n.id);
     const people = census(w).all.filter((c) => c.nation === n.id);
@@ -251,7 +285,9 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
         const q = weighted(w, [1, 2, 3], (x) => ({ 1: 5, 2: 3, 3: 1.5 }[x]!))!;
         const co = createCompany(w, cref(owner.id), ind, q, region.id);
         co.auto = { sell: true, buyInputs: true, hire: true };
-        co.offer = { wage: cur(B.wages.start + q - 1 + rand(w, -1, 1)), slots: randInt(w, 2, B.company.maxWorkers[q - 1] - 1), minEco: 0 };
+        // The industries added in 1.3.3 start small and grow into their markets, so they don't strip farms and food plants of workers.
+        const young = (NEW_INDUSTRIES as string[]).includes(ind);
+        co.offer = { wage: cur(B.wages.start + q - 1 + rand(w, -1, 1)), slots: young ? randInt(w, 1, 2) : randInt(w, 2, B.company.maxWorkers[q - 1] - 1), minEco: 0 };
         mint(w, coref(co.id), n.cur, cur(randInt(w, 250, 500) + q * 80), 'Genesis endowment');
         if (!raw) {
           const input = (B.company.recipes as any)[ind].input as string;
@@ -271,6 +307,7 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
     produce(w, natref(n.id), 'grain', 300, 'genesis');
     produce(w, natref(n.id), 'food:1', 200, 'genesis');
     produce(w, natref(n.id), 'wg:1', 200, 'genesis');
+    produce(w, natref(n.id), 'materials:1', 200, 'genesis');
   }
 
   // Player.

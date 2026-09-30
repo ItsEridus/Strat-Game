@@ -1,21 +1,57 @@
-// Item catalogue. Raw materials have no quality; finished goods carry Q1..Q5.
+// Item catalogue. Raw materials have no grade; finished goods, and the companies
+// that make them, come in five grades from Basic to Top-grade (stored as 1..5).
 import { B } from './balance';
 import type { Industry, ItemKey, Product, RawRes } from '../sim/types';
 
-export const RAWS: RawRes[] = ['grain', 'iron', 'titanium', 'oil'];
-export const PRODUCTS: Product[] = ['food', 'wg', 'wa', 'ticket'];
+export const RAWS: RawRes[] = ['grain', 'iron', 'titanium', 'oil', 'timber', 'cotton', 'copper'];
+export const PRODUCTS: Product[] = ['food', 'wg', 'wa', 'ticket', 'materials', 'clothing', 'electronics', 'medicine'];
 export const INDUSTRIES: Industry[] = [...RAWS, ...PRODUCTS];
-export const INPUT_OF: Record<Product, RawRes> = { food: 'grain', wg: 'iron', wa: 'titanium', ticket: 'oil' };
+export const INPUT_OF: Record<Product, RawRes> = {
+  food: 'grain', wg: 'iron', wa: 'titanium', ticket: 'oil', materials: 'timber', clothing: 'cotton', electronics: 'copper', medicine: 'oil',
+};
+
+/** Grades of finished goods and of the companies that make them, lowest first. */
+export const GRADES = ['Basic', 'Standard', 'Good', 'Premium', 'Top-grade'];
+export const grade = (q: number) => GRADES[Math.min(5, Math.max(1, Math.round(q) || 1)) - 1];
+/** For running text: "premium food". */
+export const gradeLc = (q: number) => grade(q).toLowerCase();
+export const stars = (q: number) => '★'.repeat(Math.min(5, Math.max(1, q))) + '☆'.repeat(5 - Math.min(5, Math.max(1, q)));
 
 export const INDUSTRY_INFO: Record<Industry, { name: string; icon: string; raw: boolean }> = {
   grain: { name: 'Grain Farm', icon: '🌾', raw: true },
   iron: { name: 'Iron Mine', icon: '⛏️', raw: true },
   titanium: { name: 'Titanium Quarry', icon: '💠', raw: true },
   oil: { name: 'Oil Rig', icon: '🛢️', raw: true },
+  timber: { name: 'Logging Camp', icon: '🌲', raw: true },
+  cotton: { name: 'Cotton Farm', icon: '🌿', raw: true },
+  copper: { name: 'Copper Mine', icon: '🔶', raw: true },
   food: { name: 'Food Factory', icon: '🍲', raw: false },
   wg: { name: 'Arms Factory', icon: '🔫', raw: false },
   wa: { name: 'Aerospace Works', icon: '✈️', raw: false },
   ticket: { name: 'Transit Company', icon: '🎫', raw: false },
+  materials: { name: 'Building Supplies', icon: '🧱', raw: false },
+  clothing: { name: 'Clothing Factory', icon: '👕', raw: false },
+  electronics: { name: 'Electronics Plant', icon: '📱', raw: false },
+  medicine: { name: 'Pharmaceuticals', icon: '💊', raw: false },
+};
+
+/** What each kind of good is for (shown on the market and in storage). */
+export const GOOD_USE: Record<string, string> = {
+  grain: 'Raw material for food factories.', iron: 'Raw material for arms factories; construction.', titanium: 'Raw material for aerospace works; military bases.',
+  oil: 'Raw material for transit companies and pharmaceuticals; construction.', timber: 'Raw material for building supplies.',
+  cotton: 'Raw material for clothing factories.', copper: 'Raw material for electronics plants.',
+  food: 'Eat to restore energy: 10 (basic) to 50 (top-grade).', wg: 'Ground combat: better grades hit harder.', wa: 'Air combat: better grades hit harder.',
+  ticket: 'Travel: better grades go farther.', materials: 'Construction: each unit counts as its grade (a premium unit does the work of four basic ones).',
+  clothing: 'New clothes lift your spirits for a month (more for better grades).', electronics: 'A new gadget lifts your spirits for three months (more for better grades).',
+  medicine: 'Restores health; helps the sick recover (more for better grades).',
+};
+
+const RAW_NAME: Record<RawRes, string> = { grain: 'Grain', iron: 'Iron', titanium: 'Titanium', oil: 'Oil', timber: 'Timber', cotton: 'Cotton', copper: 'Copper' };
+/** Finished goods by name: the kind in general ("Clothing") and a unit in running text ("premium clothing"). */
+export const PRODUCT_NAME: Record<Product, { kind: string; noun: string }> = {
+  food: { kind: 'Food', noun: 'food' }, wg: { kind: 'Ground weapons', noun: 'ground weapon' }, wa: { kind: 'Air weapons', noun: 'air weapon' },
+  ticket: { kind: 'Tickets', noun: 'ticket' }, materials: { kind: 'Building materials', noun: 'building materials' },
+  clothing: { kind: 'Clothing', noun: 'clothing' }, electronics: { kind: 'Electronics', noun: 'electronics' }, medicine: { kind: 'Medicine', noun: 'medicine' },
 };
 
 export const SPECIALS: Record<string, { name: string; icon: string; desc: string; price: number }> = {
@@ -37,23 +73,16 @@ export const SPECIALS: Record<string, { name: string; icon: string; desc: string
 export function itemName(key: ItemKey): string {
   const [kind, q] = key.split(':');
   if (kind === 'sp') return SPECIALS[q]?.name ?? key;
-  switch (kind) {
-    case 'grain': return 'Grain';
-    case 'iron': return 'Iron';
-    case 'titanium': return 'Titanium';
-    case 'oil': return 'Oil';
-    case 'food': return `Food Q${q}`;
-    case 'wg': return `Ground Weapon Q${q}`;
-    case 'wa': return `Air Weapon Q${q}`;
-    case 'ticket': return `Ticket Q${q}`;
-  }
+  if (kind in RAW_NAME) return RAW_NAME[kind as RawRes];
+  const p = PRODUCT_NAME[kind as Product];
+  if (p) return q ? `${grade(Number(q))} ${p.noun}` : `${p.kind} (any grade)`;
   return key;
 }
 
 export function itemIcon(key: ItemKey): string {
   const [kind, q] = key.split(':');
   if (kind === 'sp') return SPECIALS[q]?.icon ?? '✨';
-  return ({ grain: '🌾', iron: '🪨', titanium: '💠', oil: '🛢️', food: '🍲', wg: '🔫', wa: '🚀', ticket: '🎫' } as Record<string, string>)[kind] ?? '📦';
+  return ({ grain: '🌾', iron: '🪨', titanium: '💠', oil: '🛢️', timber: '🪵', cotton: '🌿', copper: '🔶', food: '🍲', wg: '🔫', wa: '🚀', ticket: '🎫', materials: '🧱', clothing: '👕', electronics: '📱', medicine: '💊' } as Record<string, string>)[kind] ?? '📦';
 }
 
 export const kindOf = (key: ItemKey) => key.split(':')[0];
@@ -82,7 +111,7 @@ export const MARKET_KEYS: ItemKey[] = [
 export function refValue(key: ItemKey, curPerGold = 100): number {
   const kind = kindOf(key);
   const q = qualityOf(key);
-  const base: Record<string, number> = { grain: 0.9, iron: 1, titanium: 1.6, oil: 1.3 };
+  const base: Record<string, number> = { grain: 0.9, iron: 1, titanium: 1.6, oil: 1.3, timber: 0.8, cotton: 0.9, copper: 1.4 };
   if (base[kind] !== undefined) return Math.round(base[kind] * 100);
   const rec = (B.company.recipes as any)[kind];
   if (rec) {

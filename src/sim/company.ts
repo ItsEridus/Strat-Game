@@ -6,7 +6,7 @@ import type { AccountRef, Citizen, Company, DayRecord, Id, Industry, World } fro
 import { localNews } from './life';
 import { companiesOf, invalidateCensus } from './census';
 import { B } from '../data/balance';
-import { INDUSTRY_INFO, INPUT_OF, itemName, outputKey, weightOf } from '../data/items';
+import { INDUSTRY_INFO, INPUT_OF, grade, gradeLc, itemName, outputKey, weightOf } from '../data/items';
 import { IDEOLOGIES } from '../data/ideologies';
 import { fail, ok, type Result } from '../engine/result';
 import { acct, burn, consume, freeCap, moveItems, pay, produce } from '../engine/ledger';
@@ -54,7 +54,7 @@ export function productionFactors(w: World, co: Company, worker: Citizen | null)
   const raw = isRawIndustry(co.industry);
   const f: { label: string; mult: number }[] = [];
   if (raw) {
-    f.push({ label: `Quality Q${co.q}`, mult: B.company.rawQualityMult[co.q - 1] });
+    f.push({ label: `${grade(co.q)} grade`, mult: B.company.rawQualityMult[co.q - 1] });
     const rich = r.res[co.industry as keyof typeof r.res] ?? 0;
     f.push({ label: rich ? `Region richness ${rich}` : 'Region lacks this resource', mult: B.company.richness[rich] });
     if (r.bld.fields) f.push({ label: `Production Fields L${r.bld.fields}`, mult: 1 + r.bld.fields * B.buildings.fieldsRaw });
@@ -266,7 +266,7 @@ export function setOffer(w: World, actor: Id, coId: Id, wage: number, slots: num
   if (slots < 0 || !Number.isInteger(slots)) return fail('Invalid number of positions.');
   if (slots > 0 && wage < n.minWage) return fail(`Wage must be at least the minimum wage (${fmtAmt(n.cur, n.minWage)}).`);
   const max = B.company.maxWorkers[co.q - 1];
-  if (slots > max) return fail(`A Q${co.q} company can employ at most ${max}.`);
+  if (slots > max) return fail(`A ${gradeLc(co.q)}-grade company can employ at most ${max}.`);
   co.offer = slots > 0 || co.workers.length ? { wage: Math.round(wage), slots, minEco: Math.max(0, minEco) } : null;
   // Workers beyond the new slot count are let go (most recent first).
   while (co.offer && co.workers.length > co.offer.slots) {
@@ -326,7 +326,7 @@ export function foundCheck(w: World, actor: Citizen, owner: AccountRef, ind: Ind
   if (!r) return 'Pick a region.';
   if (controller(r) !== controller(w.regions[actor.loc])) return `You must be located in ${w.nations[controller(r)].name} to found a company there.`;
   const cost = g(B.company.foundCost[0]);
-  if ((acct(w, owner)?.wallet[GOLD] ?? 0) < cost) return `Founding a Q1 ${INDUSTRY_INFO[ind].name} costs ${B.company.foundCost[0]} gold.`;
+  if ((acct(w, owner)?.wallet[GOLD] ?? 0) < cost) return `Founding a basic-grade ${INDUSTRY_INFO[ind].name} costs ${B.company.foundCost[0]} gold.`;
   return null;
 }
 
@@ -353,12 +353,12 @@ export function upgradeCompany(w: World, actor: Citizen, coId: Id, payer: Accoun
   if (!co) return fail('Company not found.');
   const auth = authorize(w, actor.id, coref(coId), 'manage') ?? authorize(w, actor.id, payer, 'money');
   if (auth) return fail(auth);
-  if (co.q >= 5) return fail('Already Q5.');
+  if (co.q >= 5) return fail('Already top grade.');
   const cost = upgradeCost(w, actor, co);
   if (!burn(w, payer, GOLD, cost, 'Company upgrade')) return fail(`Upgrade costs ${fmtAmt(GOLD, cost)}.`);
   co.q++;
   if (actor.player) bump(w, 'upgrade');
-  return ok(`${co.name} upgraded to Q${co.q}.`);
+  return ok(`${co.name} upgraded to ${gradeLc(co.q)} grade.`);
 }
 
 export function deposit(w: World, actor: Citizen, coId: Id, asset: string, amt: number): Result {

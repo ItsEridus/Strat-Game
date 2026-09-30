@@ -49,6 +49,7 @@ function healthTarget(w: World, c: Citizen): number {
   if (sick?.has(c.home)) t -= 15;
   if (c.energy < 10) t -= 5; // exhausted and hungry
   t -= Math.max(0, (c.life?.stress ?? 25) - 65) * 0.3; // long strain wears people down
+  if (c.life?.treated != null && today(w) - c.life.treated < B.goods.treatmentDays) t += B.goods.treatment; // under treatment
   return Math.max(5, Math.min(100, t));
 }
 

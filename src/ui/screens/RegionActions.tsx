@@ -1,6 +1,7 @@
 // Region-context actions: travel and citizenship (stage 2); invasions are added by the war UI.
 import type { Region, World } from '../../sim/types';
 import { ActBtn, Btn } from '../common';
+import { itemName } from '../../data/items';
 import { store } from '../store';
 import { controller, player } from '../../sim/query';
 import { applyCitizenship, citizenshipCheck, kmBetween, travel, travelOptions } from '../../sim/travel';
@@ -18,10 +19,10 @@ export function RegionActions({ w, r }: { w: World; r: Region }) {
         <>
           <h4>Travel here ({km.toLocaleString()} km from {w.regions[p.loc].name})</h4>
           <table class="table compact"><tbody>{opts.map((o) => (
-            <tr><td>{o.label}</td><td>{o.energy}⚡{o.ticket ? ` + 1 ${o.ticket.replace('ticket:', 'Q')} ticket` : ''}</td>
+            <tr><td>{o.label}</td><td>{o.energy}⚡{o.ticket ? ` + 1 ${itemName(o.ticket).toLowerCase()}` : ''}</td>
               <td><ActBtn small why={o.why} showWhy={false} run={(w) => travel(w, p, r.id, o.id)}>Go</ActBtn></td></tr>
           ))}</tbody></table>
-          <p class="small muted">Tickets come from transit companies (Goods Market → Tickets). Higher quality flies farther for less energy; going overland only works between bordering regions.</p>
+          <p class="small muted">Tickets come from transit companies (Goods Market → Tickets). Better grades go farther for less energy; going overland only works between bordering regions.</p>
         </>
       )}
       {r.project != null && w.projects[r.project] && !w.projects[r.project].done && <Btn small onClick={() => store.go('construction', { conNat: w.projects[r.project!].nation })}>Construction site →</Btn>}

@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import { Emblem } from '../icons';
 import { GAME_VERSION } from '../Updates';
+import { showWhatsNew } from '../WhatsNew';
 import { store } from '../store';
 import { NATION_DEFS } from '../../data/names';
 import { EARTH } from '../../data/earth';
@@ -93,7 +94,7 @@ export function StartScreen() {
           </div>
         )}
       </section>
-      <p class="start-footer">Version {GAME_VERSION} · single-player · everything runs on your computer</p>
+      <p class="start-footer">Version {GAME_VERSION} · <button class="linkish" onClick={() => showWhatsNew()}>What's new</button> · single-player · everything runs on your computer</p>
       </div>
     </div>
   );

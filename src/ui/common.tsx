@@ -4,7 +4,7 @@ import { useState } from 'preact/hooks';
 import type { Id, World } from '../sim/types';
 import type { Result } from '../engine/result';
 import { fmtAmt } from '../engine/money';
-import { itemIcon, itemName } from '../data/items';
+import { grade, itemIcon, itemName, stars } from '../data/items';
 import { store } from './store';
 
 /** Button that is disabled with a visible reason when `why` is a string. */
@@ -38,6 +38,9 @@ export function ActBtn(props: { run: (w: World) => Result | void; why?: string |
 export const Amt = ({ asset, v, sign }: { asset: string; v: number; sign?: boolean }) => (
   <span class={`amt ${sign ? (v > 0 ? 'pos' : v < 0 ? 'neg' : '') : ''}`}>{fmtAmt(asset, v, { sign })}</span>
 );
+
+/** A grade in words with stars: "Premium ★★★★☆". */
+export const Grade = ({ q }: { q: number }) => <span class="grade" title={`Grade ${q} of 5`}>{grade(q)} <span class="stars">{stars(q)}</span></span>;
 
 export const Item = ({ k, n }: { k: string; n?: number }) => (
   <span class="item">{itemIcon(k)} {n !== undefined ? <b>{n.toLocaleString()}</b> : null} {itemName(k)}</span>

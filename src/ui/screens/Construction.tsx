@@ -3,7 +3,7 @@ import type { BuildingType, Project, World } from '../../sim/types';
 import { ActBtn, Bar, CitLink, Empty, NationChip, Num, Panel, RegionLink, Select, Help } from '../common';
 import { store } from '../store';
 import { cref, natref, player } from '../../sim/query';
-import { BUILDINGS, contributeLabor, donateCheck, donateMaterials, fundProject, laborCheck, laborPoints, projectNeeds, startCheck, startProject } from '../../sim/construction';
+import { BUILDINGS, GRADED, contributeLabor, delivered, donateCheck, donateMaterials, fundProject, laborCheck, laborPoints, needFor, projectNeeds, startCheck, startProject } from '../../sim/construction';
 import { builderRank } from '../../sim/combatMath';
 import { itemName } from '../../data/items';
 import { B } from '../../data/balance';
@@ -43,13 +43,13 @@ function ProjectCard({ w, pr }: { w: World; pr: Project }) {
     <Panel title={`${BUILDINGS[pr.type].icon} ${BUILDINGS[pr.type].name} L${pr.level}`} right={<RegionLink w={w} id={pr.region} />}>
       {n.priorities.project === pr.id && <p class="small good">★ National priority (public works shifts also add points)</p>}
       <Bar v={pr.points} max={pr.needPts} color="#e0a526" label={`Labour ${Math.round(pr.points)}/${pr.needPts}`} />
-      {Object.entries(pr.needMats).map(([k, need]) => <Bar v={pr.mats[k] ?? 0} max={need} color="#5b8def" label={`${itemName(k)} ${pr.mats[k] ?? 0}/${need}`} />)}
+      {Object.entries(pr.needMats).map(([k, need]) => <Bar v={delivered(pr, k)} max={need} color="#5b8def" label={`${k === GRADED ? 'Building materials (by grade)' : itemName(k)} ${delivered(pr, k)}/${need}`} />)}
       <p class="small">Your labour: {laborPoints(w, p, pr)} points per {B.cost.build} energy.</p>
       <ActBtn kind="primary" why={laborCheck(w, p, pr)} run={(w) => contributeLabor(w, p, pr.id, 1)}>Work ×1</ActBtn>
       <ActBtn why={laborCheck(w, p, pr)} showWhy={false} run={(w) => contributeLabor(w, p, pr.id, 5)}>Work ×5</ActBtn>
       <div class="form row">
         <Num value={qty} min={1} onInput={setQty} />
-        {Object.keys(pr.needMats).map((k) => <ActBtn small why={donateCheck(w, p.id, cref(p.id), pr, k, qty)} showWhy={false} run={(w) => donateMaterials(w, p.id, cref(p.id), pr.id, k, qty)}>Deliver {itemName(k)} (have {p.inv[k] ?? 0})</ActBtn>)}
+        {Object.keys(pr.needMats).flatMap((k) => (k === GRADED ? Object.keys(p.inv).filter((x) => needFor(x) === GRADED && (p.inv[x] ?? 0) > 0).sort() : [k])).map((k) => <ActBtn small why={donateCheck(w, p.id, cref(p.id), pr, k, qty)} showWhy={false} run={(w) => donateMaterials(w, p.id, cref(p.id), pr.id, k, qty)}>Deliver {itemName(k).toLowerCase()} (have {p.inv[k] ?? 0})</ActBtn>)}
       </div>
       <ActBtn small why={null} run={(w) => fundProject(w, p.id, pr.id)} title="Requires construction authority">Deliver from national storage</ActBtn>
       <p class="small muted">Top contributors: {top.map(([id, v]) => `${w.citizens[Number(id)]?.name} (${Math.round(v)})`).join(', ') || 'none yet'}</p>
@@ -71,7 +71,7 @@ function StartPanel({ w, nid }: { w: World; nid: number }) {
         <label>Region <Select value={rid} options={regions.map((x) => [x.id, `${x.name} (H${x.bld.hospital} F${x.bld.fields} I${x.bld.industrial} B${x.bld.base})`])} onChange={setRid} /></label>
         <label>Building <Select value={type} options={(Object.keys(BUILDINGS) as BuildingType[]).map((b) => [b, BUILDINGS[b].name])} onChange={setType} /></label>
       </div>
-      {need && <p class="small">Level {r.bld[type] + 1} needs {need.needPts} labour points and {Object.entries(need.needMats).map(([k, v]) => `${v} ${itemName(k)}`).join(', ')} (scaled by population; centralist congresses pay more).</p>}
+      {need && <p class="small">Level {r.bld[type] + 1} needs {need.needPts} labour points and {Object.entries(need.needMats).map(([k, v]) => (k === GRADED ? `${v} units of building materials (a premium unit counts 4)` : `${v} ${itemName(k)}`)).join(', ')} (scaled by population; centralist congresses pay more).</p>}
       <ActBtn why={why} run={(w) => startProject(w, p.id, nid, rid, type)}>Start construction</ActBtn>
       <p class="small muted">Requires the president, vice president or development minister (<CitLink w={w} id={w.nations[nid].cabinet.development} /> now).</p>
       {void natref}

@@ -67,11 +67,15 @@ test('government construction requires authority and completes exactly once', ()
   assert.ok(r.ok, r.msg);
   const proj = Object.values(w.projects).find((x) => x.region === rid)!;
   const before = w.regions[rid].bld.hospital;
-  // deliver materials from the player's storage
-  for (const [k, need] of Object.entries(proj.needMats)) {
-    produce(w, cref(p.id), k, need, 'test');
+  // deliver materials from the player's storage; building materials count by grade (a premium unit covers four)
+  for (const [need, amount] of Object.entries(proj.needMats)) {
+    const k = need === 'materials' ? 'materials:4' : need;
+    const n = need === 'materials' ? Math.ceil(amount / 4) : amount;
+    produce(w, cref(p.id), k, n + 3, 'test');
     p.loc = rid;
-    assert.ok(donateMaterials(w, p.id, cref(p.id), proj.id, k, need).ok);
+    const r = donateMaterials(w, p.id, cref(p.id), proj.id, k, n + 3);
+    assert.ok(r.ok, r.msg);
+    assert.equal(p.inv[k], 3, 'only what the project needs is taken');
   }
   let guard = 0;
   while (!proj.done && guard++ < 200) { p.energy = 100; contributeLabor(w, p, proj.id, 5); }

@@ -11,7 +11,7 @@ import { eat } from '../../sim/citizen';
 import { useSpecial, specialCheck } from '../../sim/specials';
 import { refPrice } from '../../sim/market';
 import { B } from '../../data/balance';
-import { SPECIALS, itemName } from '../../data/items';
+import { SPECIALS, gradeLc, itemName } from '../../data/items';
 import { fmtDur } from '../../engine/clock';
 import { GOLD, fmtAmt } from '../../engine/money';
 
@@ -127,7 +127,7 @@ function FightPanel({ w, b }: { w: World; b: BattleT }) {
         <ActBtn why={why ?? (maxHits < 1 ? 'No energy.' : null)} showWhy={false} run={(w) => hitMany(w, p, b.id, side, weapon, maxHits)}>All ({maxHits})</ActBtn>
       </div>
       <div class="row">
-        <ActBtn small why={!bestFood ? 'No food.' : p.allowance < 1 ? 'No allowance.' : null} showWhy={false} run={(w) => eat(w, p, bestFood!)}>🍲 Eat {bestFood ? `Q${bestFood}` : ''} ({p.allowance} allowance)</ActBtn>
+        <ActBtn small why={!bestFood ? 'No food.' : p.allowance < 1 ? 'No allowance.' : null} showWhy={false} run={(w) => eat(w, p, bestFood!)}>🍲 Eat {bestFood ? `${gradeLc(bestFood)} food` : ''} ({p.allowance} allowance)</ActBtn>
         {buffs.map((k) => <ActBtn small why={specialCheck(w, p, k)} showWhy={false} run={(w) => useSpecial(w, p, k)}>{SPECIALS[k].icon} {SPECIALS[k].name}</ActBtn>)}
       </div>
       <p class="small muted">Rank {rankOf(p.dmgTotal).name} (×{rankOf(p.dmgTotal).mult.toFixed(1)}). Each hit costs {pv.energy} energy and consumes the selected weapon even on a miss. Round reward pools are shared by damage (40% paid now, 60% to your reserve: {fmtAmt(GOLD, p.reserve)}).</p>

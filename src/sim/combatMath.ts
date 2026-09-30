@@ -5,6 +5,7 @@
 //   crit %  = critChance + Luck×0.1 + gear + Focus;  crit damage = 200% + Luck×0.2 pt + gear
 import type { Battle, Citizen, World } from './types';
 import { B } from '../data/balance';
+import { grade } from '../data/items';
 import { IDEOLOGIES } from '../data/ideologies';
 import { buffValue, seatShare, studyActive } from './query';
 
@@ -59,7 +60,7 @@ export function hitPreview(w: World, c: Citizen, b: Battle | null, side: 'a' | '
     if (wsel.kind === 'wa' && studyActive(w, c, 'airforce')) wm *= 1.1;
     const tb = buffValue(w, c, wsel.kind === 'wa' ? 'bomber' : 'tank');
     if (tb) wm *= 1 + tb * (studyActive(w, c, 'reinforcements') ? 1.5 : 1);
-    parts.push(`${wsel.kind === 'wa' ? 'Air' : 'Ground'} weapon Q${wsel.q} → ×${wm.toFixed(2)}`);
+    parts.push(`${grade(wsel.q)} ${wsel.kind === 'wa' ? 'air' : 'ground'} weapon → ×${wm.toFixed(2)}`);
   } else parts.push('Unarmed → ×1');
   if (b?.airOnly && (!wsel || wsel.kind !== 'wa')) { wm = B.damage.unarmed; parts.push('Non-border (air-only) battle: ground weapons count as unarmed'); }
   mult *= wm;

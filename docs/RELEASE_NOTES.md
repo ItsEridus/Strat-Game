@@ -3,6 +3,27 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.3.3: seven new industries, plain-language grades, and the present day
+
+- **Seven new industries.** Logging camps, cotton farms and copper mines supply four new kinds of factory:
+  building supplies, clothing, electronics and pharmaceuticals. The raw materials come from where real producers
+  are. Timber: the Pacific Northwest, British Columbia, Quebec, Siberia and the Black Forest. Cotton: Texas,
+  Gujarat, Xinjiang and Mato Grosso. Copper: Arizona, Sonora, the Urals and South Australia. Every country has
+  some. These industries start small and grow as people buy, and in existing games entrepreneurs start the first
+  companies over the next days.
+- **The new goods matter.**
+  - Construction also needs building materials, counted by grade: a premium unit does the work of four basic ones.
+  - Medicine restores health and speeds recovery.
+  - New clothes and gadgets lift your spirits for a while.
+  - Households spend on all of them, and AI citizens use them just as you can. Take, wear or use them from your
+    inventory.
+- **Grades instead of Q1–Q5.** Goods and companies are Basic, Standard, Good, Premium or Top-grade, shown with
+  stars: "premium food", "a good-grade company", "a top-grade ticket".
+- **The present day.** The calendar starts on Wednesday 1 January 2025 instead of 2030. Existing games keep their
+  timeline and only the dates change.
+- **What's new.** This window: after every update the game shows what changed. Open it again from the title
+  screen or Settings → Updates.
+
 ### New in 1.3.2: back and forward, and sturdier releases
 
 Updates now come more often, in smaller steps, each one tested before it is released.

@@ -158,7 +158,7 @@ export function defuseCheck(w: World, c: Citizen, target: Id, region: Id): strin
   if (!studyActive(w, c, 'secretagent')) return 'Requires the Secret Agent study.';
   if ((c.flags.intel ?? 0) < B.spy.defuseIntel) return `Needs ${B.spy.defuseIntel} intelligence (from reconnaissance).`;
   if ((c.wallet[GOLD] ?? 0) < g(B.spy.defuseGold)) return `Needs ${B.spy.defuseGold} gold.`;
-  if ((c.inv['ticket:1'] ?? 0) < B.spy.defuseTickets) return `Needs ${B.spy.defuseTickets} Q1 tickets.`;
+  if ((c.inv['ticket:1'] ?? 0) < B.spy.defuseTickets) return `Needs ${B.spy.defuseTickets} basic tickets.`;
   if (!w.nations[target]?.warheads.some((s) => s.region === region && s.count > 0)) return 'No known warheads there.';
   return null;
 }

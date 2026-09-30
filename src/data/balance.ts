@@ -81,6 +81,10 @@ export const BALANCE = {
       wg: { perShift: 3, input: 'iron', perQ: 3 },
       wa: { perShift: 2, input: 'titanium', perQ: 4 },
       ticket: { perShift: 3, input: 'oil', perQ: 3 },
+      materials: { perShift: 4, input: 'timber', perQ: 2 },
+      clothing: { perShift: 4, input: 'cotton', perQ: 2 },
+      electronics: { perShift: 2, input: 'copper', perQ: 3 },
+      medicine: { perShift: 3, input: 'oil', perQ: 2 },
     },
     ecoFactor: 0.06, // SOLO output multiplier per point of effective economic skill
     maxWorkers: [4, 6, 8, 10, 12], // SOLO by quality
@@ -91,8 +95,14 @@ export const BALANCE = {
     storage: 6000, // SOLO
     startFunds: 400, // SOLO currency for a newly founded company (paid by the founder)
   },
+  goods: { // SOLO everyday uses of clothing, electronics and medicine (by grade, basic..top-grade)
+    medicine: [4, 7, 10, 14, 18], // health restored at once (one dose a day)
+    treatment: 6, treatmentDays: 3, // better recovery for a few days after a dose
+    clothes: [1, 2, 3, 4, 6], clothesDays: 30, // happiness from new clothes, and for how long
+    gadget: [2, 3, 4, 6, 8], gadgetDays: 90, // happiness from a new gadget, and for how long
+  },
   eco: { gainBase: 0.5, startSkill: 1 }, // SOLO diminishing gain = base / (1 + skill/5)
-  storage: { weights: { raw: 1, food: 3, wg: 2, wa: 4, ticket: 4, special: 1 }, citizen: 3000, holding: 3750, unit: 3750, nation: 15000 }, // WIKI
+  storage: { weights: { raw: 1, food: 3, wg: 2, wa: 4, ticket: 4, materials: 3, clothing: 1, electronics: 2, medicine: 1, special: 1 }, citizen: 3000, holding: 3750, unit: 3750, nation: 15000 }, // WIKI
   pollution: {
     windowDays: 7, // SOLO rolling window
     weights: { raw: 1, finished: 2 }, // SOLO (wiki tables conflict)
@@ -113,7 +123,7 @@ export const BALANCE = {
   fx: { startRate: 100, spread: 0.03, bankShare: 0.08, levels: 4, drift: 0.002, pressure: 0.01, reserveTarget: 400 }, // managed float: drift toward trades, adjust when gold reserves leave 50–150% of target // SOLO: 100 currency per gold at start; treasuries quote a 4-level ladder daily with 8% of reserves
   households: {
     spendRate: 0.5, // SOLO share of the background households' wallet spent on goods each day
-    shares: { food: 0.75, ticket: 0.15, wg: 0.1 }, // SOLO spending mix
+    shares: { food: 0.7, ticket: 0.12, wg: 0.06, clothing: 0.05, electronics: 0.03, medicine: 0.02, materials: 0.02 }, // SOLO spending mix (materials: home repairs)
     startPerPop: 0.01, // SOLO starting household wallet per resident
     maxStockShare: 0.7, // SOLO households buy at most 70% of the listed stock per shopping round, leaving goods for citizens
   },
@@ -156,11 +166,11 @@ export const BALANCE = {
     needPtsPerLevel: 400, // SOLO × level × population factor
     popFactorPer: 5000, // SOLO
     mats: { // SOLO material needs per level
-      hospital: { grain: 120, iron: 80 },
-      fields: { grain: 100, oil: 50 },
-      industrial: { iron: 150, oil: 60 },
-      base: { iron: 200, titanium: 60 },
-    } as Record<string, Record<string, number>>,
+      hospital: { grain: 120, iron: 80, materials: 30 },
+      fields: { grain: 100, oil: 50, materials: 20 },
+      industrial: { iron: 150, oil: 60, materials: 40 },
+      base: { iron: 200, titanium: 60, materials: 40 },
+    } as Record<string, Record<string, number>>, // `materials`: building materials of any grade, counted by grade (a premium unit counts 4)
     builderRankStep: [0, 2000, 8000, 25000, 70000, 180000], // SOLO lifetime points
     builderRankBonus: 0.1, // SOLO per builder rank
     rewardPool: 2, // SOLO gold to top contributors on completion

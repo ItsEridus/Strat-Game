@@ -5,6 +5,7 @@ import { ageOf } from './growth';
 import type { Citizen, Id, World } from './types';
 import { invalidateCensus } from './census';
 import { B } from '../data/balance';
+import { grade, gradeLc } from '../data/items';
 import { fail, ok, type Result } from '../engine/result';
 import { burn, consume } from '../engine/ledger';
 import { GOLD, g } from '../engine/money';
@@ -62,8 +63,8 @@ export function travelOptions(w: World, c: Citizen, dest: Id): TravelOption[] {
     const range = B.travel.ticketRangeKm[q - 1];
     const e = Math.max(1, Math.round(B.travel.energyPer1000km * Math.max(1, km / 1000) * (1 - B.travel.qualityDiscount * (q - 1)) * light));
     const key = `ticket:${q}`;
-    const why = base ?? (km > range ? `Q${q} tickets reach ${range.toLocaleString()} km (this trip is ${km.toLocaleString()} km).` : (c.inv[key] ?? 0) < 1 ? `You have no Q${q} tickets.` : c.energy < e ? `Needs ${e} energy.` : null);
-    opts.push({ id: `t${q}`, label: `Q${q} ticket (up to ${range >= 20000 ? 'anywhere' : `${range.toLocaleString()} km`})`, ticket: key, energy: e, why });
+    const why = base ?? (km > range ? `${grade(q)} tickets reach ${range.toLocaleString()} km (this trip is ${km.toLocaleString()} km).` : (c.inv[key] ?? 0) < 1 ? `You have no ${gradeLc(q)} tickets.` : c.energy < e ? `Needs ${e} energy.` : null);
+    opts.push({ id: `t${q}`, label: `${grade(q)} ticket (up to ${range >= 20000 ? 'anywhere' : `${range.toLocaleString()} km`})`, ticket: key, energy: e, why });
   }
   return opts;
 }

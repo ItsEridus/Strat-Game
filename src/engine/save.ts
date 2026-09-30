@@ -8,7 +8,8 @@ import { civilianControl } from '../sim/forces';
 import { newLifeState, normalizeLife } from '../sim/lifecycle';
 import { initFamilies, initPlayerFamily } from '../sim/family';
 import { initPopulation } from '../sim/population';
-import { autoAllocate } from '../sim/worldgen';
+import { autoAllocate, placeNewDeposits } from '../sim/worldgen';
+import { hash01 } from './rng';
 import { ageOf, bornYearsAgo } from '../sim/growth';
 import { B } from '../data/balance';
 import LZ from 'lz-string';
@@ -72,6 +73,11 @@ function migrate(w: World, from: number): World {
     if (w.settings.pauseOn.life == null) w.settings.pauseOn.life = true;
     if (w.settings.notifyFilter.life == null) w.settings.notifyFilter.life = true;
     for (const q of [...w.player.dailies]) { const r = q.reward as typeof q.reward & { xp?: number }; if (r.xp) { r.rep = Math.max(1, Math.round(r.xp / 5)); delete r.xp; } }
+  }
+  if (from < 9) {
+    // 9: timber, cotton and copper (1.3.3). Deposits from a stable hash, so upgrading rolls no dice;
+    // entrepreneurs found the first companies in the new industries over the following days.
+    placeNewDeposits(w.regions, (r, salt) => hash01(r.id, salt, 1303));
   }
   normalizeLife(w);
   w.version = SAVE_VERSION;

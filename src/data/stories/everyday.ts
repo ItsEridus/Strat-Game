@@ -375,11 +375,11 @@ export const EVERYDAY: StoryDef[] = [
       return crook ? { bind: { crook: crook.id }, key: `fence:${crook.id}:${Math.floor(today(w) / 10)}`, data: { price: cur(randInt(w, 30, 60)), code: curOf(w, p.loc) } } : null;
     },
     stale: (c) => (c.cit('crook') && !jailed(c.w, c.cit('crook')!) && c.cit('crook')!.loc === c.p.loc ? null : 'The seller has gone.'),
-    text: (c) => `A man who says his name is ${first(c.cit('crook')!.name)} opens a car boot: a crate of military-grade rifles (Q2), “no questions asked”, for ${money(c.str('code'), c.num('price'))}.`,
+    text: (c) => `A man who says his name is ${first(c.cit('crook')!.name)} opens a car boot: a crate of standard-issue military rifles, “no questions asked”, for ${money(c.str('code'), c.num('price'))}.`,
     choices: (c) => {
       const crook = c.cit('crook')!, code = c.str('code'), price = c.num('price');
       return [
-        { id: 'buy', label: `Buy the crate (${money(code, price)})`, hint: '+8 Q2 ground weapons, police attention', why: why(cash(c.w, c.p) >= price, 'Not enough money.'), run: (c) => {
+        { id: 'buy', label: `Buy the crate (${money(code, price)})`, hint: '+8 standard ground weapons, police attention', why: why(cash(c.w, c.p) >= price, 'Not enough money.'), run: (c) => {
           pay(c.w, cref(c.p.id), cref(crook.id), code, price, 'Stolen goods');
           produce(c.w, cref(c.p.id), 'wg:2', 8, 'stolen goods');
           c.p.sec.heat = Math.min(100, c.p.sec.heat + 12);

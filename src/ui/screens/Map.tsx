@@ -5,7 +5,7 @@ import type { Region, World } from '../../sim/types';
 import { Btn, CitLink, NationChip, Panel, Tabs, Amt } from '../common';
 import { store } from '../store';
 import { controller, player } from '../../sim/query';
-import { INDUSTRY_INFO } from '../../data/items';
+import { INDUSTRY_INFO, grade } from '../../data/items';
 import { EARTH } from '../../data/earth';
 import { RegionActions } from './RegionActions';
 import { StateGovPanel } from './StateGov';
@@ -286,7 +286,7 @@ function RegionInfo({ w, r }: { w: World; r: Region }) {
       </tbody></table>
       {battles.map((b) => <p>⚔️ Battle: <NationChip w={w} id={b.att} /> vs <NationChip w={w} id={b.def} /> <Btn small onClick={() => store.go('battle', { battle: b.id })}>Open</Btn></p>)}
       <h4>Companies ({companies.length})</h4>
-      <ul class="small">{companies.slice(0, 12).map((c) => <li>{INDUSTRY_INFO[c.industry].icon} {c.name} Q{c.q} · {c.workers.length} workers</li>)}</ul>
+      <ul class="small">{companies.slice(0, 12).map((c) => <li>{INDUSTRY_INFO[c.industry].icon} {c.name} · {grade(c.q)} · {c.workers.length} workers</li>)}</ul>
       <StateGovPanel w={w} r={r} />
       <RegionActions w={w} r={r} />
     </Panel>

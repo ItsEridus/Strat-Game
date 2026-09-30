@@ -20,13 +20,13 @@ const fresh = (seed = 401) => generateWorld(seed, 'Tester', 0, { citizensPerRegi
 const calendarWorld = (seed = 409) => generateWorld(seed, 'Tester', 0, { citizensPerRegion: 2 });
 
 test('the calendar: real dates, leap years, weekdays and seasons by hemisphere', () => {
-  assert.equal(fmtDate(DAY, 'long'), 'Tuesday, 1 January 2030', 'world day 1');
-  assert.equal(fmtDate(timeOfDate(2032, 1, 29), 'long'), 'Sunday, 29 February 2032', 'a leap day');
-  assert.equal(fmtDate(-400 * DAY, 'short'), '26 Nov 2028', 'before the campaign began (day 1 − 401 days)');
+  assert.equal(fmtDate(DAY, 'long'), 'Wednesday, 1 January 2025', 'world day 1');
+  assert.equal(fmtDate(timeOfDate(2028, 1, 29), 'long'), 'Tuesday, 29 February 2028', 'a leap day');
+  assert.equal(fmtDate(-400 * DAY, 'short'), '27 Nov 2023', 'before the campaign began (day 1 − 401 days)');
   assert.equal(fmtTime(DAY + 9 * HOUR + 40), '9:40 am');
   assert.equal(fmtTime(DAY + 21 * HOUR + 5, true), '21:05');
   assert.equal(partOfDay(DAY + 19 * HOUR).name, 'Evening');
-  const july = timeOfDate(2030, 6, 15);
+  const july = timeOfDate(2025, 6, 15);
   assert.equal(seasonAt(july, 45), 'Summer');
   assert.equal(seasonAt(july, -35), 'Winter', 'southern hemisphere');
   assert.equal(seasonAt(july, 10), 'Wet season', 'tropics');

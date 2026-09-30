@@ -490,6 +490,21 @@ ul.news li { padding: .3rem 0; border-bottom: 1px solid var(--line); line-height
   .advance-actions { grid-row: auto; grid-column: 1; }
 }
 @media (max-width: 800px) { .local-hero { grid-template-columns: 1fr; } .book { grid-template-columns: 1fr; } }
+/* grades of goods and companies: "Premium ★★★★☆" */
+.grade { white-space: nowrap; }
+.grade .stars { color: var(--gold); letter-spacing: .02em; font-size: .82em; }
+/* What's new after an update */
+.modal.whatsnew { max-width: 660px; border-color: rgba(230, 180, 79, .45); background: radial-gradient(560px 240px at 50% -10%, rgba(230, 180, 79, .16), transparent 70%), var(--glass), var(--ink-2); }
+.modal.whatsnew header { text-align: center; margin-bottom: .8rem; }
+.modal.whatsnew header small { letter-spacing: .18em; text-transform: uppercase; }
+.modal.whatsnew header h2 { font: 700 1.9rem/1.15 var(--font-brand); letter-spacing: .05em; margin: .25rem 0; }
+.modal.whatsnew .tagline { margin: 0; color: var(--text-2); }
+.modal.whatsnew .md ul { padding-left: 1.1rem; }
+.modal.whatsnew .md li { margin: .45rem 0; line-height: 1.5; }
+.modal.whatsnew details { margin-top: .8rem; border-top: 1px solid var(--line); padding-top: .6rem; }
+.modal.whatsnew summary { cursor: pointer; color: var(--gold-hi); }
+.modal.whatsnew footer { margin-top: 1rem; justify-content: flex-end; }
+.linkish { background: none; border: 0; padding: 0; color: var(--gold-hi); cursor: pointer; font: inherit; text-decoration: underline; text-underline-offset: 2px; }
 /* A part of the interface that failed (the rest of the game keeps running). */
 .ui-error { border-color: rgba(239, 95, 88, .45); margin: .6rem 0; }
 .ui-error h3 { color: var(--bad); margin: 0 0 .3rem; }

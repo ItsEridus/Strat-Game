@@ -1,13 +1,13 @@
 import { useState } from 'preact/hooks';
 import type { Company, Industry, World } from '../../sim/types';
-import { ActBtn, Amt, Btn, CitLink, Empty, Item, Num, Panel, RegionLink, Select, Help, Sparkline } from '../common';
+import { ActBtn, Amt, Btn, CitLink, Empty, Grade, Item, Num, Panel, RegionLink, Select, Help, Sparkline } from '../common';
 import { store } from '../store';
 import { companyCurrency, controller, coref, cref, player } from '../../sim/query';
 import {
   deposit, fire, foundCheck, foundCompany, managerCheck, managerCost, managerShift, productionBlock, relocate, setOffer,
   shiftPreview, transferStock, upgradeCompany, upgradeCost, withdraw,
 } from '../../sim/company';
-import { INDUSTRIES, INDUSTRY_INFO, itemName, outputKey } from '../../data/items';
+import { INDUSTRIES, INDUSTRY_INFO, grade, gradeLc, itemName, outputKey } from '../../data/items';
 import { B } from '../../data/balance';
 import { GOLD, c as cur, fmtAmt } from '../../engine/money';
 import { list, listingsFor, cancelListing, refPrice } from '../../sim/market';
@@ -36,7 +36,7 @@ export function Companies({ w }: { w: World }) {
                 return (
                   <tr class="link-row" onClick={() => store.go('companies', { company: co.id })}>
                     <td><b>{co.name}</b>{co.owner.k === 'hold' ? <small class="muted"> (holding)</small> : null}</td>
-                    <td>{INDUSTRY_INFO[co.industry].icon} {INDUSTRY_INFO[co.industry].name} Q{co.q}</td>
+                    <td>{INDUSTRY_INFO[co.industry].icon} {INDUSTRY_INFO[co.industry].name} · <Grade q={co.q} /></td>
                     <td><RegionLink w={w} id={co.region} /></td>
                     <td>{co.workers.length}/{co.offer?.slots ?? 0}</td>
                     <td><Amt asset={c} v={co.wallet[c] ?? 0} /></td>
@@ -48,7 +48,7 @@ export function Companies({ w }: { w: World }) {
               })}
             </tbody>
           </table>
-        ) : <Empty>You don’t own a company yet. Founding a Q1 company costs {B.company.foundCost[0]} gold; the tutorial reward covers it.</Empty>}
+        ) : <Empty>You don’t own a company yet. Founding a basic-grade company costs {B.company.foundCost[0]} gold; the tutorial reward covers it.</Empty>}
       </Panel>
     </div>
   );
@@ -73,12 +73,12 @@ function FoundPanel({ w }: { w: World }) {
           const res = foundCompany(w, p, cref(p.id), ind, region, name);
           if (res.ok) store.sel.company = res.data.id;
           return res;
-        }}>Found Q1 ({B.company.foundCost[0]} gold)</ActBtn>
+        }}>Found (basic grade, {B.company.foundCost[0]} gold)</ActBtn>
       </div>
       <Help>
         {raw ? <>Raw producers need no inputs. Output depends on the region’s <b>{ind}</b> richness (here: {(r?.res as any)?.[ind] ?? 0} → ×{B.company.richness[(r?.res as any)?.[ind] ?? 0]}), Production Fields, pollution, and workers’ skill.</>
-          : <>Factories consume {itemName((B.company.recipes as any)[ind].input)} ({(B.company.recipes as any)[ind].perQ}× quality per unit). Industrial Zones raise output. Place factories in low-pollution regions.</>}
-        {' '}Founding costs (Q1–Q5): {B.company.foundCost.join(' / ')} gold (wiki); you found at Q1 and upgrade later.
+          : <>Factories consume {itemName((B.company.recipes as any)[ind].input)} ({(B.company.recipes as any)[ind].perQ}× the grade per unit: a premium unit takes four times the input of a basic one). Industrial Zones raise output. Place factories in low-pollution regions.</>}
+        {' '}A company's grade is the grade of what it makes and sets how many people it can employ. Costs by grade (basic → top-grade): {B.company.foundCost.join(' / ')} gold; you start at basic and upgrade later.
       </Help>
     </Panel>
   );
@@ -107,7 +107,7 @@ function CompanyDetail({ w, co }: { w: World; co: Company }) {
   const payroll = (co.offer?.wage ?? 0) * co.workers.length;
   return (
     <div class="grid">
-      <Panel title={`${INDUSTRY_INFO[co.industry].icon} ${co.name} — Q${co.q}`} class="wide" right={<Btn small kind="ghost" onClick={() => store.go('companies', { company: null })}>← All companies</Btn>}>
+      <Panel title={`${INDUSTRY_INFO[co.industry].icon} ${co.name} — ${grade(co.q)}`} class="wide" right={<Btn small kind="ghost" onClick={() => store.go('companies', { company: null })}>← All companies</Btn>}>
         <div class="stats">
           <div class="stat"><small>Location</small><b><RegionLink w={w} id={co.region} /></b></div>
           <div class="stat"><small>Funds</small><b><Amt asset={c} v={co.wallet[c] ?? 0} /></b></div>
@@ -131,7 +131,7 @@ function CompanyDetail({ w, co }: { w: World; co: Company }) {
           <label>Min. skill <Num value={minEco} min={0} step={0.5} onInput={setMinEco} /></label>
           <ActBtn run={(w) => setOffer(w, p.id, co.id, cur(wage), slots, minEco)}>Post offer</ActBtn>
         </div>
-        <p class="small muted">Minimum wage {fmtAmt(n.cur, n.minWage)}. Max {B.company.maxWorkers[co.q - 1]} employees at Q{co.q}. Workers switch employers for ≥15% better net pay; unfilled vacancies mean your wage is uncompetitive.</p>
+        <p class="small muted">Minimum wage {fmtAmt(n.cur, n.minWage)}. Max {B.company.maxWorkers[co.q - 1]} employees at {gradeLc(co.q)} grade. Workers switch employers for ≥15% better net pay; unfilled vacancies mean your wage is uncompetitive.</p>
         <table class="table compact">
           <tbody>{co.workers.map((id) => <tr><td><CitLink w={w} id={id} /></td><td>skill {w.citizens[id].eco.toFixed(1)}</td><td><ActBtn small kind="danger" run={(w) => fire(w, p.id, co.id, id)}>Dismiss</ActBtn></td></tr>)}</tbody>
         </table>
@@ -169,8 +169,8 @@ function CompanyDetail({ w, co }: { w: World; co: Company }) {
         <p class="small muted">Runs at 05:00 each day using the same actions and money as manual play.</p>
       </Panel>
       <Panel title="Upgrade, relocate, sell">
-        <p>Upgrade to Q{co.q + 1}: {co.q < 5 ? fmtAmt(GOLD, upgradeCost(w, p, co)) : '—'}</p>
-        <ActBtn why={co.q >= 5 ? 'Already Q5.' : null} run={(w) => upgradeCompany(w, p, co.id, cref(p.id))}>Upgrade</ActBtn>
+        <p>Upgrade to {co.q < 5 ? grade(co.q + 1) : 'a higher grade'}: {co.q < 5 ? fmtAmt(GOLD, upgradeCost(w, p, co)) : '—'}</p>
+        <ActBtn why={co.q >= 5 ? 'Already top grade.' : null} run={(w) => upgradeCompany(w, p, co.id, cref(p.id))}>Upgrade</ActBtn>
         <div class="form row">
           <label>Move to <Select value={dest} options={w.regions.filter((r) => controller(r) === market).map((r) => [r.id, r.name])} onChange={setDest} /></label>
           <ActBtn run={(w) => relocate(w, p, co.id, dest)}>Relocate ({B.company.relocateFee} g, {B.company.relocateCooldownDays}d cooldown)</ActBtn>

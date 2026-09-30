@@ -1,11 +1,11 @@
-// The calendar: world time as real dates. World day 1 is Tuesday 1 January
-// 2030; each world day is one calendar day (Gregorian, with leap years). Times
+// The calendar: world time as real dates. World day 1 is Wednesday 1 January
+// 2025 (the present day, so the economy can be anchored to real data); each world day is one calendar day (Gregorian, with leap years). Times
 // of day and seasons are descriptive, and seasons follow the hemisphere of the
 // place (so it is summer in Sydney when it is winter in Chicago).
 import { DAY, dayOf, hourOf } from './clock';
 
 /** Midnight UTC of world day 1. */
-export const EPOCH_MS = Date.UTC(2030, 0, 1);
+export const EPOCH_MS = Date.UTC(2025, 0, 1);
 const MS_DAY = 86400000;
 
 export const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -31,7 +31,7 @@ const daysIn = (y: number, m: number) => [31, isLeap(y) ? 29 : 28, 31, 30, 31, 3
 
 // ---------- formatting ----------
 
-/** "Tuesday, 14 March 2030" / "Tue 14 Mar 2030" / "14 Mar 2030" / "14 March" */
+/** "Friday, 14 March 2025" / "Fri 14 Mar 2025" / "14 Mar 2025" / "14 March" */
 export function fmtDate(t: number, style: 'long' | 'medium' | 'short' | 'dayMonth' = 'short'): string {
   const d = dateAt(t);
   switch (style) {
@@ -42,7 +42,7 @@ export function fmtDate(t: number, style: 'long' | 'medium' | 'short' | 'dayMont
   }
 }
 
-/** A date for lists and logs, e.g. "6 Feb 2030". */
+/** A date for lists and logs, e.g. "6 Feb 2025". */
 export const fmtDay = (t: number) => fmtDate(t, 'short');
 
 /** "9:40 am" (or "09:40" on a 24-hour clock). */
