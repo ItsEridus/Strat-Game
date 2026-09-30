@@ -1,6 +1,7 @@
 // Business market: companies listed for gold. Listed companies produce less
 // (wiki; size SOLO). Purchase transfers gold and ownership atomically and keeps
 // the company's accounting and ownership history.
+import { lifeGate } from './lifecycle';
 import type { AccountRef, Citizen, Company, Id, World } from './types';
 import { census } from './census';
 import { B } from '../data/balance';
@@ -12,6 +13,8 @@ import { authorize } from './authority';
 import { companyCurrency, coref, cref } from './query';
 
 export function listCompanyCheck(w: World, actor: Citizen, co: Company): string | null {
+  const tooYoung = lifeGate(w, actor, 18, 'Selling a company');
+  if (tooYoung) return tooYoung;
   const a = authorize(w, actor.id, coref(co.id), 'own');
   if (a) return a;
   if (co.forSale != null) return 'Already listed.';

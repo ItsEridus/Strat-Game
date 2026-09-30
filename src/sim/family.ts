@@ -14,12 +14,12 @@ import { chance, pick, rand, randInt, shuffle } from '../engine/rng';
 import { fail, ok, type Result } from '../engine/result';
 import { census, invalidateCensus, residents } from './census';
 import { controller, cref, hhref, jailed, player, today } from './query';
-import { YEAR, ageOf, isAdult, standing } from './growth';
+import { lifeYear, ageOf, isAdult, standing } from './growth';
 import { ideoDistance } from './interact';
 import { localNews } from './life';
 import { remember } from './story';
 import { adjustRel } from './social';
-import { newResident } from './population';
+import { newResident, regionTarget } from './population';
 import { bump } from './progress';
 
 export function fam(c: Citizen): Family {
@@ -149,7 +149,7 @@ export function familyDaily(w: World) {
       if (rel < 0 && chance(w, 0.02)) { split(w, a, b); localNews(w, a.home, `📄 ${a.name} and ${b.name} are divorcing.`); continue; }
       const young = Math.min(ageOf(w, a), ageOf(w, b)), older = Math.max(ageOf(w, a), ageOf(w, b));
       const kids = fam(a).kids.length + fam(b).kids.length + fam(a).children.length;
-      if (young >= 20 && older <= 46 && kids < 4 && chance(w, (0.0009 * B.life.pace) / (1 + kids))) haveBaby(w, a, b);
+      if (young >= 20 && older <= 46 && kids < 4 && chance(w, (0.3 * fertilityFactor(w, a)) / (w.settings.lifeYearDays ?? 365) / (1 + kids))) haveBaby(w, a, b);
     }
   }
   // New couples: neighbours, colleagues, friends of friends.
@@ -184,6 +184,16 @@ export function familyDaily(w: World) {
   }
 }
 
+/** Families have more children where the region is growing and fewer where it is crowded (and never past the world's size budget). */
+function fertilityFactor(w: World, c: Citizen): number {
+  const r = w.regions[c.home];
+  const n = residents(w, r.id).length;
+  const t = regionTarget(w, r);
+  const world = census(w).all.length / Math.max(1, w.calendar.basePop ?? census(w).all.length);
+  if (world > B.population.worldCap) return 0.3;
+  return n < t ? 1.3 : n > t * 1.2 ? 0.5 : 1;
+}
+
 function wed(w: World, a: Citizen, b: Citizen) {
   fam(a).status = fam(b).status = 'married';
   fam(a).since = fam(b).since = w.time;
@@ -207,7 +217,7 @@ export function initFamilies(w: World) {
       if (!b) continue;
       const years = Math.max(0, Math.min(ageOf(w, a), ageOf(w, b)) - randInt(w, 20, 32));
       const married = years > 0 && chance(w, 0.8);
-      pair(w, a, b, married ? 'married' : 'dating', married ? w.time - years * YEAR : w.time - randInt(w, 10, 300) * DAY);
+      pair(w, a, b, married ? 'married' : 'dating', married ? w.time - years * lifeYear(w) : w.time - randInt(w, 10, 300) * DAY);
       bumpRel(a, b, randInt(w, 40, 80));
       if (!married) continue;
       // Children still at home: born after the wedding, under 18 now.
@@ -216,7 +226,7 @@ export function initFamilies(w: World) {
       for (let i = 0; i < n; i++) {
         const kidAge = randInt(w, 0, Math.min(17, years, young - 20));
         if (kidAge < 0) continue;
-        fam(a).kids.push({ name: babyName(w, a), born: w.time - kidAge * YEAR - randInt(w, 0, 364) * DAY });
+        fam(a).kids.push({ name: babyName(w, a), born: w.time - kidAge * lifeYear(w) - randInt(w, 0, (w.settings.lifeYearDays ?? 365) - 1) * DAY });
       }
     }
     // Grown-up children: an older resident with a younger one who shares their surname or simply lives nearby.

@@ -2,6 +2,7 @@
 //  - Elections run on the in-game calendar without player intervention.
 //  - Voters are individual AI citizens plus aggregated background blocs.
 //  - Every result stores turnout, tallies, seats and a readable explanation.
+import { lifeGate } from './lifecycle';
 import { ageOf, isAdult, repNeed, standing } from './growth';
 import type { Citizen, Election, Id, Ministry, Nation, Party, World } from './types';
 import { census } from './census';
@@ -148,6 +149,8 @@ export function leaveParty(w: World, c: Citizen): Result {
   return ok(`You left the ${name}.`);
 }
 export function foundPartyCheck(w: World, c: Citizen): string | null {
+  const tooYoung = lifeGate(w, c, 18, 'Founding a party');
+  if (tooYoung) return tooYoung;
   if (standing(c) < B.politics.foundRep) return `Nobody would follow you yet: founding a party needs ${repNeed(B.politics.foundRep)}.`;
   if ((c.wallet[GOLD] ?? 0) < g(B.politics.partyFoundCost)) return `Founding a party costs ${B.politics.partyFoundCost} gold.`;
   if (partiesOf(w, c.nation).length >= 8) return 'This nation already has 8 parties.';
@@ -230,6 +233,8 @@ export function callSpecialElection(w: World, n: Nation) {
 }
 
 export function registerCheck(w: World, c: Citizen, e: Election): string | null {
+  const tooYoung = lifeGate(w, c, 18, 'Standing for election');
+  if (tooYoung) return tooYoung;
   if (e.done) return 'Election already held.';
   if (w.time >= e.regClose) return 'Registration has closed.';
   if (c.nation !== e.nation) return 'Only citizens can run.';

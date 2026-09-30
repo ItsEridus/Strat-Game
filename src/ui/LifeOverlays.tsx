@@ -1,0 +1,68 @@
+// Life-simulation overlays: the long-advance progress banner and the annual
+// review shown on each birthday.
+import { store, useStore } from './store';
+import { Btn } from './common';
+import { fmtClock, fmtDur } from '../engine/clock';
+import { fmtAmt } from '../engine/money';
+import type { World } from '../sim/types';
+import { pendingReview } from '../sim/lifecycle';
+
+/** Shows a long advance in progress, or where it stopped and why. */
+export function AdvanceBanner() {
+  const s = useStore();
+  const w = s.w;
+  const a = w?.life.advance;
+  if (!w || !a) return null;
+  const span = Math.max(1, a.target - a.from);
+  const pct = Math.max(0, Math.min(100, ((w.time - a.from) / span) * 100));
+  return (
+    <div class={`advance-banner ${s.advRunning ? 'running' : 'stopped'}`} role="status" aria-live="polite">
+      <div class="advance-text">
+        {s.advRunning
+          ? <span>⏩ Advancing to <b>{a.label}</b> — {fmtClock(w)} · {fmtDur(a.target - w.time)} to go</span>
+          : <span>⏸ Stopped at <b>{fmtClock(w)}</b>{s.advStopped ? <>: {s.advStopped}</> : null}. Still {fmtDur(a.target - w.time)} to <b>{a.label}</b>.</span>}
+      </div>
+      <div class="advance-bar"><i style={{ width: `${pct}%` }} /></div>
+      <div class="advance-actions">
+        {s.advRunning
+          ? <Btn small onClick={() => store.cancelAdvanceKeepTarget()}>Stop here</Btn>
+          : <Btn small kind="primary" onClick={() => store.resumeAdvance()}>Resume</Btn>}
+        <Btn small kind="ghost" onClick={() => store.cancelAdvance()}>Cancel</Btn>
+      </div>
+    </div>
+  );
+}
+
+/** The year in review, on the player's birthday. */
+export function AnnualReviewModal({ w }: { w: World }) {
+  useStore();
+  const r = pendingReview(w);
+  if (!r || store.advRunning) return null;
+  const delta = r.money.end - r.money.start;
+  const close = () => { r.seen = true; store.emit(); };
+  return (
+    <div class="modal-back" onClick={close}>
+      <div class="modal review" role="dialog" aria-label={`Age ${r.age}`} onClick={(e) => e.stopPropagation()}>
+        <header>
+          <small class="muted">{fmtClock(w, r.from)} → {fmtClock(w, r.to)}</small>
+          <h2>🎂 You are {r.age}</h2>
+        </header>
+        <section>
+          <h4>Your year</h4>
+          {r.lines.length ? <ul class="review-lines">{r.lines.map((l) => <li class={`k-${l.kind}`}>{l.text}</li>)}</ul> : <p class="muted">A quiet year: nothing much changed.</p>}
+          <p class="small">Savings {fmtAmt(r.money.cur, r.money.start)} → <b>{fmtAmt(r.money.cur, r.money.end)}</b> ({delta >= 0 ? '+' : '−'}{fmtAmt(r.money.cur, Math.abs(delta))}).</p>
+        </section>
+        {r.world.length > 0 && (
+          <section>
+            <h4>The world this year</h4>
+            <ul class="small">{r.world.map((t) => <li>{t}</li>)}</ul>
+          </section>
+        )}
+        <footer class="row">
+          <Btn kind="primary" onClick={() => { close(); store.go('life'); }}>Open my life</Btn>
+          <Btn onClick={close}>Continue</Btn>
+        </footer>
+      </div>
+    </div>
+  );
+}

@@ -5,6 +5,7 @@ import { SCREENS } from './screens';
 import { StartScreen } from './screens/Start';
 import { ConversationPanel, StoryModal } from './Overlays';
 import { UpdateBanner } from './Updates';
+import { AdvanceBanner, AnnualReviewModal } from './LifeOverlays';
 
 export function App() {
   const s = useStore();
@@ -33,6 +34,7 @@ export function App() {
     <div class="app">
       <TopBar onMenu={() => setNavOpen(!navOpen)} />
       <UpdateBanner />
+      <AdvanceBanner />
       <div class="body">
         <nav class={`nav ${navOpen ? 'open' : ''}`}>
           {groups.map((g) => (
@@ -53,6 +55,7 @@ export function App() {
       </div>
       <ConversationPanel w={w} />
       <StoryModal w={w} />
+      <AnnualReviewModal w={w} />
       <div class="toasts">{s.toasts.map((t) => <div class={`toast ${t.ok ? 'ok' : 'err'}`}>{t.text}</div>)}</div>
     </div>
   );

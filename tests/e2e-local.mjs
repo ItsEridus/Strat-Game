@@ -21,7 +21,7 @@ let t = Date.now();
 await page.click('text=Start campaign');
 await page.waitForSelector('.topbar', { timeout: 60000 });
 console.log('generated in', Date.now() - t, 'ms');
-await page.evaluate(() => { const s = window.meridian; s.w.story.settings.frequency = 'off'; for (const i of Object.values(s.w.story.instances)) if (i.status === 'offered' || i.status === 'active') i.status = 'declined'; s.emit(); s.jump(12 * 60); });
+await page.evaluate(() => { const s = window.meridian; s.w.story.settings.frequency = 'off'; for (const i of Object.values(s.w.story.instances)) if (i.status === 'offered' || i.status === 'active') i.status = 'declined'; s.emit(); s.advanceSync(12 * 60); });
 await page.click('.nav button:has-text("Neighbourhood")');
 await page.waitForTimeout(200);
 await page.screenshot({ path: `${out}/1-neighbourhood.png` });
@@ -38,7 +38,7 @@ await page.click('text=Canvass door to door');
 await page.waitForTimeout(150);
 await page.screenshot({ path: `${out}/3-canvass.png` });
 // Let an encounter happen.
-const got = await page.evaluate(() => { const s = window.meridian; s.w.story.settings.frequency = 'normal'; s.w.settings.pauseOn = { encounter: true }; s.w.story.nextAmbient = s.w.time; const open = () => Object.values(s.w.story.instances).find((i) => i.status === 'offered'); for (let i = 0; i < 72 && !open(); i++) s.jump(60); s.emit(); return open()?.def ?? null; });
+const got = await page.evaluate(() => { const s = window.meridian; s.w.story.settings.frequency = 'normal'; s.w.settings.pauseOn = { encounter: true }; s.w.story.nextAmbient = s.w.time; const open = () => Object.values(s.w.story.instances).find((i) => i.status === 'offered'); for (let i = 0; i < 72 && !open(); i++) s.advanceSync(60); s.emit(); return open()?.def ?? null; });
 console.log('encounter:', got);
 await page.waitForTimeout(200);
 await page.screenshot({ path: `${out}/4-encounter.png` });

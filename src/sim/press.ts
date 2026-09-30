@@ -1,6 +1,7 @@
 // Newspapers and articles. Readership and influence come from the chosen topic,
 // stance and the current situation (not from parsing prose). NPC journalists
 // report real events. Revenue comes from background readers (households).
+import { lifeGate } from './lifecycle';
 import type { Article, Citizen, Id, Newspaper, World } from './types';
 import { census, nationals, representation } from './census';
 import { B } from '../data/balance';
@@ -29,6 +30,8 @@ export const STANCES: Record<Topic, { id: string; label: string }[]> = {
 export const papersOwnedBy = (w: World, cid: Id) => Object.values(w.papers).filter((p) => p.owner.k === 'cit' && p.owner.id === cid);
 
 export function foundPaperCheck(w: World, c: Citizen): string | null {
+  const tooYoung = lifeGate(w, c, 18, 'Founding a newspaper');
+  if (tooYoung) return tooYoung;
   if (papersOwnedBy(w, c.id).length) return 'You already own a newspaper.';
   if ((c.wallet[GOLD] ?? 0) < g(B.newspaper.cost)) return `Founding a newspaper costs ${B.newspaper.cost} gold.`;
   return null;
@@ -65,6 +68,8 @@ export function relevance(w: World, nation: Id, topic: Topic): number {
 }
 
 export function articleCheck(w: World, c: Citizen, paperId: Id): string | null {
+  const tooYoung = lifeGate(w, c, 16, 'Writing for the press');
+  if (tooYoung) return tooYoung;
   const p = w.papers[paperId];
   if (!p) return 'Newspaper not found.';
   if (!(p.owner.k === 'cit' && p.owner.id === c.id)) return 'You can only publish in your own newspaper.';

@@ -1,4 +1,5 @@
 import type { Attr, Citizen, World } from '../../sim/types';
+import { routineOf } from '../../sim/lifecycle';
 import { ActBtn, Bar, Panel, Stat, Help } from '../common';
 import { ATTRS, powerGain, train, trainCheck } from '../../sim/citizen';
 import { effEco, maxEnergy, player, today } from '../../sim/query';
@@ -34,7 +35,7 @@ export function Character({ w }: { w: World }) {
           <ActBtn why={trainCheck(w, p, 'weapons')} run={(w) => train(w, p, 'weapons')}>Train and donate 20 Q1 weapons (+standing)</ActBtn>
         </div>
         <p class="muted small">{p.lastTrainDay === today(w) ? `Power already raised today (${p.trainsToday} session${p.trainsToday > 1 ? 's' : ''}).` : `Next power gain: +${powerGain(w, p).toFixed(3)}.`}</p>
-        <label class="check"><input type="checkbox" checked={w.settings.autoTrain} onChange={() => { w.settings.autoTrain = !w.settings.autoTrain; }} /> Automatically do my first training each day (at {String(p.trainHour).padStart(2, '0')}:00 when energy allows)</label>
+        <label class="check"><input type="checkbox" checked={routineOf(w).train} onChange={() => { const r = routineOf(w); r.train = !r.train; w.settings.autoTrain = r.train; }} /> Automatically do my first training each day (at {String(p.trainHour).padStart(2, '0')}:00 when energy allows)</label>
       </Panel>
       <Panel title="Progression tracks">
         {tracks(w, p).map((t) => <div class="track"><Stat label={t.label}>{t.value}</Stat><small class="muted">{t.next}</small></div>)}

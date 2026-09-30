@@ -1,5 +1,6 @@
 // AI citizen routines. Personas shape priorities; every action goes through the
 // same validated action functions the player uses.
+import { ageOf } from '../sim/growth';
 import type { Citizen, Company, World } from '../sim/types';
 import { B } from '../data/balance';
 import { hourOf } from '../engine/clock';
@@ -84,7 +85,7 @@ export function eatUp(w: World, c: Citizen, upTo: number) {
 }
 
 export function citizenHourly(w: World, c: Citizen) {
-  if (jailed(w, c)) return;
+  if (jailed(w, c) || ageOf(w, c) < 16) return; // children are at home and at school, not at work
   const h = hourOf(w.time);
   const d = today(w);
   const home = w.nations[c.nation];

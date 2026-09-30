@@ -7,9 +7,9 @@ import { audit, mint } from '../src/engine/ledger';
 import { DAY } from '../src/engine/clock';
 import { c as cur } from '../src/engine/money';
 import { census, residents } from '../src/sim/census';
-import { cref, player } from '../src/sim/query';
+import { controller, cref, player } from '../src/sim/query';
 import { createCompany } from '../src/sim/company';
-import { YEAR, ageOf } from '../src/sim/growth';
+import { ageOf, lifeYear } from '../src/sim/growth';
 import { die, heirOf, leaveAbroad, populationDaily } from '../src/sim/population';
 import { askOut, fam, goOnDate, kidComesOfAge, marry, propose, romanceCheck } from '../src/sim/family';
 import { deserialize, serialize } from '../src/engine/save';
@@ -67,7 +67,7 @@ test('emigrants leave with their savings; office holders and owners stay', () =>
 test('children grow up in the family and come of age once, with parents on record', () => {
   const w = fresh(304);
   const parent = npcs(w).find((c) => c.family?.status === 'married')!;
-  const kid = { name: 'Robin Test', born: w.time - 18 * YEAR - DAY };
+  const kid = { name: 'Robin Test', born: w.time - 18 * lifeYear(w) - DAY };
   fam(parent).kids.push(kid);
   const before = census(w).all.length;
   populationDaily(w);
@@ -103,7 +103,9 @@ test('the player dates, proposes and marries under the same rules as everyone', 
   npc.loc = p.loc; npc.rel[p.id] = 100;
   for (let i = 0; i < 10 && fam(p).status !== 'engaged'; i++) propose(w);
   assert.equal(fam(p).status, 'engaged');
-  assert.ok(marry(w).ok);
+  mint(w, cref(p.id), w.nations[controller(w.regions[p.loc])].cur, cur(400), 'test'); // fifteen days of living costs later (and wherever they are)
+  const m = marry(w);
+  assert.ok(m.ok, m.msg);
   assert.equal(fam(p).status, 'married');
   assert.equal(npc.home, p.home, 'they moved in');
   const w2 = deserialize(serialize(w));

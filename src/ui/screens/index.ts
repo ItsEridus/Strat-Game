@@ -1,5 +1,7 @@
 import type { FunctionComponent } from 'preact';
 import { Journal } from './Journal';
+import { Life } from './Life';
+import { pendingReview } from '../../sim/lifecycle';
 import { Local } from './Local';
 import { Admin } from './Admin';
 import type { World } from '../../sim/types';
@@ -45,6 +47,7 @@ export interface ScreenDef { id: string; label: string; icon: string; group: str
 
 export const SCREENS: ScreenDef[] = [
   { id: 'dashboard', label: 'Dashboard', icon: '🏠', group: 'Citizen', comp: Dashboard },
+  { id: 'life', label: 'My Life', icon: '🌱', group: 'Citizen', comp: Life, badge: (w) => (pendingReview(w) ? 1 : 0) },
   { id: 'local', label: 'Neighbourhood', icon: '🏘️', group: 'Citizen', comp: Local, },
   { id: 'journal', label: 'Journal', icon: '📖', group: 'Citizen', comp: Journal, badge: (w) => Object.values(w.story.instances).filter((i) => i.status === 'offered' || i.status === 'active').length },
   { id: 'character', label: 'Character', icon: '🧍', group: 'Citizen', comp: Character },

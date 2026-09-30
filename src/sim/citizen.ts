@@ -1,5 +1,6 @@
 // Personal condition: energy, eating, skills (grown by practice, see growth.ts), training.
 // Used identically by the player and AI citizens.
+import { lifeGate } from './lifecycle';
 import type { Attr, Citizen, World } from './types';
 import { B } from '../data/balance';
 import { fail, ok, type Result } from '../engine/result';
@@ -85,6 +86,8 @@ export function powerGain(w: World, c: Citizen): number {
 export type TrainMode = 'normal' | 'food' | 'weapons';
 
 export function trainCheck(w: World, c: Citizen, mode: TrainMode): string | null {
+  const tooYoung = lifeGate(w, c, 13, 'Training at the grounds');
+  if (tooYoung) return tooYoung;
   if (jailed(w, c)) return 'You are in prison (the yard has no gym).';
   if (mode === 'food' && (c.inv['food:1'] ?? 0) < 5) return 'Donation training needs 5 Q1 food.';
   if (mode === 'weapons' && (c.inv['wg:1'] ?? 0) < 20) return 'Donation training needs 20 Q1 ground weapons.';

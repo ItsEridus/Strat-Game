@@ -2,6 +2,7 @@
 // data). Contributions of energy or items build progress; a study is unlocked
 // at 75%. Passive studies work while unlocked; active ones grant a timed buff
 // with a cooldown. Decay is gentle by default and can be set to 0.
+import { lifeGate } from './lifecycle';
 import type { Citizen, World } from './types';
 import { census } from './census';
 import { B } from '../data/balance';
@@ -45,6 +46,8 @@ export const progressOf = (c: Citizen, id: string) => c.studies[id]?.progress ??
 export const unlocked = (c: Citizen, id: string) => progressOf(c, id) >= B.studies.unlockAt;
 
 export function contributeCheck(w: World, c: Citizen, id: string, how: 'energy' | 'item'): string | null {
+  const tooYoung = lifeGate(w, c, 16, 'National study programmes');
+  if (tooYoung) return tooYoung;
   const d = studyDef(id);
   if (!d) return 'Unknown study.';
   if (progressOf(c, id) >= 100) return 'Study is at 100%.';

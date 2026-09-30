@@ -1,6 +1,7 @@
 // Companies, employment and production chains. A shift consumes energy, inputs
 // and wage funds, and creates goods; it refuses to run (with a reason) when
 // labour, funds, inputs or storage capacity are missing.
+import { lifeGate } from './lifecycle';
 import type { AccountRef, Citizen, Company, DayRecord, Id, Industry, World } from './types';
 import { localNews } from './life';
 import { companiesOf, invalidateCensus } from './census';
@@ -164,6 +165,8 @@ export function netWage(w: World, co: Company, worker: Citizen) {
 }
 
 export function shiftCheck(w: World, c: Citizen): string | null {
+  const tooYoung = lifeGate(w, c, 16, 'Paid work');
+  if (tooYoung) return tooYoung;
   if (jailed(w, c)) return 'You are in prison.';
   if (c.job == null) return 'You have no job. Find one on the job market.';
   const co = w.companies[c.job];
@@ -206,6 +209,8 @@ export function workShift(w: World, c: Citizen): Result {
 }
 
 export function applyCheck(w: World, c: Citizen, co: Company | undefined): string | null {
+  const tooYoung = lifeGate(w, c, 16, 'Taking a job');
+  if (tooYoung) return tooYoung;
   if (jailed(w, c)) return 'You are in prison.';
   if (!co) return 'Company not found.';
   if (!co.offer || co.offer.slots <= co.workers.length) return 'No open positions.';
@@ -283,6 +288,8 @@ export function managerCost(c: Citizen, w: World) {
 }
 
 export function managerCheck(w: World, actor: Citizen, co: Company | undefined): string | null {
+  const tooYoung = lifeGate(w, actor, 18, 'Managing a company');
+  if (tooYoung) return tooYoung;
   if (!co) return 'Company not found.';
   const auth = authorize(w, actor.id, coref(co.id), 'produce');
   if (auth) return auth;
@@ -311,6 +318,8 @@ export function managerShift(w: World, actor: Citizen, coId: Id): Result {
 }
 
 export function foundCheck(w: World, actor: Citizen, owner: AccountRef, ind: Industry, region: Id): string | null {
+  const tooYoung = lifeGate(w, actor, 18, 'Founding a company');
+  if (tooYoung) return tooYoung;
   const auth = authorize(w, actor.id, owner, 'money');
   if (auth) return auth;
   const r = w.regions[region];
@@ -432,6 +441,8 @@ export function publicWorksWage(w: World, nation: Id) {
 }
 
 export function publicWorksCheck(w: World, c: Citizen): string | null {
+  const tooYoung = lifeGate(w, c, 16, 'Public works');
+  if (tooYoung) return tooYoung;
   if (jailed(w, c)) return 'You are in prison.';
   const nat = controller(w.regions[c.loc]);
   const n = w.nations[nat];

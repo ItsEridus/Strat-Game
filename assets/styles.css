@@ -292,3 +292,24 @@ ul.news li { padding: .25rem 0; border-bottom: 1px solid var(--line); }
 .memories li { padding: .2rem 0; border-bottom: 1px solid var(--line); font-size: .85rem; }
 .convo-mem { margin: 0; padding: .3rem .8rem; border-bottom: 1px solid var(--line); }
 .update-banner { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; padding: .4rem 1rem; background: #2a2310; border-bottom: 1px solid var(--accent); font-size: .85rem; }
+
+/* life: long advances, the hub, the annual review */
+.advance-banner { display: grid; grid-template-columns: 1fr auto; gap: .3rem 1rem; align-items: center; padding: .45rem 1rem; background: #13202b; border-bottom: 1px solid var(--blue); font-size: .85rem; }
+.advance-banner.stopped { background: #2a2310; border-bottom-color: var(--accent); }
+.advance-bar { grid-column: 1 / -1; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.advance-bar i { display: block; height: 100%; background: var(--blue); transition: width .2s linear; }
+.advance-actions { display: flex; gap: .4rem; grid-row: 1; grid-column: 2; }
+.dropdown button.strong { font-weight: 650; }
+.dropdown .row.pad button { width: auto; flex: 1; justify-content: center; border: 1px solid var(--line); }
+.row.between { justify-content: space-between; }
+.row.wrap { flex-wrap: wrap; }
+.gauge { margin: .5rem 0; }
+.gauge .why { display: block; margin-top: .15rem; }
+.panel.hero { background: linear-gradient(135deg, #1f2733, #171d26 60%); }
+.milestones { padding-left: 1rem; margin: .2rem 0; }
+.milestones li { margin: .2rem 0; }
+.modal.review { max-width: 620px; border-color: var(--accent); background: linear-gradient(180deg, #221d12, var(--panel) 35%); }
+.modal.review header h2 { font-size: 1.6rem; }
+.review-lines { padding-left: 1.1rem; }
+.review-lines li { margin: .3rem 0; }
+.modal.review footer { margin-top: 1rem; justify-content: flex-end; }

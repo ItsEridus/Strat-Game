@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { routineOf, setLifePace } from '../../sim/lifecycle';
 import { census } from '../../sim/census';
 import { UpdateSettings } from '../Updates';
 import type { World } from '../../sim/types';
@@ -68,7 +69,10 @@ function Game({ w }: { w: World }) {
   return (
     <div class="form">
       <label>Month length (days) <Select value={s.monthLen} options={[[20, '20'], [30, '30 (default)'], [40, '40']]} onChange={(v) => { s.monthLen = v; store.emit(); }} /></label>
-      <label class="check"><input type="checkbox" checked={s.autoTrain} onChange={() => { s.autoTrain = !s.autoTrain; store.emit(); }} /> Automatic first daily training</label>
+      <label class="check"><input type="checkbox" checked={routineOf(w).train} onChange={() => { const r = routineOf(w); r.train = !r.train; s.autoTrain = r.train; store.emit(); }} /> Automatic first daily training</label>
+      <label>Pace of life <Select value={s.lifeYearDays ?? 365} options={[[24, 'Brisk (24 days a year)'], [36, 'Lifetime (36)'], [72, 'Unhurried (72)'], [365, 'Real time (365)']]} onChange={(v) => { setLifePace(w, v); store.emit(); }} /></label>
+      <label>Long advances stop for <Select value={s.advanceStops ?? 'personal'} options={[['personal', 'Personal matters only (default)'], ['all', 'Everything set to pause below']]} onChange={(v) => { s.advanceStops = v; store.emit(); }} /></label>
+      <p class="small muted">How many days of world time make one year of age. Changing it keeps everyone's current age; people simply age faster or slower from now on. The economy and elections keep their own calendar.</p>
       <p class="small muted">{s.fixedFate ? `Reproducible world (seed ${w.seed}) · ` : 'Living world (unscripted) · '}difficulty {s.difficulty} · {census(w).all.length} citizens · advanced systems: {Object.entries(s.advanced).filter(([, v]) => v).map(([k]) => k).join(', ') || 'none'}.</p>
       <p class="small muted">Elections follow the calendar: president day {B.politics.days.president}, party leaders day {B.politics.days.party}, congress day {B.politics.days.congress} of each month.</p>
     </div>

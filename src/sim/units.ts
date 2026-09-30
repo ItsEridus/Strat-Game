@@ -1,6 +1,7 @@
 // Military units: named AI citizens in squads, a commander with orders and a
 // doctrine, a shared supply store, and squad specialisations. Bonuses apply only
 // when fighting on the ordered side in the assigned battle.
+import { lifeGate } from './lifecycle';
 import { repNeed, standing } from './growth';
 import type { Citizen, Id, Unit, World } from './types';
 import { census } from './census';
@@ -36,6 +37,8 @@ export function createUnit(w: World, commander: Citizen, name?: string): Unit {
 }
 
 export function foundUnitCheck(w: World, c: Citizen): string | null {
+  const tooYoung = lifeGate(w, c, 18, 'Founding a military unit');
+  if (tooYoung) return tooYoung;
   if (c.unit != null) return 'Leave your current unit first.';
   if (standing(c) < 15 && c.mil.rank < 3 && c.power < 20) return `Nobody would enlist with you yet: you need ${repNeed(15)}, a military rank, or a fighter's name (training power 20+).`;
   if ((c.wallet[GOLD] ?? 0) < g(B.units.cost)) return `Founding a unit costs ${B.units.cost} gold.`;
@@ -63,6 +66,8 @@ function addMember(u: Unit, c: Citizen) {
 }
 
 export function joinCheck(w: World, c: Citizen, u: Unit | undefined): string | null {
+  const tooYoung = lifeGate(w, c, 18, 'Joining a military unit');
+  if (tooYoung) return tooYoung;
   if (!u) return 'Unit not found.';
   if (c.unit != null) return 'Leave your current unit first.';
   if (u.nation !== c.nation) return 'Units recruit their own citizens only.';

@@ -9,6 +9,7 @@
 // citizens, feud with each other and get raided. Crimes (by AI citizens and the
 // player) open cases; evidence builds with policing; arrests lead to trials with
 // fines and prison. AI and player use the same functions.
+import { lifeGate } from './lifecycle';
 import type { Case, Citizen, CrimeKind, Id, Syndicate, World } from './types';
 import { localNews } from './life';
 import { census, nationals, officersOf, presentIn, residents, invalidateCensus } from './census';
@@ -170,6 +171,8 @@ function attempt(w: World, c: Citizen, kind: CrimeKind, base: number, heat: numb
 }
 
 export function crimeCheck(w: World, c: Citizen, kind: keyof typeof CRIMES): string | null {
+  const tooYoung = lifeGate(w, c, 18, 'Crime');
+  if (tooYoung) return tooYoung;
   const def = CRIMES[kind];
   if (jailed(w, c)) return 'You are in prison.';
   if (c.energy < def.energy) return `Needs ${def.energy} energy.`;
@@ -253,6 +256,8 @@ export function removeMember(w: World, s: Syndicate, c: Citizen) {
 }
 
 export function jobCheck(w: World, c: Citizen, job: keyof typeof SYND_JOBS): string | null {
+  const tooYoung = lifeGate(w, c, 18, 'Organised crime');
+  if (tooYoung) return tooYoung;
   const s = c.sec.syndicate != null ? w.syndicates[c.sec.syndicate] : null;
   const def = SYND_JOBS[job];
   if (!s) return 'Only members of an organisation get jobs.';
@@ -321,6 +326,8 @@ function promote(w: World, s: Syndicate, c: Citizen) {
 // ---------- police service ----------
 
 export function joinPoliceCheck(w: World, c: Citizen): string | null {
+  const tooYoung = lifeGate(w, c, 18, 'Police service');
+  if (tooYoung) return tooYoung;
   const r = w.regions[c.loc];
   if (c.sec.police != null) return 'You already serve.';
   if (c.sec.syndicate != null) return 'Known associates of organised crime are not hired.';
@@ -350,6 +357,8 @@ export function leavePolice(w: World, c: Citizen): Result {
 }
 
 export function patrolCheck(w: World, c: Citizen): string | null {
+  const tooYoung = lifeGate(w, c, 18, 'Police patrols');
+  if (tooYoung) return tooYoung;
   if (c.sec.police == null) return 'Join the police first.';
   if (c.loc !== c.sec.police) return `You serve in ${w.regions[c.sec.police].name}; go there to patrol.`;
   if (jailed(w, c)) return 'You are in prison.';
@@ -387,6 +396,8 @@ export function patrol(w: World, c: Citizen): Result {
 }
 
 export function investigateCheck(w: World, c: Citizen, caseId: Id): string | null {
+  const tooYoung = lifeGate(w, c, 18, 'Police investigations');
+  if (tooYoung) return tooYoung;
   const k = w.cases[caseId];
   if (c.sec.police == null || c.sec.prank < 2) return 'Only detectives (rank 2+) investigate cases.';
   if (!k || k.status !== 'open') return 'No open case.';

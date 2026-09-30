@@ -4,6 +4,7 @@
 // residents stand for a slice of their region's electorate, so persuading them
 // moves real votes: state elections blend the residents' choices with the
 // region's standing mood, and national voters weigh relationships and pledges.
+import { lifeGate } from './lifecycle';
 import { bump } from './progress';
 import type { Citizen, Convo, Id, Ideology, World } from './types';
 import { localNews } from './life';
@@ -435,6 +436,8 @@ export function holdRally(w: World, issue: Issue): Result {
 }
 
 export function canvassCheck(w: World, p: Citizen): string | null {
+  const tooYoung = lifeGate(w, p, 18, 'Canvassing');
+  if (tooYoung) return tooYoung;
   if (jailed(w, p)) return 'You are in prison.';
   if (w.player.lastCanvass === today(w)) return 'You already went door to door today.';
   if (p.energy < B.social.canvassEnergy) return `Needs ${B.social.canvassEnergy} energy.`;

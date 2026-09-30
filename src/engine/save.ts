@@ -4,10 +4,11 @@
 // a small description of each slot is kept in localStorage so menus can list
 // saves instantly. Saves made by older versions in localStorage still load.
 // Saves can also be exported and imported as files.
+import { newLifeState } from '../sim/lifecycle';
 import { initFamilies, initPlayerFamily } from '../sim/family';
 import { initPopulation } from '../sim/population';
 import { autoAllocate } from '../sim/worldgen';
-import { YEAR } from '../sim/growth';
+import { lifeYear } from '../sim/growth';
 import { B } from '../data/balance';
 import LZ from 'lz-string';
 import type { World } from '../sim/types';
@@ -55,15 +56,19 @@ function migrate(w: World, from: number): World {
     for (const c of Object.values(w.citizens)) {
       const o = c as typeof c & { level?: number; xp?: number; attrPts?: number };
       if (o.attrPts) autoAllocate(c, o.attrPts);
-      const age = (w.time - c.born) / YEAR;
-      if (c.player) { if (age < B.life.adultAge) c.born = w.time - B.life.playerAge * YEAR; }
-      else if (age < B.life.adultAge) c.born = w.time - (B.life.adultAge + Math.min(40, (o.level ?? 1) * 1.5 + (c.id % 7))) * YEAR;
+      const age = (w.time - c.born) / lifeYear(w);
+      if (c.player) { if (age < B.life.adultAge) c.born = w.time - B.life.playerAge * lifeYear(w); }
+      else if (age < B.life.adultAge) c.born = w.time - (B.life.adultAge + Math.min(40, (o.level ?? 1) * 1.5 + (c.id % 7))) * lifeYear(w);
       delete o.level; delete o.xp; delete o.attrPts;
     }
     for (const t of Object.values(w.tournaments)) { const o = t as typeof t & { minLevel?: number }; if (t.minPower == null) t.minPower = B.tournaments.power; delete o.minLevel; }
     initFamilies(w);
     initPlayerFamily(w);
     initPopulation(w);
+    w.life = newLifeState();
+    w.player.routine = { work: false, train: w.settings.autoTrain, family: false, rest: false, hobby: null, school: false };
+    if (w.settings.pauseOn.life == null) w.settings.pauseOn.life = true;
+    if (w.settings.notifyFilter.life == null) w.settings.notifyFilter.life = true;
     for (const q of [...w.player.dailies]) { const r = q.reward as typeof q.reward & { xp?: number }; if (r.xp) { r.rep = Math.max(1, Math.round(r.xp / 5)); delete r.xp; } }
   }
   w.version = SAVE_VERSION;

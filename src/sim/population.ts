@@ -20,7 +20,7 @@ import { notify, record } from '../engine/events';
 import { chance, pick, rand, randInt, weighted } from '../engine/rng';
 import { census, companiesIn, invalidateCensus, residents } from './census';
 import { controller, cref, jailed, natref, player, today } from './query';
-import { YEAR, ageOf, isAdult, seniority } from './growth';
+import { lifeYear, ageOf, isAdult, seniority } from './growth';
 import { autoAllocate, newCitizen, residentsFor } from './worldgen';
 import { localNews } from './life';
 import { quitJob } from './company';
@@ -49,6 +49,7 @@ function healthTarget(w: World, c: Citizen): number {
   let t = 96 - Math.max(0, age - 45) * 0.9 + r.bld.hospital * 2 - Math.max(0, r.pollution - 40) * 0.15;
   if (sick?.has(c.home)) t -= 15;
   if (c.energy < 10) t -= 5; // exhausted and hungry
+  t -= Math.max(0, (c.life?.stress ?? 25) - 65) * 0.3; // long strain wears people down
   return Math.max(5, Math.min(100, t));
 }
 
@@ -60,7 +61,7 @@ export function healthLabel(h: number) {
 export function mortality(w: World, c: Citizen): number {
   const age = ageOf(w, c);
   const yearly = 0.0003 * Math.exp(0.09 * (age - 30)) * (1 + Math.max(0, 60 - healthOf(c)) / 15);
-  return Math.min(0.2, (yearly / 365) * B.life.pace);
+  return Math.min(0.2, yearly / (w.settings.lifeYearDays ?? 365));
 }
 
 // ---------- targets: how many people a region can hold ----------
@@ -245,7 +246,7 @@ export function newResident(w: World, nation: Nation, rid: Id, opts: { name?: st
   const name = opts.name ?? `${pick(w, pool.first)} ${pick(w, pool.last)}`;
   const persona = opts.persona ?? weighted(w, PERSONAS, (x) => x[1])![0];
   const c = newCitizen(w, name, nation.id, rid, persona, opts.ideo ?? pick(w, IDEOLOGY_LIST));
-  c.born = w.time - (opts.age ?? 18) * YEAR - randInt(w, 0, 300) * DAY;
+  c.born = w.time - (opts.age ?? 18) * lifeYear(w) - randInt(w, 0, Math.max(0, (w.settings.lifeYearDays ?? 365) - 2)) * DAY;
   autoAllocate(c, 2 + seniority(w, c) * rand(w, 0.8, 1.6));
   c.eco = +(1 + seniority(w, c) * rand(w, 0.05, 0.2)).toFixed(2);
   c.influence = Math.round(rand(w, 0, 5) + seniority(w, c) * 0.3);
@@ -282,7 +283,7 @@ function immigrant(w: World, r: Region) {
   if (chance(w, 0.3)) {
     const d = newResident(w, n, r.id, { name: `${pick(w, pool.first)} ${name.split(' ').slice(-1)[0]}`, age: Math.max(18, ageOf(w, c) + randInt(w, -5, 5)), savings: randInt(w, 30, 150) });
     fam(c).partner = d.id; fam(c).status = 'married'; fam(d).partner = c.id; fam(d).status = 'married';
-    fam(c).since = fam(d).since = w.time - randInt(w, 1, 10) * YEAR;
+    fam(c).since = fam(d).since = w.time - randInt(w, 1, 10) * lifeYear(w);
   }
   return c;
 }
@@ -340,7 +341,7 @@ export function populationDaily(w: World) {
   for (const c of all) {
     const f = c.family;
     if (!f?.kids.length) continue;
-    for (const k of [...f.kids]) if (w.time - k.born >= B.life.adultAge * YEAR) kidComesOfAge(w, c, k);
+    for (const k of [...f.kids]) if (w.time - k.born >= B.life.adultAge * lifeYear(w)) kidComesOfAge(w, c, k);
   }
   // Regions: how attractive they are, and people coming and going accordingly.
   let targetSum = 0, baseSum = 0;
@@ -367,7 +368,7 @@ export function populationDaily(w: World) {
     // Departures: people leave shrinking or troubled places for better ones.
     const outflow = n <= Math.max(3, target * 0.5) ? 0 : rate * (gap > 0.25 ? 0.4 : 1) * (1 + Math.max(0, -gap) * 5 + Math.max(0, -(r.draw ?? 0)) * 3);
     for (const c of outflow > 0 ? people : []) {
-      if (c.gone || c.home !== r.id || !chance(w, outflow)) continue;
+      if (c.gone || c.home !== r.id || !chance(w, outflow * (1 + Math.max(0, 40 - (c.life?.happiness ?? 60)) / 40))) continue;
       if (!canEmigrate(w, c)) continue;
       const nat = controller(r);
       const roll = next3(w);

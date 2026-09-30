@@ -2,6 +2,7 @@
 // events fire in (time, sequence) order, then per-tick, hourly and daily rules
 // run. Advancing N days in one call processes exactly the same steps as N
 // separate one-day calls, so results do not depend on how time is advanced.
+import { routineOf } from './lifecycle';
 import type { World } from './types';
 import { B } from '../data/balance';
 import { DAY, HOUR, TICK, dayOf, hourOf } from '../engine/clock';
@@ -41,7 +42,7 @@ function hourly(w: World) {
   if (h === 7) entrepreneurship(w);
   if (h === 6) centralBank(w);
   const p = player(w);
-  if (w.settings.autoTrain && h === p.trainHour && p.lastTrainDay !== dayOf(w.time) && p.energy >= B.cost.train) train(w, p);
+  if (routineOf(w).train && h === p.trainHour && p.lastTrainDay !== dayOf(w.time) && p.energy >= B.cost.train) train(w, p);
   for (const f of hourlyHooks) f(w);
   checkProgress(w);
 }

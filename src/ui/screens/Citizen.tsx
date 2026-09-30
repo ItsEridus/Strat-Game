@@ -1,4 +1,5 @@
 import type { World } from '../../sim/types';
+import { askOut, romanceCheck } from '../../sim/family';
 import { ageOf, reputation } from '../../sim/growth';
 import { Amt, NationChip, Panel, RegionLink, Stat } from '../common';
 import { store } from '../store';
@@ -51,6 +52,7 @@ export function CitizenProfile({ w }: { w: World }) {
       {!c.player && <Panel title={`💭 What ${c.name.split(' ')[0]} remembers about you`}>
         {memoriesOf(w, c.id).length ? <ul class="memories">{memoriesOf(w, c.id).slice().reverse().map((m) => <li><span class={m.delta > 0 ? 'good' : m.delta < 0 ? 'bad' : 'muted'}>{m.delta > 0 ? '▲' : m.delta < 0 ? '▼' : '•'}</span> You {m.text} <small class="muted">(day {Math.floor(m.t / 1440)}{m.visibility === 'public' ? ', public' : ''})</small></li>)}</ul> : <p class="muted small">Nothing in particular yet. First impressions are made in conversation and in what you do.</p>}
         {!c.player && c.loc === p.loc && <ActBtn small why={talkCheck(w, p, c)} run={(w) => startTalk(w, c.id)}>💬 Talk</ActBtn>}
+        {!c.player && !c.gone && p.family?.partner !== c.id && <ActBtn small why={romanceCheck(w, p, c, 'ask')} run={(w) => askOut(w, c.id)}>💕 Ask out</ActBtn>}
       </Panel>}
       <CitizenExtras w={w} c={c} />
     </div>

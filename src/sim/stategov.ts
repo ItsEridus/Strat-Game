@@ -277,6 +277,8 @@ export function eligibleCandidate(w: World, cid: Id, rid: Id): string | null {
   const r = w.regions[rid];
   const s = w.govs[rid];
   const tpl = govTemplate(w, rid);
+  if (!c || c.gone) return 'No such person.';
+  if (!isAdult(w, c)) return `Candidates must be ${B.life.adultAge} or older.`;
   if (!s || !tpl) return `${r.name} has no regional government.`;
   if (jailed(w, c)) return 'Prisoners cannot stand for office.';
   if (tpl.mode !== 'elected') return `The ${tpl.title} of ${r.name} is appointed by the national government.`;

@@ -9,6 +9,7 @@
 // Exposure causes diplomatic incidents and arrests. Citizens (AI and player) can
 // join their service and climb from analyst to deputy director, and foreign
 // services try to turn well-placed citizens into double agents.
+import { lifeGate } from './lifecycle';
 import { ageOf, repNeed, seniority, standing } from './growth';
 import type { Citizen, Id, OpKind, SpyOp, World } from './types';
 import { census, nationals } from './census';
@@ -300,6 +301,8 @@ export function leaveAgency(w: World, c: Citizen): Result {
 }
 
 export function analyzeCheck(w: World, c: Citizen, target: Id): string | null {
+  const tooYoung = lifeGate(w, c, 18, 'Intelligence work');
+  if (tooYoung) return tooYoung;
   if (c.sec.agency == null) return 'Join the intelligence service first.';
   if (target === c.sec.agency || !w.nations[target]) return 'Pick a foreign nation.';
   if (c.energy < 10) return 'Needs 10 energy.';

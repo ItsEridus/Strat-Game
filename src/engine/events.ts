@@ -24,6 +24,7 @@ export const NOTICE_CATS: Record<string, { label: string; pauseDefault: boolean 
   market: { label: 'Trades & auctions', pauseDefault: false },
   inbox: { label: 'Messages needing a reply', pauseDefault: true },
   encounter: { label: 'Situations needing a decision', pauseDefault: true },
+  life: { label: 'Birthdays & life events', pauseDefault: true },
   progress: { label: 'Rewards & progression', pauseDefault: false },
 };
 
@@ -32,8 +33,15 @@ export function notify(w: World, cat: string, text: string, opts: { link?: strin
   const critical = opts.critical ?? false;
   w.notices.unshift({ id: nid(w), t: w.time, text, cat, critical, link: opts.link });
   if (w.notices.length > 250) w.notices.length = 250;
-  if (w.settings.pauseOn[cat] || critical) pauseRequest.flag = true;
+  if (!(w.settings.pauseOn[cat] || critical)) return;
+  // During a long advance (to a birthday, a month ahead) only personal matters stop the clock,
+  // unless the player asked to stop for everything; world news is summarised in the annual review.
+  if (w.life?.advance && w.settings.advanceStops !== 'all' && !PERSONAL_STOPS.has(cat)) return;
+  pauseRequest.flag = true;
 }
+
+/** Notice categories that interrupt a long advance: decisions that are yours to make. */
+export const PERSONAL_STOPS = new Set(['office', 'inbox', 'encounter', 'life', 'personal']);
 
 /** Set by notify(); the time loop checks and clears it to stop advancement. */
 export const pauseRequest = { flag: false };

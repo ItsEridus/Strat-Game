@@ -13,6 +13,7 @@
 // through real rank ladders to command formations; the most senior officer
 // becomes chief of staff. AI defence ministries raise, supply, deploy and order
 // forces by the same rules the player's government uses.
+import { lifeGate } from './lifecycle';
 import { seniority, serviceDays } from './growth';
 import type { Battle, Branch, Citizen, Formation, FormationKind, Id, World } from './types';
 import { census, nationals, referenceSociety } from './census';
@@ -247,6 +248,8 @@ export function armyPath(w: World, f: Formation, to: Id): Id[] {
 }
 
 export function commandCheck(w: World, c: Citizen, fid: Id): string | null {
+  const tooYoung = lifeGate(w, c, 18, 'Military command');
+  if (tooYoung) return tooYoung;
   const f = w.forces[fid];
   if (!f || f.nation !== c.nation) return 'Command formations of your own nation.';
   if (c.mil.branch !== f.branch) return `Only ${BRANCH_NAME[f.branch]} officers command it.`;
@@ -273,6 +276,8 @@ export function takeCommand(w: World, c: Citizen, fid: Id): Result {
 export const rankName = (c: Citizen) => (c.mil.branch ? RANKS[c.mil.branch][c.mil.rank].name : 'Civilian');
 
 export function enlistCheck(w: World, c: Citizen, branch: Branch): string | null {
+  const tooYoung = lifeGate(w, c, 18, 'Enlisting');
+  if (tooYoung) return tooYoung;
   if (c.mil.branch) return `You already serve in the ${BRANCH_NAME[c.mil.branch]}.`;
   if (jailed(w, c)) return 'You are in prison.';
   if (c.sec.record.convictions > 1) return 'Repeat offenders are not accepted.';
@@ -296,6 +301,8 @@ export function discharge(w: World, c: Citizen): Result {
 }
 
 export function dutyCheck(w: World, c: Citizen): string | null {
+  const tooYoung = lifeGate(w, c, 18, 'Military duty');
+  if (tooYoung) return tooYoung;
   if (!c.mil.branch) return 'Enlist first.';
   if (jailed(w, c)) return 'You are in prison.';
   if (c.mil.lastDuty === dayOf(w.time)) return 'You already reported for duty today.';

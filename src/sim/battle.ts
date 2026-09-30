@@ -4,6 +4,7 @@
 // the end of that tick (ties → defender). A round is won with more points
 // (≥2,401); the battle by the first side to win B.battle.roundsToWin rounds.
 // Damage, scoring points, round wins and the final outcome are kept distinct.
+import { lifeGate } from './lifecycle';
 import type { Battle, Citizen, Id, World } from './types';
 import { B } from '../data/balance';
 import { itemName } from '../data/items';
@@ -40,6 +41,8 @@ export const activeBattles = (w: World) => Object.values(w.battles).filter((b) =
 
 /** Can this citizen fight for `side`? Location rule (SOLO): be in territory controlled by that side or an ally. */
 export function fightCheck(w: World, c: Citizen, b: Battle | undefined, side: 'a' | 'd', weapon: WeaponSel): string | null {
+  const tooYoung = lifeGate(w, c, 18, 'Fighting in battles');
+  if (tooYoung) return tooYoung;
   if (jailed(w, c)) return 'You are in prison.';
   if (!b) return 'Battle not found.';
   if (b.done) return 'This battle is over.';

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import type { World } from '../sim/types';
 import type { Result } from '../engine/result';
-import { advance, advanceTo } from '../sim/tick';
+import { advance } from '../sim/tick';
 import { generateWorld } from '../sim/worldgen';
 import { registerSystems } from '../sim/systems';
 import { deserialize, latestSlot, loadFromSlot, saveToSlot, savesSettled, serialize } from '../engine/save';
@@ -51,8 +51,8 @@ class Store {
 
   get paused() { return !this.w || this.w.settings.paused || this.w.settings.speed === 0; }
 
-  newGame(seed: number | null, name: string, nation: number, citizensPerRegion: number, difficulty: World['settings']['difficulty'], advanced: World['settings']['advanced']) {
-    this.w = generateWorld(seed ?? entropy() % 1e9, name, nation, { citizensPerRegion, difficulty, advanced, fixedFate: seed != null });
+  newGame(seed: number | null, name: string, nation: number, citizensPerRegion: number, difficulty: World['settings']['difficulty'], advanced: World['settings']['advanced'], lifeYearDays = 36) {
+    this.w = generateWorld(seed ?? entropy() % 1e9, name, nation, { citizensPerRegion, difficulty, advanced, fixedFate: seed != null, lifeYearDays });
     this.tab = 'dashboard';
     this.save('autosave');
     this.emit();
@@ -148,17 +148,93 @@ class Store {
   }
 
   /** Jump the clock (event-based advancement). Stops early on pausing notifications. */
-  jump(minutes: number) {
+  jump(minutes: number, label = 'later') {
+    if (!this.w) return;
+    this.startAdvance(this.w.time + minutes, label);
+  }
+  jumpTo(t: number, label = 'the next event') {
+    this.startAdvance(t, label);
+  }
+  /** Synchronous advance for scripts and tests (blocks until done or a pausing event). */
+  advanceSync(minutes: number) {
     if (!this.w) return;
     stir(this.w);
     const r = advance(this.w, minutes, true);
     this.afterAdvance(r.stopped);
   }
-  jumpTo(t: number) {
-    if (!this.w) return;
-    stir(this.w);
-    const r = advanceTo(this.w, t, true);
-    this.afterAdvance(r.stopped);
+  advanceSyncTo(t: number) { if (this.w && t > this.w.time) this.advanceSync(t - this.w.time); }
+
+  // ---------- long advances (to a birthday, a week ahead…) ----------
+  // Time moves in short chunks of the same ten-minute steps as normal play,
+  // yielding to the window between chunks so it stays responsive. A pausing
+  // event stops the run where it is (the target is kept, so it can resume);
+  // cancelling stops at the time actually reached.
+  advRunning = false;
+  advStopped = '';
+  private advCancel = false;
+
+  startAdvance(target: number, label: string) {
+    const w = this.w;
+    if (!w || target <= w.time) return;
+    w.settings.paused = true;
+    w.life.advance = { target, from: w.time, label };
+    this.advStopped = '';
+    this.runAdvance();
+  }
+
+  resumeAdvance() {
+    if (!this.w?.life.advance) return;
+    this.advStopped = '';
+    this.runAdvance();
+  }
+
+  /** Stop running but keep the target (closing the window mid-advance: the save can resume it). */
+  cancelAdvanceKeepTarget() {
+    if (this.advRunning) this.advCancel = true;
+  }
+
+  cancelAdvance() {
+    if (this.w) this.w.life.advance = null;
+    this.advStopped = '';
+    if (this.advRunning) this.advCancel = true;
+    this.emit();
+  }
+
+  private runAdvance() {
+    if (this.advRunning) return;
+    this.advRunning = true;
+    this.emit();
+    const step = () => {
+      const w = this.w;
+      const a = w?.life.advance;
+      if (!w || !a || this.advCancel) { this.advRunning = false; this.advCancel = false; this.emit(); return; }
+      const t0 = Date.now();
+      let stopped = false;
+      while (w.time < a.target && Date.now() - t0 < 60) {
+        stir(w);
+        const r = advance(w, Math.min(60, a.target - w.time), true);
+        if (r.stopped) { stopped = true; break; }
+      }
+      if (w.time >= a.target) {
+        w.life.advance = null;
+        this.advRunning = false;
+        if (stopped) this.pauseReason = w.notices[0]?.text ?? '';
+        this.maybeAutosave();
+        this.emit();
+        return;
+      }
+      if (stopped) {
+        this.advRunning = false;
+        this.advStopped = w.notices[0]?.text ?? 'An important event';
+        this.pauseReason = this.advStopped;
+        this.maybeAutosave();
+        this.emit();
+        return;
+      }
+      this.emit();
+      setTimeout(step, 0);
+    };
+    setTimeout(step, 0);
   }
 
   private afterAdvance(stopped: boolean) {
@@ -175,7 +251,7 @@ class Store {
   /** Real-time loop tick (called every 100 ms). */
   loop(dtMs: number) {
     const w = this.w;
-    if (!w || this.paused) return;
+    if (!w || this.paused || this.advRunning) return;
     this.acc += (SPEEDS[w.settings.speed] * dtMs) / 1000;
     const whole = Math.floor(this.acc / 10) * 10;
     if (whole <= 0) return;
@@ -201,7 +277,7 @@ if (typeof window !== 'undefined') {
     if (document.hidden && store.w) { store.w.settings.paused = true; void store.save('autosave'); store.emit(); }
   });
   // The desktop window calls this on close and waits for the save to finish.
-  (window as any).__meridianSave = async () => { if (store.w) { store.w.settings.paused = true; await store.save('autosave'); } await savesSettled(); };
+  (window as any).__meridianSave = async () => { if (store.w) { store.w.settings.paused = true; if (store.advRunning) store.cancelAdvanceKeepTarget(); await store.save('autosave'); } await savesSettled(); };
 }
 
 /** Preact hook: re-render when the store changes. */

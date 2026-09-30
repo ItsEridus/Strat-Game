@@ -41,6 +41,7 @@ export interface Citizen {
   born: number;
   attrs: Record<Attr, number>; // skills, grown by practice (sim/growth.ts)
   health?: number; // 0..100 (sim/population.ts); undefined = 90
+  life?: LifeProfile; // personal life: wellbeing, milestones, hobbies, goals (sim/lifecycle.ts, sim/wellbeing.ts)
   family?: Family; // partner, parents, children (sim/family.ts)
   retired?: boolean;
   trip?: { until: number; why: string } | null; // travelling away from home (AI)
@@ -116,6 +117,41 @@ export interface Formation {
 }
 
 /** Law, underworld, intelligence and public-profile state of a citizen. */
+/** A person's private life. Created for the player and the people close to them; other citizens get one when something happens to them. */
+export interface LifeProfile {
+  happiness: number; // 0..100, personal satisfaction (not the same as Citizen.mood, which is about the government)
+  stress: number; // 0..100
+  aptitude: number; // learning aptitude 0..100
+  confidence: number; // social confidence 0..100
+  goals: string[]; // aspiration keys (data/life.ts)
+  milestones: Milestone[]; // durable record of a life (capped)
+  hobbies: Record<string, number>; // hobby key -> skill 0..100
+  lastAge?: number; // age at the last birthday processed
+  lastRest?: number; lastFamily?: number; lastHobby?: number; // cooldowns (day numbers)
+  why?: { happiness: string[]; stress: string[] }; // the main reasons for the current values
+  grief?: number; // recent loss, fades over time
+}
+export interface Milestone { t: number; age: number; kind: string; text: string }
+
+/** One year of a life, reviewed on a birthday. */
+export interface AnnualReview {
+  id: Id; who: Id; age: number; from: number; to: number;
+  lines: { kind: string; text: string }[]; // personal developments
+  world: string[]; // notable world events of the year
+  money: { start: number; end: number; cur: string };
+  seen?: boolean;
+}
+
+/** Personal routine: what the player does automatically each day (through the same validated actions as manual play). */
+export interface Routine { work: boolean; train: boolean; family: boolean; rest: boolean; hobby: string | null; school: boolean; jobHunt?: boolean }
+
+/** The life simulation's saved state (versioned with the world). */
+export interface LifeState {
+  reviews: AnnualReview[];
+  advance: { target: number; from: number; label: string } | null; // a long time advance in progress (resumable)
+  snap: { who: Id; t: number; age: number; cash: number; cur: string; job: string; status: string; kids: number; health: number; happiness: number } | null; // start of the current life year
+}
+
 /** Family ties. Children under 18 are not yet citizens: they live in `kids` until they come of age. */
 export interface Family {
   partner: Id | null;
@@ -550,6 +586,8 @@ export interface Settings {
   balance: Record<string, any>;
   notifyFilter: Record<string, boolean>;
   adminUsed?: boolean; // the admin panel changed this campaign
+  advanceStops?: 'personal' | 'all'; // what interrupts a long advance (default: personal matters only)
+  lifeYearDays?: number; // pace of life: world days per year of age (undefined = 365, for older saves)
   fixedFate?: boolean; // reproducible: never mix outside randomness into the world's dice (see ui/store.ts)
 }
 
@@ -578,6 +616,7 @@ export interface PlayerState {
   talked?: Record<Id, number>; // day the player last talked with each person
   lastRally?: number; // day of the player's last rally
   lastCanvass?: number; // day of the player's last canvassing round
+  routine?: Routine;
 }
 
 /** A conversation with an NPC: what has been said and what the player can say next. */
@@ -629,6 +668,7 @@ export interface World {
   playerId: Id;
   player: PlayerState;
   story: NarrativeState; // stories, journal, relationship memories, places (see sim/story.ts)
+  life: LifeState; // life simulation: reviews, long advances (see sim/lifecycle.ts)
   regions: Region[];
   govs: (StateGov | null)[]; // indexed by region id; null where there is no regional government
   syndicates: Record<Id, Syndicate>;

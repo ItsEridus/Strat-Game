@@ -1,6 +1,7 @@
 // Congress: deputies and the president draft proposals, vote, and enacted laws
 // change the simulation (taxes affect subsequent wages and sales, minimum wage
 // constrains job offers, printing mints currency, embargoes block trade…).
+import { lifeGate } from './lifecycle';
 import type { Citizen, Id, Nation, Proposal, ProposalType, World } from './types';
 import { B } from '../data/balance';
 import { IDEOLOGIES } from '../data/ideologies';
@@ -63,6 +64,8 @@ function estRevenue(w: World, n: Nation, _k: string, v: number) {
 }
 
 export function proposeCheck(w: World, c: Citizen, type: ProposalType, params: Record<string, any>): string | null {
+  const tooYoung = lifeGate(w, c, 18, 'Proposing laws');
+  if (tooYoung) return tooYoung;
   if (jailed(w, c)) return 'You are in prison.';
   const n = w.nations[c.nation];
   if (!n.deputies.includes(c.id) && n.president !== c.id) return 'Only deputies and the president can draft proposals.';
@@ -116,6 +119,8 @@ export function propose(w: World, c: Citizen, type: ProposalType, params: Record
 }
 
 export function voteCheck(w: World, c: Citizen, p: Proposal | undefined): string | null {
+  const tooYoung = lifeGate(w, c, 18, 'Voting in the legislature');
+  if (tooYoung) return tooYoung;
   if (!p) return 'Proposal not found.';
   if (p.status !== 'open') return 'Voting has closed.';
   const n = w.nations[p.nation];

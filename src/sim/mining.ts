@@ -2,6 +2,7 @@
 // yields gold (wiki 0.5 / 0.8) scaled by equipment, skill, studies and a global
 // multiplier. Mining blocks travel, fighting, market trading and donations but
 // allows work and training. Rewards are calculated once at completion.
+import { lifeGate } from './lifecycle';
 import type { Citizen, World } from './types';
 import { census } from './census';
 import { B } from '../data/balance';
@@ -27,6 +28,8 @@ export function miningPreview(w: World, c: Citizen, hours: 1 | 2) {
 }
 
 export function mineCheck(w: World, c: Citizen): string | null {
+  const tooYoung = lifeGate(w, c, 18, 'Mining');
+  if (tooYoung) return tooYoung;
   if (jailed(w, c)) return 'You are in prison.';
   if (c.mining) return 'Already mining.';
   if (c.loc !== c.mineSite) return `Your assigned site is ${w.regions[c.mineSite].name} (${distance(w, c.loc, c.mineSite)} regions away) — travel there first.`;

@@ -3,6 +3,7 @@
 // along borders, strikes, protests and riots driven by conditions on the ground,
 // internal migration, and new people arriving. Governments (AI or player)
 // respond with relief spending, lockdowns, crackdowns or concessions.
+import { lifeGate } from './lifecycle';
 import type { Citizen, Crisis, CrisisKind, Id, World } from './types';
 import { presentIn } from './census';
 import { B } from '../data/balance';
@@ -137,6 +138,8 @@ function reliefDaily(w: World) {
 }
 
 export function reliefCheck(w: World, c: Citizen, crisisId: Id): string | null {
+  const tooYoung = lifeGate(w, c, 13, 'Relief volunteering');
+  if (tooYoung) return tooYoung;
   const k = w.crises[crisisId];
   if (!k || k.status !== 'active' || !['hurricane', 'earthquake', 'flood', 'wildfire', 'blizzard', 'drought', 'epidemic'].includes(k.kind)) return 'No relief effort here.';
   if (!k.regions.includes(c.loc)) return `Relief work happens on the ground: go to ${k.regions.map((r) => w.regions[r].name).slice(0, 3).join(', ')}.`;
@@ -225,6 +228,8 @@ function epidemicsDaily(w: World) {
 }
 
 export function lockdownCheck(w: World, c: Citizen, rid: Id): string | null {
+  const tooYoung = lifeGate(w, c, 18, 'Ordering a lockdown');
+  if (tooYoung) return tooYoung;
   const s = w.govs[rid];
   const ep = activeCrises(w).find((k) => k.kind === 'epidemic' && k.regions.includes(rid));
   if (!s || s.head.cit !== c.id) return `Only the ${govTemplate(w, rid)?.title ?? 'head of government'} can order a lockdown.`;
@@ -352,6 +357,8 @@ function govResponse(w: World, rid: Id, c: Crisis) {
 }
 
 export function joinProtestCheck(w: World, c: Citizen): string | null {
+  const tooYoung = lifeGate(w, c, 16, 'Joining a protest');
+  if (tooYoung) return tooYoung;
   const k = activeCrises(w).find((x) => (x.kind === 'protest' || x.kind === 'riot') && x.regions.includes(c.loc));
   if (!k) return 'No protest here right now.';
   if (jailed(w, c)) return 'You are in prison.';

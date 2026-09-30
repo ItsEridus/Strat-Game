@@ -47,7 +47,7 @@ export const TUTORIAL: { text: string; metric: string; target: number; hint: str
   { text: 'Buy food on the market', metric: 'buy', target: 1, hint: 'Goods Market → Food. Purchases require being in that country.', tab: 'market', gold: 0.5 },
   { text: 'Eat to restore energy', metric: 'eat', target: 1, hint: 'Eating uses one allowance; allowance regenerates every 45 minutes.', tab: 'inventory', gold: 0.5 },
   { text: 'Exchange currency for gold (or gold for currency)', metric: 'fx', target: 1, hint: 'Currency Market: asks sell gold, bids buy gold.', tab: 'fx', gold: 0.5 },
-  { text: 'Join a political party', metric: 'inParty', target: 1, hint: 'Parties → Join. Members vote in party elections and can run for office.', tab: 'parties', gold: 0.5 },
+  { text: 'Join a political party', metric: 'inParty', target: 1, hint: 'Parties → Join. Members vote in party elections and can run for office.', tab: 'politics', gold: 0.5 },
   { text: 'Make a hit in any battle', metric: 'hit', target: 1, hint: 'Wars → choose a battle → Attack. Each hit uses a weapon if one is selected.', tab: 'wars', gold: 0.5 },
   { text: 'Found your first company', metric: 'found', target: 1, hint: 'Companies → Found. The tutorial reward covers a Q1 company.', tab: 'companies', gold: 2 },
 ];

@@ -2,6 +2,7 @@
 // newspapers, gear and shares. The sender's side is escrowed at creation;
 // acceptance moves both sides in one operation; cancel/reject/expiry releases
 // the escrow. NPC recipients decide by value and relationship.
+import { lifeGate } from './lifecycle';
 import { standing } from './growth';
 import type { Citizen, Consideration, Contract, Id, World } from './types';
 import { census } from './census';
@@ -56,6 +57,8 @@ export function deliverable(w: World, c: Citizen, x: Consideration): string | nu
 }
 
 export function createCheck(w: World, from: Citizen, toId: Id, give: Consideration, want: Consideration): string | null {
+  const tooYoung = lifeGate(w, from, 18, 'Signing contracts');
+  if (tooYoung) return tooYoung;
   const to = w.citizens[toId];
   if (!to || to.id === from.id) return 'Choose another citizen.';
   if (isEmpty(give) && isEmpty(want)) return 'The contract is empty.';

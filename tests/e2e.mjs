@@ -42,7 +42,7 @@ const stops = await page.evaluate(() => {
   // Critical alerts (e.g. an attack on your nation) stop an advance; keep going like a player pressing play again.
   const s = window.meridian; s.w.settings.pauseOn = {};
   const end = s.w.time + 45 * 1440, reasons = [];
-  for (let i = 0; i < 20 && s.w.time < end; i++) { s.jumpTo(end); if (s.w.time < end) reasons.push(s.pauseReason); }
+  for (let i = 0; i < 20 && s.w.time < end; i++) { s.advanceSyncTo(end); if (s.w.time < end) reasons.push(s.pauseReason); }
   s.w.story.settings.frequency = 'off'; for (const i of Object.values(s.w.story.instances)) if (i.status === 'offered' || i.status === 'active') i.status = 'declined'; s.emit();
   return reasons;
 });

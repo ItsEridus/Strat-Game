@@ -4,6 +4,7 @@
 // stored warheads in the target and damages connected regions. Stockpile
 // sabotage (defusal) targets stored warheads only — interception of missiles in
 // flight is not modelled, since sources don't establish it.
+import { lifeGate } from './lifecycle';
 import type { Citizen, Id, World } from './types';
 import { B } from '../data/balance';
 import { IDEOLOGIES } from '../data/ideologies';
@@ -122,6 +123,8 @@ export function onNukeArrive(w: World, id: Id) {
 
 // ---------- espionage ----------
 export function reconCheck(w: World, c: Citizen, target: Id): string | null {
+  const tooYoung = lifeGate(w, c, 18, 'Nuclear reconnaissance');
+  if (tooYoung) return tooYoung;
   if (!w.settings.advanced.nuclear) return 'Espionage is part of the disabled nuclear system.';
   if (!studyActive(w, c, 'secretagent')) return 'Requires the Secret Agent study (Academy).';
   if (w.regions[c.loc].bld.base < B.buildings.nukeLevel) return `Requires a level-${B.buildings.nukeLevel} military base at your location.`;
@@ -150,6 +153,8 @@ export function recon(w: World, c: Citizen, target: Id): Result {
 }
 
 export function defuseCheck(w: World, c: Citizen, target: Id, region: Id): string | null {
+  const tooYoung = lifeGate(w, c, 18, 'Defusing warheads');
+  if (tooYoung) return tooYoung;
   if (!studyActive(w, c, 'secretagent')) return 'Requires the Secret Agent study.';
   if ((c.flags.intel ?? 0) < B.spy.defuseIntel) return `Needs ${B.spy.defuseIntel} intelligence (from reconnaissance).`;
   if ((c.wallet[GOLD] ?? 0) < g(B.spy.defuseGold)) return `Needs ${B.spy.defuseGold} gold.`;

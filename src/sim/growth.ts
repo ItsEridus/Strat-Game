@@ -10,10 +10,20 @@ import { B } from '../data/balance';
 import { DAY } from '../engine/clock';
 import { notify } from '../engine/events';
 
-export const YEAR = 365 * DAY;
+/**
+ * Length of a life year in world time. Each campaign sets its pace of life
+ * (Settings.lifeYearDays): the economy and politics keep their calendar, while
+ * people age one year every `lifeYearDays` days, so a whole life (and the next
+ * generation) fits in a campaign. Saves from before this setting use 365.
+ */
+export const lifeYear = (w: World) => (w.settings.lifeYearDays ?? 365) * DAY;
 
-/** Age in whole years. */
-export const ageOf = (w: World, c: Citizen) => Math.floor((w.time - c.born) / YEAR);
+/** Age in whole years (negative birth times are people born before the campaign began). */
+export const ageOf = (w: World, c: { born: number }) => Math.floor((w.time - c.born) / lifeYear(w));
+/** Exact age in years (fractional). */
+export const ageExact = (w: World, c: { born: number }) => (w.time - c.born) / lifeYear(w);
+/** When someone next has a birthday. */
+export const nextBirthday = (w: World, c: { born: number }) => c.born + (ageOf(w, c) + 1) * lifeYear(w);
 export const isAdult = (w: World, c: Citizen) => ageOf(w, c) >= B.life.adultAge;
 export const cleanRecord = (c: Citizen) => c.sec.record.convictions === 0;
 

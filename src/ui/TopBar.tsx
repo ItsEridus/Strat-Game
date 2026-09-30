@@ -1,11 +1,11 @@
 import { useState } from 'preact/hooks';
 import { SPEED_LABELS, store, useStore } from './store';
 import { Bar, Amt } from './common';
-import { fmtClock, fmtDur } from '../engine/clock';
+import { DAY, fmtClock, fmtDur } from '../engine/clock';
 import { GOLD } from '../engine/money';
 import { allowanceCap, allowanceEta, energyEta } from '../sim/citizen';
 import { controller, maxEnergy, player } from '../sim/query';
-import { ageOf, reputation } from '../sim/growth';
+import { ageOf, nextBirthday, reputation } from '../sim/growth';
 import { upcoming } from './upcoming';
 
 export function TopBar({ onMenu }: { onMenu: () => void }) {
@@ -34,8 +34,16 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
             <button onClick={() => setOpen(!open)} title="Advance time to an event">⏭ Advance</button>
             {open && (
               <div class="dropdown" onMouseLeave={() => setOpen(false)}>
+                <button class="strong" onClick={() => { setOpen(false); store.startAdvance(nextBirthday(w, p), `your ${ageOf(w, p) + 1}th birthday`); }}>
+                  <span>🎂 Next birthday (age {ageOf(w, p) + 1})</span><small>in {fmtDur(nextBirthday(w, p) - w.time)}</small>
+                </button>
+                <div class="row pad">
+                  <button onClick={() => { setOpen(false); store.jump(DAY, 'tomorrow'); }}>+1 day</button>
+                  <button onClick={() => { setOpen(false); store.jump(7 * DAY, 'a week from now'); }}>+1 week</button>
+                  <button onClick={() => { setOpen(false); store.jump(30 * DAY, 'a month from now'); }}>+30 days</button>
+                </div>
                 {ups.slice(0, 14).map((u) => (
-                  <button onClick={() => { setOpen(false); store.jumpTo(u.t); }}>
+                  <button onClick={() => { setOpen(false); store.jumpTo(u.t, u.label); }}>
                     <span>{u.label}</span><small>in {fmtDur(u.t - w.time)}</small>
                   </button>
                 ))}

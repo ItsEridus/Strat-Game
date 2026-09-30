@@ -23,7 +23,7 @@ await page.evaluate(() => {
   const s = window.meridian;
   s.w.settings.pauseOn = {};
   const end = s.w.time + 60 * 1440;
-  for (let i = 0; i < 40 && s.w.time < end; i++) s.jumpTo(end);
+  for (let i = 0; i < 40 && s.w.time < end; i++) s.advanceSyncTo(end);
   s.w.story.settings.frequency = 'off'; for (const i of Object.values(s.w.story.instances)) if (i.status === 'offered' || i.status === 'active') i.status = 'declined'; s.emit();
 });
 const shot = async (nav, file, prep, full = false) => {
@@ -58,7 +58,7 @@ await page.mouse.move(1435, 895);
 await page.screenshot({ path: `${out}/conversation.png` });
 await page.click('.convo .choice:has-text("Say goodbye")');
 // A situation that needs a decision.
-await page.evaluate(() => { const s = window.meridian; s.w.story.settings.frequency = 'normal'; s.w.settings.pauseOn = { encounter: true }; s.w.story.nextAmbient = s.w.time; const open = () => Object.values(s.w.story.instances).find((i) => i.status === 'offered'); for (let i = 0; i < 72 && !open(); i++) s.jump(60); s.emit(); return open()?.def ?? null; });
+await page.evaluate(() => { const s = window.meridian; s.w.story.settings.frequency = 'normal'; s.w.settings.pauseOn = { encounter: true }; s.w.story.nextAmbient = s.w.time; const open = () => Object.values(s.w.story.instances).find((i) => i.status === 'offered'); for (let i = 0; i < 72 && !open(); i++) s.advanceSync(60); s.emit(); return open()?.def ?? null; });
 await page.waitForTimeout(200);
 await page.mouse.move(1435, 895);
 await page.screenshot({ path: `${out}/encounter.png` });

@@ -1,6 +1,7 @@
 // Regional construction: governments start projects; anyone contributes labour
 // (energy → points) or materials. A project completes exactly once, consuming
 // its materials and raising the building level.
+import { lifeGate } from './lifecycle';
 import type { AccountRef, BuildingType, Citizen, Id, Nation, Project, World } from './types';
 import { B } from '../data/balance';
 import { IDEOLOGIES } from '../data/ideologies';
@@ -75,6 +76,8 @@ export function laborPoints(w: World, c: Citizen, p: Project): number {
 }
 
 export function laborCheck(w: World, c: Citizen, p: Project | undefined): string | null {
+  const tooYoung = lifeGate(w, c, 16, 'Construction work');
+  if (tooYoung) return tooYoung;
   if (jailed(w, c)) return 'You are in prison.';
   if (!p) return 'Project not found.';
   if (p.done) return 'This project is complete.';

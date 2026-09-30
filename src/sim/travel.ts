@@ -1,5 +1,6 @@
 // Travel and citizenship. Location (where you are) and citizenship (who you
 // belong to) are separate. Travel shows methods, ticket use and energy first.
+import { lifeGate } from './lifecycle';
 import { ageOf } from './growth';
 import type { Citizen, Id, World } from './types';
 import { invalidateCensus } from './census';
@@ -82,6 +83,8 @@ export function travel(w: World, c: Citizen, dest: Id, method: string): Result {
 
 // ---------- citizenship ----------
 export function citizenshipCheck(w: World, c: Citizen, nation: Id): string | null {
+  const tooYoung = lifeGate(w, c, 18, 'Applying for citizenship');
+  if (tooYoung) return tooYoung;
   const n = w.nations[nation];
   if (!n) return 'Unknown nation.';
   if (c.nation === nation) return 'You are already a citizen.';

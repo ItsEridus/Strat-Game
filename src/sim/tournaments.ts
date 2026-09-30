@@ -1,6 +1,7 @@
 // Stadium tournaments on the simulated calendar. Entrants (AI and player) fight
 // bracket bouts with organiser-issued Q2 weapons (not consumed) and a fixed
 // hit budget, so supplies are equal and builds decide. Fees fund the prize pool.
+import { lifeGate } from './lifecycle';
 import { repNeed, standing } from './growth';
 import type { Battle, Citizen, Id, Terrain, Tournament, World } from './types';
 import { census } from './census';
@@ -32,6 +33,8 @@ export function scheduleTournament(w: World, opts: Partial<Tournament> = {}, hos
 }
 
 export function enterCheck(w: World, c: Citizen, t: Tournament | undefined): string | null {
+  const tooYoung = lifeGate(w, c, 16, 'Entering tournaments');
+  if (tooYoung) return tooYoung;
   if (!t || t.status !== 'upcoming') return 'Registration is closed.';
   if (w.time >= t.start) return 'Registration is closed.';
   if (c.power < t.minPower) return `Fighters with training power ${t.minPower}+ only.`;
@@ -54,6 +57,8 @@ export function enter(w: World, c: Citizen, id: Id): Result {
 }
 
 export function hostCheck(w: World, c: Citizen, prize: number): string | null {
+  const tooYoung = lifeGate(w, c, 18, 'Hosting a tournament');
+  if (tooYoung) return tooYoung;
   if (standing(c) < 15 && c.power < B.tournaments.power) return `Nobody would come: hosting needs ${repNeed(15)} or a fighter's name (power ${B.tournaments.power}+).`;
   if ((c.wallet[GOLD] ?? 0) < prize) return `You must fund the ${fmtAmt(GOLD, prize)} prize.`;
   return null;
