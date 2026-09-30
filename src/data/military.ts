@@ -4,12 +4,12 @@
 // are rolled per seed from these.
 import type { Branch, FormationKind } from '../sim/types';
 
-export interface RankDef { name: string; sp: number; level: number; command?: boolean; flag?: boolean }
+export interface RankDef { name: string; sp: number; days: number; command?: boolean; flag?: boolean } // days: minimum time in service
 
 const ladder = (names: string[], commandFrom: number, flagFrom: number): RankDef[] => {
   const sp = [0, 10, 25, 45, 70, 100, 140, 190, 250, 320, 400, 500, 620, 760, 920];
-  const lvl = [1, 2, 3, 4, 6, 8, 10, 12, 14, 16, 18, 20, 23, 26, 30];
-  return names.map((name, i) => ({ name, sp: sp[i], level: lvl[i], command: i >= commandFrom, flag: i >= flagFrom }));
+  const days = [0, 2, 4, 7, 10, 14, 20, 26, 33, 40, 50, 60, 75, 90, 110];
+  return names.map((name, i) => ({ name, sp: sp[i], days: days[i], command: i >= commandFrom, flag: i >= flagFrom }));
 };
 
 /** Rank ladders. Officers from index 5; formation command from `command`; flag ranks need prior command. */

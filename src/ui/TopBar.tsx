@@ -4,7 +4,8 @@ import { Bar, Amt } from './common';
 import { fmtClock, fmtDur } from '../engine/clock';
 import { GOLD } from '../engine/money';
 import { allowanceCap, allowanceEta, energyEta } from '../sim/citizen';
-import { controller, maxEnergy, player, xpToNext } from '../sim/query';
+import { controller, maxEnergy, player } from '../sim/query';
+import { ageOf, reputation } from '../sim/growth';
 import { upcoming } from './upcoming';
 
 export function TopBar({ onMenu }: { onMenu: () => void }) {
@@ -53,10 +54,11 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
           <small>🍽 Allowance {p.allowance}/{allowanceCap(w, p)}{allowanceEta(w, p) ? ` · +1 in ${fmtDur(allowanceEta(w, p))}` : ''}</small>
           <Bar v={p.allowance} max={allowanceCap(w, p)} color="#e0a526" />
         </div>
-        <div class="vital" title="Account level and XP">
-          <small>⭐ Lv {p.level} · {p.xp}/{xpToNext(p.level)} XP{p.attrPts ? ` · ${p.attrPts} pts` : ''}</small>
-          <Bar v={p.xp} max={xpToNext(p.level)} color="#8e7cc3" />
-        </div>
+        {(() => { const r = reputation(p); const lo = r.min, hi = r.next?.min ?? r.min + 1; return (
+          <div class="vital" title={`Reputation: how well known and regarded you are (influence + fame). Age ${ageOf(w, p)}.`}>
+            <small>{r.icon} {r.name}{r.next ? ` · ${Math.floor(r.standing)}/${hi}` : ''}</small>
+            <Bar v={r.next ? r.standing - lo : 1} max={r.next ? hi - lo : 1} color="#8e7cc3" />
+          </div>); })()}
         <div class="money">
           <Amt asset={GOLD} v={p.wallet[GOLD] ?? 0} />
           <Amt asset={home.cur} v={p.wallet[home.cur] ?? 0} />

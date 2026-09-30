@@ -12,7 +12,7 @@ import { GOLD, c as cur, g } from '../engine/money';
 import { DAY } from '../engine/clock';
 import { nid, notify, record } from '../engine/events';
 import { chance, pick, rand, randInt } from '../engine/rng';
-import { addXp } from './citizen';
+import { practise } from './growth';
 import { citizensOf, cref, hhref, player } from './query';
 import { partiesOf, partyOf } from './politics';
 import { bump } from './progress';
@@ -82,7 +82,7 @@ export function publish(w: World, c: Citizen, paperId: Id, topic: Topic, stance:
   const n = w.nations[p.nation];
   c.energy -= B.cost.article;
   c.flags.articleDay = Math.floor(w.time / DAY);
-  const quality = 1 + Math.min(1, c.level / 40) + c.influence / 200;
+  const quality = 1 + Math.min(1, c.attrs.lead / 40) + c.influence / 200;
   const readers = Math.round((p.subs.length * 3 + p.bgSubs) * relevance(w, p.nation, topic) * quality * rand(w, 0.8, 1.2)) + 5;
   const effects: string[] = [];
   let votes = 0;
@@ -121,7 +121,7 @@ export function publish(w: World, c: Citizen, paperId: Id, topic: Topic, stance:
   w.articles[art.id] = art;
   p.articles++;
   pruneArticles(w);
-  addXp(w, c, B.xp.article);
+  practise(w, c, 'lead', B.practice.article);
   if (c.player) { bump(w, 'article'); record(w, 'press', `📰 ${c.name} published “${art.title}” in ${p.name} (${readers} readers).`, { cit: c.id, nation: p.nation, player: true }); }
   return ok(`Published “${art.title}”: ${readers} readers, ${votes} endorsements. ${effects.join('; ')}.`);
 }

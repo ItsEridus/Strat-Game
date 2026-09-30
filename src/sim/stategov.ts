@@ -10,6 +10,7 @@
 // treasury, and spends on welfare (to households), infrastructure (raises a
 // production bonus) and business support (subsidies to local companies).
 // Heads are generated officials or full citizens, including the player.
+import { isAdult, repNeed, standing } from './growth';
 import type { Company, Id, Ideology, StateCandidate, StateGov, World } from './types';
 import { localNews } from './life';
 import { nationals, officersOf, residents } from './census';
@@ -169,7 +170,7 @@ function openRegistration(w: World, s: StateGov, announce = true) {
     const p = player(w);
     if (p.loc === r.id && p.nation === r.owner) {
       const tpl = govTemplate(w, r.id)!;
-      notify(w, 'politics', `🗳️ ${r.name} elects its ${tpl.title} on day ${dayOf(s.nextElection)}. Residents can vote; level ${B.state.candLevel}+ citizens can still run (Map → ${r.name}).`, { link: 'map' });
+      notify(w, 'politics', `🗳️ ${r.name} elects its ${tpl.title} on day ${dayOf(s.nextElection)}. Residents can vote; well-known citizens can still run (Map → ${r.name}).`, { link: 'map' });
     }
   }
 }
@@ -193,7 +194,7 @@ function resolveElection(w: World, s: StateGov, announce = true) {
   const total = scores.reduce((a, b) => a + b, 0) || 1;
   // The region's residents are a sample of its electorate: half the vote follows the standing mood,
   // half follows what the residents themselves decide (views, relationships, promises made in person).
-  const locals = residents(w, r.id).filter((c) => !c.player && c.nation === r.owner && c.level >= B.politics.voteLevel && !jailed(w, c));
+  const locals = residents(w, r.id).filter((c) => !c.player && c.nation === r.owner && isAdult(w, c) && !jailed(w, c));
   const localVotes = s.candidates.map(() => 0);
   for (const v of locals) {
     let best = 0, bestU = -Infinity;
@@ -282,7 +283,7 @@ export function eligibleCandidate(w: World, cid: Id, rid: Id): string | null {
   if (r.occ) return `${r.name} is under occupation; elections are postponed.`;
   if (c.nation !== r.owner) return `Only ${w.nations[r.owner].adj} citizens can run.`;
   if (c.loc !== rid) return `You must live in ${r.name} (be located there) to run.`;
-  if (c.level < B.state.candLevel) return `Requires level ${B.state.candLevel}.`;
+  if (standing(c) < B.state.candRep) return `Voters don't know you: running needs ${repNeed(B.state.candRep)}.`;
   const other = headOf(w, cid);
   if (other != null && other !== rid) return `You already head ${w.regions[other].name}.`;
   return null;

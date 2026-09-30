@@ -1,6 +1,7 @@
 // Military units: named AI citizens in squads, a commander with orders and a
 // doctrine, a shared supply store, and squad specialisations. Bonuses apply only
 // when fighting on the ordered side in the assigned battle.
+import { repNeed, standing } from './growth';
 import type { Citizen, Id, Unit, World } from './types';
 import { census } from './census';
 import { B } from '../data/balance';
@@ -20,7 +21,6 @@ export const SQUAD_SPECS: Record<string, string> = {
   air: 'Air — bonus with air weapons',
   plains: 'Plains terrain', mountains: 'Mountain terrain', forest: 'Forest terrain', desert: 'Desert terrain',
 };
-export const UNIT_MIN_LEVEL = 5; // SOLO
 
 export const unitRef = (id: Id) => ({ k: 'unit' as const, id });
 export const members = (u: Unit) => u.squads.flatMap((s) => s.members);
@@ -37,7 +37,7 @@ export function createUnit(w: World, commander: Citizen, name?: string): Unit {
 
 export function foundUnitCheck(w: World, c: Citizen): string | null {
   if (c.unit != null) return 'Leave your current unit first.';
-  if (c.level < UNIT_MIN_LEVEL) return `Reach level ${UNIT_MIN_LEVEL} to found a unit.`;
+  if (standing(c) < 15 && c.mil.rank < 3 && c.power < 20) return `Nobody would enlist with you yet: you need ${repNeed(15)}, a military rank, or a fighter's name (training power 20+).`;
   if ((c.wallet[GOLD] ?? 0) < g(B.units.cost)) return `Founding a unit costs ${B.units.cost} gold.`;
   return null;
 }
@@ -77,7 +77,7 @@ export function requestJoin(w: World, c: Citizen, uid: Id): Result {
   if (why) return fail(why);
   const cmd = w.citizens[u.commander];
   if (cmd.player) return fail('You command this unit.');
-  const score = (cmd.rel[c.id] ?? 0) + c.level + c.dmgTotal / 50000 + 10;
+  const score = (cmd.rel[c.id] ?? 0) + standing(c) / 2 + c.dmgTotal / 50000 + 10;
   if (score < 5) return fail(`${cmd.name} turned you down (they don’t know you well — build a record or relationship).`);
   addMember(u, c);
   cmd.rel[c.id] = (cmd.rel[c.id] ?? 0) + 3;

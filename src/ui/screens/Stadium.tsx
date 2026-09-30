@@ -22,12 +22,12 @@ export function Stadium({ w }: { w: World }) {
   return (
     <div class="grid">
       <Panel title="🏟️ Stadium" class="wide">
-        <Help>Tournaments follow the simulated calendar{w.settings.advanced.tournaments ? '' : ' (official tournaments are disabled in this campaign; you can still host)'}. Bouts use organiser-issued Q2 ground weapons and {10} hits each, so supplies are equal: your attributes, training power, rank, gear and buffs decide. Entry needs level {B.tournaments.level}. Prizes: 60/25/15% of the pool.</Help>
+        <Help>Tournaments follow the simulated calendar{w.settings.advanced.tournaments ? '' : ' (official tournaments are disabled in this campaign; you can still host)'}. Bouts use organiser-issued Q2 ground weapons and {10} hits each, so supplies are equal: your attributes, training power, rank, gear and buffs decide. Official tournaments need training power {B.tournaments.power}+. Prizes: 60/25/15% of the pool.</Help>
       </Panel>
       <Panel title="Upcoming">
         {upcoming.length ? upcoming.map((t) => (
           <div class="card"><b>{t.name}</b> <small class="muted">{t.format} · {t.terrain} · {fmtClock(w, t.start)} ({fmtWhen(w, t.start)})</small>
-            <p class="small">Fee {fmtAmt(GOLD, t.fee)} · level {t.minLevel}+ · {t.entrants.length}/{t.cap} entrants · pool {fmtAmt(GOLD, t.prize)}{t.hostedBy != null ? ` · hosted by ${w.citizens[t.hostedBy]?.name}` : ''}</p>
+            <p class="small">Fee {fmtAmt(GOLD, t.fee)} · power {t.minPower}+ · {t.entrants.length}/{t.cap} entrants · pool {fmtAmt(GOLD, t.prize)}{t.hostedBy != null ? ` · hosted by ${w.citizens[t.hostedBy]?.name}` : ''}</p>
             <ActBtn small why={enterCheck(w, p, t)} run={(w) => enter(w, p, t.id)}>{t.entrants.includes(p.id) ? 'Registered ✓' : 'Register'}</ActBtn>
             <Btn small kind="ghost" onClick={() => store.jumpTo(t.start)}>⏭ Advance to start</Btn></div>
         )) : <Empty>None scheduled.</Empty>}

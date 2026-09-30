@@ -4,6 +4,7 @@
 // residents stand for a slice of their region's electorate, so persuading them
 // moves real votes: state elections blend the residents' choices with the
 // region's standing mood, and national voters weigh relationships and pledges.
+import { bump } from './progress';
 import type { Citizen, Convo, Id, Ideology, World } from './types';
 import { localNews } from './life';
 import { B } from '../data/balance';
@@ -25,7 +26,7 @@ import { netWage } from './company';
 import { listingsFor } from './market';
 import { activeWars } from './war';
 import { activeCrises } from './dynamics';
-import { addXp } from './citizen';
+import { isAdult, practise } from './growth';
 
 // ---------- issues ----------
 
@@ -143,7 +144,8 @@ export function startTalk(w: World, npcId: Id): Result {
   }
   w.player.convo = convo;
   offerChoices(w, convo);
-  addXp(w, p, 1);
+  practise(w, p, 'lead', B.practice.talk);
+  bump(w, 'talk');
   return ok('');
 }
 
@@ -160,7 +162,7 @@ function offerChoices(w: World, convo: Convo) {
   const cand = playerCandidacy(w);
   if (cand && npc.nation === p.nation) add('vote', `“Can I count on your vote? I’m running for ${cand.label}.”`, pledgeOf(w, npc) === p.id ? 'They already promised you their vote.' : null);
   const party = partyOf(w, p);
-  if (party && npc.party !== party.id && npc.nation === p.nation) add('party', `“Have you thought about joining the ${party.name}?”`, npc.level < B.politics.partyLevel ? `They are too new to politics (level ${B.politics.partyLevel}+).` : null);
+  if (party && npc.party !== party.id && npc.nation === p.nation) add('party', `“Have you thought about joining the ${party.name}?”`, !isAdult(w, npc) ? 'They are too young to join a party.' : null);
   const mine = Object.values(w.companies).filter((co) => co.owner.k === 'cit' && co.owner.id === p.id && co.offer && co.workers.length < co.offer.slots && controller(w.regions[co.region]) === controller(w.regions[npc.loc]));
   if (mine.length && npc.job == null ? true : mine.length && npc.persona === 'worker') add('hire', `“Come and work for me at ${mine[0].name}.”`);
   const n = w.nations[controller(w.regions[p.loc])];
@@ -312,7 +314,7 @@ export function converse(w: World, choice: string): Result {
         say(convo, 'npc', '“Huh. I never thought of it that way. Maybe you’re right.”');
         remember(w, npc, 2, `talked them round to ${IDEOLOGIES[p.ideo].name.toLowerCase()}`);
         say(convo, 'note', `💡 ${npc.name} came round to ${IDEOLOGIES[p.ideo].name.toLowerCase()} (was ${IDEOLOGIES[old].name.toLowerCase()}).`);
-        addXp(w, p, 3);
+        practise(w, p, 'lead', B.practice.talk * 3);
       } else if (chance(w, 0.4 + d * 0.3)) {
         adjustRel(npc, p.id, -4);
         say(convo, 'npc', '“We’ll have to agree to disagree. Strongly.”');
@@ -382,7 +384,7 @@ export function rallyCheck(w: World, p: Citizen, issue: Issue): string | null {
   if (jailed(w, p)) return 'You are in prison.';
   if (!ISSUE_INFO[issue]) return 'Pick an issue.';
   if (w.regions[p.loc].owner !== p.nation && controller(w.regions[p.loc]) !== p.nation) return 'Rallies are held in your own country.';
-  if (p.level < B.politics.voteLevel) return `Reach level ${B.politics.voteLevel} to hold rallies.`;
+  if (!isAdult(w, p)) return `You must be ${B.life.adultAge} to hold rallies.`;
   if (w.player.lastRally === today(w)) return 'You already held a rally today.';
   if (p.energy < B.social.rallyEnergy) return `Needs ${B.social.rallyEnergy} energy.`;
   const code = w.nations[controller(w.regions[p.loc])].cur;
@@ -425,7 +427,7 @@ export function holdRally(w: World, issue: Issue): Result {
   // The region's standing mood drifts toward the ideologies that own the issue.
   const s = w.govs[p.loc];
   if (s) { for (const i of ISSUE_INFO[issue].ideo) s.lean[i] = (s.lean[i] ?? 0) + 0.004 * resonance; if (cand?.region === p.loc) { const me = s.candidates.find((x) => x.cit === p.id); if (me) me.campaign += Math.round(cost * (0.5 + resonance)); } }
-  addXp(w, p, 6);
+  practise(w, p, 'lead', B.practice.rally);
   const verdict = resonance >= 0.8 ? 'The crowd roared' : resonance >= 0.6 ? 'The speech landed well' : 'The crowd was polite but distracted';
   localNews(w, p.loc, `📣 ${p.name} spoke to ${crowd.toLocaleString()} people about ${ISSUE_INFO[issue].name.toLowerCase()}.`);
   record(w, 'politics', `📣 ${p.name} held a rally on ${ISSUE_INFO[issue].name.toLowerCase()} in ${r.name} (${crowd.toLocaleString()} attended).`, { cit: p.id, region: p.loc, nation: nat, player: true });
@@ -465,7 +467,7 @@ export function canvass(w: World): Result {
     if (cand && d >= 3 && pledgeOf(w, c) == null && chance(w, 0.3 + (c.rel[p.id] ?? 0) / 200)) { pledge(w, c, p.id); pledges++; res = 'promised their vote'; }
     lines.push(`${c.name} (${c.persona}, ${ISSUE_INFO[issue].icon} ${ISSUE_INFO[issue].name.toLowerCase()}): ${res}`);
   }
-  addXp(w, p, 3);
+  practise(w, p, 'lead', B.practice.canvass);
   p.influence += 0.3 * seen.size;
   return ok(`You knocked on ${seen.size} doors in ${w.regions[p.loc].name}${pledges ? ` — ${pledges} promised you their vote` : ''}. ${lines.join('; ')}.`);
 }

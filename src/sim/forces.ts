@@ -13,6 +13,7 @@
 // through real rank ladders to command formations; the most senior officer
 // becomes chief of staff. AI defence ministries raise, supply, deploy and order
 // forces by the same rules the player's government uses.
+import { seniority, serviceDays } from './growth';
 import type { Battle, Branch, Citizen, Formation, FormationKind, Id, World } from './types';
 import { census, nationals, referenceSociety } from './census';
 import { B } from '../data/balance';
@@ -324,7 +325,7 @@ export function addSp(w: World, c: Citizen, sp: number) {
   const ladder = RANKS[c.mil.branch];
   while (c.mil.rank + 1 < ladder.length) {
     const next = ladder[c.mil.rank + 1];
-    if (c.mil.sp < next.sp || c.level < next.level) break;
+    if (c.mil.sp < next.sp || serviceDays(w, c) < next.days) break;
     if (next.flag && c.mil.commands < 10) break; // flag ranks need 10 days of formation command
     c.mil.rank++;
     if (c.player) notify(w, 'progress', `🎖️ Promoted to ${next.name}${next.command && !ladder[c.mil.rank - 1].command ? ' — you can now command a formation' : ''}.`, { link: 'forces' });
@@ -577,13 +578,15 @@ export function seedOfficers(w: World) {
   for (const n of w.nations) {
     // About 3% of the population serves as career officers and NCOs (at least 7).
     const people = nationals(w, n.id);
-    const pool = people.filter((c) => !c.player && (c.persona === 'soldier' || (c.traits.loyalty > 0.7 && c.level > 12))).sort((a, b) => b.level - a.level || a.id - b.id).slice(0, Math.max(7, Math.round(people.length * B.forces.careerShare)));
+    const pool = people.filter((c) => !c.player && (c.persona === 'soldier' || (c.traits.loyalty > 0.7 && seniority(w, c) > 15))).sort((a, b) => seniority(w, b) - seniority(w, a) || a.id - b.id).slice(0, Math.max(7, Math.round(people.length * B.forces.careerShare)));
     pool.forEach((c, i) => {
       const branch: Branch = i % 4 === 1 && formationsOf(w, n.id).some((f) => f.branch === 'navy') ? 'navy' : i % 4 === 3 ? 'air' : 'army';
       const ladder = RANKS[branch];
+      // Years in uniform: career soldiers joined young, others later in life.
+      const served = Math.max(30, Math.round(seniority(w, c) * (c.persona === 'soldier' ? 7 : 3)));
       let rank = 0;
-      while (rank + 1 < ladder.length && ladder[rank + 1].level <= c.level && !(ladder[rank + 1].flag && i > 1)) rank++;
-      c.mil = { branch, rank, sp: ladder[rank].sp, since: w.time - 365 * DAY, lastDuty: -1, commands: ladder[rank].flag ? 30 : 0 };
+      while (rank + 1 < ladder.length && ladder[rank + 1].days <= served && ladder[rank + 1].sp <= served * 6 && !(ladder[rank + 1].flag && i > 1)) rank++;
+      c.mil = { branch, rank, sp: ladder[rank].sp, since: w.time - served * DAY, lastDuty: -1, commands: ladder[rank].flag ? 30 : 0 };
     });
     assignCommanders(w, n.id);
   }

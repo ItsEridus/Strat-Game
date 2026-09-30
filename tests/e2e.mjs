@@ -16,7 +16,7 @@ await page.goto('file://' + process.cwd() + '/index.html');
 await page.evaluate(() => localStorage.clear());
 await page.reload();
 await page.screenshot({ path: `${out}/00-start.png` });
-await page.fill('.form input[type=number]', '7');
+await page.click('details summary:has-text("Reproducible world")'); await page.check('details input[type=checkbox]'); await page.fill('details input[type=number]', '7');
 await page.click('text=Start campaign');
 await page.waitForSelector('.topbar');
 // Encounters are covered by tests/e2e-local.mjs; keep them out of the screen tour.

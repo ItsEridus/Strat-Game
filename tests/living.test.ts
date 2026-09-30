@@ -50,7 +50,7 @@ test('police career: patrols cut crime and advance cases; trials acquit on weak 
   const w = fresh(72);
   const p = player(w);
   const r = big(w);
-  p.loc = r.id; p.level = 6;
+  p.loc = r.id; p.influence = 40; p.attrs.str = 5; p.born -= 10 * 365 * DAY;
   assert.ok(joinPolice(w, p).ok);
   const before = r.crime;
   p.energy = 100;
@@ -70,7 +70,7 @@ test('syndicates recruit, run jobs, and extort companies through the inbox', () 
   const p = player(w);
   const s = Object.values(w.syndicates).find((x) => x.nation === 0)!;
   assert.ok(s, 'the US has organised crime');
-  p.loc = s.turf[0]; p.level = 5; p.sec.notoriety = 5;
+  p.loc = s.turf[0]; p.sec.notoriety = 5;
   assert.ok(joinSyndicate(w, p, s.id).ok);
   mint(w, { k: 'synd', id: s.id }, 'USD', cur(200), 'test');
   let paid = false;

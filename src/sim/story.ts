@@ -15,7 +15,6 @@ import { nid, notify } from '../engine/events';
 import { chance, randInt, weighted } from '../engine/rng';
 import { player } from './query';
 import { adjustRel } from './social';
-import { addXp } from './citizen';
 
 // ---------- definitions ----------
 
@@ -238,7 +237,6 @@ export function chooseStory(w: World, instId: Id, choiceId: string, stageId?: st
   inst.decisions.push({ t: w.time, stage, choice: choice.id, label: choice.label, outcome: o.text });
   journal(w, { story: inst.id, title: storyTitle(w, inst), text: `${choice.label} — ${o.text}`, kind: 'outcome' });
   apply(w, inst, o);
-  addXp(w, player(w), 2);
   return ok(o.text);
 }
 

@@ -36,7 +36,7 @@ export function Holdings({ w }: { w: World }) {
         </table>
         <div class="form row">
           <input placeholder="Holding name" value={name} onInput={(e) => setName((e.target as HTMLInputElement).value)} />
-          <ActBtn why={foundHoldingCheck(w, p)} run={(w) => foundHolding(w, p, name)}>Found holding ({B.holdings.cost} gold, level {B.holdings.level})</ActBtn>
+          <ActBtn why={foundHoldingCheck(w, p)} run={(w) => foundHolding(w, p, name)}>Found holding ({B.holdings.cost} gold, standing {B.holdings.rep} or a company)</ActBtn>
         </div>
       </Panel>
     </div>

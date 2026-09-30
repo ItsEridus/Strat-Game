@@ -5,10 +5,10 @@ import { CAMPAIGNS, GOALS, TUTORIAL, campaignStep, claimDaily, claimSeason, metr
 import { B } from '../../data/balance';
 import { itemName } from '../../data/items';
 
-function rewardText(r: { gold?: number; xp?: number; items?: Record<string, number>; prestige?: number }) {
+function rewardText(r: { gold?: number; rep?: number; items?: Record<string, number>; prestige?: number }) {
   const parts: string[] = [];
   if (r.gold) parts.push(`${(r.gold / 1000).toFixed(2)} g`);
-  if (r.xp) parts.push(`${r.xp} XP`);
+  if (r.rep) parts.push(`+${r.rep} standing`);
   if (r.prestige) parts.push(`${r.prestige} prestige`);
   for (const [k, n] of Object.entries(r.items ?? {})) parts.push(`${n}× ${itemName(k)}`);
   return parts.join(', ');
@@ -31,7 +31,7 @@ export function Missions({ w }: { w: World }) {
         </Panel>
       )}
       <Panel title={`Daily missions (day ${ps.dailyDay})`}>
-        <Help>{B.missions.count} missions drawn from systems you’ve unlocked; each pays {B.missions.gold} gold + {B.missions.prestige} prestige (+1 XP from level 2). They refresh at midnight (simulated).</Help>
+        <Help>{B.missions.count} missions drawn from systems you’ve unlocked; each pays {B.missions.gold} gold + {B.missions.prestige} prestige (+ a little standing). They refresh at midnight (simulated).</Help>
         {ps.dailies.map((q) => {
           const prog = Math.min(q.target, metric(w, q.metric) - q.base);
           return (

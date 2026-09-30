@@ -1,5 +1,6 @@
 // Things that come to you: stories waiting for a decision, and the
 // conversation you are having. Shown over whatever screen is open.
+import { ageOf } from '../sim/growth';
 import { useState } from 'preact/hooks';
 import type { World } from '../sim/types';
 import { store } from './store';
@@ -75,7 +76,7 @@ export function ConversationPanel({ w }: { w: World }) {
         <Avatar c={npc} size={48} />
         <div>
           <b class="link" onClick={() => store.go('citizen', { citizen: npc.id })}>{npc.name}</b>
-          <small class="muted">{npc.persona} · level {npc.level} · {IDEOLOGIES[npc.ideo].name}</small>
+          <small class="muted">{npc.persona} · {ageOf(w, npc)} · {IDEOLOGIES[npc.ideo].name}</small>
           <small class={rel >= 10 ? 'good' : rel <= -10 ? 'bad' : 'muted'}>{attitude(rel)} towards you ({rel > 0 ? '+' : ''}{rel})</small>
         </div>
         <button class="btn sm ghost" onClick={() => store.act((w) => converse(w, 'bye'))}>✕</button>

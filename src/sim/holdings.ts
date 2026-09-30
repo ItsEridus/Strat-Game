@@ -1,6 +1,7 @@
 // Holdings with a share ledger, roles, treasury and ownership-weighted votes;
 // a stock market for their shares (citizens only — holdings may not buy
 // shares, DOC). Issuance dilutes, dividends pay pro rata, splits scale orders.
+import { repNeed, standing } from './growth';
 import type { Citizen, Holding, Id, ShareOrder, World } from './types';
 import { census } from './census';
 import { B } from '../data/balance';
@@ -37,7 +38,7 @@ export function lastSharePrice(w: World, hid: Id): number | null {
 }
 
 export function foundHoldingCheck(w: World, c: Citizen): string | null {
-  if (c.level < B.holdings.level) return `Holdings require level ${B.holdings.level}.`;
+  if (standing(c) < B.holdings.rep && !Object.values(w.companies).some((co) => co.owner.k === 'cit' && co.owner.id === c.id)) return `Investors won't back you yet: a holding needs ${repNeed(B.holdings.rep)} or a company of your own.`;
   if ((c.wallet[GOLD] ?? 0) < g(B.holdings.cost)) return `Founding a holding costs ${B.holdings.cost} gold.`;
   return null;
 }

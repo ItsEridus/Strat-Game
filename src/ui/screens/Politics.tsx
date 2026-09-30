@@ -57,7 +57,7 @@ export function Politics({ w }: { w: World }) {
           {nid === p.nation && <FoundParty w={w} />}
         </Panel>
       )}
-      {tab === 'mine' && (myParty ? <MyParty w={w} /> : <Panel title="My party"><Empty>You are not in a party. Join one on the Parties tab (level {B.politics.partyLevel}+).</Empty></Panel>)}
+      {tab === 'mine' && (myParty ? <MyParty w={w} /> : <Panel title="My party"><Empty>You are not in a party. Join one on the Parties tab (adults).</Empty></Panel>)}
     </div>
   );
 }

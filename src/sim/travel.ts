@@ -1,5 +1,6 @@
 // Travel and citizenship. Location (where you are) and citizenship (who you
 // belong to) are separate. Travel shows methods, ticket use and energy first.
+import { ageOf } from './growth';
 import type { Citizen, Id, World } from './types';
 import { invalidateCensus } from './census';
 import { B } from '../data/balance';
@@ -99,7 +100,7 @@ export function applyCitizenship(w: World, c: Citizen, nation: Id): Result {
   const official = n.cabinet.recruitment ?? n.president;
   const pl = player(w);
   if (official === pl.id && !c.player) {
-    sendMsg(w, { from: c.id, subject: `Citizenship application: ${c.name}`, body: `${c.name} (${w.nations[c.nation].name}, level ${c.level}, ${c.persona}) asks to become a citizen of ${n.name}.`, kind: 'gov', options: [{ id: 'approve', label: 'Approve' }, { id: 'deny', label: 'Deny' }], payload: { handler: 'citizenship', nation, cit: c.id } });
+    sendMsg(w, { from: c.id, subject: `Citizenship application: ${c.name}`, body: `${c.name} (${w.nations[c.nation].name}, age ${ageOf(w, c)}, ${c.persona}) asks to become a citizen of ${n.name}.`, kind: 'gov', options: [{ id: 'approve', label: 'Approve' }, { id: 'deny', label: 'Deny' }], payload: { handler: 'citizenship', nation, cit: c.id } });
   }
   return ok(`Application submitted to ${n.name}. The recruitment minister will decide.`);
 }

@@ -11,8 +11,9 @@ import { census, invalidateCensus, residents } from '../src/sim/census';
 import { listingsFor } from '../src/sim/market';
 import { canvass, converse, holdRally, localIssues, pledgeOf, startTalk } from '../src/sim/interact';
 import { STORIES, chooseStory, triggerStory, urgentStories, viewStage } from '../src/sim/story';
-import { adminGiveItem, adminSetLevel, adminSetMoney, adminTeleport } from '../src/sim/admin';
+import { adminGiveItem, adminSetAge, adminSetStanding, adminSetMoney, adminTeleport } from '../src/sim/admin';
 import { runForHead } from '../src/sim/stategov';
+import { ageOf } from '../src/sim/growth';
 import { deserialize, serialize } from '../src/engine/save';
 import { EARTH } from '../src/data/earth';
 import type { World } from '../src/sim/types';
@@ -52,7 +53,7 @@ test('indexes stay consistent with the world: order books and census', () => {
 test('conversations, canvassing and rallies win people over; pledges decide a state election', () => {
   const w = fresh(93, 6);
   const p = player(w);
-  p.level = 10; p.energy = 100;
+  p.influence = Math.max(p.influence, 40); p.energy = 100;
   mint(w, cref(p.id), 'USD', cur(500), 'test');
   const co = region(w, 'Colorado');
   adminTeleport(w, co.id, true);
@@ -76,7 +77,7 @@ test('conversations, canvassing and rallies win people over; pledges decide a st
   s.nextElection = w.time + 2 * DAY;
   advance(w, DAY, false);
   assert.ok(runForHead(w, p.id, co.id).ok);
-  for (const c of residents(w, co.id)) if (!c.player) { c.flags.pledge = p.id; c.flags.pledgeDay = Math.floor(w.time / DAY); c.level = Math.max(c.level, 5); }
+  for (const c of residents(w, co.id)) if (!c.player) { c.flags.pledge = p.id; c.flags.pledgeDay = Math.floor(w.time / DAY); }
   assert.ok(residents(w, co.id).every((c) => c.player || pledgeOf(w, c) === p.id));
   advance(w, 2 * DAY, false);
   assert.equal(s.head.cit, p.id, 'residents who promised their votes carried the election');
@@ -89,7 +90,7 @@ test('every everyday situation can be presented and every choice resolves withou
     for (let optIdx = 0; optIdx < 4; optIdx++) {
       const w = fresh(94 + optIdx);
       const p = player(w);
-      p.level = 12; p.influence = 30; p.energy = 100;
+      p.influence = 40; p.energy = 100;
       mint(w, cref(p.id), 'USD', cur(800), 'test');
       mint(w, cref(p.id), GOLD, g(40), 'test');
       adminGiveItem(w, 'food:1', 6);
@@ -124,8 +125,9 @@ test('admin panel edits go through the ledger; saves migrate and round-trip', ()
   assert.ok(adminSetMoney(w, 'USD', cur(123456)).ok);
   assert.equal(p.wallet.USD, cur(123456));
   assert.ok(adminSetMoney(w, GOLD, g(5)).ok);
-  assert.ok(adminSetLevel(w, 30).ok);
-  assert.equal(p.level, 30);
+  assert.ok(adminSetStanding(w, 80).ok);
+  assert.ok(adminSetAge(w, 40).ok);
+  assert.equal(ageOf(w, p), 40);
   assert.ok(adminGiveItem(w, 'wg:5', 20).ok);
   assert.ok(w.settings.adminUsed);
   assert.ok(audit(w).ok, audit(w).problems.join('; '));

@@ -2,6 +2,7 @@
 //  - Elections run on the in-game calendar without player intervention.
 //  - Voters are individual AI citizens plus aggregated background blocs.
 //  - Every result stores turnout, tallies, seats and a readable explanation.
+import { ageOf, isAdult, repNeed, standing } from './growth';
 import type { Citizen, Election, Id, Ministry, Nation, Party, World } from './types';
 import { census } from './census';
 import { B } from '../data/balance';
@@ -46,7 +47,7 @@ export const partiesOf = (w: World, n: Id) => Object.values(w.parties).filter((p
 /** Leader's ranking of members for the congress list (a player leader's manual order is respected). */
 export function sortPartyList(w: World, p: Party, registered?: Id[]) {
   const leader = w.citizens[p.leader];
-  const eligible = (registered ?? p.members).filter((id) => w.citizens[id]?.party === p.id && w.citizens[id].level >= B.politics.congressLevel);
+  const eligible = (registered ?? p.members).filter((id) => w.citizens[id]?.party === p.id && standing(w.citizens[id]) >= B.politics.congressRep);
   if (leader?.player) {
     const kept = p.list.filter((id) => eligible.includes(id));
     p.list = [...kept, ...eligible.filter((id) => !kept.includes(id))];
@@ -76,7 +77,7 @@ export function seedPolitics(w: World) {
       const leader = fans.slice().sort((a, b) => (b.persona === 'politician' ? 1 : 0) - (a.persona === 'politician' ? 1 : 0) || b.influence - a.influence || a.id - b.id)[0];
       createParty(w, n.id, ideo, leader.id);
       const party = partyOf(w, leader)!;
-      for (const c of fans) if (c !== leader && c.level >= B.politics.partyLevel && c.traits.ambition + c.ideoStr > 0.6) joinPartyRaw(w, c, party);
+      for (const c of fans) if (c !== leader && isAdult(w, c) && c.traits.ambition + c.ideoStr > 0.6) joinPartyRaw(w, c, party);
     }
     const ps = partiesOf(w, n.id);
     for (const p of ps) { p.support = Math.round((p.members.length / Math.max(1, cits.length)) * 100); sortPartyList(w, p); }
@@ -127,7 +128,7 @@ export function joinPartyCheck(w: World, c: Citizen, pid: Id): string | null {
   const p = w.parties[pid];
   if (!p) return 'Party not found.';
   if (p.nation !== c.nation) return 'You can only join parties of your citizenship nation.';
-  if (c.level < B.politics.partyLevel) return `Reach level ${B.politics.partyLevel} to join a party.`;
+  if (!isAdult(w, c)) return `You must be ${B.life.adultAge} to join a party.`;
   if (c.party === pid) return 'Already a member.';
   return null;
 }
@@ -147,7 +148,7 @@ export function leaveParty(w: World, c: Citizen): Result {
   return ok(`You left the ${name}.`);
 }
 export function foundPartyCheck(w: World, c: Citizen): string | null {
-  if (c.level < B.politics.partyLevel) return `Reach level ${B.politics.partyLevel}.`;
+  if (standing(c) < B.politics.foundRep) return `Nobody would follow you yet: founding a party needs ${repNeed(B.politics.foundRep)}.`;
   if ((c.wallet[GOLD] ?? 0) < g(B.politics.partyFoundCost)) return `Founding a party costs ${B.politics.partyFoundCost} gold.`;
   if (partiesOf(w, c.nation).length >= 8) return 'This nation already has 8 parties.';
   return null;
@@ -180,10 +181,11 @@ export function setNominee(w: World, c: Citizen, nominee: Id | null, coalition: 
 export function seekNomination(w: World, c: Citizen): Result {
   const p = partyOf(w, c);
   if (!p) return fail('Join a party first.');
-  if (c.level < B.politics.presidentLevel) return fail(`Reach level ${B.politics.presidentLevel} to run for president.`);
+  if (ageOf(w, c) < B.politics.presidentAge) return fail(`Candidates must be at least ${B.politics.presidentAge}.`);
+  if (standing(c) < B.politics.presidentRep) return fail(`The party won't nominate an unknown: you need ${repNeed(B.politics.presidentRep)}.`);
   if (p.leader === c.id) { p.nominee = c.id; return ok('As leader you nominate yourself.'); }
   const leader = w.citizens[p.leader];
-  const mine = c.influence + (leader.rel[c.id] ?? 0) / 2 + c.level;
+  const mine = c.influence + (leader.rel[c.id] ?? 0) / 2 + standing(c) / 2;
   const theirs = w.citizens[p.nominee ?? p.leader]?.influence ?? 0;
   if (mine > theirs * 1.1) {
     p.nominee = c.id;
@@ -233,7 +235,7 @@ export function registerCheck(w: World, c: Citizen, e: Election): string | null 
   if (c.nation !== e.nation) return 'Only citizens can run.';
   if (e.kind === 'congress') {
     if (c.party == null) return 'Congress candidates run on a party list — join a party.';
-    if (c.level < B.politics.congressLevel) return `Reach level ${B.politics.congressLevel} to run for congress.`;
+    if (standing(c) < B.politics.congressRep) return `Voters don't know you yet: running for congress needs ${repNeed(B.politics.congressRep)}.`;
   }
   if (e.kind === 'party') {
     if (c.party !== e.party) return 'Only members can run for party leader.';
@@ -256,7 +258,7 @@ export function registerCandidate(w: World, c: Citizen, eid: Id): Result {
 export function voteCheck(w: World, c: Citizen, e: Election): string | null {
   if (e.done) return 'Election already held.';
   if (c.nation !== e.nation) return 'Only citizens can vote.';
-  if (c.level < B.politics.voteLevel) return `Reach level ${B.politics.voteLevel} to vote.`;
+  if (!isAdult(w, c)) return `You must be ${B.life.adultAge} to vote.`;
   if (e.kind === 'party' && c.party !== e.party) return 'Only party members vote for their leader.';
   if (w.time < e.regClose && e.kind !== 'congress') return 'Voting opens when registration closes.';
   return null;
@@ -279,7 +281,7 @@ export function onRegClose(w: World, eid: Id) {
   const n = w.nations[e.nation];
   if (e.kind === 'congress') {
     for (const c of citizensOf(w, n.id)) {
-      if (c.player || c.party == null || c.level < B.politics.congressLevel) continue;
+      if (c.player || c.party == null || standing(c) < B.politics.congressRep) continue;
       if (c.persona === 'politician' || c.traits.ambition > 0.55 || partyOf(w, c)?.leader === c.id) if (!e.candidates.includes(c.id)) e.candidates.push(c.id);
     }
   } else if (e.kind === 'party') {
@@ -301,7 +303,7 @@ export function onRegClose(w: World, eid: Id) {
         if (p.support < 12 && ally && chance(w, 0.6)) { p.nominee = null; p.coalition = ally.id; }
         else if (p.nominee == null || !p.members.includes(p.nominee)) { p.nominee = p.leader; p.coalition = null; }
       }
-      if (p.nominee != null && w.citizens[p.nominee]?.level >= B.politics.presidentLevel && !e.candidates.includes(p.nominee)) e.candidates.push(p.nominee);
+      if (p.nominee != null && standing(w.citizens[p.nominee]) >= B.politics.presidentRep && !e.candidates.includes(p.nominee)) e.candidates.push(p.nominee);
     }
     if (!e.candidates.length && n.president != null) e.candidates.push(n.president);
   }
@@ -354,7 +356,7 @@ export function runElection(w: World, eid: Id) {
   if (!cands.length) { e.result = { turnout: 0, electorate: 0, tallies: [], winners: [], explain: ['No candidates registered.'] }; return; }
   const tallies: Record<Id, number> = {};
   for (const id of cands) tallies[id] = 0;
-  const voters = e.kind === 'party' ? (w.parties[e.party!]?.members ?? []).map((id) => w.citizens[id]).filter(Boolean) : citizensOf(w, n.id).filter((c) => c.level >= B.politics.voteLevel);
+  const voters = e.kind === 'party' ? (w.parties[e.party!]?.members ?? []).map((id) => w.citizens[id]).filter(Boolean) : citizensOf(w, n.id).filter((c) => isAdult(w, c));
   let turnout = 0;
   const sums: Record<Id, Record<string, number>> = {};
   for (const id of cands) sums[id] = {};
@@ -436,7 +438,7 @@ function runCongressElection(w: World, e: Election, n: Nation) {
   for (const p of ps) sortPartyList(w, p, e.candidates.filter((id) => w.citizens[id]?.party === p.id));
   const votes: Record<Id, number> = {};
   for (const p of ps) votes[p.id] = 0;
-  const voters = citizensOf(w, n.id).filter((c) => c.level >= B.politics.voteLevel);
+  const voters = citizensOf(w, n.id).filter((c) => isAdult(w, c));
   let turnout = 0;
   for (const v of voters) {
     if (v.player) {
@@ -485,7 +487,7 @@ export function appointCabinetAI(w: World, n: Nation) {
   if (n.president == null || !w.citizens[n.president]) return;
   const pres = w.citizens[n.president];
   if (pres.player) return; // a player president appoints manually
-  const pool = citizensOf(w, n.id).filter((c) => c.id !== n.president && c.level >= B.politics.voteLevel);
+  const pool = citizensOf(w, n.id).filter((c) => c.id !== n.president && isAdult(w, c));
   const fit: Record<Ministry, (c: Citizen) => number> = {
     vp: (c) => c.influence + (c.persona === 'politician' ? 20 : 0),
     development: (c) => c.buildTotal / 1000 + (c.persona === 'builder' ? 30 : 0) + c.attrs.cons,
@@ -586,7 +588,7 @@ export function dailyOpinion(w: World) {
 /** AI citizens join parties that match their views; leaderless parties get new leaders. */
 export function partyRecruitment(w: World) {
   for (const c of census(w).all) {
-    if (c.player || c.party != null || c.level < B.politics.partyLevel) continue;
+    if (c.player || c.party != null || !isAdult(w, c)) continue;
     if (!chance(w, 0.03 * (c.ideoStr + c.traits.ambition))) continue;
     const opts = partiesOf(w, c.nation).filter((p) => p.ideo === c.ideo);
     const p = opts.sort((a, b) => b.support - a.support || a.id - b.id)[0];

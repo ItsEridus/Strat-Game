@@ -1,6 +1,7 @@
 // Stadium tournaments on the simulated calendar. Entrants (AI and player) fight
 // bracket bouts with organiser-issued Q2 weapons (not consumed) and a fixed
 // hit budget, so supplies are equal and builds decide. Fees fund the prize pool.
+import { repNeed, standing } from './growth';
 import type { Battle, Citizen, Id, Terrain, Tournament, World } from './types';
 import { census } from './census';
 import { B } from '../data/balance';
@@ -22,7 +23,7 @@ export function scheduleTournament(w: World, opts: Partial<Tournament> = {}, hos
   const t: Tournament = {
     id: nid(w), name: opts.name ?? `${pick(w, ['Grand', 'Open', 'Iron', 'Crown', 'Frontier'])} ${pick(w, ['Cup', 'Classic', 'Invitational', 'Games'])}`,
     format: opts.format ?? pick(w, ['solo', 'solo', 'teams'] as const), regOpen: w.time, start, fee: opts.fee ?? g(B.tournaments.fee), cap: opts.cap ?? B.tournaments.cap,
-    minLevel: opts.minLevel ?? B.tournaments.level, terrain: opts.terrain ?? pick(w, ['plains', 'mountains', 'forest', 'desert'] as Terrain[]),
+    minPower: opts.minPower ?? B.tournaments.power, terrain: opts.terrain ?? pick(w, ['plains', 'mountains', 'forest', 'desert'] as Terrain[]),
     entrants: [], bracket: [], status: 'upcoming', prize: 0, podium: [], hostedBy: host?.id, escrow: 0,
   };
   w.tournaments[t.id] = t;
@@ -33,7 +34,7 @@ export function scheduleTournament(w: World, opts: Partial<Tournament> = {}, hos
 export function enterCheck(w: World, c: Citizen, t: Tournament | undefined): string | null {
   if (!t || t.status !== 'upcoming') return 'Registration is closed.';
   if (w.time >= t.start) return 'Registration is closed.';
-  if (c.level < t.minLevel) return `Level ${t.minLevel}+ only.`;
+  if (c.power < t.minPower) return `Fighters with training power ${t.minPower}+ only.`;
   if (t.entrants.includes(c.id)) return 'Already registered.';
   if (t.entrants.length >= t.cap) return 'The tournament is full.';
   if ((c.wallet[GOLD] ?? 0) < t.fee) return `Entry fee ${fmtAmt(GOLD, t.fee)}.`;
@@ -53,14 +54,14 @@ export function enter(w: World, c: Citizen, id: Id): Result {
 }
 
 export function hostCheck(w: World, c: Citizen, prize: number): string | null {
-  if (c.level < B.tournaments.level) return `Hosting requires level ${B.tournaments.level}.`;
+  if (standing(c) < 15 && c.power < B.tournaments.power) return `Nobody would come: hosting needs ${repNeed(15)} or a fighter's name (power ${B.tournaments.power}+).`;
   if ((c.wallet[GOLD] ?? 0) < prize) return `You must fund the ${fmtAmt(GOLD, prize)} prize.`;
   return null;
 }
-export function host(w: World, c: Citizen, name: string, terrain: Terrain, fee: number, prize: number, minLevel: number): Result {
+export function host(w: World, c: Citizen, name: string, terrain: Terrain, fee: number, prize: number, minPower: number): Result {
   const why = hostCheck(w, c, prize);
   if (why) return fail(why);
-  const t = scheduleTournament(w, { name: name.trim().slice(0, 40) || `${c.name}'s Cup`, terrain, fee, minLevel: Math.max(1, minLevel), format: 'solo' }, c);
+  const t = scheduleTournament(w, { name: name.trim().slice(0, 40) || `${c.name}'s Cup`, terrain, fee, minPower: Math.max(1, minPower), format: 'solo' }, c);
   if (prize) { escrowIn(w, cref(c.id), GOLD, prize, `Prize fund: ${t.name}`); t.prize += prize; t.escrow += prize; }
   return ok(`Hosting ${t.name} on day ${Math.floor(t.start / DAY)}.`);
 }
@@ -78,7 +79,7 @@ export function onTournamentStart(w: World, id: Id) {
   const t = w.tournaments[id];
   if (!t || t.status !== 'upcoming') return;
   // AI entrants fill the field.
-  const pool = shuffle(w, census(w).all.filter((c) => !c.player && c.level >= t.minLevel && !t.entrants.includes(c.id) && (c.persona === 'soldier' || chance(w, 0.1)) && (c.wallet[GOLD] ?? 0) >= t.fee));
+  const pool = shuffle(w, census(w).all.filter((c) => !c.player && c.power >= t.minPower && !t.entrants.includes(c.id) && (c.persona === 'soldier' || chance(w, 0.1)) && (c.wallet[GOLD] ?? 0) >= t.fee));
   for (const c of pool) { if (t.entrants.length >= t.cap) break; enter(w, c, t.id); }
   if (!t.hostedBy) { t.prize += g(SPONSOR); t.sponsored = true; }
   if (t.entrants.length < 2) {

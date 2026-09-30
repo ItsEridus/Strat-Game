@@ -4,6 +4,9 @@
 // a small description of each slot is kept in localStorage so menus can list
 // saves instantly. Saves made by older versions in localStorage still load.
 // Saves can also be exported and imported as files.
+import { autoAllocate } from '../sim/worldgen';
+import { YEAR } from '../sim/growth';
+import { B } from '../data/balance';
 import LZ from 'lz-string';
 import type { World } from '../sim/types';
 import { applyBalance } from '../data/balance';
@@ -44,6 +47,19 @@ function migrate(w: World, from: number): World {
     const ps = w.player as World['player'] & { encounter?: unknown; nextEncounter?: unknown; encounterLog?: { t: number; title: string; outcome: string }[] };
     for (const e of ps.encounterLog ?? []) w.story.journal.push({ id: -1, t: e.t, title: e.title, text: e.outcome, kind: 'outcome' });
     delete ps.encounter; delete ps.nextEncounter; delete ps.encounterLog;
+  }
+  if (from < 8) {
+    // 8: no levels. Unspent attribute points become skills; everyone gets a plausible age.
+    for (const c of Object.values(w.citizens)) {
+      const o = c as typeof c & { level?: number; xp?: number; attrPts?: number };
+      if (o.attrPts) autoAllocate(c, o.attrPts);
+      const age = (w.time - c.born) / YEAR;
+      if (c.player) { if (age < B.life.adultAge) c.born = w.time - B.life.playerAge * YEAR; }
+      else if (age < B.life.adultAge) c.born = w.time - (B.life.adultAge + Math.min(40, (o.level ?? 1) * 1.5 + (c.id % 7))) * YEAR;
+      delete o.level; delete o.xp; delete o.attrPts;
+    }
+    for (const t of Object.values(w.tournaments)) { const o = t as typeof t & { minLevel?: number }; if (t.minPower == null) t.minPower = B.tournaments.power; delete o.minLevel; }
+    for (const q of [...w.player.dailies]) { const r = q.reward as typeof q.reward & { xp?: number }; if (r.xp) { r.rep = Math.max(1, Math.round(r.xp / 5)); delete r.xp; } }
   }
   w.version = SAVE_VERSION;
   return w;

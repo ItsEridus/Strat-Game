@@ -2,14 +2,15 @@
 // "admin" anywhere). Money and items are minted or burned through the ledger
 // with the reason "Admin", so the asset audit stays balanced. Using them marks
 // the campaign (settings.adminUsed).
+import { YEAR, reputation } from './growth';
+import { census } from './census';
 import type { Attr, Id, ItemKey, World } from './types';
-import { B } from '../data/balance';
 import { fail, ok, type Result } from '../engine/result';
 import { burn, consume, mint, produce } from '../engine/ledger';
 import { fmtAmt } from '../engine/money';
 import { itemName } from '../data/items';
 import { RANKS } from '../data/military';
-import { cref, maxEnergy, natref, player, xpToNext } from './query';
+import { cref, maxEnergy, natref, player } from './query';
 import { allowanceCap } from './citizen';
 import { invalidateCensus } from './census';
 
@@ -36,21 +37,25 @@ export function adminTreasury(w: World, asset: string, amount: number): Result {
   return ok(`Added ${fmtAmt(asset, Math.round(amount))} to the ${w.nations[p.nation].name} treasury.`);
 }
 
-/** Set level exactly; attribute points are recalculated for the levels gained. */
-export function adminSetLevel(w: World, level: number): Result {
-  if (!Number.isInteger(level) || level < 1 || level > 200) return fail('Level must be 1–200.');
+/** Set standing (influence; fame is left as is). */
+export function adminSetStanding(w: World, value: number): Result {
+  if (!Number.isFinite(value) || value < 0 || value > 10000) return fail('Standing must be 0–10000.');
   const p = player(w);
-  const spent = Object.values(p.attrs).reduce((a, b) => a + b, 0);
-  const total = Math.min(level, B.levels.attrMaxLevel) * B.levels.attrPerLevel;
-  p.level = level;
-  p.xp = 0;
-  p.attrPts = Math.max(0, total - spent);
+  p.influence = Math.max(0, value - p.sec.fame * 2);
   mark(w);
-  return ok(`Level set to ${level} (${p.attrPts} unspent attribute points; next level at ${xpToNext(level)} XP).`);
+  return ok(`Standing set to ${value} (${reputation(p).name}).`);
+}
+
+export function adminSetAge(w: World, years: number): Result {
+  if (!Number.isInteger(years) || years < 16 || years > 100) return fail('Age must be 16–100.');
+  const p = player(w);
+  p.born = w.time - years * YEAR;
+  mark(w);
+  return ok(`You are now ${years}.`);
 }
 
 export function adminSetAttr(w: World, attr: Attr, value: number): Result {
-  if (!Number.isInteger(value) || value < 0 || value > 500) return fail('Attribute must be 0–500.');
+  if (!Number.isFinite(value) || value < 0 || value > 500) return fail('Skill must be 0–500.');
   player(w).attrs[attr] = value;
   mark(w);
   return ok(`${attr} set to ${value}.`);
@@ -122,7 +127,7 @@ export function adminMilRank(w: World, rank: number): Result {
 /** Relationship with every citizen of a nation (or everyone). */
 export function adminCharm(w: World, value: number): Result {
   const p = player(w);
-  for (const c of Object.values(w.citizens)) if (!c.player) c.rel[p.id] = Math.max(-100, Math.min(100, value));
+  for (const c of census(w).all) if (!c.player) c.rel[p.id] = Math.max(-100, Math.min(100, value));
   mark(w);
   return ok(`Everyone's opinion of you set to ${value}.`);
 }

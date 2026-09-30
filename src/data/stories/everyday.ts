@@ -2,7 +2,6 @@
 // Each binds real people and entities when offered and re-checks them when the
 // player decides.
 import type { StoryDef } from '../../sim/story';
-import { B } from '../balance';
 import { mint, moveItems, pay, produce } from '../../engine/ledger';
 import { GOLD, c as cur, fmtAmt, g } from '../../engine/money';
 import { DAY } from '../../engine/clock';
@@ -18,7 +17,7 @@ import { openCase } from '../../sim/crime';
 import { activeCrises, donate, joinProtest, joinProtestCheck, reliefCheck, volunteer } from '../../sim/dynamics';
 import { activeWars } from '../../sim/war';
 import { ISSUE_INFO, localIssues, playerCandidacy, type Issue } from '../../sim/interact';
-import { addXp } from '../../sim/citizen';
+import { isAdult, practise } from '../../sim/growth';
 import { Ctx } from '../../sim/story';
 import { cash, curOf, done, first, locals, money, myCompanies, single, why } from './kit';
 
@@ -37,10 +36,10 @@ export const EVERYDAY: StoryDef[] = [
     stale: (c) => (c.cit('owner') ? null : 'The owner is gone.'),
     text: (c) => `On the pavement in ${c.w.regions[c.p.loc].name} you find a wallet with ${money(c.str('code'), c.num('amt'))} inside. The ID card says it belongs to ${c.cit('owner')!.name}.`,
     choices: (c) => [
-      { id: 'return', label: `Track down ${first(c.cit('owner')!.name)} and return it`, hint: '+relationship, a little fame, XP', run: (c) => {
+      { id: 'return', label: `Track down ${first(c.cit('owner')!.name)} and return it`, hint: '+relationship, a little fame', run: (c) => {
         const o = c.cit('owner')!;
         c.remember(o, 20, 'returned my lost wallet with every coin in it', 'witnessed');
-        c.p.sec.fame += 0.5; addXp(c.w, c.p, 5);
+        c.p.sec.fame += 0.5; practise(c.w, c.p, 'str', 1);
         for (const x of residents(c.w, o.home).slice(0, 6)) if (x.id !== o.id && !x.player) adjustRel(x, c.p.id, 2);
         return done(`${o.name} can't thank you enough, and tells the neighbours about it.`);
       } },
@@ -52,7 +51,7 @@ export const EVERYDAY: StoryDef[] = [
         if (c.roll(0.3)) { c.remember(o, -30, 'kept the money from my lost wallet', 'witnessed'); openCase(c.w, c.p, 'pickpocket', c.p.loc, 25, amt); return done(`You kept the cash — but a camera caught you. ${o.name} has reported you.`, 'caught'); }
         return done('You kept the cash. Nobody saw… probably.', 'kept');
       } },
-      { id: 'police', label: 'Hand it in at the police station', hint: '+XP, no fuss', run: (c) => { c.remember(c.cit('owner'), 5, 'handed my wallet in to the police'); addXp(c.w, c.p, 3); return done('The desk sergeant logs it. The owner gets it back.'); } },
+      { id: 'police', label: 'Hand it in at the police station', hint: 'a good name, no fuss', run: (c) => { c.remember(c.cit('owner'), 5, 'handed my wallet in to the police'); c.p.influence += 0.3; return done('The desk sergeant logs it. The owner gets it back.'); } },
     ],
   }),
   single({
@@ -265,7 +264,7 @@ export const EVERYDAY: StoryDef[] = [
     id: 'civic.townhall', icon: '🎤', tags: ['politics'], weight: 3,
     title: () => 'A question from the crowd',
     bind: (w, p) => {
-      if (p.level < B.politics.voteLevel || (p.influence < 8 && !playerCandidacy(w))) return null;
+      if (!isAdult(w, p) || (p.influence < 8 && !playerCandidacy(w))) return null;
       const asker = locals(w, p).find((c) => c.nation === p.nation);
       return asker ? { bind: { asker: asker.id, region: p.loc }, key: `townhall:${p.loc}:${today(w)}`, data: { issue: localIssues(w, p.loc)[0].issue } } : null;
     },
@@ -361,7 +360,7 @@ export const EVERYDAY: StoryDef[] = [
       const fight = Ctx.odds(0.3 + c.p.attrs.str * 0.03 + c.p.power / 400);
       const police = Ctx.odds(r.police / 110);
       return [
-        { id: 'fight', label: 'Fight back', hint: 'send them running — or get hurt and lose more', chance: fight, run: (c) => { if (c.roll(fight)) { c.p.sec.fame += 0.5; addXp(c.w, c.p, 5); return done('You sent them running. A few onlookers cheer.', 'won'); } lose(c, loss() * 1.5); c.p.energy = Math.max(0, c.p.energy - 25); return done('You lost the fight — and more money than if you had just handed it over. −25 energy.', 'lost'); } },
+        { id: 'fight', label: 'Fight back', hint: 'send them running — or get hurt and lose more', chance: fight, run: (c) => { if (c.roll(fight)) { c.p.sec.fame += 0.5; practise(c.w, c.p, 'str', 1); return done('You sent them running. A few onlookers cheer.', 'won'); } lose(c, loss() * 1.5); c.p.energy = Math.max(0, c.p.energy - 25); return done('You lost the fight — and more money than if you had just handed it over. −25 energy.', 'lost'); } },
         { id: 'give', label: 'Hand it over', hint: `lose ${money(code, loss())}`, run: (c) => { const l = loss(); lose(c, l); return done(`You handed over ${fmtAmt(code, l)}. At least you're unharmed.`, 'robbed'); } },
         { id: 'shout', label: 'Shout for the police', hint: `police strength here ${Math.round(r.police)}/100`, chance: police, run: (c) => { if (c.roll(police)) return done('Sirens! The mugger bolts before taking anything.', 'saved'); lose(c, loss()); return done('Nobody came. The mugger took your cash.', 'robbed'); } },
       ];

@@ -3,6 +3,7 @@
 // along borders, strikes, protests and riots driven by conditions on the ground,
 // internal migration, and new people arriving. Governments (AI or player)
 // respond with relief spending, lockdowns, crackdowns or concessions.
+import { YEAR } from './growth';
 import type { Citizen, Crisis, CrisisKind, Id, Persona, World } from './types';
 import { census, invalidateCensus } from './census';
 import { B } from '../data/balance';
@@ -17,7 +18,7 @@ import { DAY, HOUR, dayOf } from '../engine/clock';
 import { nid, notify, record, sendMsg } from '../engine/events';
 import { chance, pick, rand, randInt, weighted } from '../engine/rng';
 import { controller, cref, hhref, jailed, natref, player, regref } from './query';
-import { addXp } from './citizen';
+import { practise } from './growth';
 import { autoAllocate, newCitizen } from './worldgen';
 import { govTemplate } from './stategov';
 
@@ -163,7 +164,7 @@ export function volunteer(w: World, c: Citizen, crisisId: Id): Result {
   c.sec.fame += 1;
   c.influence += 0.5;
   for (const x of census(w).all) if (x.loc === c.loc && !x.player) x.rel[c.id] = Math.min(100, (x.rel[c.id] ?? 0) + 2);
-  addXp(w, c, 3);
+  practise(w, c, 'end', B.practice.volunteer);
   return ok(`You worked with relief crews in ${r.name}. Locals won't forget it (+fame, +influence).`);
 }
 
@@ -420,9 +421,8 @@ function arrivalsDaily(w: World) {
   const origin = fromAbroad ? pick(w, w.nations.filter((x) => x.id !== n.id)) : n;
   const name = `${pick(w, NAME_POOLS[origin.cur].first)} ${pick(w, fromAbroad ? NAME_POOLS[origin.cur].last : pool.last)}`;
   const c = newCitizen(w, name, n.id, loc, persona, pick(w, IDEOLOGY_LIST));
-  c.level = randInt(w, 1, 8);
-  c.attrPts = c.level * B.levels.attrPerLevel;
-  autoAllocate(c);
+  c.born = w.time - randInt(w, 18, 40) * YEAR;
+  autoAllocate(c, randInt(w, 3, 24));
   w.citizens[c.id] = c;
   invalidateCensus(w);
   mint(w, cref(c.id), n.cur, cur(randInt(w, 40, 140)), 'New arrival');

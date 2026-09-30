@@ -29,7 +29,7 @@ export const alive = (n: Nation) => !n.exile;
 
 export function maxEnergy(w: World, c: Citizen): number {
   const hosp = w.regions[c.loc]?.bld.hospital ?? 0;
-  return B.energy.baseMax + c.attrs.end * B.attrs.end + hosp * B.energy.hospitalPerLevel;
+  return Math.floor(B.energy.baseMax + c.attrs.end * B.attrs.end + hosp * B.energy.hospitalPerLevel);
 }
 
 /** Effective economic skill including the Economic Aptitude attribute and studies. */
@@ -44,7 +44,6 @@ export function studyActive(w: World, c: Citizen, id: string): boolean {
   return !!s && (s.progress >= B.studies.unlockAt || (s.activeUntil ?? 0) > w.time);
 }
 
-export const xpToNext = (level: number) => B.levels.base + B.levels.perLevel * (level - 1);
 
 export function buffValue(w: World, c: Citizen, type: string): number {
   let v = 0;

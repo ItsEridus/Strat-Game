@@ -186,7 +186,7 @@ export function militaryPower(w: World, n: Id): number {
   for (const c of census(w).all) {
     if (c.nation !== n) continue;
     const weapons = Object.entries(c.inv).filter(([k]) => k.startsWith('wg:') || k.startsWith('wa:')).reduce((a, [, v]) => a + v, 0);
-    s += (1 + c.power / 100) * (1 + c.level / 20) * (c.persona === 'soldier' ? 2 : 1) + Math.min(50, weapons) * 0.05;
+    s += (1 + c.power / 100) * (1 + (c.attrs.str + c.attrs.acc) / 40) * (c.persona === 'soldier' ? 2 : 1) + Math.min(50, weapons) * 0.05;
   }
   const nat = w.nations[n];
   for (const f of Object.values(w.forces)) if (f.nation === n) s += power(w, f) * 15;

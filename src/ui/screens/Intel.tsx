@@ -80,7 +80,7 @@ function CareerPanel({ w }: { w: World }) {
     <Panel title="🎖️ Your intelligence career">
       {p.sec.agency == null ? (
         <>
-          <p class="small">Join the {w.nations[p.nation].agency.name} (level {B.intel.level}+, clean record). Analysts file reports that deepen networks; case officers run operations; field agents run the risky ones.</p>
+          <p class="small">Join the {w.nations[p.nation].agency.name} (age {B.intel.age}+, standing {B.intel.rep}+, clean record). Analysts file reports that deepen networks; case officers run operations; field agents run the risky ones.</p>
           <ActBtn why={joinAgencyCheck(w, p)} run={(w) => joinAgency(w, p)}>Apply to the service</ActBtn>
         </>
       ) : (

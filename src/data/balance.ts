@@ -18,14 +18,11 @@ export const BALANCE = {
     allowanceStart: 5, // SOLO
   },
   cost: { work: 10, train: 10, hit: 10, build: 10, manager: 10, mineStart: 10, article: 10 }, // train/hit/build: DOC/WIKI; others SOLO
-  xp: { work: 2, train: 2, trainDonate: 4, hit: 1, build: 2, manager: 2, article: 3, vote: 1, daily: 1 }, // train & donate DOC, daily DOC, rest SOLO
-  levels: {
-    base: 20, // SOLO: XP to reach level 2
-    perLevel: 12, // SOLO: extra XP per level
-    attrPerLevel: 3, // DOC
-    attrMaxLevel: 50, // DOC
-    goldPerLevel: 0.5, // SOLO
-  },
+  // No levels: skills grow by practice (sim/growth.ts). Effort per activity ≈ one day's worth.
+  practice: { work: 1, train: 1.2, trainDonate: 0.6, hit: 0.03, build: 1, manager: 1, article: 1, rally: 1.5, canvass: 0.8, talk: 0.1, volunteer: 0.6, crime: 0.5, patrol: 0.6, spy: 0.6 }, // SOLO
+  growth: { rate: 0.6, soft: 20 }, // SOLO gain = effort × rate × youth / (1 + skill / soft)
+  life: { adultAge: 18, playerAge: 24 }, // SOLO
+  standing: { rally: 0, talk: 0.05, daily: 0.2 }, // SOLO influence from daily goals (rallies/articles already give influence)
   attrs: {
     str: 5, // DOC +5 starting hit damage per point (applied before training-power multiplier, DOC Sept 19)
     acc: 0.1, // DOC +0.1 percentage point hit chance
@@ -131,10 +128,10 @@ export const BALANCE = {
   wages: { start: 8, min: 5 }, // SOLO starting offer and minimum wage (currency)
   treasury: { householdTransfer: 0.02, publicWorksFrac: 0.6, startPerCitizen: 400 }, // SOLO daily transfer share, fallback wage share
   politics: {
-    voteLevel: 3, // SOLO
-    partyLevel: 3, // SOLO
-    congressLevel: 5, // SOLO
-    presidentLevel: 8, // SOLO
+    foundRep: 15, // SOLO standing to found a party ("Known locally")
+    congressRep: 15, // SOLO standing to stand for congress
+    presidentRep: 35, // SOLO standing to run for head of government ("Respected")
+    presidentAge: 30, // SOLO
     partyFoundCost: 10, // WIKI gold
     congressMin: 3, // WIKI
     congressMax: 20, // WIKI
@@ -187,10 +184,10 @@ export const BALANCE = {
     rarityMult: [1, 1.8, 3, 4.6, 7], // SOLO stat scaling
     dismantleGold: [0.05, 0.15, 0.5, 1.5, 4], // SOLO (Scavenger study doubles)
   },
-  holdings: { cost: 50, shares: 100, level: 10 }, // WIKI
+  holdings: { cost: 50, shares: 100, rep: 15 }, // cost/shares WIKI; standing SOLO
   newspaper: { cost: 5, revenuePerReader: 0.02 }, // cost WIKI, revenue SOLO
-  auctions: { level: 7, listFee: 0.1, sellerCut: 0.05, minHours: 1, maxHours: 48, snipeWindow: 10, snipeExtend: 10 }, // level/cut/durations WIKI; others SOLO
-  contracts: { feeFlat: 0.05, feePct: 0.005, giftExemptLevel: 10, expiryDays: 3 }, // SOLO (fee existence DOC)
+  auctions: { listFee: 0.1, sellerCut: 0.05, minHours: 1, maxHours: 48, snipeWindow: 10, snipeExtend: 10 }, // level/cut/durations WIKI; others SOLO
+  contracts: { feeFlat: 0.05, feePct: 0.005, giftExemptRep: 15, expiryDays: 3 }, // SOLO (fee existence DOC)
   missions: { count: 8, gold: 0.4, prestige: 10, aiGold: 0.05 }, // WIKI; aiGold SOLO (AI citizens earn per completed activity type)
   season: { days: 60, tiers: 30, prestigePerTier: 100 }, // SOLO
   mining: { yields: { 1: 0.5, 2: 0.8 } as Record<number, number>, globalMult: 1 }, // WIKI yields
@@ -221,7 +218,7 @@ export const BALANCE = {
     evidencePerDay: 4, // SOLO base evidence gathered per day on an open case (× police/50)
     arrestAt: 60, // SOLO evidence needed to arrest
     rankAt: [0, 5, 15, 35, 70], // SOLO collars needed for officer/sergeant/detective/captain/chief
-    level: 4, // SOLO level to join the police
+    fitness: 3, // SOLO strength + endurance to pass the police fitness test
   },
   justice: {
     finePerLoot: 2, // SOLO fine = 2× what was taken (min 20 currency)
@@ -238,7 +235,6 @@ export const BALANCE = {
     payoutShare: 0.25, // SOLO share of daily income paid to members
     expandChance: 0.08, // SOLO daily chance to push into a neighbouring region
     raidAt: 1.2, // SOLO police/strength ratio at which authorities raid
-    level: 3, // SOLO level to be offered membership
   },
   intel: {
     staffShare: 0.01, // SOLO AI citizens stop joining the intelligence service once it employs this share of the nation
@@ -248,7 +244,7 @@ export const BALANCE = {
     opHours: { intel: 8, sabotage: 18, theft: 24, unrest: 20, propaganda: 16, scandal: 30, recruit: 20, counter: 12, milintel: 12, milsabotage: 20 }, // SOLO
     opCost: { intel: 30, sabotage: 80, theft: 60, unrest: 60, propaganda: 50, scandal: 70, recruit: 40, counter: 30, milintel: 40, milsabotage: 90 }, // SOLO currency
     minNetwork: { intel: 0, sabotage: 25, theft: 35, unrest: 20, propaganda: 10, scandal: 30, recruit: 15, counter: 0, milintel: 20, milsabotage: 35 }, // SOLO
-    level: 6, // SOLO level to join an intelligence service
+    rep: 5, age: 21, // SOLO standing and age to be vetted by an intelligence service
     energy: 25, // SOLO field agent energy per operation
     agentCd: 12, // SOLO hours between a citizen agent's operations
     salary: 8, // SOLO daily salary of a citizen in the intelligence service (currency)
@@ -296,7 +292,7 @@ export const BALANCE = {
   state: {
     termDays: 60, // SOLO state/provincial election cycle (staggered across regions)
     regDays: 5, // SOLO candidate registration window before an election
-    candLevel: 5, // SOLO level to run for governor/premier
+    candRep: 15, // SOLO standing to run for governor/premier
     maxTax: 12, // SOLO ceiling on a state wage tax (%)
     taxStep: 3, // SOLO largest change per decision
     taxCooldownDays: 7, // SOLO
@@ -311,7 +307,7 @@ export const BALANCE = {
     turnout: 0.55, // SOLO background turnout
   },
   pirates: { ships: 6, defenders: 10, depotBonus: 0.1, depotDiscount: 0.02, cutlass: 0.2, everyDays: 45, lengthDays: 10 }, // DOC numbers; schedule SOLO
-  tournaments: { level: 10, everyDays: 7, fee: 1, cap: 16 }, // level WIKI; rest SOLO
+  tournaments: { power: 25, everyDays: 7, fee: 1, cap: 16 }, // SOLO minimum training power
   ai: {
     fightShare: 0.65, // SOLO share of energy AI soldiers commit to battles
     priceStep: 0.04, // SOLO price adjustment per day
@@ -342,8 +338,6 @@ export const PROVENANCE: { key: string; src: Source; note: string }[] = [
   { key: 'food.energy', src: 'WIKI', note: 'Q1–Q5 food restore 10–50 energy' },
   { key: 'food.allowanceEvery', src: 'WIKI', note: 'One eating allowance per 45 minutes' },
   { key: 'food.allowanceMax', src: 'SOLO', note: 'Allowance cap not established by sources' },
-  { key: 'xp.train', src: 'DOC', note: 'Training gives 2 XP; donation variant 4 XP' },
-  { key: 'levels.attrPerLevel', src: 'DOC', note: '3 attribute points per level through level 50' },
   { key: 'attrs', src: 'DOC', note: 'Per-point attribute effects from the September attributes update' },
   { key: 'training.logBase', src: 'SOLO', note: 'Wiki: power gain 1/log(power+2); log base unstated, base 10 chosen' },
   { key: 'damage.base / powerDivisor', src: 'SOLO', note: 'Full current damage formula unverified; see docs/DESIGN.md' },
@@ -382,8 +376,8 @@ export const PROVENANCE: { key: string; src: Source; note: string }[] = [
   { key: 'buildings.baseSupplyLevel', src: 'DOC', note: 'Level-4 military base protects its region’s supply' },
   { key: 'units.cost / squads', src: 'WIKI', note: '50 gold, up to 10 squads of 5' },
   { key: 'gear.drop*', src: 'WIKI', note: '0.4% per attack, 0.04% per construction, 1% per mining' },
-  { key: 'holdings', src: 'WIKI', note: '50 gold, 100 shares, level 10' },
-  { key: 'auctions', src: 'WIKI', note: 'Level 7, 1–48h, 5% seller charge; anti-snipe adapted to 10-minute ticks (SOLO)' },
+  { key: 'holdings', src: 'WIKI', note: '50 gold, 100 shares' },
+  { key: 'auctions', src: 'WIKI', note: '1–48h, 5% seller charge; anti-snipe adapted to 10-minute ticks (SOLO)' },
   { key: 'missions', src: 'WIKI', note: '8 daily missions, 0.4 gold + 10 prestige each' },
   { key: 'mining.yields', src: 'WIKI', note: '0.5 gold / 1h, 0.8 gold / 2h shifts' },
   { key: 'studies.unlockAt', src: 'DOC', note: 'Studies unlock at 75%' },

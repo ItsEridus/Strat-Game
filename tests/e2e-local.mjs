@@ -16,7 +16,7 @@ page.on('dialog', (d) => d.accept());
 await page.goto('file://' + process.cwd() + '/index.html');
 await page.evaluate(() => localStorage.clear());
 await page.reload();
-await page.fill('.form input[type=number]', '2024');
+await page.click('details summary:has-text("Reproducible world")'); await page.check('details input[type=checkbox]'); await page.fill('details input[type=number]', '2024');
 let t = Date.now();
 await page.click('text=Start campaign');
 await page.waitForSelector('.topbar', { timeout: 60000 });

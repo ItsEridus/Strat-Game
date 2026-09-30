@@ -1,4 +1,5 @@
 // Secret admin panel (Ctrl+Shift+A, or type "admin"). Not listed in the menu.
+import { ageOf, reputation, standing } from '../../sim/growth';
 import { useState } from 'preact/hooks';
 import type { Attr, World } from '../../sim/types';
 import { ActBtn, Amt, Num, Panel, Select } from '../common';
@@ -8,7 +9,7 @@ import { MARKET_KEYS, SPECIALS, itemName } from '../../data/items';
 import { RANKS } from '../../data/military';
 import { store } from '../store';
 import {
-  adminCharm, adminFreedom, adminGiveItem, adminMilRank, adminRefill, adminSetAttr, adminSetLevel, adminSetMoney, adminSetStat, adminTeleport, adminTreasury,
+  adminCharm, adminFreedom, adminGiveItem, adminMilRank, adminRefill, adminSetAttr, adminSetAge, adminSetStanding, adminSetMoney, adminSetStat, adminTeleport, adminTreasury,
 } from '../../sim/admin';
 
 const ATTRS: [Attr, string][] = [['str', 'Strength'], ['acc', 'Accuracy'], ['luck', 'Luck'], ['end', 'Endurance'], ['lead', 'Leadership'], ['eco', 'Economic aptitude'], ['cons', 'Construction']];
@@ -20,7 +21,8 @@ export function Admin({ w }: { w: World }) {
   const currencies = [GOLD, home, ...w.nations.map((n) => n.cur).filter((c) => c !== home)];
   const [asset, setAsset] = useState(home);
   const [amount, setAmount] = useState(Math.round(toWhole(home, p.wallet[home] ?? 0)));
-  const [level, setLevel] = useState(p.level);
+  const [rep, setRep] = useState(Math.floor(standing(p)));
+  const [age, setAge] = useState(ageOf(w, p));
   const [attr, setAttr] = useState<Attr>('str');
   const [attrV, setAttrV] = useState(p.attrs.str);
   const [stat, setStat] = useState<(typeof STATS)[number][0]>('power');
@@ -36,7 +38,7 @@ export function Admin({ w }: { w: World }) {
     <div class="grid admin">
       <Panel title="🛠️ Admin panel" class="wide" right={<button class="btn sm ghost" onClick={() => store.go('dashboard')}>Close</button>}>
         <p class="small muted">Changes apply to your citizen immediately. Money and items go through the ledger as “Admin”, and the campaign is marked as edited{w.settings.adminUsed ? ' (it already is)' : ''}.</p>
-        <div class="row small">{currencies.slice(0, 2).map((c) => <span class="chip"><Amt asset={c} v={p.wallet[c] ?? 0} /></span>)}<span class="chip">Level {p.level}</span><span class="chip">⚡ {Math.floor(p.energy)}</span></div>
+        <div class="row small">{currencies.slice(0, 2).map((c) => <span class="chip"><Amt asset={c} v={p.wallet[c] ?? 0} /></span>)}<span class="chip">{reputation(p).name}</span><span class="chip">Age {ageOf(w, p)}</span><span class="chip">⚡ {Math.floor(p.energy)}</span></div>
       </Panel>
 
       <Panel title="💰 Money">
@@ -53,10 +55,11 @@ export function Admin({ w }: { w: World }) {
           <ActBtn small run={(w) => adminTreasury(w, GOLD, toMinor(GOLD, treasury / 100))}>Add {treasury / 100} gold</ActBtn></div>
       </Panel>
 
-      <Panel title="⭐ Level & skills">
-        <div class="row small">Level <Num value={level} onInput={setLevel} min={1} max={200} width={80} /><ActBtn small kind="primary" run={(w) => adminSetLevel(w, level)}>Set level</ActBtn></div>
+      <Panel title="⭐ Reputation, age & skills">
+        <div class="row small">Standing <Num value={rep} onInput={setRep} min={0} max={10000} width={80} /><ActBtn small kind="primary" run={(w) => adminSetStanding(w, rep)}>Set standing</ActBtn></div>
+        <div class="row small">Age <Num value={age} onInput={setAge} min={16} max={100} width={80} /><ActBtn small run={(w) => adminSetAge(w, age)}>Set age</ActBtn></div>
         <div class="row small"><Select value={attr} options={ATTRS} onChange={(a) => { setAttr(a); setAttrV(p.attrs[a]); }} />
-          <Num value={attrV} onInput={setAttrV} min={0} max={500} width={80} /><ActBtn small run={(w) => adminSetAttr(w, attr, attrV)}>Set attribute</ActBtn></div>
+          <Num value={attrV} onInput={setAttrV} min={0} max={500} width={80} /><ActBtn small run={(w) => adminSetAttr(w, attr, attrV)}>Set skill</ActBtn></div>
         <div class="row small"><Select value={stat} options={STATS.map(([k, l]) => [k, l] as [typeof k, string])} onChange={(s) => setStat(s)} />
           <Num value={statV} onInput={setStatV} min={0} width={100} /><ActBtn small run={(w) => adminSetStat(w, stat, statV)}>Set</ActBtn></div>
         <div class="row small"><ActBtn small run={adminRefill}>Refill energy & allowance</ActBtn></div>

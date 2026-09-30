@@ -78,7 +78,7 @@ function ElectionBox({ w, r, regOpen }: { w: World; r: Region; regOpen: boolean 
         <div class="row small">Campaign spending <Num value={amt} onInput={setAmt} min={1} width={80} /> {s.cur}
           <ActBtn small run={(w) => campaign(w, p.id, r.id, cur(amt))}>Spend</ActBtn> <span class="muted">spent so far {(mine.campaign / 100).toFixed(0)} {s.cur}</span></div>
       )}
-      <Help>Residents who are citizens vote; the background electorate follows its ideological leaning, the incumbent's approval, candidates' influence and campaign spending (paid to local households). Level {B.state.candLevel}+ citizens living here can run.</Help>
+      <Help>Residents who are citizens vote; the background electorate follows its ideological leaning, the incumbent's approval, candidates' influence and campaign spending (paid to local households). Citizens living here with standing {B.state.candRep}+ can run.</Help>
     </div>
   );
 }

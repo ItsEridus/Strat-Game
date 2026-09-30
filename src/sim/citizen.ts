@@ -1,12 +1,11 @@
-// Personal progression: energy, eating, XP/levels, attributes, training.
+// Personal condition: energy, eating, skills (grown by practice, see growth.ts), training.
 // Used identically by the player and AI citizens.
 import type { Attr, Citizen, World } from './types';
 import { B } from '../data/balance';
 import { fail, ok, type Result } from '../engine/result';
-import { consume, mint } from '../engine/ledger';
-import { GOLD, g } from '../engine/money';
-import { notify } from '../engine/events';
-import { cref, maxEnergy, studyActive, today, xpToNext, jailed } from './query';
+import { consume } from '../engine/ledger';
+import { cref, maxEnergy, studyActive, today, jailed } from './query';
+import { practise } from './growth';
 import { bump } from './progress';
 
 export const ATTRS: Record<Attr, { name: string; effect: string }> = {
@@ -49,17 +48,6 @@ export function spendEnergy(w: World, c: Citizen, n: number): string | null {
   return null;
 }
 
-export function addXp(w: World, c: Citizen, n: number) {
-  c.xp += n;
-  while (c.xp >= xpToNext(c.level)) {
-    c.xp -= xpToNext(c.level);
-    c.level++;
-    if (c.level <= B.levels.attrMaxLevel) c.attrPts += B.levels.attrPerLevel;
-    mint(w, cref(c.id), GOLD, g(B.levels.goldPerLevel), 'Level-up reward');
-    if (c.player) notify(w, 'progress', `⭐ Level ${c.level}! +${B.levels.attrPerLevel} attribute points, +${B.levels.goldPerLevel} gold.`, { link: 'character' });
-  }
-}
-
 export function eatPreview(w: World, c: Citizen, q: number) {
   const restore = B.food.energy[q - 1];
   const room = Math.max(0, maxEnergy(w, c) - c.energy);
@@ -79,24 +67,14 @@ export function eat(w: World, c: Citizen, q: number): Result {
   return ok(`Ate Q${q} food: +${p.gained} energy${p.wasted ? ` (${p.wasted} wasted)` : ''}.`);
 }
 
-export function allocAttr(w: World, c: Citizen, a: Attr, n: number): Result {
-  if (!(a in c.attrs)) return fail('Unknown attribute.');
-  if (!Number.isInteger(n) || n < 1) return fail('Invalid amount.');
-  if (c.attrPts < n) return fail(`Only ${c.attrPts} unspent points.`);
-  c.attrPts -= n;
-  c.attrs[a] += n;
-  if (a === 'end') c.energy = Math.min(c.energy, maxEnergy(w, c));
-  return ok(`${ATTRS[a].name} +${n}.`);
-}
-
-export function respec(w: World, c: Citizen): Result {
-  if ((c.inv['sp:manual'] ?? 0) < 1) return fail('Requires a Retraining Manual (Shop).');
+/** A study manual: a few evenings of reading improve your weakest skill. */
+export function studyManual(w: World, c: Citizen): Result {
+  if ((c.inv['sp:manual'] ?? 0) < 1) return fail('Requires a Study Manual (Shop).');
   consume(w, cref(c.id), 'sp:manual', 1, 'special used');
-  let refunded = 0;
-  for (const k of Object.keys(c.attrs) as Attr[]) { refunded += c.attrs[k]; c.attrs[k] = 0; }
-  c.attrPts += refunded;
-  c.energy = Math.min(c.energy, maxEnergy(w, c));
-  return ok(`Attributes reset: ${refunded} points to reallocate.`);
+  const a = (Object.keys(c.attrs) as Attr[]).filter((k) => k !== 'luck').sort((x, y) => c.attrs[x] - c.attrs[y])[0];
+  const before = c.attrs[a];
+  practise(w, c, a, 5);
+  return ok(`You studied ${ATTRS[a].name.toLowerCase()}: ${before.toFixed(1)} → ${c.attrs[a].toFixed(1)}.`);
 }
 
 export function powerGain(w: World, c: Citizen): number {
@@ -115,7 +93,7 @@ export function trainCheck(w: World, c: Citizen, mode: TrainMode): string | null
   return null;
 }
 
-/** First training each day raises training power; extra sessions give XP only (DOC). */
+/** First training each day raises training power; every session builds strength and endurance (less each time). */
 export function train(w: World, c: Citizen, mode: TrainMode = 'normal'): Result {
   const why = trainCheck(w, c, mode);
   if (why) return fail(why);
@@ -130,12 +108,14 @@ export function train(w: World, c: Citizen, mode: TrainMode = 'normal'): Result 
     msg = `Training power +${gain.toFixed(2)} (now ${c.power.toFixed(1)}).`;
   } else {
     c.trainsToday++;
-    msg = 'Extra session: XP only (power grows once per day).';
+    msg = 'Extra session: power grows once per day, but your body still gets stronger.';
   }
-  let xp = B.xp.train;
-  if (mode === 'food') { consume(w, cref(c.id), 'food:1', 5, 'training donation'); xp = B.xp.trainDonate; }
-  if (mode === 'weapons') { consume(w, cref(c.id), 'wg:1', 20, 'training donation'); xp = B.xp.trainDonate; }
-  addXp(w, c, xp);
+  const effort = B.practice.train / Math.max(1, c.trainsToday);
+  const str0 = c.attrs.str, end0 = c.attrs.end;
+  practise(w, c, 'str', effort);
+  practise(w, c, 'end', effort * 0.5);
+  if (mode === 'food') { consume(w, cref(c.id), 'food:1', 5, 'training donation'); practise(w, c, 'lead', B.practice.trainDonate); c.influence += 0.2; }
+  if (mode === 'weapons') { consume(w, cref(c.id), 'wg:1', 20, 'training donation'); practise(w, c, 'lead', B.practice.trainDonate); c.influence += 0.2; }
   if (c.player) bump(w, 'train');
-  return ok(`${msg} +${xp} XP.`);
+  return ok(`${msg} Strength ${str0.toFixed(1)} → ${c.attrs.str.toFixed(1)}, endurance ${end0.toFixed(1)} → ${c.attrs.end.toFixed(1)}.${mode !== 'normal' ? ' The donation was noticed (+standing).' : ''}`);
 }

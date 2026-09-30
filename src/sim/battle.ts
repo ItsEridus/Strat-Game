@@ -12,7 +12,7 @@ import { consume, mint } from '../engine/ledger';
 import { GOLD, g } from '../engine/money';
 import { nid, notify } from '../engine/events';
 import { chance } from '../engine/rng';
-import { addXp } from './citizen';
+import { practise } from './growth';
 import { hitPreview, sideNation, type WeaponSel } from './combatMath';
 import { controller, cref, player, today, jailed } from './query';
 import { rollDrop } from './gear';
@@ -89,7 +89,8 @@ export function hit(w: World, c: Citizen, bid: Id, side: 'a' | 'd', weapon: Weap
   if (b.kind !== 'training') c.dmgTotal += dmg;
   if (b.kind === 'war') serviceFromDamage(w, c, dmg);
   c.flags.hitDay = today(w);
-  addXp(w, c, B.xp.hit);
+  practise(w, c, 'acc', B.practice.hit);
+  if (b.kind !== 'training') practise(w, c, 'luck', B.practice.hit * 0.3);
   rollDrop(w, c, B.gear.dropAttack, 'combat', w.regions[b.region]?.terrain);
   if (c.player) { bump(w, 'hit'); if (dmg) bump(w, 'dmgDealt', dmg); }
   return ok(landed ? `${crit ? 'Critical hit' : 'Hit'} for ${dmg.toLocaleString()} damage.` : 'Missed!', { dmg, crit, landed });

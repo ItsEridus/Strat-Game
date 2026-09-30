@@ -13,7 +13,7 @@ import { GOLD, fmtAmt, g } from '../engine/money';
 import { DAY } from '../engine/clock';
 import { nid, notify, record } from '../engine/events';
 import { authorize } from './authority';
-import { addXp } from './citizen';
+import { practise } from './growth';
 import { companyCurrency, controller, coref, cref, effEco, natref, seatShare, studyActive, today, jailed } from './query';
 import { remitWorkTax, workTaxFor } from './taxes';
 import { infraBonus } from './stategov';
@@ -200,7 +200,7 @@ export function workShift(w: World, c: Citizen): Result {
   c.lastWorkDay = today(w);
   c.incomeToday += gross - t.tax;
   c.eco = +(c.eco + B.eco.gainBase / (1 + c.eco / 5)).toFixed(3);
-  addXp(w, c, B.xp.work);
+  practise(w, c, 'eco', B.practice.work);
   if (c.player) bump(w, 'work');
   return ok(`Worked at ${co.name}: produced ${made} ${itemName(outputKey(co.industry, co.q))}, earned ${fmtAmt(cur, gross - t.tax)} net (${fmtAmt(cur, t.tax)} tax${t.stateRate ? `, incl. ${t.stateRate}% ${w.regions[co.region].name} state tax` : ''}).`);
 }
@@ -305,7 +305,7 @@ export function managerShift(w: World, actor: Citizen, coId: Id): Result {
   actor.energy -= B.cost.manager;
   const made = runProduction(w, co, shiftPreview(w, co, actor).units, 'manager output');
   actor.eco = +(actor.eco + (B.eco.gainBase / (1 + actor.eco / 5)) * 0.5).toFixed(3);
-  addXp(w, actor, B.xp.manager);
+  practise(w, actor, 'lead', B.practice.manager);
   if (actor.player) bump(w, 'manage');
   return ok(`Manager shift: produced ${made} ${itemName(outputKey(co.industry, co.q))}${cost ? ` (fee ${fmtAmt(GOLD, cost)})` : ' (free first shift today)'}.`);
 }
@@ -455,7 +455,7 @@ export function publicWorksShift(w: World, c: Citizen): Result {
   c.lastWorkDay = today(w);
   c.incomeToday += wage;
   c.eco = +(c.eco + (B.eco.gainBase / (1 + c.eco / 5)) * 0.5).toFixed(3);
-  addXp(w, c, B.xp.work);
+  practise(w, c, 'eco', B.practice.work);
   let extra = '';
   const proj = n.priorities.project != null ? w.projects[n.priorities.project] : undefined;
   if (proj && !proj.done && proj.points < proj.needPts) {

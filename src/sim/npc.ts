@@ -2,6 +2,7 @@
 // rivals and allies form around the player and act on it; NPCs make offers,
 // requests and threats through the inbox; journalists investigate; NPCs build
 // their own relationships and feuds; and everyone reacts to what the player does.
+import { ageOf, practise, standing } from './growth';
 import type { Citizen, Id, World } from './types';
 import { remember } from './story';
 import { census, nationals, residents } from './census';
@@ -94,7 +95,7 @@ function agendasDaily(w: World) {
     const g = c.sec.goal!;
     if (g.kind === 'governor' && g.target != null) {
       const s = w.govs[g.target];
-      if (s && !s.candidates.some((x) => x.cit === c.id) && s.candidates.length && c.level >= B.state.candLevel && c.loc === g.target && !jailed(w, c) && headOf(w, c.id) == null) {
+      if (s && !s.candidates.some((x) => x.cit === c.id) && s.candidates.length && standing(c) >= B.state.candRep && c.loc === g.target && !jailed(w, c) && headOf(w, c.id) == null) {
         s.candidates.push({ name: c.name, ideo: c.ideo, cit: c.id, campaign: 0 });
         const cash = c.wallet[w.nations[c.nation].cur] ?? 0;
         if (cash > cur(200)) { const spend = Math.floor(cash * 0.2); if (pay(w, cref(c.id), { k: 'hh', id: c.nation }, w.nations[c.nation].cur, spend, 'Campaign')) s.candidates[s.candidates.length - 1].campaign += spend; }
@@ -327,7 +328,7 @@ export function replyDebate(w: World, payload: Record<string, any>, option: stri
   const me = s?.candidates.find((c) => c.cit === p.id);
   if (!s || !me) return ok('The race is over.');
   if (option === 'decline') { me.campaign = Math.max(0, me.campaign * 0.9); return ok('You ducked the debate. Commentators noticed.'); }
-  const skill = 0.45 + Math.min(0.3, p.influence / 200) + Math.min(0.1, p.level / 200);
+  const skill = 0.45 + Math.min(0.3, p.influence / 200) + Math.min(0.1, p.attrs.lead / 200);
   if (chance(w, skill)) { me.campaign += cur(Math.max(20, w.regions[s.region].pop / 800)); p.influence += 2; return ok(`You won the debate against ${payload.rival} (+standing in the race, +2 influence).`); }
   const other = s.candidates.find((c) => c.name === payload.rival);
   if (other) other.campaign += cur(Math.max(20, w.regions[s.region].pop / 800));
@@ -348,8 +349,9 @@ function npcSocial(w: World) {
       const [win, lose] = a.influence * rand(w, 0.7, 1.3) > b.influence * rand(w, 0.7, 1.3) ? [a, b] : [b, a];
       win.influence += 1; lose.influence = Math.max(0, lose.influence - 1);
       record(w, 'politics', `🗣️ ${a.name} (${IDEOLOGIES[a.ideo].name}) and ${b.name} (${IDEOLOGIES[b.ideo].name}) clashed publicly; ${win.name} came out ahead.`, { nation: a.nation });
-    } else if (a.level > b.level + 10 && a.persona === b.persona && chance(w, 0.4)) {
-      b.xp += 10; b.eco += 0.1; a.rel[b.id] = Math.min(100, (a.rel[b.id] ?? 0) + 10); b.rel[a.id] = Math.min(100, (b.rel[a.id] ?? 0) + 15);
+    } else if (ageOf(w, a) > ageOf(w, b) + 12 && a.persona === b.persona && chance(w, 0.4)) {
+      // Mentoring: the elder passes on what they know.
+      b.eco += 0.1; practise(w, b, a.persona === 'soldier' ? 'str' : a.persona === 'politician' || a.persona === 'journalist' ? 'lead' : 'eco', 1); a.rel[b.id] = Math.min(100, (a.rel[b.id] ?? 0) + 10); b.rel[a.id] = Math.min(100, (b.rel[a.id] ?? 0) + 15);
       if (chance(w, 0.3)) record(w, 'people', `🤝 ${a.name} has taken ${b.name} under their wing.`, { nation: a.nation });
     } else if ((a.persona === 'investor' || a.persona === 'industrialist') && (b.persona === 'industrialist' || b.persona === 'merchant') && chance(w, 0.3)) {
       const code = w.nations[a.nation].cur;
@@ -370,7 +372,6 @@ function reactToPlayer(w: World) {
     cos: Object.values(w.companies).filter((co) => co.owner.k === 'cit' && co.owner.id === p.id).length,
     office: (headOf(w, p.id) != null ? 1 : 0) + (w.nations[p.nation].president === p.id ? 2 : 0) + (Object.values(w.nations[p.nation].cabinet).includes(p.id) ? 4 : 0),
     conv: p.sec.record.convictions,
-    level: p.level,
   };
   const prev = { cos: p.flags.snapCos ?? snap.cos, office: p.flags.snapOffice ?? snap.office, conv: p.flags.snapConv ?? snap.conv };
   const locals = census(w).all.filter((c) => !c.player && c.nation === p.nation);

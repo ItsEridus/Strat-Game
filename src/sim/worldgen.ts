@@ -21,9 +21,10 @@ import { initGovs } from './stategov';
 import { initCrime } from './crime';
 import { initForces, seedOfficers } from './forces';
 import { newNarrative } from './story';
+import { YEAR, seniority } from './growth';
 import { AGENCY_NAMES } from '../data/names';
 
-export const SAVE_VERSION = 7; // 5: armed forces; 6: per-region population, home regions; 7: stories, journal, memories, places
+export const SAVE_VERSION = 8; // 5: armed forces; 6: per-region population, home regions; 7: stories, journal, memories, places; 8: no levels (skills, age, reputation)
 
 export function defaultSettings(): Settings {
   const pauseOn: Record<string, boolean> = {};
@@ -97,7 +98,6 @@ function personName(w: World, cur: string, used: Set<string>) {
 export function newCitizen(w: World, name: string, nation: Id, loc: Id, persona: Persona, ideo: Ideology): Citizen {
   return {
     id: w.nextId++, name, persona, nation, loc, home: loc, wallet: {}, inv: {}, born: w.time,
-    xp: 0, level: 1, attrPts: B.levels.attrPerLevel,
     attrs: { str: 0, acc: 0, luck: 0, end: 0, lead: 0, eco: 0, cons: 0 },
     power: B.training.startPower, eco: B.eco.startSkill, dmgTotal: 0, buildTotal: 0,
     energy: B.energy.baseMax, allowance: B.food.allowanceStart, allowAcc: 0,
@@ -120,8 +120,8 @@ export function newSec(): Citizen['sec'] {
   };
 }
 
-/** Spend a citizen's attribute points according to their persona. */
-export function autoAllocate(c: Citizen) {
+/** Give a citizen `points` of skill spread by what their persona has spent life doing. */
+export function autoAllocate(c: Citizen, points: number) {
   const prefs: Record<Persona, (keyof Citizen['attrs'])[]> = {
     worker: ['eco', 'end', 'lead'], merchant: ['eco', 'lead', 'end'], politician: ['end', 'eco', 'str'],
     soldier: ['str', 'acc', 'luck', 'end'], industrialist: ['lead', 'eco', 'end'], builder: ['cons', 'end', 'str'],
@@ -129,7 +129,7 @@ export function autoAllocate(c: Citizen) {
   };
   const p = prefs[c.persona];
   let i = 0;
-  while (c.attrPts > 0) { c.attrs[p[i % p.length]]++; c.attrPts--; i++; }
+  for (let n = Math.round(points); n > 0; n--, i++) c.attrs[p[i % p.length]]++;
 }
 
 const PERSONA_MIX: [Persona, number][] = [['worker', 38], ['soldier', 16], ['industrialist', 10], ['merchant', 7], ['politician', 11], ['builder', 7], ['journalist', 5], ['investor', 6]];
@@ -139,14 +139,14 @@ const CORE_ROLES: Persona[] = ['industrialist', 'industrialist', 'merchant', 'in
 
 function makeGenesisCitizen(w: World, n: Nation, loc: Id, persona: Persona, ideo: Ideology, used: Set<string>) {
   const c = newCitizen(w, personName(w, n.cur, used), n.id, loc, persona, ideo);
-  c.born = w.time - randInt(w, 18, 70) * 365 * DAY;
-  c.level = randInt(w, 2, 22) + (persona === 'politician' ? 4 : 0);
-  c.attrPts = Math.min(c.level, B.levels.attrMaxLevel) * B.levels.attrPerLevel;
-  autoAllocate(c);
-  c.power = +(B.training.startPower + c.level * rand(w, 0.8, 2.2) * (persona === 'soldier' ? 1.6 : 1)).toFixed(2);
-  c.eco = +(1 + c.level * rand(w, 0.1, 0.35) * (persona === 'worker' || persona === 'industrialist' ? 1.5 : 1)).toFixed(2);
-  c.dmgTotal = Math.round(c.power * c.level * rand(w, 500, 3000) * (persona === 'soldier' ? 3 : 0.5));
-  c.influence = Math.round(rand(w, 0, 20) + (persona === 'politician' ? 25 : persona === 'journalist' ? 12 : 0) + c.level);
+  c.born = w.time - randInt(w, 18, 72) * YEAR - randInt(w, 0, 364) * DAY;
+  // Experience comes with years: a veteran knows more than a school leaver.
+  const exp = seniority(w, c) * rand(w, 0.35, 0.7) + (persona === 'politician' ? 4 : 0) + 1;
+  autoAllocate(c, exp * 3);
+  c.power = +(B.training.startPower + exp * rand(w, 0.8, 2.2) * (persona === 'soldier' ? 1.6 : 1)).toFixed(2);
+  c.eco = +(1 + exp * rand(w, 0.1, 0.35) * (persona === 'worker' || persona === 'industrialist' ? 1.5 : 1)).toFixed(2);
+  c.dmgTotal = Math.round(c.power * exp * rand(w, 500, 3000) * (persona === 'soldier' ? 3 : 0.5));
+  c.influence = Math.round(rand(w, 0, 20) + (persona === 'politician' ? 25 : persona === 'journalist' ? 12 : 0) + exp);
   c.energy = rand(w, 40, 100);
   w.citizens[c.id] = c;
   invalidateCensus(w);
@@ -271,8 +271,12 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
 
   // Player.
   const pn = w.nations[playerNation];
-  const p = newCitizen(w, playerName.trim().slice(0, 28) || 'Citizen', pn.id, pn.capital, 'worker', 'capitalism');
+  // Where you are born is luck: any region of your nation, big places more likely than small ones.
+  const birthplace = weighted(w, regions.filter((r) => r.owner === pn.id), (r) => Math.sqrt(Math.max(1, EARTH.regions[r.id].popReal)))?.id ?? pn.capital;
+  const p = newCitizen(w, playerName.trim().slice(0, 28) || 'Citizen', pn.id, birthplace, 'worker', 'capitalism');
   p.player = true;
+  p.born = w.time - B.life.playerAge * YEAR;
+  autoAllocate(p, 3);
   p.workHour = 9; p.trainHour = 8; p.traits = { ambition: 1, risk: 0.5, loyalty: 0.5, greed: 0.5, activity: 1 };
   p.energy = B.energy.baseMax;
   w.citizens[p.id] = p;
@@ -341,7 +345,7 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
   seedLate(w);
 
   for (const n of w.nations) record(w, 'genesis', `${n.name} enters the new era with ${regions.filter((r) => r.owner === n.id).length} regions.`, { nation: n.id });
-  record(w, 'player', `${p.name} begins life as a citizen of ${pn.name}.`, { cit: p.id, nation: pn.id, player: true, important: true });
+  record(w, 'player', `${p.name} begins life in ${w.regions[p.home].name}, ${pn.name}.`, { cit: p.id, nation: pn.id, player: true, important: true });
   return w;
 }
 

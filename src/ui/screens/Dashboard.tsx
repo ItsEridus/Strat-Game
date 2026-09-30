@@ -48,7 +48,7 @@ export function Dashboard({ w }: { w: World }) {
           </div>
           <div class="action">
             <b>🏋️ Train</b>
-            <small>{p.lastTrainDay === today(w) ? 'Power gained today ✓ (extra sessions give XP)' : `+${powerGain(w, p).toFixed(2)} training power`}</small>
+            <small>{p.lastTrainDay === today(w) ? 'Power gained today ✓ (extra sessions still build strength)' : `+${powerGain(w, p).toFixed(2)} training power`}</small>
             <ActBtn kind="primary" why={trainCheck(w, p, 'normal')} run={(w) => train(w, p)}>Train (−{B.cost.train}⚡)</ActBtn>
           </div>
           <div class="action">

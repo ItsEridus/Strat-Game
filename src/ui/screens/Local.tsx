@@ -1,6 +1,7 @@
 // Neighbourhood: the place you are in right now — its people, what they are
 // doing this hour, what worries them, its businesses and its news — and the
 // things you can do here in person: talk, canvass, hold a rally.
+import { ageOf } from '../../sim/growth';
 import { useState } from 'preact/hooks';
 import type { Citizen, World } from '../../sim/types';
 import { ActBtn, Amt, CitLink, Empty, Help, Panel, RegionLink, Select } from '../common';
@@ -105,7 +106,7 @@ function PersonCard({ w, c }: { w: World; c: Citizen }) {
       <Avatar c={c} />
       <div class="person-body">
         <b class="link" onClick={() => store.go('citizen', { citizen: c.id })}>{c.name}</b>
-        <small class="muted">{c.persona} · L{c.level}{job ? ` · ${job.name}` : ''}</small>
+        <small class="muted">{c.persona} · {ageOf(w, c)}{job ? ` · ${job.name}` : ''}</small>
         <small>{DOING_INFO[d].icon} {DOING_INFO[d].label}{c.home !== c.loc ? ` · visiting from ${w.regions[c.home].name}` : ''}</small>
         <small><span class={rel >= 10 ? 'good' : rel <= -10 ? 'bad' : 'muted'}>{attitude(rel)}</span>{issue ? <> · cares about {ISSUE_INFO[issue].icon}</> : null}{pledged ? <> · <span class="good">🗳️ your vote</span></> : null}</small>
       </div>

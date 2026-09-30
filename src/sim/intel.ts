@@ -9,6 +9,7 @@
 // Exposure causes diplomatic incidents and arrests. Citizens (AI and player) can
 // join their service and climb from analyst to deputy director, and foreign
 // services try to turn well-placed citizens into double agents.
+import { ageOf, repNeed, seniority, standing } from './growth';
 import type { Citizen, Id, OpKind, SpyOp, World } from './types';
 import { census, nationals } from './census';
 import { B } from '../data/balance';
@@ -274,7 +275,8 @@ function promoteAgent(w: World, c: Citizen) {
 
 export function joinAgencyCheck(w: World, c: Citizen): string | null {
   if (c.sec.agency != null) return 'You already serve.';
-  if (c.level < B.intel.level) return `Requires level ${B.intel.level}.`;
+  if (ageOf(w, c) < B.intel.age) return `The service recruits from age ${B.intel.age}.`;
+  if (standing(c) < B.intel.rep) return `They recruit people with a track record: you need ${repNeed(B.intel.rep)}.`;
   if (c.sec.record.convictions > 0) return 'A criminal record fails the vetting.';
   if (c.sec.syndicate != null) return 'Organised-crime links fail the vetting.';
   if (w.nations[c.nation].exile) return 'Your government is in exile.';
@@ -335,7 +337,7 @@ function approachPlayer(w: World, foreign: Id) {
   const p = player(w);
   const f = w.nations[foreign];
   if (w.inbox.some((m) => m.payload?.handler === 'spyApproach' && !m.resolved) || p.sec.asset != null) return;
-  const fee = cur(20 + p.level * 2);
+  const fee = cur(20 + Math.min(100, Math.round(standing(p) / 2)));
   sendMsg(w, {
     from: null, subject: 'A stranger with an offer', kind: 'npc',
     body: `Someone slipped you a note: "Friends abroad value your perspective on ${w.nations[p.nation].name}. ${fmtAmt(f.cur, fee)} a day for occasional conversations." You suspect the ${f.agency.name}. Accepting is espionage — a serious crime if you're caught.`,
@@ -419,8 +421,8 @@ export function intelDaily(w: World) {
   for (const c of census(w).all) if (c.sec.agency != null) staff[c.sec.agency]++;
   for (const c of census(w).all) {
     if (c.player || c.sec.agency != null || (c.id + dayOf(w.time)) % 40 !== 0) continue;
-    if (staff[c.nation] < Math.max(5, Math.round(nationals(w, c.nation).length * B.intel.staffShare)) && c.traits.loyalty > 0.65 && c.level >= B.intel.level && !joinAgencyCheck(w, c) && chance(w, 0.4) && ++staff[c.nation]) joinAgency(w, c);
-    if (c.sec.agency != null && chance(w, 0.5)) c.sec.arank = Math.min(3, 1 + Math.floor(c.level / 12));
+    if (staff[c.nation] < Math.max(5, Math.round(nationals(w, c.nation).length * B.intel.staffShare)) && c.traits.loyalty > 0.65 && ageOf(w, c) >= B.intel.age && !joinAgencyCheck(w, c) && chance(w, 0.4) && ++staff[c.nation]) joinAgency(w, c);
+    if (c.sec.agency != null && chance(w, 0.5)) c.sec.arank = Math.min(3, 1 + Math.floor(seniority(w, c) / 12));
   }
 }
 

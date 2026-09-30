@@ -7,7 +7,7 @@ import { fail, ok, type Result } from '../engine/result';
 import { burn, consume, produce } from '../engine/ledger';
 import { GOLD, g } from '../engine/money';
 import { HOUR } from '../engine/clock';
-import { allowanceCap, respec } from './citizen';
+import { allowanceCap, studyManual } from './citizen';
 import { citizensOf, cref, maxEnergy } from './query';
 
 const BUFFS: Record<string, { value: number; hours: number }> = {
@@ -21,7 +21,6 @@ export function specialCheck(w: World, c: Citizen, id: string): string | null {
   if (id === 'adrenaline' && c.allowance >= allowanceCap(w, c)) return 'Eating allowance already full.';
   if (id === 'medic' && c.energy >= maxEnergy(w, c) + 50) return 'Energy already at the medic-bag limit.';
   if (id === 'permit') return 'Used automatically when relocating a company.';
-  if (id === 'manual' && Object.values(c.attrs).every((v) => v === 0)) return 'No attribute points allocated.';
   return null;
 }
 
@@ -29,7 +28,7 @@ export function specialCheck(w: World, c: Citizen, id: string): string | null {
 export function useSpecial(w: World, c: Citizen, id: string): Result {
   const why = specialCheck(w, c, id);
   if (why) return fail(why);
-  if (id === 'manual') return respec(w, c);
+  if (id === 'manual') return studyManual(w, c);
   consume(w, cref(c.id), `sp:${id}`, 1, 'special used');
   if (id === 'adrenaline') { c.allowance = Math.min(allowanceCap(w, c), c.allowance + 5); return ok('Adrenaline: +5 eating allowance.'); }
   if (id === 'medic') { const before = c.energy; c.energy = Math.min(maxEnergy(w, c) + 50, c.energy + 50); return ok(`Medic bag: +${Math.round(c.energy - before)} energy.`); }

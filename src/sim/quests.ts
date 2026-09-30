@@ -1,5 +1,6 @@
 // Tutorial (onboarding ally), daily missions, three campaign branches and an
 // earnable season track. Rewards are real ledger mints tracked by reason.
+import { isAdult, standing } from './growth';
 import type { Inventory, QuestState, World } from './types';
 import { B } from '../data/balance';
 import { ENVOY_NAME } from '../data/names';
@@ -10,7 +11,6 @@ import { dayOf } from '../engine/clock';
 import { notify, sendMsg } from '../engine/events';
 import { shuffle } from '../engine/rng';
 import { cref, player, studyActive } from './query';
-import { addXp } from './citizen';
 import { counter } from './progress';
 import { itemName } from '../data/items';
 
@@ -21,7 +21,7 @@ export function metric(w: World, m: string): number {
   switch (m) {
     case 'dmg': return p.dmgTotal;
     case 'build': return p.buildTotal;
-    case 'level': return p.level;
+    case 'level': case 'rep': return Math.floor(standing(p));
     case 'isDeputy': return n.deputies.includes(p.id) ? 1 : 0;
     case 'isMinister': return Object.values(n.cabinet).includes(p.id) ? 1 : 0;
     case 'isPresident': return n.president === p.id ? 1 : 0;
@@ -43,7 +43,7 @@ export const TUTORIAL: { text: string; metric: string; target: number; hint: str
   { text: 'Find a job', metric: 'hasJob', target: 1, hint: 'Open Employment and apply to an offer. Compare the net wage after work tax.', tab: 'jobs', gold: 0.5 },
   { text: 'Work your first shift', metric: 'work', target: 1, hint: 'Working costs 10 energy, pays a wage and grows economic skill.', tab: 'jobs', gold: 0.5 },
   { text: 'Train at the training grounds', metric: 'train', target: 1, hint: 'Your first training each day raises training power.', tab: 'character', gold: 0.5 },
-  { text: 'Spend your attribute points', metric: 'attrSpent', target: 3, hint: 'Character → Attributes. Each point has a concrete effect.', tab: 'character', gold: 0.5 },
+  { text: 'Talk to someone in your neighbourhood', metric: 'talk', target: 1, hint: 'Neighbourhood → Talk. People remember you; your reputation grows by being known.', tab: 'local', gold: 0.5 },
   { text: 'Buy food on the market', metric: 'buy', target: 1, hint: 'Goods Market → Food. Purchases require being in that country.', tab: 'market', gold: 0.5 },
   { text: 'Eat to restore energy', metric: 'eat', target: 1, hint: 'Eating uses one allowance; allowance regenerates every 45 minutes.', tab: 'inventory', gold: 0.5 },
   { text: 'Exchange currency for gold (or gold for currency)', metric: 'fx', target: 1, hint: 'Currency Market: asks sell gold, bids buy gold.', tab: 'fx', gold: 0.5 },
@@ -82,8 +82,8 @@ function makeQuest(w: World, def: { text: string; metric: string; target: number
 
 export function rollDailies(w: World) {
   const p = player(w);
-  const pool = shuffle(w, DAILY_POOL.filter((d) => !d.lvl || p.level >= d.lvl)).slice(0, B.missions.count);
-  w.player.dailies = pool.map((d) => makeQuest(w, d, { gold: g(B.missions.gold), prestige: B.missions.prestige, xp: p.level >= 2 ? B.xp.daily : 0 }));
+  const pool = shuffle(w, DAILY_POOL.filter((d) => !d.lvl || isAdult(w, p))).slice(0, B.missions.count);
+  w.player.dailies = pool.map((d) => makeQuest(w, d, { gold: g(B.missions.gold), prestige: B.missions.prestige, rep: B.standing.daily }));
   w.player.dailyDay = dayOf(w.time);
 }
 
@@ -92,40 +92,40 @@ export const CAMPAIGNS: Record<string, { name: string; steps: { text: string; me
   political: {
     name: 'Political career',
     steps: [
-      { text: 'Publish an article', metric: 'article', target: 1, reward: { xp: 5, gold: g(0.5) } },
-      { text: 'Join a party', metric: 'inParty', target: 1, reward: { xp: 5, gold: g(0.5) } },
-      { text: 'Vote in an election', metric: 'vote', target: 1, reward: { xp: 5, gold: g(1) } },
-      { text: 'Register as a candidate', metric: 'candidate', target: 1, reward: { xp: 10, gold: g(1) } },
-      { text: 'Win a congress seat', metric: 'isDeputy', target: 1, reward: { xp: 20, gold: g(3) } },
-      { text: 'Author a law that passes', metric: 'lawPassed', target: 1, reward: { xp: 20, gold: g(3) } },
-      { text: 'Serve as a minister', metric: 'isMinister', target: 1, reward: { xp: 25, gold: g(4) } },
-      { text: 'Become president', metric: 'isPresident', target: 1, reward: { xp: 50, gold: g(10) } },
+      { text: 'Publish an article', metric: 'article', target: 1, reward: { rep: 1, gold: g(0.5) } },
+      { text: 'Join a party', metric: 'inParty', target: 1, reward: { rep: 1, gold: g(0.5) } },
+      { text: 'Vote in an election', metric: 'vote', target: 1, reward: { rep: 1, gold: g(1) } },
+      { text: 'Register as a candidate', metric: 'candidate', target: 1, reward: { rep: 2, gold: g(1) } },
+      { text: 'Win a congress seat', metric: 'isDeputy', target: 1, reward: { rep: 4, gold: g(3) } },
+      { text: 'Author a law that passes', metric: 'lawPassed', target: 1, reward: { rep: 4, gold: g(3) } },
+      { text: 'Serve as a minister', metric: 'isMinister', target: 1, reward: { rep: 5, gold: g(4) } },
+      { text: 'Become president', metric: 'isPresident', target: 1, reward: { rep: 10, gold: g(10) } },
     ],
   },
   military: {
     name: 'Military service',
     steps: [
-      { text: 'Make 10 hits', metric: 'hit', target: 10, reward: { xp: 5, items: { 'wg:1': 10 } } },
-      { text: 'Train on 5 different days', metric: 'trainDays', target: 5, reward: { xp: 5, items: { 'food:2': 5 } } },
-      { text: 'Buy weapons on the market', metric: 'buyWeapon', target: 1, reward: { xp: 5, gold: g(0.5) } },
-      { text: 'Deal 50,000 lifetime damage', metric: 'dmg', target: 50000, reward: { xp: 10, gold: g(1), items: { 'sp:steroids': 1 } } },
-      { text: 'Join a military unit', metric: 'inUnit', target: 1, reward: { xp: 10, gold: g(1) } },
-      { text: 'Equip a piece of gear', metric: 'equip', target: 1, reward: { xp: 10, items: { 'sp:focus': 1 } } },
-      { text: 'Earn a hero medal', metric: 'hero', target: 1, reward: { xp: 20, gold: g(3) } },
-      { text: 'Enter a tournament', metric: 'tournament', target: 1, reward: { xp: 20, gold: g(3) } },
+      { text: 'Make 10 hits', metric: 'hit', target: 10, reward: { rep: 1, items: { 'wg:1': 10 } } },
+      { text: 'Train on 5 different days', metric: 'trainDays', target: 5, reward: { rep: 1, items: { 'food:2': 5 } } },
+      { text: 'Buy weapons on the market', metric: 'buyWeapon', target: 1, reward: { rep: 1, gold: g(0.5) } },
+      { text: 'Deal 50,000 lifetime damage', metric: 'dmg', target: 50000, reward: { rep: 2, gold: g(1), items: { 'sp:steroids': 1 } } },
+      { text: 'Join a military unit', metric: 'inUnit', target: 1, reward: { rep: 2, gold: g(1) } },
+      { text: 'Equip a piece of gear', metric: 'equip', target: 1, reward: { rep: 2, items: { 'sp:focus': 1 } } },
+      { text: 'Earn a hero medal', metric: 'hero', target: 1, reward: { rep: 4, gold: g(3) } },
+      { text: 'Enter a tournament', metric: 'tournament', target: 1, reward: { rep: 4, gold: g(3) } },
     ],
   },
   economic: {
     name: 'Economic empire',
     steps: [
-      { text: 'Work 5 shifts', metric: 'work', target: 5, reward: { xp: 5, gold: g(0.5) } },
-      { text: 'Found a company', metric: 'found', target: 1, reward: { xp: 10, gold: g(2) } },
-      { text: 'Employ a worker', metric: 'employees', target: 1, reward: { xp: 10, gold: g(1) } },
-      { text: 'Sell 100 goods on markets', metric: 'sell', target: 100, reward: { xp: 10, gold: g(2) } },
-      { text: 'Upgrade a company', metric: 'upgrade', target: 1, reward: { xp: 10, gold: g(3) } },
-      { text: 'Contribute to construction', metric: 'buildAct', target: 1, reward: { xp: 10, items: { 'sp:hammer': 1 } } },
-      { text: 'Own shares in a holding', metric: 'shares', target: 1, reward: { xp: 15, gold: g(3) } },
-      { text: 'Own three companies', metric: 'companies', target: 3, reward: { xp: 25, gold: g(8) } },
+      { text: 'Work 5 shifts', metric: 'work', target: 5, reward: { rep: 1, gold: g(0.5) } },
+      { text: 'Found a company', metric: 'found', target: 1, reward: { rep: 2, gold: g(2) } },
+      { text: 'Employ a worker', metric: 'employees', target: 1, reward: { rep: 2, gold: g(1) } },
+      { text: 'Sell 100 goods on markets', metric: 'sell', target: 100, reward: { rep: 2, gold: g(2) } },
+      { text: 'Upgrade a company', metric: 'upgrade', target: 1, reward: { rep: 2, gold: g(3) } },
+      { text: 'Contribute to construction', metric: 'buildAct', target: 1, reward: { rep: 2, items: { 'sp:hammer': 1 } } },
+      { text: 'Own shares in a holding', metric: 'shares', target: 1, reward: { rep: 3, gold: g(3) } },
+      { text: 'Own three companies', metric: 'companies', target: 3, reward: { rep: 5, gold: g(8) } },
     ],
   },
 };
@@ -144,7 +144,7 @@ export function seasonReward(tier: number): QuestState['reward'] {
   if (rot === 1) return { items: { [`food:${Math.min(5, 1 + Math.floor(tier / 6))}`]: 10 } };
   if (rot === 2) return { items: { [`wg:${Math.min(5, 1 + Math.floor(tier / 6))}`]: 10 } };
   if (rot === 3) return { items: { [`sp:${['medic', 'adrenaline', 'steroids', 'focus', 'hammer', 'coffee', 'protein', 'manual'][Math.floor(tier / 5) % 8]}`]: 1 } };
-  return { gold: g(0.5), xp: 10 };
+  return { gold: g(0.5), rep: 2 };
 }
 export const seasonTier = (w: World) => Math.floor(w.player.prestige / B.season.prestigePerTier);
 
@@ -153,7 +153,7 @@ export function grant(w: World, reward: QuestState['reward'], why: string): stri
   const p = player(w);
   const parts: string[] = [];
   if (reward.gold) { mint(w, cref(p.id), GOLD, reward.gold, why); parts.push(`${(reward.gold / 1000).toFixed(2)} gold`); }
-  if (reward.xp) { addXp(w, p, reward.xp); parts.push(`${reward.xp} XP`); }
+  if (reward.rep) { p.influence += reward.rep; parts.push(`+${reward.rep} standing`); }
   if (reward.prestige) { w.player.prestige += reward.prestige; parts.push(`${reward.prestige} prestige`); }
   for (const [k, n] of Object.entries(reward.items ?? {} as Inventory)) {
     if (produce(w, cref(p.id), k, n, why)) parts.push(`${n} ${itemName(k)}`);
@@ -189,7 +189,7 @@ export function checkProgress(w: World) {
     const step = TUTORIAL[ps.tutorial];
     if (!step) break;
     if (metric(w, step.metric) < step.target) break;
-    const reward = grant(w, { gold: g(step.gold), xp: 2 }, 'Tutorial reward');
+    const reward = grant(w, { gold: g(step.gold), rep: 1 }, 'Tutorial reward');
     notify(w, 'progress', `✅ Tutorial: ${step.text} (+${reward})`);
     ps.tutorial++;
     const nxt = TUTORIAL[ps.tutorial];
@@ -255,7 +255,7 @@ export function checkGoals(w: World) {
   for (const gl of GOALS) {
     if (ach[gl.id] || !gl.test(w)) continue;
     ach[gl.id] = w.time;
-    grant(w, { gold: g(5), xp: 25, prestige: 50 }, 'Goal achieved');
-    notify(w, 'progress', `🏆 Goal achieved: ${gl.name}! (+5 gold, +25 XP, +50 prestige)`, { critical: true, link: 'missions' });
+    grant(w, { gold: g(5), rep: 5, prestige: 50 }, 'Goal achieved');
+    notify(w, 'progress', `🏆 Goal achieved: ${gl.name}! (+5 gold, +5 standing, +50 prestige)`, { critical: true, link: 'missions' });
   }
 }

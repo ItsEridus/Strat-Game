@@ -1,5 +1,6 @@
 // People: rivals and allies, the notable figures of your country, and who is
 // around you right now — what they do and what they want.
+import { ageOf } from '../../sim/growth';
 import type { Citizen, World } from '../../sim/types';
 import { CitLink, Empty, Help, Panel, RegionLink } from '../common';
 import { player } from '../../sim/query';
@@ -12,7 +13,7 @@ function Row({ w, c, showGoal }: { w: World; c: Citizen; showGoal: boolean }) {
   const rel = Math.round(c.rel[p.id] ?? 0);
   return (
     <tr>
-      <td><CitLink w={w} id={c.id} /><br /><small class="muted">{c.persona} · L{c.level} · {IDEOLOGIES[c.ideo].name}</small></td>
+      <td><CitLink w={w} id={c.id} /><br /><small class="muted">{c.persona} · {ageOf(w, c)} · {IDEOLOGIES[c.ideo].name}</small></td>
       <td class="small">{activityOf(w, c)}{showGoal && c.sec.goal ? <><br /><span class="muted">wants to {goalText(w, c)}</span></> : null}</td>
       <td class={rel >= 30 ? 'good' : rel <= -30 ? 'bad' : 'muted'}>{rel > 0 ? '+' : ''}{rel}</td>
     </tr>
@@ -27,7 +28,7 @@ export function People({ w }: { w: World }) {
   const n = w.nations[p.nation];
   const notable = Object.values(w.citizens).filter((c) => c.nation === p.nation && !c.player && (n.president === c.id || Object.values(n.cabinet).includes(c.id) || headOf(w, c.id) != null || c.sec.prank >= 3 || c.influence > 40 || c.sec.fame > 8))
     .sort((a, b) => (n.president === b.id ? 1 : 0) - (n.president === a.id ? 1 : 0) || b.influence - a.influence).slice(0, 25);
-  const here = Object.values(w.citizens).filter((c) => c.loc === p.loc && !c.player).sort((a, b) => (b.rel[p.id] ?? 0) - (a.rel[p.id] ?? 0) || b.level - a.level);
+  const here = Object.values(w.citizens).filter((c) => c.loc === p.loc && !c.player).sort((a, b) => (b.rel[p.id] ?? 0) - (a.rel[p.id] ?? 0) || b.influence - a.influence);
   const gov = headOf(w, p.id);
   return (
     <div class="grid">

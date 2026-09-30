@@ -39,10 +39,7 @@ export interface Citizen {
   wallet: Wallet;
   inv: Inventory;
   born: number;
-  xp: number;
-  level: number;
-  attrPts: number;
-  attrs: Record<Attr, number>;
+  attrs: Record<Attr, number>; // skills, grown by practice (sim/growth.ts)
   power: number; // training power
   eco: number; // economic skill
   dmgTotal: number;
@@ -494,7 +491,7 @@ export interface WorldEvent { t: number; type: string; text: string; nation?: Id
 export interface Notice { id: Id; t: number; text: string; cat: string; critical: boolean; read?: boolean; link?: string }
 
 export interface QuestDef { id: string; branch?: string; text: string; target: number; metric: string }
-export interface QuestState { id: string; text: string; metric: string; target: number; base: number; done: boolean; claimed: boolean; reward: { gold?: number; xp?: number; items?: Inventory; prestige?: number } }
+export interface QuestState { id: string; text: string; metric: string; target: number; base: number; done: boolean; claimed: boolean; reward: { gold?: number; rep?: number; items?: Inventory; prestige?: number } }
 
 export interface Tournament {
   id: Id;
@@ -504,7 +501,7 @@ export interface Tournament {
   start: number;
   fee: number;
   cap: number;
-  minLevel: number;
+  minPower: number; // minimum training power to enter
   terrain: Terrain;
   entrants: Id[];
   bracket: { round: number; a: Id[]; b: Id[]; dmgA: number; dmgB: number; winner: 'a' | 'b' | null }[];
@@ -534,6 +531,7 @@ export interface Settings {
   balance: Record<string, any>;
   notifyFilter: Record<string, boolean>;
   adminUsed?: boolean; // the admin panel changed this campaign
+  fixedFate?: boolean; // reproducible: never mix outside randomness into the world's dice (see ui/store.ts)
 }
 
 export interface Stats {

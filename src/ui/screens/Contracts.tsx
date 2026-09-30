@@ -50,7 +50,7 @@ export function Contracts({ w }: { w: World }) {
   return (
     <div class="grid">
       <Panel title="New contract" class="wide">
-        <Help>Your side is escrowed when you send; acceptance moves both sides at once; cancelling, rejection or expiry returns your escrow. NPCs accept when the deal is worth it to them (relationships help). Fees are burned; unconditional gifts to citizens under level 10 are exempt.</Help>
+        <Help>Your side is escrowed when you send; acceptance moves both sides at once; cancelling, rejection or expiry returns your escrow. NPCs accept when the deal is worth it to them (relationships help). Fees are burned; unconditional gifts to people who are not yet well known (standing under 15) are exempt.</Help>
         <div class="form row"><label>Counterparty <Select value={to} options={people.map((c) => [c.id, `${c.name} (${w.nations[c.nation].name}, ${c.persona})`])} onChange={setTo} /></label></div>
         <div class="book">
           <SideEditor w={w} owner={p.id} value={give} onChange={setGive} label="You give" />

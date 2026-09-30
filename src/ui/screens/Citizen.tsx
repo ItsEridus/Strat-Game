@@ -1,4 +1,5 @@
 import type { World } from '../../sim/types';
+import { ageOf, reputation } from '../../sim/growth';
 import { Amt, NationChip, Panel, RegionLink, Stat } from '../common';
 import { store } from '../store';
 import { player, jailed } from '../../sim/query';
@@ -27,7 +28,7 @@ export function CitizenProfile({ w }: { w: World }) {
         <div class="stats">
           <Stat label="Citizenship"><NationChip w={w} id={c.nation} /></Stat>
           <Stat label="Location"><RegionLink w={w} id={c.loc} /></Stat>
-          <Stat label="Level">{c.level}</Stat>
+          <Stat label="Age">{ageOf(w, c)}</Stat><Stat label="Reputation">{reputation(c).icon} {reputation(c).name}</Stat>
           <Stat label="Profile">{c.player ? 'you' : c.persona}</Stat>
           <Stat label="Ideology">{IDEOLOGIES[c.ideo].name}</Stat>
           <Stat label="Party">{party ? party.name : '—'}</Stat>

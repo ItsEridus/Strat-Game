@@ -23,7 +23,7 @@ import { nid, notify, record, sendMsg } from '../engine/events';
 import { chance, pick, rand, randInt, weighted } from '../engine/rng';
 import { controller, coref, cref, hhref, jailed, natref, player, regref, syndref } from './query';
 import { nationPerm } from './authority';
-import { addXp } from './citizen';
+import { isAdult, practise } from './growth';
 
 // ---------- definitions ----------
 
@@ -212,7 +212,7 @@ export function commitCrime(w: World, c: Citizen, kind: keyof typeof CRIMES): Re
     }
   } else msg = 'It went wrong — you got away with nothing.';
   if (res.detected) openCase(w, c, kind, c.loc, res.ok ? rand(w, 15, 35) : rand(w, 35, 60), loot);
-  if (c.player) addXp(w, c, 2);
+  practise(w, c, 'luck', B.practice.crime);
   return res.ok ? ok(`${msg}${res.detected ? ' Someone saw you — the police are investigating.' : ''}`) : fail(`${msg}${res.detected ? ' And you were seen.' : ''}`);
 }
 
@@ -223,7 +223,7 @@ export function joinSyndicateCheck(w: World, c: Citizen, sid: Id): string | null
   if (!s) return 'No such organisation.';
   if (c.sec.syndicate != null) return 'You already belong to an organisation.';
   if (c.sec.police != null) return 'Serving police officers cannot join.';
-  if (c.level < B.syndicate.level) return `They don't take anyone below level ${B.syndicate.level}.`;
+  if (!isAdult(w, c)) return 'They don’t take children.';
   if (!s.turf.includes(c.loc)) return `Go to their turf (${s.turf.slice(0, 3).map((r) => w.regions[r].name).join(', ')}…) to make contact.`;
   if (c.sec.notoriety < 3 && !c.flags[`syndInvite_${sid}`]) return 'They don’t know you. Build a reputation (notoriety 3+) or get an invitation.';
   return null;
@@ -304,7 +304,8 @@ export function syndicateJob(w: World, c: Citizen, job: keyof typeof SYND_JOBS):
     promote(w, s, c);
   }
   if (res.detected) openCase(w, c, kind, c.loc, res.ok ? rand(w, 15, 35) : rand(w, 35, 60), loot);
-  if (c.player) addXp(w, c, 3);
+  practise(w, c, 'luck', B.practice.crime);
+  practise(w, c, 'str', B.practice.crime * 0.5);
   return res.ok ? ok(msg + (res.detected ? ' The police are on to it.' : '')) : fail(msg + (res.detected ? ' And the police know.' : ''));
 }
 
@@ -325,7 +326,7 @@ export function joinPoliceCheck(w: World, c: Citizen): string | null {
   if (c.sec.syndicate != null) return 'Known associates of organised crime are not hired.';
   if (c.sec.record.convictions > 0) return 'A criminal conviction bars you from the police.';
   if (c.nation !== r.owner || r.occ) return `Only ${w.nations[r.owner].adj} citizens can join the ${policeName(w, r.id)}.`;
-  if (c.level < B.police.level) return `Requires level ${B.police.level}.`;
+  if (c.attrs.str + c.attrs.end < B.police.fitness) return `You would fail the fitness test (strength + endurance ${B.police.fitness}+; train first).`;
   if (!c.player && (w.nations[c.nation].president === c.id || Object.values(w.nations[c.nation].cabinet).includes(c.id))) return 'Serving politicians do not join.';
   if (jailed(w, c)) return 'You are in prison.';
   return null;
@@ -380,7 +381,8 @@ export function patrol(w: World, c: Citizen): Result {
     openCase(w, x, 'extortion', r.id, rand(w, 30, 50), 0);
     parts.push(`you caught ${x.name} (${w.syndicates[x.sec.syndicate!]?.name ?? 'a gang'}) shaking down a shop`);
   }
-  if (c.player) addXp(w, c, 2);
+  practise(w, c, 'end', B.practice.patrol);
+  practise(w, c, 'acc', B.practice.patrol * 0.5);
   return ok(parts.join('; ') + '.');
 }
 

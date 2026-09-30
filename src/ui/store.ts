@@ -10,6 +10,20 @@ import { deserialize, latestSlot, loadFromSlot, saveToSlot, savesSettled, serial
 import { invalidateCensus } from '../sim/census';
 import { checkProgress } from '../sim/quests';
 
+/**
+ * Fate is not written in advance. The simulation itself is deterministic (the
+ * same dice give the same results, which keeps it testable), but the game mixes
+ * real randomness into the world's dice as time passes and whenever a save is
+ * loaded, so no two playthroughs, and no two reloads, unfold the same way.
+ * Campaigns started from a chosen seed ("reproducible world") skip this.
+ */
+function entropy(): number {
+  try { return crypto.getRandomValues(new Uint32Array(1))[0]; } catch { return Math.floor(Math.random() * 2 ** 32); }
+}
+function stir(w: World) {
+  if (!w.settings.fixedFate) w.rng = (w.rng ^ entropy()) | 0;
+}
+
 registerSystems();
 
 /** Simulated minutes per real second at each speed. */
@@ -37,8 +51,8 @@ class Store {
 
   get paused() { return !this.w || this.w.settings.paused || this.w.settings.speed === 0; }
 
-  newGame(seed: number, name: string, nation: number, citizensPerRegion: number, difficulty: World['settings']['difficulty'], advanced: World['settings']['advanced']) {
-    this.w = generateWorld(seed, name, nation, { citizensPerRegion, difficulty, advanced });
+  newGame(seed: number | null, name: string, nation: number, citizensPerRegion: number, difficulty: World['settings']['difficulty'], advanced: World['settings']['advanced']) {
+    this.w = generateWorld(seed ?? entropy() % 1e9, name, nation, { citizensPerRegion, difficulty, advanced, fixedFate: seed != null });
     this.tab = 'dashboard';
     this.save('autosave');
     this.emit();
@@ -52,6 +66,7 @@ class Store {
       const w = await loadFromSlot(slot);
       if (!w) return this.toast('That slot is empty.', false);
       w.settings.paused = true; // closing the game pauses; resume manually
+      stir(w); // reloading does not replay the same future
       this.w = w;
       this.tab = 'dashboard';
       this.lastAutosave = Date.now();
@@ -74,6 +89,7 @@ class Store {
   importText(text: string) {
     const w = deserialize(text);
     w.settings.paused = true;
+    stir(w);
     this.w = w;
     this.save('autosave');
     this.toast('Save imported.', true);
@@ -134,11 +150,13 @@ class Store {
   /** Jump the clock (event-based advancement). Stops early on pausing notifications. */
   jump(minutes: number) {
     if (!this.w) return;
+    stir(this.w);
     const r = advance(this.w, minutes, true);
     this.afterAdvance(r.stopped);
   }
   jumpTo(t: number) {
     if (!this.w) return;
+    stir(this.w);
     const r = advanceTo(this.w, t, true);
     this.afterAdvance(r.stopped);
   }
@@ -162,6 +180,7 @@ class Store {
     const whole = Math.floor(this.acc / 10) * 10;
     if (whole <= 0) return;
     this.acc -= whole;
+    stir(w);
     const r = advance(w, whole, true);
     if (r.stopped) { this.acc = 0; this.afterAdvance(true); return; }
     this.maybeAutosave();

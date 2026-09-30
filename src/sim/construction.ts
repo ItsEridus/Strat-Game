@@ -10,7 +10,7 @@ import { acct, consume, itemsFromEscrow, itemsToEscrow, pay } from '../engine/le
 import { GOLD, g } from '../engine/money';
 import { nid, notify, record } from '../engine/events';
 import { authorize } from './authority';
-import { addXp } from './citizen';
+import { practise } from './growth';
 import { builderRank, gearStats } from './combatMath';
 import { buffValue, controller, cref, natref, player, seatShare, studyActive, today, jailed } from './query';
 import { bump } from './progress';
@@ -96,7 +96,7 @@ export function contributeLabor(w: World, c: Citizen, pid: Id, times = 1): Resul
     c.buildTotal += add;
     pts += add;
     done++;
-    addXp(w, c, B.xp.build);
+    practise(w, c, 'cons', B.practice.build);
     rollDrop(w, c, B.gear.dropBuild * (studyActive(w, c, 'extrashift') ? 2 : 1), 'construction');
     c.flags.buildDay = today(w);
     if (p.done) break;

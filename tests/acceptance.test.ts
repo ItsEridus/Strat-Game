@@ -11,7 +11,7 @@ import { controller, coref, cref, player } from '../src/sim/query';
 import type { Citizen, World } from '../src/sim/types';
 import { applyJob, createCompany, foundCompany, productionBlock, setOffer, shiftPreview, workShift } from '../src/sim/company';
 import { buyBest, listingsFor } from '../src/sim/market';
-import { allocAttr, eat, train } from '../src/sim/citizen';
+import { eat, train } from '../src/sim/citizen';
 import { hitPreview, gearStats } from '../src/sim/combatMath';
 import { createBattle, hit } from '../src/sim/battle';
 import { makeGear, equip } from '../src/sim/gear';
@@ -39,7 +39,6 @@ function playDay(w: World, career: 'worker' | 'entrepreneur' | 'politician' | 's
       workShift(w, p);
       train(w, p);
       if ((p.inv['food:1'] ?? 0) < 3) buyBest(w, p.id, cref(p.id), controller(w.regions[p.loc]), 'food:1', 5);
-      while (p.attrPts > 0) allocAttr(w, p, career === 'soldier' ? 'str' : career === 'builder' ? 'cons' : 'eco', 1);
       checkProgress(w);
       for (const q of w.player.dailies) if (q.done && !q.claimed) { q.claimed = true; mint(w, cref(p.id), GOLD, q.reward.gold ?? 0, 'Daily mission reward'); }
     }
@@ -93,10 +92,10 @@ test('1. a new campaign starts with a working economy and tutorial', () => {
 test('2. citizens can earn wages, buy food and progress without fighting', () => {
   const w = fresh(52);
   const p = player(w);
-  const lvl0 = p.level, pow0 = p.power, eco0 = p.eco;
+  const str0 = p.attrs.str, apt0 = p.attrs.eco, pow0 = p.power, eco0 = p.eco;
   for (let d = 0; d < 10; d++) playDay(w, 'worker');
   assert.ok(p.job != null, 'employed');
-  assert.ok(p.level > lvl0 && p.power > pow0 && p.eco > eco0, 'progressed');
+  assert.ok(p.attrs.str > str0 && p.attrs.eco > apt0 && p.power > pow0 && p.eco > eco0, 'skills grew with practice');
   assert.equal(p.dmgTotal, 0, 'never fought');
   assert.ok(w.ledger.some((e) => /Wage/.test(e.text) && e.amount > 0), 'earned wages');
   const r = buyBest(w, p.id, cref(p.id), controller(w.regions[p.loc]), 'food:1', 3);
@@ -159,11 +158,11 @@ test('6. NPCs keep markets, elections, government and the military functioning',
   assert.ok(audit(w).ok, audit(w).problems.join('\n'));
 });
 
-test('7. attribute allocation changes displayed and executed outcomes consistently', () => {
+test('7. skills change displayed and executed outcomes consistently', () => {
   const w = fresh(56);
   const p = player(w);
   const before = hitPreview(w, p, null, 'a', null).dmg;
-  allocAttr(w, p, 'str', 3);
+  p.attrs.str += 3;
   const after = hitPreview(w, p, null, 'a', null);
   const mult = 1 + p.power / 100;
   assert.ok(Math.abs(after.dmg - before - 15 * mult) < 1e-6, 'preview: +5 per Strength point before the power multiplier');
@@ -256,7 +255,7 @@ test('23. meaningful play as entrepreneur, politician, soldier or builder', () =
   const co = Object.values(w.companies).find((c) => c.owner.k === 'cit' && c.owner.id === p.id);
   assert.ok(co && co.lifetime.produced > 0, 'entrepreneur: company produced');
   // Politician: joins a party, publishes, stands on a congress list.
-  w = fresh(63); p = player(w); p.level = 6; mint(w, cref(p.id), GOLD, g(6), 'test');
+  w = fresh(63); p = player(w); p.influence = 40; mint(w, cref(p.id), GOLD, g(6), 'test');
   for (let d = 0; d < 12; d++) playDay(w, 'politician');
   assert.ok(p.party != null && p.influence > 3 && Object.values(w.articles).some((a) => a.author === p.id), 'politician: party, influence, articles');
   // Soldier: fights in a war and climbs the rank ladder.

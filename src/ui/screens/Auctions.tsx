@@ -25,7 +25,7 @@ export function Auctions({ w }: { w: World }) {
   return (
     <div class="grid">
       <Panel title="Auction house" class="wide">
-        <Help>Equipment and special items sell to the highest gold bidder (level {B.auctions.level}+). Your winning bid is held in escrow; if outbid you are refunded immediately. A bid in the last {B.auctions.snipeWindow} minutes extends the auction. Sellers pay a {B.auctions.listFee}-gold listing fee and {B.auctions.sellerCut * 100}% of the sale.</Help>
+        <Help>Equipment and special items sell to the highest gold bidder (adults). Your winning bid is held in escrow; if outbid you are refunded immediately. A bid in the last {B.auctions.snipeWindow} minutes extends the auction. Sellers pay a {B.auctions.listFee}-gold listing fee and {B.auctions.sellerCut * 100}% of the sale.</Help>
         {open.length ? (
           <table class="table">
             <thead><tr><th>Lot</th><th>Seller</th><th>Ends</th><th class="num">Current</th><th>Bids</th><th /></tr></thead>

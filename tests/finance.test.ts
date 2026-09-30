@@ -21,9 +21,9 @@ const fresh = (seed = 41) => generateWorld(seed, 'Tester', 0, { citizensPerRegio
 test('auctions escrow bids, refund the outbid, and deliver exactly once', () => {
   const w = fresh();
   const p = player(w);
-  p.level = 10;
+  p.influence = 40;
   const bidders = Object.values(w.citizens).filter((c) => !c.player).slice(0, 2);
-  for (const b of bidders) { b.level = 10; mint(w, cref(b.id), GOLD, g(10), 'test'); }
+  for (const b of bidders) { mint(w, cref(b.id), GOLD, g(10), 'test'); }
   const gr = makeGear(w, 'combat', 2); gr.owner = cref(p.id);
   mint(w, cref(p.id), GOLD, g(1), 'test');
   const r = createAuction(w, p, { gear: gr.id }, g(1), 1);

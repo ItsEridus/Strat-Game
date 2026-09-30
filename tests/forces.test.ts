@@ -44,7 +44,7 @@ test('service careers: enlist, report for duty, promotion by service and command
   p.energy = 100;
   assert.ok(reportForDuty(w, p).ok);
   assert.match(dutyCheck(w, p) ?? '', /already/);
-  p.level = 40;
+  p.mil.since -= 100 * DAY; // long service
   addSp(w, p, 2000);
   const ladder = RANKS.navy;
   assert.ok(ladder[p.mil.rank].command && !ladder[p.mil.rank].flag, 'promoted up to command rank, flag ranks need command time');

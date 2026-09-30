@@ -81,7 +81,7 @@ test('a citizen can run for governor, campaign, vote and then govern', () => {
   const p = player(w);
   const co = region(w, 'Colorado');
   p.loc = co.id;
-  p.level = 8;
+  p.influence = 40;
   const s = w.govs[co.id]!;
   // Registration opens a few days before the election.
   s.nextElection = w.time + 3 * DAY;

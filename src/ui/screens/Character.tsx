@@ -1,7 +1,8 @@
 import type { Attr, Citizen, World } from '../../sim/types';
 import { ActBtn, Bar, Panel, Stat, Help } from '../common';
-import { ATTRS, allocAttr, powerGain, respec, train, trainCheck } from '../../sim/citizen';
-import { effEco, maxEnergy, player, today, xpToNext } from '../../sim/query';
+import { ATTRS, powerGain, train, trainCheck } from '../../sim/citizen';
+import { effEco, maxEnergy, player, today } from '../../sim/query';
+import { SKILL_HOW, ageOf, reputation } from '../../sim/growth';
 import { B } from '../../data/balance';
 import { hitPreview, rankOf, builderRank } from '../../sim/combatMath';
 
@@ -10,7 +11,8 @@ export function tracks(w: World, c: Citizen) {
   const r = rankOf(c.dmgTotal);
   const br = builderRank(c.buildTotal);
   return [
-    { label: 'Level', value: `${c.level}`, next: `${xpToNext(c.level) - c.xp} XP to level ${c.level + 1} (+${B.levels.attrPerLevel} attribute points)` },
+    (() => { const r = reputation(c); return { label: 'Reputation', value: `${r.icon} ${r.name}`, next: r.next ? `${Math.ceil(r.next.min - r.standing)} more standing to “${r.next.name}” (influence and fame: speak, write, lead, serve)` : 'As famous as it gets' }; })(),
+    { label: 'Age', value: `${ageOf(w, c)}`, next: 'Everyone grows older; the young learn fastest' },
     { label: 'Training power', value: c.power.toFixed(1), next: `Next training: +${powerGain(w, c).toFixed(2)} (×${(1 + c.power / B.damage.powerDivisor).toFixed(2)} damage now)` },
     { label: 'Economic skill', value: effEco(w, c).toFixed(2), next: `Grows with each shift; ×${(1 + effEco(w, c) * B.company.ecoFactor).toFixed(2)} production` },
     { label: 'Military rank', value: `${r.name} (×${r.mult.toFixed(1)})`, next: r.next ? `${Math.round(r.next - c.dmgTotal).toLocaleString()} damage to ${r.nextName}` : 'Top rank' },
@@ -25,11 +27,11 @@ export function Character({ w }: { w: World }) {
     <div class="grid">
       <Panel title="Training grounds">
         <p>Training power multiplies your battle damage. The <b>first</b> session each simulated day raises power by 1/log₁₀(power+2)
-          (wiki baseline; log base chosen); extra sessions still give XP. Strength (an attribute) is separate: it adds flat damage before the power multiplier.</p>
+          (wiki baseline; log base chosen). Every session also builds strength and endurance, less with each extra session in a day.</p>
         <div class="row">
-          <ActBtn kind="primary" why={trainCheck(w, p, 'normal')} run={(w) => train(w, p, 'normal')}>Train (−{B.cost.train}⚡, {B.xp.train} XP)</ActBtn>
-          <ActBtn why={trainCheck(w, p, 'food')} run={(w) => train(w, p, 'food')}>Donate 5 Q1 food ({B.xp.trainDonate} XP)</ActBtn>
-          <ActBtn why={trainCheck(w, p, 'weapons')} run={(w) => train(w, p, 'weapons')}>Donate 20 Q1 weapons ({B.xp.trainDonate} XP)</ActBtn>
+          <ActBtn kind="primary" why={trainCheck(w, p, 'normal')} run={(w) => train(w, p, 'normal')}>Train (−{B.cost.train}⚡)</ActBtn>
+          <ActBtn why={trainCheck(w, p, 'food')} run={(w) => train(w, p, 'food')}>Train and donate 5 Q1 food (+standing)</ActBtn>
+          <ActBtn why={trainCheck(w, p, 'weapons')} run={(w) => train(w, p, 'weapons')}>Train and donate 20 Q1 weapons (+standing)</ActBtn>
         </div>
         <p class="muted small">{p.lastTrainDay === today(w) ? `Power already raised today (${p.trainsToday} session${p.trainsToday > 1 ? 's' : ''}).` : `Next power gain: +${powerGain(w, p).toFixed(3)}.`}</p>
         <label class="check"><input type="checkbox" checked={w.settings.autoTrain} onChange={() => { w.settings.autoTrain = !w.settings.autoTrain; }} /> Automatically do my first training each day (at {String(p.trainHour).padStart(2, '0')}:00 when energy allows)</label>
@@ -37,19 +39,15 @@ export function Character({ w }: { w: World }) {
       <Panel title="Progression tracks">
         {tracks(w, p).map((t) => <div class="track"><Stat label={t.label}>{t.value}</Stat><small class="muted">{t.next}</small></div>)}
       </Panel>
-      <Panel title={`Attributes — ${p.attrPts} unspent`} class="wide" right={<ActBtn small why={(p.inv['sp:manual'] ?? 0) < 1 ? 'Needs a Retraining Manual (Shop).' : null} run={(w) => respec(w, p)} confirm="Reset all attribute points?">Respec</ActBtn>}>
-        <Help>Three points per level through level 50 (documented). No per-attribute limit. Percentage-point (pt) effects add to a percentage; % effects multiply.</Help>
+      <Panel title="Skills" class="wide">
+        <Help>There are no levels. You get better at what you do: each skill grows with practice, quickly at first and more slowly as you master it, and fastest while you are young. A Study Manual (Shop) improves your weakest skill.</Help>
         <table class="table">
-          <thead><tr><th>Attribute</th><th>Points</th><th>Effect per point</th><th>Your total</th><th /></tr></thead>
+          <thead><tr><th>Skill</th><th>Value</th><th>Improves by</th><th>Effect</th></tr></thead>
           <tbody>
             {(Object.keys(ATTRS) as Attr[]).map((a) => (
               <tr>
-                <td>{ATTRS[a].name}</td><td>{p.attrs[a]}</td><td class="small">{ATTRS[a].effect}</td>
+                <td>{ATTRS[a].name}</td><td class="num">{p.attrs[a].toFixed(1)}</td><td class="small">{SKILL_HOW[a]}</td>
                 <td class="small">{attrTotal(w, p, a)}</td>
-                <td>
-                  <ActBtn small why={p.attrPts < 1 ? 'No unspent points.' : null} showWhy={false} run={(w) => allocAttr(w, p, a, 1)}>+1</ActBtn>
-                  <ActBtn small why={p.attrPts < 5 ? 'Fewer than 5 points.' : null} showWhy={false} run={(w) => allocAttr(w, p, a, 5)}>+5</ActBtn>
-                </td>
               </tr>
             ))}
           </tbody>
@@ -72,7 +70,7 @@ export function Character({ w }: { w: World }) {
       </Panel>
       <Panel title="Energy">
         <Bar v={p.energy} max={maxEnergy(w, p)} color="#3fb5a8" label={`${Math.floor(p.energy)} / ${maxEnergy(w, p)}`} />
-        <p class="small muted">Base {B.energy.baseMax} + Endurance {p.attrs.end} + hospital in your region ({w.regions[p.loc].bld.hospital} × {B.energy.hospitalPerLevel}).</p>
+        <p class="small muted">Base {B.energy.baseMax} + Endurance {Math.floor(p.attrs.end)} + hospital in your region ({w.regions[p.loc].bld.hospital} × {B.energy.hospitalPerLevel}).</p>
       </Panel>
     </div>
   );
@@ -80,11 +78,12 @@ export function Character({ w }: { w: World }) {
 
 function attrTotal(w: World, p: Citizen, a: Attr): string {
   const v = p.attrs[a];
+  const f = (x: number) => (Math.round(x * 10) / 10).toString();
   switch (a) {
-    case 'str': return `+${v * B.attrs.str} base damage`;
+    case 'str': return `+${f(v * B.attrs.str)} base damage`;
     case 'acc': return `+${(v * B.attrs.acc).toFixed(1)} pt hit chance`;
     case 'luck': return `+${(v * B.attrs.luckCrit).toFixed(1)} pt crit, +${(v * B.attrs.luckCritDmg).toFixed(1)} pt crit dmg`;
-    case 'end': return `+${v * B.attrs.end} max energy (${maxEnergy(w, p)})`;
+    case 'end': return `+${f(v * B.attrs.end)} max energy (${maxEnergy(w, p)})`;
     case 'lead': return `+${(v * B.attrs.lead).toFixed(1)}% employee production`;
     case 'eco': return `+${(v * B.attrs.eco).toFixed(1)} economic skill`;
     case 'cons': return `+${(v * B.attrs.cons).toFixed(1)}% construction`;

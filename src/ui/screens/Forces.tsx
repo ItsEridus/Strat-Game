@@ -126,13 +126,13 @@ function ServicePanel({ w }: { w: World }) {
   return (
     <Panel title={`${BRANCH_ICON[p.mil.branch]} ${rankName(p)}, ${n.adj} ${BRANCH_NAME[p.mil.branch]}`}>
       <p class="small">Service points {Math.floor(p.mil.sp)} · serving since day {dayOf(p.mil.since)}{cmd ? ` · commanding the ${cmd.name}` : ''}{n.defense.chief === p.id ? ' · Chief of Staff' : ''}</p>
-      {next ? <Bar v={p.mil.sp} max={next.sp} color="#e0a526" label={`next: ${next.name} at ${next.sp} SP, level ${next.level}${next.flag ? ', 10 days in command' : ''}`} /> : <p class="good small">Highest rank reached.</p>}
+      {next ? <Bar v={p.mil.sp} max={next.sp} color="#e0a526" label={`next: ${next.name} at ${next.sp} SP and ${next.days} days' service${next.flag ? ', 10 days in command' : ''}`} /> : <p class="good small">Highest rank reached.</p>}
       <div class="row">
         <ActBtn kind="primary" why={dutyCheck(w, p)} run={(w) => reportForDuty(w, p)}>Report for duty (−{B.forces.dutyEnergy}⚡)</ActBtn>
         <ActBtn small kind="ghost" confirm="Leave the armed forces?" run={(w) => discharge(w, p)}>Discharge</ActBtn>
       </div>
       {!cmd && eligible.length > 0 && <p class="small">You can take command: {eligible.slice(0, 4).map((f) => <ActBtn small run={(w) => takeCommand(w, p, f.id)}>{f.name}</ActBtn>)}</p>}
-      <details><summary class="small">Rank ladder</summary><ol class="small">{ladder.map((r, i) => <li class={i === p.mil.rank ? 'good' : i < p.mil.rank ? 'muted' : ''}>{r.name} — {r.sp} SP, level {r.level}{r.command ? ' · command' : ''}{r.flag ? ' · flag rank' : ''}</li>)}</ol></details>
+      <details><summary class="small">Rank ladder</summary><ol class="small">{ladder.map((r, i) => <li class={i === p.mil.rank ? 'good' : i < p.mil.rank ? 'muted' : ''}>{r.name} — {r.sp} SP, {r.days} days' service{r.command ? ' · command' : ''}{r.flag ? ' · flag rank' : ''}</li>)}</ol></details>
     </Panel>
   );
 }

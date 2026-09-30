@@ -2,6 +2,7 @@
 // newspapers, gear and shares. The sender's side is escrowed at creation;
 // acceptance moves both sides in one operation; cancel/reject/expiry releases
 // the escrow. NPC recipients decide by value and relationship.
+import { standing } from './growth';
 import type { Citizen, Consideration, Contract, Id, World } from './types';
 import { census } from './census';
 import { B } from '../data/balance';
@@ -39,7 +40,7 @@ export function valueOf(w: World, cons: Consideration, nation: Id): number {
 }
 
 export function contractFee(w: World, from: Citizen, to: Citizen, give: Consideration, want: Consideration): number {
-  if (isEmpty(want) && to.level < B.contracts.giftExemptLevel) return 0; // unconditional gift to a newcomer (DOC exemption)
+  if (isEmpty(want) && standing(to) < B.contracts.giftExemptRep) return 0; // unconditional gift to a newcomer (DOC exemption)
   return g(B.contracts.feeFlat) + Math.round(valueOf(w, give, to.nation) * B.contracts.feePct);
 }
 

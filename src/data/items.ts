@@ -30,7 +30,7 @@ export const SPECIALS: Record<string, { name: string; icon: string; desc: string
   permit: { name: 'Relocation Permit', icon: '📜', desc: 'Waives the fee and cooldown for one company move', price: 3 },
   coffee: { name: 'Coffee', icon: '☕', desc: 'Catch-up: economic skill +25% of gap to national top (capped, never lowers)', price: 2 },
   protein: { name: 'Protein Bar', icon: '🍫', desc: 'Catch-up: training power +25% of gap to national top (capped, never lowers)', price: 2 },
-  manual: { name: 'Retraining Manual', icon: '📘', desc: 'Refund all attribute points for reallocation', price: 5 },
+  manual: { name: 'Study Manual', icon: '📘', desc: 'A few evenings of study: improves your weakest skill', price: 5 },
   cutlass: { name: 'Cutlass', icon: '🗡️', desc: '+20% damage against pirate ships for 1h (event)', price: 0.5 },
 };
 
