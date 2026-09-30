@@ -43,6 +43,7 @@ export interface Citizen {
   health?: number; // 0..100 (sim/population.ts); undefined = 90
   life?: LifeProfile; // personal life: wellbeing, milestones, hobbies, goals (sim/lifecycle.ts, sim/wellbeing.ts)
   family?: Family; // partner, parents, children (sim/family.ts)
+  post?: import('./services').Post; // a public-service post (sim/services.ts)
   edu?: import('./education').Education; // qualifications and current course (sim/education.ts)
   retired?: boolean;
   veteran?: { branch: Branch; rank: number; title: string; days: number; until: number }; // past military service (pensions, standing)
@@ -133,6 +134,7 @@ export interface LifeProfile {
   lastAge?: number; // age at the last birthday processed
   lastRest?: number; lastFamily?: number; lastHobby?: number; // cooldowns (day numbers)
   treated?: number; // day of the last dose of medicine (better recovery for a few days)
+  work?: import('./services').WorkEntry[]; // work history, newest last
   giftDay?: number; giftFrom?: Id; // the last gift received (one a day from the same person)
   goods?: { clothes?: { t: number; q: number }; gadget?: { t: number; q: number } }; // latest new clothes and gadget (time, grade)
   why?: { happiness: string[]; stress: string[] }; // the main reasons for the current values
@@ -325,6 +327,7 @@ export interface Region {
   pop0?: number; // background population at genesis
   draw?: number; // how attractive the region is to live in, -1..1, smoothed (sim/population.ts)
   blockade: Id | null; // nation whose navy blockades this coast
+  staff?: { school: number; clinic: number; offices: number }; // public-service staffing 0..1 (sim/services.ts)
 }
 
 export interface Relation { score: number; hist: { t: number; delta: number; why: string }[] }

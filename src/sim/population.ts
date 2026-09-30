@@ -46,7 +46,7 @@ let sick: Set<Id> | null = null; // regions with an epidemic, for today's health
 function healthTarget(w: World, c: Citizen): number {
   const age = ageOf(w, c);
   const r = w.regions[c.home];
-  let t = 96 - Math.max(0, age - 45) * 0.9 + r.bld.hospital * 2 - Math.max(0, r.pollution - 40) * 0.15;
+  let t = 96 - Math.max(0, age - 45) * 0.9 + r.bld.hospital * 2 + ((r.staff?.clinic ?? 0.6) - 0.6) * 8 - Math.max(0, r.pollution - 40) * 0.15;
   if (sick?.has(c.home)) t -= 15;
   if (c.energy < 10) t -= 5; // exhausted and hungry
   t -= Math.max(0, (c.life?.stress ?? 25) - 65) * 0.3; // long strain wears people down

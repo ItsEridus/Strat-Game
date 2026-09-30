@@ -3,6 +3,20 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.3.11: careers in public service
+
+- **Five public-service careers.** Teacher, nurse, doctor, civil servant and public engineer, each with a ladder of
+  five grades (for example, teaching assistant → teacher → senior teacher → head of department → head teacher).
+- **Qualifications matter.** Each grade needs the right qualification: a bachelor's to teach, a medical master's to
+  practise as a doctor, a doctorate to become a consultant. Graduates start on the second rung.
+- **Paid by the state.** Salaries come from the national treasury, with work tax like any wage. Apply from the new
+  Public service panel on the Jobs screen. Shifts join your daily routine.
+- **Promotions.** After enough shifts at a grade, good work (your skills and drive) earns promotion, as far as your
+  qualifications allow. Each promotion is a milestone.
+- **Staffing matters.** Local people fill vacancies. Well-staffed schools teach better, and a well-staffed clinic
+  keeps the region healthier.
+- **Work history.** Profiles now list every job someone has held, where, when and why it ended.
+
 ### New in 1.3.10: schools and universities
 
 - **Education for everyone.** Every person now has a qualification: secondary school, a vocational diploma, or a

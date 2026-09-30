@@ -6,6 +6,7 @@ import { controller, companyCurrency, effEco, player } from '../../sim/query';
 import { applyCheck, applyJob, netWage, publicWorksCheck, publicWorksShift, publicWorksWage, quitJob, shiftCheck, shiftPreview, workShift } from '../../sim/company';
 import { INDUSTRY_INFO, itemName } from '../../data/items';
 import { B } from '../../data/balance';
+import { SERVICES, SERVICE_KEYS, leavePost, maxGrade, postCheck, postTitle, postsIn, salary, serviceShift, serviceShiftCheck, staffOf, takePost } from '../../sim/services';
 
 export function Jobs({ w }: { w: World }) {
   const p = player(w);
@@ -44,7 +45,36 @@ export function Jobs({ w }: { w: World }) {
             <ActBtn kind="primary" why={shiftCheck(w, p)} run={(w) => workShift(w, p)}>Work shift (−{B.cost.work}⚡)</ActBtn>
             <ActBtn kind="danger" run={(w) => quitJob(w, p)} confirm="Resign from this job?">Resign</ActBtn>
           </>
-        ) : <Empty>You are unemployed. Pick an offer below, or take a public-works shift.</Empty>}
+        ) : p.post ? <p>You work in public service: <b>{postTitle(p.post)}</b> in <RegionLink w={w} id={p.post.region} />.</p> : <Empty>You are unemployed. Pick an offer below, take a public post, or a public-works shift.</Empty>}
+      </Panel>
+      <Panel title="Public service" class="wide">
+        {p.post && (
+          <div class="row wrap">
+            <span>{SERVICES[p.post.kind].icon} <b>{postTitle(p.post)}</b> · <Amt asset={n.cur} v={salary(w, p.post.region, p.post.kind, p.post.grade)} /> a shift · {p.post.shifts} shifts at this grade{p.post.grade < Math.min(4, maxGrade(p, p.post.kind)) ? ` (next: ${SERVICES[p.post.kind].ladder[p.post.grade + 1].toLowerCase()} after about ${40 + p.post.grade * 60})` : p.post.grade < 4 ? ' (a higher qualification opens the next grade)' : ''}</span>
+            <ActBtn kind="primary" why={serviceShiftCheck(w, p)} run={(w) => serviceShift(w, p)}>Work shift (−{B.cost.work}⚡)</ActBtn>
+            <ActBtn kind="danger" confirm="Leave public service?" run={(w) => leavePost(w, p)}>Resign</ActBtn>
+          </div>
+        )}
+        <table class="table compact">
+          <thead><tr><th>Career</th><th>Where</th><th>Starting grade</th><th class="num">Pay a shift</th><th class="num">Posts</th><th /></tr></thead>
+          <tbody>
+            {SERVICE_KEYS.map((k) => {
+              const s = SERVICES[k];
+              const g = Math.max(0, Math.min(1, maxGrade(p, k)));
+              return (
+                <tr>
+                  <td>{s.icon} {s.label} <small class="muted">· {s.ladder.join(' → ')}</small></td>
+                  <td class="small">{w.regions[p.home].name} {s.place}</td>
+                  <td class="small">{maxGrade(p, k) < 0 ? <span class="muted">not qualified</span> : s.ladder[g]}</td>
+                  <td class="num"><Amt asset={w.nations[controller(w.regions[p.home])].cur} v={salary(w, p.home, k, g)} /></td>
+                  <td class="num small">{staffOf(w, p.home, k).length}/{postsIn(w, p.home, k)}</td>
+                  <td><ActBtn small why={postCheck(w, p, k)} run={(w) => takePost(w, k)}>Apply</ActBtn></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        <Help>Teachers, nurses, doctors, civil servants and engineers are paid a salary by the state. Each grade needs a qualification (see Education on the Life screen); promotions come with service and good work. Staffing makes schools and clinics better.</Help>
       </Panel>
       <Panel title="Public works (fallback)">
         <p>The state pays a low wage (<Amt asset={n.cur} v={publicWorksWage(w, nat)} />) from the treasury for civic labour. Shifts also help any national construction priority. One shift per day, shared with regular work.</p>

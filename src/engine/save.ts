@@ -17,6 +17,7 @@ import type { World } from '../sim/types';
 import { applyBalance } from '../data/balance';
 import { SAVE_VERSION } from '../sim/worldgen';
 import { initEducation } from '../sim/education';
+import { initServices } from '../sim/services';
 import { newNarrative } from '../sim/story';
 
 const PREFIX = 'meridian-save:';
@@ -83,6 +84,10 @@ function migrate(w: World, from: number): World {
   if (from < 10) {
     // 10: education (1.3.10). Qualifications from a stable hash by country and age; funding at national defaults.
     initEducation(w);
+  }
+  if (from < 11) {
+    // 11: public services (1.3.11): posts filled from qualified local people who are out of work.
+    initServices(w);
   }
   normalizeLife(w);
   w.version = SAVE_VERSION;

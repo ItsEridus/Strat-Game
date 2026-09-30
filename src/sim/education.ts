@@ -40,7 +40,7 @@ export function hasUniversity(w: World, r: Region): boolean {
 /** Quality of a region's schools and university, 0–100: national funding, plus local development. */
 export function schoolQuality(w: World, r: Region): number {
   const n = w.nations[controller(r)];
-  return Math.max(10, Math.min(100, Math.round((n.eduQ ?? 60) + (w.govs[r.id]?.dev ?? 0) * 3 - (r.occ ? 15 : 0))));
+  return Math.max(10, Math.min(100, Math.round((n.eduQ ?? 60) + (w.govs[r.id]?.dev ?? 0) * 3 + ((r.staff?.school ?? 0.6) - 0.6) * 25 - (r.occ ? 15 : 0))));
 }
 
 const tuitionYear = (w: World, nation: Id, course: Course) => cur(Math.round(eduOf(w.nations[nation].iso).tuition * COURSES[course].tuition));

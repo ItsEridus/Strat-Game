@@ -1,6 +1,7 @@
 // Companies, employment and production chains. A shift consumes energy, inputs
 // and wage funds, and creates goods; it refuses to run (with a reason) when
 // labour, funds, inputs or storage capacity are missing.
+import { endWork, leavePost, logWork } from './services';
 import { lifeGate } from './lifecycle';
 import type { AccountRef, Citizen, Company, DayRecord, Id, Industry, World } from './types';
 import { localNews } from './life';
@@ -228,9 +229,11 @@ export function applyJob(w: World, c: Citizen, coId: Id): Result {
   const why = applyCheck(w, c, co);
   if (why) return fail(why);
   if (c.job != null) quitJob(w, c, true);
+  if (c.post) leavePost(w, c, `took a job at ${co.name}`);
   co.workers.push(c.id);
   c.job = co.id;
   c.jobSince = w.time;
+  logWork(w, c, `Worker at ${co.name}`, w.regions[co.region].name);
   if (c.player) { bump(w, 'job'); record(w, 'job', `${c.name} joined ${co.name}.`, { cit: c.id, player: true }); }
   const cur = companyCurrency(w, co);
   return ok(`Hired at ${co.name} for ${fmtAmt(cur, co.offer!.wage)} gross per shift.`);
@@ -241,6 +244,7 @@ export function quitJob(w: World, c: Citizen, silent = false): Result {
   const co = w.companies[c.job];
   if (co) co.workers = co.workers.filter((x) => x !== c.id);
   c.job = null;
+  endWork(w, c, 'resigned');
   return ok(silent ? '' : 'You resigned.');
 }
 
@@ -253,6 +257,7 @@ export function fire(w: World, actor: Id, coId: Id, workerId: Id): Result {
   if (!c || c.job !== coId) return fail('Not an employee.');
   co.workers = co.workers.filter((x) => x !== workerId);
   c.job = null;
+  endWork(w, c, 'dismissed');
   if (c.player) notify(w, 'economy', `You were dismissed by ${co.name}.`, { link: 'jobs' });
   return ok(`${c.name} dismissed.`);
 }
