@@ -214,7 +214,19 @@ try {
     if (await bye.count()) await bye.first().click();
     log('new campaign: talked to a neighbour');
   }
+  // Family life: adopt a cat on the Life screen (with the money for it).
+  await page.evaluate(() => { const s = window.meridian; s.go('life'); });
+  await page.waitForTimeout(200);
+  const adopt = page.locator('.btn:has-text("Adopt a cat"):not([disabled])');
+  if (await adopt.count()) {
+    await adopt.first().click();
+    await page.waitForTimeout(200);
+    check(await page.locator('text=No pets.').count() === 0, 'new campaign: the adopted cat is not on the Life screen');
+    log('new campaign: adopted a cat');
+  }
+  const pets = await page.evaluate(() => window.meridian.w.life.pets.length);
   await saveReloadContinue(page, 'new campaign');
+  check(await page.evaluate(() => window.meridian.w.life.pets.length) >= pets, 'new campaign: pets were lost on reload');
   check(await liveDays(page, 1), 'new campaign: time did not advance after reloading');
   await page.close();
 

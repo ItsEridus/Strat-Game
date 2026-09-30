@@ -1,8 +1,10 @@
-import type { World } from '../../sim/types';
+import type { Citizen, World } from '../../sim/types';
 import { calendarPace } from '../../sim/growth';
 import { fmtDate } from '../../engine/calendar';
 import { militaryTitle } from '../../sim/forces';
 import { askOut, romanceCheck } from '../../sim/family';
+import { GIFTABLE, giftCheck, giftValue, giveGift } from '../../sim/kinship';
+import { itemName, kindOf } from '../../data/items';
 import { ageOf, reputation } from '../../sim/growth';
 import { Amt, NationChip, Panel, RegionLink, Stat } from '../common';
 import { store } from '../store';
@@ -57,8 +59,22 @@ export function CitizenProfile({ w }: { w: World }) {
         {memoriesOf(w, c.id).length ? <ul class="memories">{memoriesOf(w, c.id).slice().reverse().map((m) => <li><span class={m.delta > 0 ? 'good' : m.delta < 0 ? 'bad' : 'muted'}>{m.delta > 0 ? '▲' : m.delta < 0 ? '▼' : '•'}</span> You {m.text} <small class="muted">(day {Math.floor(m.t / 1440)}{m.visibility === 'public' ? ', public' : ''})</small></li>)}</ul> : <p class="muted small">Nothing in particular yet. First impressions are made in conversation and in what you do.</p>}
         {!c.player && c.loc === p.loc && <ActBtn small why={talkCheck(w, p, c)} run={(w) => startTalk(w, c.id)}>💬 Talk</ActBtn>}
         {!c.player && !c.gone && p.family?.partner !== c.id && <ActBtn small why={romanceCheck(w, p, c, 'ask')} run={(w) => askOut(w, c.id)}>💕 Ask out</ActBtn>}
+        {!c.player && !c.gone && <Gifts w={w} p={p} c={c} />}
       </Panel>}
       <CitizenExtras w={w} c={c} />
+    </div>
+  );
+}
+
+/** Flowers, or something from one's own things (clothing, gadgets, food, medicine). */
+function Gifts({ w, p, c }: { w: World; p: Citizen; c: Citizen }) {
+  const items = Object.keys(p.inv).filter((k) => (p.inv[k] ?? 0) >= 1 && GIFTABLE.includes(kindOf(k)) && giftValue(k) > 0)
+    .sort((a, b) => giftValue(b) - giftValue(a)).slice(0, 4);
+  return (
+    <div class="row wrap gifts">
+      <small class="muted">Give a gift:</small>
+      <ActBtn small why={giftCheck(w, p, c, 'flowers')} run={(w) => giveGift(w, c.id, 'flowers')}>💐 Flowers</ActBtn>
+      {items.map((k) => <ActBtn small why={giftCheck(w, p, c, k)} run={(w) => giveGift(w, c.id, k)}>🎁 {itemName(k)}</ActBtn>)}
     </div>
   );
 }

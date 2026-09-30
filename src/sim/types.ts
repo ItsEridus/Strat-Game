@@ -132,6 +132,7 @@ export interface LifeProfile {
   lastAge?: number; // age at the last birthday processed
   lastRest?: number; lastFamily?: number; lastHobby?: number; // cooldowns (day numbers)
   treated?: number; // day of the last dose of medicine (better recovery for a few days)
+  giftDay?: number; giftFrom?: Id; // the last gift received (one a day from the same person)
   goods?: { clothes?: { t: number; q: number }; gadget?: { t: number; q: number } }; // latest new clothes and gadget (time, grade)
   why?: { happiness: string[]; stress: string[] }; // the main reasons for the current values
   grief?: number; // recent loss, fades over time

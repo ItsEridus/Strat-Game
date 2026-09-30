@@ -5,12 +5,13 @@ import type { Citizen, World } from '../../sim/types';
 import { ActBtn, Bar, Btn, CitLink, Empty, Help, Panel, RegionLink, Stat } from '../common';
 import { store } from '../store';
 import { DAY, fmtDur } from '../../engine/clock';
-import { fmtAmt } from '../../engine/money';
+import { c as cur, fmtAmt } from '../../engine/money';
 import { player, maxEnergy } from '../../sim/query';
 import { ageOf, calendarPace, nextBirthday, reputation } from '../../sim/growth';
 import { STAGE_INFO, lifeOf, lifeStage, occupation, routineBudget, routineOf } from '../../sim/lifecycle';
 import { familyTime, familyTimeCheck, rest, restCheck, wellbeingLabel } from '../../sim/wellbeing';
 import { healthLabel } from '../../sim/population';
+import { PET_KINDS, adoptCheck, adoptPet, careCheck, careForPet, dueText, expecting, petAge, petsOf, siblingsOf } from '../../sim/kinship';
 import { STATUS_LABEL, breakUp, familyOf, goOnDate, marry, partnerOf, propose, romanceCheck, tryForChild } from '../../sim/family';
 
 export function Life({ w }: { w: World }) {
@@ -58,8 +59,11 @@ export function Life({ w }: { w: World }) {
             <ActBtn small kind="danger" confirm={fam.status === 'married' ? 'Divorce? A quarter of your savings goes to the settlement.' : 'End the relationship?'} run={(w) => breakUp(w)}>{fam.status === 'married' ? 'Divorce' : 'Break up'}</ActBtn>
           </div>
         )}
+        {expecting(w, p) && <p class="small">🤰 A baby is on the way, due around {dueText(expecting(w, p)!.due)}.</p>}
         {!partner && <Help>Single. Get to know people in your Neighbourhood; once someone likes you (relationship 30+), you can ask them out from their profile.</Help>}
       </Panel>
+
+      <Panel title="Pets"><Pets w={w} p={p} /></Panel>
 
       <Panel title="Money this month"><Budget w={w} p={p} /></Panel>
 
@@ -75,6 +79,32 @@ export function Life({ w }: { w: World }) {
         </div>
       </Panel>
     </div>
+  );
+}
+
+function Pets({ w, p }: { w: World; p: Citizen }) {
+  const pets = petsOf(w, p);
+  const code = w.nations[p.nation].cur;
+  return (
+    <>
+      {pets.length ? (
+        <table class="table compact">
+          <tbody>
+            {pets.map((x) => (
+              <tr>
+                <td>{PET_KINDS[x.kind].icon} <b>{x.name}</b> <small class="muted">· {PET_KINDS[x.kind].label.toLowerCase()}, {petAge(w, x)}</small></td>
+                <td class="small">❤️ {Math.round(x.health)} · bond {Math.round(x.bond)}</td>
+                <td><ActBtn small why={careCheck(w, p, x)} run={(w) => careForPet(w, x.id)}>{x.kind === 'dog' ? '🦮 Walk' : '🧶 Play'}</ActBtn></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : <Empty>No pets. A dog or a cat you look after lifts your spirits.</Empty>}
+      <div class="row">
+        {Object.entries(PET_KINDS).map(([k, v]) => <ActBtn small why={adoptCheck(w, p, k)} run={(w) => adoptPet(w, k)}>{v.icon} Adopt a {v.label.toLowerCase()} <small class="muted">{fmtAmt(code, cur(v.cost))}</small></ActBtn>)}
+      </div>
+      <Help>Pets cost a little every day for food and care. Give them attention (5 energy) every day or two; neglected pets lose their bond and may be rehomed.</Help>
+    </>
   );
 }
 
@@ -96,7 +126,9 @@ function People({ w, p }: { w: World; p: Citizen }) {
   for (const x of fam.children) rows.push(['Child', x]);
   const friends = Object.values(w.citizens).filter((c) => !c.gone && !c.player && (c.rel[p.id] ?? 0) >= 50 && !rows.some(([, r]) => r.id === c.id)).sort((a, b) => (b.rel[p.id] ?? 0) - (a.rel[p.id] ?? 0)).slice(0, 5);
   for (const x of friends) rows.push(['Friend', x]);
-  if (!rows.length && !fam.kids.length) return <Empty>No family nearby and no close friends yet.</Empty>;
+  const sib = siblingsOf(w, p);
+  for (const [, c] of rows) { const i = sib.grown.indexOf(c); if (i >= 0) sib.grown.splice(i, 1); }
+  if (!rows.length && !fam.kids.length && !sib.grown.length && !sib.young.length) return <Empty>No family nearby and no close friends yet.</Empty>;
   return (
     <table class="table compact">
       <tbody>
@@ -108,6 +140,8 @@ function People({ w, p }: { w: World; p: Citizen }) {
           </tr>
         ))}
         {fam.kids.map((k) => <tr><td class="muted small">Child</td><td>{k.name} <small class="muted">· {ageOf(w, k)} · at home</small></td><td /></tr>)}
+        {sib.grown.map((c) => <tr><td class="muted small">Sibling</td><td><CitLink w={w} id={c.id} />{c.gone ? <small class="muted"> ({c.gone.why === 'died' ? 'died' : 'moved abroad'})</small> : <small class="muted"> · {ageOf(w, c)} · {occupation(w, c)}</small>}</td><td class="num small">{c.gone ? '' : `♥ ${Math.round(c.rel[p.id] ?? 0)}`}</td></tr>)}
+        {sib.young.map((k) => <tr><td class="muted small">Sibling</td><td>{k.name} <small class="muted">· {ageOf(w, k)} · at home with your parents</small></td><td /></tr>)}
       </tbody>
     </table>
   );

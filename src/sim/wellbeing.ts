@@ -13,6 +13,7 @@ import { c as cur } from '../engine/money';
 import { ageOf } from './growth';
 import { lifeOf } from './lifecycle';
 import { adjustRel } from './social';
+import { petComfort } from './kinship';
 
 type Part = [string, number];
 
@@ -56,6 +57,8 @@ function parts(w: World, c: Citizen, friends: number): { happy: Part[]; stress: 
   const d = today(w);
   if (L.lastRest != null && d - L.lastRest <= 1) { happy.push(['rest', 2]); stress.push(['rest', -8]); }
   if (L.lastFamily != null && d - L.lastFamily <= 1) { happy.push(['time with family', 5]); stress.push(['time with family', -3]); }
+  const pet = petComfort(w, c);
+  if (pet >= 30) { happy.push(['a pet at home', pet >= 70 ? 4 : 2]); stress.push(['a pet at home', -3]); }
   const g = L.goods;
   if (g?.clothes && w.time - g.clothes.t < B.goods.clothesDays * DAY) happy.push(['new clothes', B.goods.clothes[g.clothes.q - 1]]);
   if (g?.gadget && w.time - g.gadget.t < B.goods.gadgetDays * DAY) happy.push(['a new gadget', B.goods.gadget[g.gadget.q - 1]]);

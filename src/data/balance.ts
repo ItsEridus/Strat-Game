@@ -21,7 +21,7 @@ export const BALANCE = {
   // No levels: skills grow by practice (sim/growth.ts). Effort per activity ≈ one day's worth.
   practice: { work: 1, train: 1.2, trainDonate: 0.6, hit: 0.03, build: 1, manager: 1, article: 1, rally: 1.5, canvass: 0.8, talk: 0.1, volunteer: 0.6, crime: 0.5, patrol: 0.6, spy: 0.6 }, // SOLO
   growth: { rate: 0.6, soft: 20 }, // SOLO gain = effort × rate × youth / (1 + skill / soft)
-  family: { dateCost: 12, weddingCost: 150 }, // SOLO currency
+  family: { dateCost: 12, weddingCost: 150, flowers: 8 }, // SOLO currency
   places: { exploreEnergy: 5, exploreGain: 6, exploreStory: 0.3 }, // SOLO exploring a district: energy, familiarity (diminishing), chance of a situation
   life: { adultAge: 18, playerAge: 24, retireAge: 65, stages: { child: 5, teen: 13, adult: 18, senior: 65 } }, // SOLO; the pace of life is Settings.lifeYearDays
   standing: { rally: 0, talk: 0.05, daily: 0.2 }, // SOLO influence from daily goals (rallies/articles already give influence)

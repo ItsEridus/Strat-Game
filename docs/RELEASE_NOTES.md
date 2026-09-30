@@ -3,6 +3,18 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.3.6: family life
+
+- **Pregnancy.** Trying for a child no longer makes a baby appear the same day. A baby is due about nine months
+  later (on the pace of life), and the Life screen shows the due date. You're told when the baby is born.
+- **Brothers and sisters.** Your family panel now lists your siblings: grown-up ones with their age, work and how
+  close you are, and younger ones still at home with your parents.
+- **Gifts.** Give flowers, or something of your own (clothing, gadgets, food or medicine), from anyone's profile.
+  Better gifts mean more. One gift a day to the same person; they remember it.
+- **Pets.** Adopt a dog or a cat from the Life screen. Walk or play with them every day or two. A pet you're close
+  to lifts your happiness and eases stress. They cost a little each day and grow old. If you neglect them for
+  weeks, a shelter rehomes them.
+
 ### New in 1.3.5: sort any list
 
 - **Click a column heading to sort.** Click again to reverse. Each table remembers how you left it.

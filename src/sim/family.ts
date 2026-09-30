@@ -21,6 +21,9 @@ import { remember } from './story';
 import { adjustRel } from './social';
 import { newResident, regionTarget } from './population';
 import { bump } from './progress';
+import { conceive } from './kinship';
+import { milestone } from './lifecycle';
+import { fmtDate } from '../engine/calendar';
 
 export function fam(c: Citizen): Family {
   return (c.family ??= { partner: null, status: 'single', since: c.born, parents: [], children: [], kids: [], exes: [] });
@@ -75,7 +78,7 @@ function babyName(w: World, parent: Citizen) {
   return `${pick(w, pool.first)} ${surname(parent)}`;
 }
 
-function haveBaby(w: World, a: Citizen, b: Citizen) {
+export function haveBaby(w: World, a: Citizen, b: Citizen) {
   const kid = { name: babyName(w, a), born: w.time };
   fam(a).kids.push(kid);
   localNews(w, a.home, `👶 ${a.name} and ${b.name} welcomed a baby, ${kid.name.split(' ')[0]}.`);
@@ -300,6 +303,8 @@ export function romanceCheck(w: World, p: Citizen, npc: Citizen | undefined, wha
     if (f.status !== 'married') return 'Start a family once you are married.';
     if (ageOf(w, npc) > 46 && ageOf(w, p) > 46) return 'That chapter has passed.';
     if ((p.flags.triedChild ?? -1) === today(w)) return 'Not today.';
+    const due = w.life.pregnancies.find((x) => x.parents.includes(p.id));
+    if (due) return `A baby is already on the way (due ${fmtDate(due.due, 'medium')}).`;
     if (f.kids.length >= 6) return 'A full house already.';
     return null;
   }
@@ -400,9 +405,10 @@ export function tryForChild(w: World): Result {
   const young = Math.min(ageOf(w, p), ageOf(w, npc!));
   const odds = young > 44 ? 0.03 : young > 38 ? 0.08 : 0.15;
   if (!chance(w, odds)) return ok('Not this time. (Babies take their time; try again another day.)');
-  const kid = haveBaby(w, p, npc!); // children are listed once, with the player
-  remember(w, npc!, 10, 'had a child with me', 'public');
-  return ok(`🍼 Congratulations: ${kid.name} is born! Children grow up at home and come of age at ${B.life.adultAge}.`);
+  const preg = conceive(w, p, npc!); // the child is listed once, with the player
+  remember(w, npc!, 6, 'is expecting a child with me', 'private');
+  milestone(w, p, 'expecting', `learned a baby is on the way with ${npc!.name}`);
+  return ok(`🤰 A baby is on the way! Due around ${fmtDate(preg.due, 'long')}.`);
 }
 
 /** Everyone the player is related to (for the family panel). */
