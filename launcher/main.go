@@ -1,8 +1,8 @@
-// Meridian Reach launcher: a self-contained Windows (or any OS) executable that
-// serves the embedded game on a fixed local port and opens it in the default
-// browser. The fixed port keeps the browser's save storage (localStorage) the
-// same between runs. The launcher exits about a minute after the game tab is
-// closed (the page sends a heartbeat), or when its window is closed.
+// Meridian Reach launcher: a self-contained executable that serves the embedded
+// game on a fixed local port and shows it. On Windows it opens a native game
+// window (WebView2); elsewhere, or when WebView2 is missing, it opens the default
+// browser. The fixed port keeps the game's origin, and so its save storage
+// (localStorage), the same between runs.
 package main
 
 import (
@@ -11,7 +11,6 @@ import (
 	"io/fs"
 	"net"
 	"net/http"
-	"os"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -24,32 +23,51 @@ var files embed.FS
 
 var version = "dev"
 
-const port = 27183
+const (
+	port  = 27183
+	title = "Meridian Reach"
+)
 
-var lastBeat atomic.Int64
+var gameURL = fmt.Sprintf("http://127.0.0.1:%d/", port)
+
+// In browser mode the page sends a heartbeat; the launcher exits about a minute
+// after the game tab is closed.
+var (
+	browserMode atomic.Bool
+	lastBeat    atomic.Int64
+)
 
 const heartbeat = `<script>setInterval(function(){fetch('/__alive',{cache:'no-store'}).catch(function(){})},5000);fetch('/__alive').catch(function(){});</script>`
 
 func main() {
+	ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
+	if err != nil {
+		if running() {
+			alreadyRunning()
+			return
+		}
+		fail(fmt.Errorf("port %d is in use by another program, so the game cannot start: %w", port, err))
+	}
+	go serve(ln)
+	show(gameURL) // platform-specific: returns when the game is closed
+}
+
+// serve runs the local web server for the embedded game files.
+func serve(ln net.Listener) {
 	web, err := fs.Sub(files, "web")
 	if err != nil {
 		fail(err)
-	}
-	ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
-	if err != nil {
-		// Already running: just open the browser on the existing instance.
-		openBrowser(fmt.Sprintf("http://127.0.0.1:%d/", port))
-		return
 	}
 	mux := http.NewServeMux()
 	static := http.FileServer(http.FS(web))
 	mux.HandleFunc("/__alive", func(w http.ResponseWriter, r *http.Request) {
 		lastBeat.Store(time.Now().Unix())
+		w.Header().Set("X-Meridian-Reach", version)
 		w.WriteHeader(http.StatusNoContent)
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-cache")
-		if r.URL.Path == "/" || r.URL.Path == "/index.html" {
+		if (r.URL.Path == "/" || r.URL.Path == "/index.html") && browserMode.Load() {
 			page, err := fs.ReadFile(web, "index.html")
 			if err != nil {
 				http.Error(w, "missing index.html", 500)
@@ -62,20 +80,33 @@ func main() {
 		}
 		static.ServeHTTP(w, r)
 	})
-	go func() {
-		// Exit once the game tab has been gone for a minute (after it first connected).
-		for range time.Tick(10 * time.Second) {
-			b := lastBeat.Load()
-			if b > 0 && time.Now().Unix()-b > 60 {
-				os.Exit(0)
-			}
-		}
-	}()
-	url := fmt.Sprintf("http://127.0.0.1:%d/", port)
-	fmt.Println("Meridian Reach is running at", url, "- close the game tab to quit.")
-	go openBrowser(url)
 	if err := http.Serve(ln, mux); err != nil {
 		fail(err)
+	}
+}
+
+// running reports whether another launcher already owns the port.
+func running() bool {
+	c := http.Client{Timeout: 2 * time.Second}
+	resp, err := c.Get(gameURL + "__alive")
+	if err != nil {
+		return false
+	}
+	resp.Body.Close()
+	return resp.Header.Get("X-Meridian-Reach") != ""
+}
+
+// runInBrowser opens the game in the default browser and blocks until the tab
+// has been closed for a minute.
+func runInBrowser() {
+	browserMode.Store(true)
+	fmt.Println("Meridian Reach is running at", gameURL, "- close the game tab to quit.")
+	openBrowser(gameURL)
+	for range time.Tick(10 * time.Second) {
+		b := lastBeat.Load()
+		if b > 0 && time.Now().Unix()-b > 60 {
+			return
+		}
 	}
 }
 
@@ -90,9 +121,4 @@ func openBrowser(url string) {
 		cmd = exec.Command("xdg-open", url)
 	}
 	_ = cmd.Start()
-}
-
-func fail(err error) {
-	fmt.Fprintln(os.Stderr, "Meridian Reach:", err)
-	os.Exit(1)
 }

@@ -28,11 +28,15 @@ Screenshots are regenerated with `node tools/screenshots.mjs` (needs Playwright)
 ## Download (Windows)
 
 Grab **`MeridianReach.exe`** from the [latest release](https://github.com/ItsEridus/Strat-Game/releases/latest)
-and double-click it. It is a single self-contained file: it starts a tiny local server on `127.0.0.1` and opens
-the game in your default browser (saves persist between sessions). It closes itself a minute after you close
-the game tab. Windows SmartScreen may warn about an unsigned app: choose **More info → Run anyway**.
+and double-click it. The game opens in its own window. It's a single self-contained file with nothing to install:
+it uses the WebView2 component built into Windows 10 and 11, and your saves are kept in
+`%APPDATA%\MeridianReach`. Closing the window autosaves and quits. Windows SmartScreen may warn about an
+unsigned app: choose **More info → Run anyway**.
 
-The release also has a `.zip` of the plain browser build for any OS.
+On a PC without WebView2 (e.g. Windows 7/8), the EXE opens the game in your default browser instead.
+
+The release also has a `.zip` of the plain browser build for any OS. Saves don't move between the browser
+build and the EXE automatically: use **Settings & Saves → Export save file** in one and **Import save file** in the other.
 
 ## Launch
 

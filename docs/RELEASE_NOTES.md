@@ -3,11 +3,20 @@
 A single-player society strategy game on a map of Earth: live as one citizen among hundreds of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.1: a native game window
+
+`MeridianReach.exe` now opens the game in its own window, with its own icon and taskbar entry, instead of a
+browser tab. It uses the WebView2 component built into Windows 10 and 11, so there is still nothing to install.
+Saves live in `%APPDATA%\MeridianReach`, and closing the window autosaves and quits. Without WebView2
+(e.g. Windows 7/8) the EXE opens the game in your default browser as before.
+
+Saves from 1.0 stay in your browser and don't move over automatically: in the old version use
+**Settings & Saves → Export save file**, then **Import save file** in the window.
+
 ### Download
 
-- **Windows:** download **`MeridianReach.exe`** and double-click it. It opens the game in your default browser
-  and closes itself about a minute after you close the tab. Saves persist between sessions. Windows SmartScreen
-  may warn about an unsigned app: choose **More info → Run anyway**.
+- **Windows:** download **`MeridianReach.exe`** and double-click it. Windows SmartScreen may warn about an
+  unsigned app: choose **More info → Run anyway**.
 - **Any OS:** download the `-web.zip`, extract it and open `index.html` (or `Play.bat` on Windows).
 
 ### Highlights
