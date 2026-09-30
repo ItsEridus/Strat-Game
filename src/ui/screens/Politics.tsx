@@ -65,7 +65,7 @@ export function Politics({ w }: { w: World }) {
 function ElectionCard({ w, e }: { w: World; e: Election }) {
   const p = player(w);
   const n = w.nations[e.nation];
-  const title = e.kind === 'president' ? 'Presidential election' : e.kind === 'congress' ? 'Congressional election' : `Party leader: ${w.parties[e.party!]?.name}`;
+  const title = e.kind === 'president' ? `${n.leader} election` : e.kind === 'congress' ? `${n.legislature} election` : `Party leader: ${w.parties[e.party!]?.name}`;
   const regOpen = w.time < e.regClose;
   const choices: [number, string][] = e.kind === 'congress'
     ? partiesOf(w, e.nation).map((pt) => [pt.id, pt.name])
@@ -95,7 +95,7 @@ function ResultCard({ w, e }: { w: World; e: Election }) {
   const total = r.tallies.reduce((s, t) => s + t.votes, 0) || 1;
   return (
     <details class="card" open={e === Object.values(w.elections).filter((x) => x.done && x.nation === e.nation).sort((a, b) => b.at - a.at)[0]}>
-      <summary><b>{e.kind === 'president' ? 'Presidential' : e.kind === 'congress' ? 'Congress' : 'Party leader'}</b> · day {Math.floor(e.at / 1440)} · turnout {r.turnout}/{r.electorate}</summary>
+      <summary><b>{e.kind === 'president' ? w.nations[e.nation].leader : e.kind === 'congress' ? w.nations[e.nation].legislature : 'Party leader'}</b> · day {Math.floor(e.at / 1440)} · turnout {r.turnout}/{r.electorate}</summary>
       <table class="table compact"><tbody>
         {r.tallies.map((t) => (
           <tr><td>{e.kind === 'congress' ? w.parties[t.cand]?.name ?? 'dissolved party' : <CitLink w={w} id={t.cand} />}</td>

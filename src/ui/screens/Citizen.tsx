@@ -16,7 +16,7 @@ export function CitizenProfile({ w }: { w: World }) {
   const job = c.job != null ? w.companies[c.job] : null;
   const owned = Object.values(w.companies).filter((co) => co.owner.k === 'cit' && co.owner.id === c.id);
   const n = w.nations[c.nation];
-  const offices = [n.president === c.id ? 'President' : null, ...Object.entries(n.cabinet).filter(([, v]) => v === c.id).map(([k]) => `Minister (${k})`), n.deputies.includes(c.id) ? 'Deputy' : null].filter(Boolean);
+  const offices = [n.president === c.id ? n.leader : null, ...Object.entries(n.cabinet).filter(([, v]) => v === c.id).map(([k]) => `Minister (${k})`), n.deputies.includes(c.id) ? 'Deputy' : null].filter(Boolean);
   return (
     <div class="grid">
       <Panel title={`${c.name}${c.player ? ' (you)' : ''}`} class="wide">

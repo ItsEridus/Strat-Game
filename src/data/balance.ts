@@ -116,6 +116,7 @@ export const BALANCE = {
     spendRate: 0.5, // SOLO share of the background households' wallet spent on goods each day
     shares: { food: 0.75, ticket: 0.15, wg: 0.1 }, // SOLO spending mix
     startPerPop: 0.01, // SOLO starting household wallet per resident
+    maxStockShare: 0.7, // SOLO households buy at most 70% of the listed stock per shopping round, leaving goods for citizens
   },
   living: { perDay: 4, discretionary: 0.05, comfort: 150 }, // SOLO daily living costs + 5%/day of cash above 150 spent on lifestyle; paid to the background economy (closes the money loop)
   wages: { start: 8, min: 5 }, // SOLO starting offer and minimum wage (currency)
@@ -243,7 +244,8 @@ export const PROVENANCE: { key: string; src: Source; note: string }[] = [
   { key: 'pollution.formula', src: 'WIKI', note: 'Production × (1 − 0.9 × pollution); weights/window SOLO' },
   { key: 'taxes.ceiling*', src: 'DOC', note: 'Ceiling = 25 + 0.5×communist% − 0.4/0.3×capitalist% (interpretation)' },
   { key: 'taxes.occupierShare', src: 'DOC', note: 'Occupied regions: 80% work tax to occupier, 20% to owner' },
-  { key: 'households / living', src: 'SOLO', note: 'Aggregated background consumers funded by citizens’ living costs and treasury transfers (closed money loop)' },
+  { key: 'households / living', src: 'SOLO', note: 'Aggregated background consumers funded by citizens’ living costs and treasury transfers (closed money loop); they leave 30% of listed stock for citizens each round' },
+  { key: 'world map', src: 'SOLO', note: 'Sixteen real countries split into 4–10 approximate regions each; terrain and resource types are hand-picked flavour, richness and population are rolled per seed; sea lanes and overland corridors link nations that share no land border' },
   { key: 'politics.days', src: 'WIKI', note: 'President ~1st, party ~10th, congress ~25th of month' },
   { key: 'politics.congressMin/Max', src: 'WIKI', note: '3–20 deputies by population' },
   { key: 'politics.proposalsPerDeputy', src: 'WIKI', note: 'Five proposals per mandate' },

@@ -142,7 +142,11 @@ export function householdsDaily(w: World, half: number) {
       }).filter(Boolean).sort((a, b) => a!.value - b!.value) as { k: string; price: number }[];
       for (const o of opts) {
         if (b < o.price) break;
-        const r = buyBest(w, SYSTEM, ref, market, o.k, Math.floor(b / o.price), Math.round(o.price * 1.3));
+        // Leave part of the listed stock for citizens (and the player) shopping later in the day.
+        const stock = listingsFor(w, market, o.k).reduce((sum, l) => sum + l.qty, 0);
+        const cap = Math.floor(stock * B.households.maxStockShare);
+        if (cap <= 0) continue;
+        const r = buyBest(w, SYSTEM, ref, market, o.k, Math.min(cap, Math.floor(b / o.price)), Math.round(o.price * 1.3));
         if (r.ok) b -= r.data.spent;
       }
       unmet += b;

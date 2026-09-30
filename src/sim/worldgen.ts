@@ -1,7 +1,8 @@
 // Deterministic world generation from a seed.
-import type { Citizen, Id, Ideology, Industry, Nation, Persona, RawRes, Region, Settings, Terrain, World } from './types';
+import type { Citizen, Id, Ideology, Industry, Nation, Persona, RawRes, Region, Settings, World } from './types';
 import { B, applyBalance } from '../data/balance';
-import { FIRST, LAST, NATION_DEFS, REGION_PREFIX, REGION_SUFFIX } from '../data/names';
+import { NAME_POOLS, NATION_DEFS } from '../data/names';
+import { EARTH } from '../data/earth';
 import { IDEOLOGY_LIST } from '../data/ideologies';
 import { RAWS, outputKey, refValue } from '../data/items';
 import { chance, next, pick, rand, randInt, shuffle, weighted } from '../engine/rng';
@@ -17,7 +18,7 @@ import { seedPolitics } from './politics';
 import { initPlayerProgress } from './quests';
 import { seedLate } from './seedLate';
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2; // 2: Earth map (region ids index src/data/earth.json)
 
 export function defaultSettings(): Settings {
   const pauseOn: Record<string, boolean> = {};
@@ -27,100 +28,36 @@ export function defaultSettings(): Settings {
   return {
     speed: 1, paused: true, monthLen: 30, difficulty: 'normal', pauseOn, autoTrain: false,
     advanced: { nuclear: true, pirates: true, terrainEvents: false, tournaments: true },
-    citizensPerNation: 36, balance: {}, notifyFilter,
+    citizensPerNation: 24, balance: {}, notifyFilter,
   };
 }
 
-const W = 12, H = 8, HEX = 40;
-
-function neighborsOf(col: number, row: number) {
-  const odd = row & 1;
-  const dirs = odd ? [[1, 0], [-1, 0], [1, -1], [0, -1], [1, 1], [0, 1]] : [[1, 0], [-1, 0], [0, -1], [-1, -1], [0, 1], [-1, 1]];
-  return dirs.map(([dc, dr]) => [col + dc, row + dr]);
-}
-
+/** Regions come from the Earth map; richness, population and extra deposits are rolled per seed. */
 function genRegions(w: World): Region[] {
-  const cells = new Map<string, { col: number; row: number }>();
-  const cx = (W - 1) / 2, cy = (H - 1) / 2;
-  for (let r = 0; r < H; r++) for (let c = 0; c < W; c++) {
-    const d = ((c - cx) / (W / 2)) ** 2 + ((r - cy) / (H / 2)) ** 2;
-    if (d < 1 + rand(w, -0.3, 0.15)) cells.set(`${c},${r}`, { col: c, row: r });
-  }
-  // largest connected component
-  const seen = new Set<string>();
-  let best: string[] = [];
-  for (const key of cells.keys()) {
-    if (seen.has(key)) continue;
-    const comp: string[] = [];
-    const stack = [key];
-    seen.add(key);
-    while (stack.length) {
-      const k = stack.pop()!;
-      comp.push(k);
-      const { col, row } = cells.get(k)!;
-      for (const [nc, nr] of neighborsOf(col, row)) {
-        const nk = `${nc},${nr}`;
-        if (cells.has(nk) && !seen.has(nk)) { seen.add(nk); stack.push(nk); }
-      }
+  return EARTH.regions.map((e, i): Region => {
+    const res: Region['res'] = {};
+    for (const k of e.res) res[k] = randInt(w, 1, 3);
+    // Occasionally a second, smaller deposit.
+    if (chance(w, 0.25)) {
+      const extra = weighted(w, RAWS.filter((k) => !res[k]), (x) => ({ grain: e.terrain === 'plains' ? 4 : 1.5, iron: e.terrain === 'mountains' ? 3 : 1.5, titanium: e.terrain === 'mountains' ? 2 : 1, oil: e.terrain === 'desert' ? 3 : 1 }[x]));
+      if (extra) res[extra] = 1;
     }
-    if (comp.length > best.length) best = comp;
-  }
-  best.sort((a, b) => { const [ac, ar] = a.split(',').map(Number); const [bc, br] = b.split(',').map(Number); return ar - br || ac - bc; });
-  const used = new Set<string>();
-  const regions: Region[] = best.map((k, i) => {
-    const { col, row } = cells.get(k)!;
-    let name = '';
-    for (let t = 0; t < 100 && (!name || used.has(name)); t++) name = pick(w, REGION_PREFIX) + pick(w, REGION_SUFFIX);
-    used.add(name);
     return {
-      id: i, name, col, row,
-      x: HEX * Math.sqrt(3) * (col + 0.5 * (row & 1)) + HEX,
-      y: HEX * 1.5 * row + HEX,
-      links: [], core: -1, owner: -1, occ: null,
-      terrain: 'plains' as Terrain, res: {}, pop: 0,
+      id: i, name: e.name, x: e.x, y: e.y, links: [...e.links], core: e.nation, owner: e.nation, occ: null,
+      terrain: e.terrain, res, pop: randInt(w, 18, 70) * 1000,
       prodWindow: new Array(B.pollution.windowDays).fill(0), pollution: 0,
       bld: { hospital: 0, fields: 0, industrial: 0, base: 0 }, project: null, supplied: true,
     };
   });
-  const byKey = new Map(regions.map((r) => [`${r.col},${r.row}`, r]));
-  for (const r of regions) r.links = neighborsOf(r.col, r.row).map(([c, rr]) => byKey.get(`${c},${rr}`)).filter(Boolean).map((n) => n!.id);
-  // Terrain: clustered random walk.
-  const terrains: Terrain[] = ['plains', 'mountains', 'forest', 'desert'];
-  for (const r of regions) {
-    const assigned = r.links.map((l) => regions[l]).filter((n) => n.id < r.id);
-    r.terrain = assigned.length && chance(w, 0.55) ? pick(w, assigned).terrain : (weighted(w, terrains, (t) => ({ plains: 4, mountains: 2, forest: 3, desert: 1.5 }[t])) as Terrain);
-  }
-  // Resources: 1–2 per region, richness 1–3.
-  for (const r of regions) {
-    const n = chance(w, 0.35) ? 2 : 1;
-    const opts = shuffle(w, [...RAWS]);
-    for (let i = 0; i < n; i++) {
-      const res = weighted(w, opts, (x) => ({ grain: r.terrain === 'plains' ? 5 : 2, iron: r.terrain === 'mountains' ? 4 : 2, titanium: r.terrain === 'mountains' ? 2 : 1, oil: r.terrain === 'desert' ? 4 : 1.3 }[x]))!;
-      opts.splice(opts.indexOf(res), 1);
-      r.res[res] = randInt(w, 1, 3);
-    }
-    r.pop = randInt(w, 18, 70) * 1000;
-  }
-  return regions;
 }
 
-function bfs(regions: Region[], from: Id) {
-  const dist = new Array(regions.length).fill(Infinity);
-  dist[from] = 0;
-  const q = [from];
-  while (q.length) {
-    const id = q.shift()!;
-    for (const n of regions[id].links) if (dist[n] === Infinity) { dist[n] = dist[id] + 1; q.push(n); }
-  }
-  return dist;
-}
-
-function personName(w: World, used: Set<string>) {
+function personName(w: World, cur: string, used: Set<string>) {
+  const pool = NAME_POOLS[cur];
   for (let i = 0; i < 50; i++) {
-    const n = `${pick(w, FIRST)} ${pick(w, LAST)}`;
+    const n = `${pick(w, pool.first)} ${pick(w, pool.last)}`;
     if (!used.has(n)) { used.add(n); return n; }
   }
-  const n = `${pick(w, FIRST)} ${pick(w, LAST)} ${used.size}`;
+  const n = `${pick(w, pool.first)} ${pick(w, pool.last)} ${used.size}`;
   used.add(n);
   return n;
 }
@@ -155,6 +92,9 @@ export function autoAllocate(c: Citizen) {
 
 const PERSONA_MIX: [Persona, number][] = [['worker', 38], ['soldier', 16], ['industrialist', 10], ['merchant', 7], ['politician', 11], ['builder', 7], ['journalist', 5], ['investor', 6]];
 
+// Every nation starts with owners for its companies, candidates for office and a few soldiers.
+const CORE_ROLES: Persona[] = ['industrialist', 'industrialist', 'merchant', 'investor', 'politician', 'politician', 'politician', 'soldier', 'soldier', 'builder', 'journalist'];
+
 export function generateWorld(seed: number, playerName: string, playerNation: number, opts: Partial<Settings> = {}): World {
   const settings = { ...defaultSettings(), ...opts };
   applyBalance(settings.balance);
@@ -169,32 +109,8 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
   };
   const regions = (w.regions = genRegions(w));
 
-  // Capitals by farthest-point sampling, then round-robin territorial growth.
   const count = NATION_DEFS.length;
-  const seeds = [randInt(w, 0, regions.length - 1)];
-  const minD = bfs(regions, seeds[0]);
-  while (seeds.length < count) {
-    let bestId = 0, bestD = -1;
-    for (const r of regions) if (minD[r.id] > bestD && !seeds.includes(r.id)) { bestD = minD[r.id]; bestId = r.id; }
-    seeds.push(bestId);
-    const d = bfs(regions, bestId);
-    for (let i = 0; i < d.length; i++) minD[i] = Math.min(minD[i], d[i]);
-  }
-  seeds.forEach((id, i) => { regions[id].owner = i; });
-  let unclaimed = regions.length - seeds.length;
-  while (unclaimed > 0) {
-    let progressed = false;
-    for (let i of shuffle(w, [...Array(count).keys()])) {
-      const frontier: Id[] = [];
-      for (const r of regions) if (r.owner === i) for (const l of r.links) if (regions[l].owner === -1) frontier.push(l);
-      if (!frontier.length) continue;
-      regions[pick(w, frontier)].owner = i;
-      unclaimed--; progressed = true;
-      if (!unclaimed) break;
-    }
-    if (!progressed) break;
-  }
-  for (const r of regions) r.core = r.owner;
+  const seeds = NATION_DEFS.map((_, i) => EARTH.regions.findIndex((e) => e.nation === i && e.capital));
   for (const id of seeds) regions[id].pop = Math.round(regions[id].pop * 1.6);
 
   // Ensure every nation has grain and iron somewhere so its economy can start.
@@ -206,7 +122,7 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
   }
 
   w.nations = NATION_DEFS.map((d, i): Nation => ({
-    id: i, name: d.name, adj: d.adj, color: d.color, cur: d.cur, capital: seeds[i], wallet: {}, inv: {},
+    id: i, name: d.name, adj: d.adj, color: d.color, cur: d.cur, iso: d.iso, leader: d.leader, legislature: d.legislature, capital: seeds[i], wallet: {}, inv: {},
     taxes: { ...B.taxes.defaults }, minWage: cur(B.wages.min), president: null, cabinet: {}, deputies: [], seats: {}, congressSize: 5,
     relations: {}, alliances: [], embargoes: [], pacts: {}, exile: false, approval: 55, printed: 0, warheads: [], nukeProd: null, intel: 0,
     priorities: { battle: null, side: null, project: null }, termStart: w.time,
@@ -222,10 +138,10 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
     const own = regions.filter((r) => r.owner === n.id);
     const nationIdeos = shuffle(w, [...IDEOLOGY_LIST]).slice(0, randInt(w, 3, 4));
     for (let k = 0; k < settings.citizensPerNation; k++) {
-      const persona = weighted(w, PERSONA_MIX, (x) => x[1])![0];
+      const persona = k < CORE_ROLES.length ? CORE_ROLES[k] : weighted(w, PERSONA_MIX, (x) => x[1])![0];
       const loc = weighted(w, own, (r) => r.pop + (r.id === n.capital ? 30000 : 0))!.id;
       const ideo = chance(w, 0.85) ? pick(w, nationIdeos) : pick(w, IDEOLOGY_LIST);
-      const c = newCitizen(w, personName(w, used), n.id, loc, persona, ideo);
+      const c = newCitizen(w, personName(w, n.cur, used), n.id, loc, persona, ideo);
       c.level = randInt(w, 2, 22) + (persona === 'politician' ? 4 : 0);
       c.attrPts = Math.min(c.level, B.levels.attrMaxLevel) * B.levels.attrPerLevel;
       autoAllocate(c);

@@ -1,8 +1,9 @@
 # Meridian Reach: design notes
 
 This is a single-player adaptation of the society-simulation systems described in the *Eclesiar feature
-reference and single-player game brief*. It is **not** a copy of Eclesiar's code, data or assets. The world,
-names and writing are original. Where the brief marks a rule as **documented** (current announcements), a
+reference and single-player game brief*. It is **not** a copy of Eclesiar's code, data or assets. The setting
+is present-day Earth with sixteen real countries; citizens, companies, parties, papers and all writing are
+invented. Where the brief marks a rule as **documented** (current announcements), a
 **wiki baseline**, **unverified**, or a **solo design** proposal, this game follows that distinction:
 
 - **DOC:** implemented as documented. Newer corrections win (e.g. Strength applies before the
@@ -31,12 +32,19 @@ names and writing are original. Where the brief marks a rule as **documented** (
 - **Actions** validate first and return a reason (level, location, authority, money, energy, material). The
   UI shows these reasons on disabled buttons. AI citizens call the **same functions** with the same permission
   checks (`src/sim/authority.ts`). Only background households use a system actor.
+- **Earth map:** `tools/build-earth.mjs` builds `src/data/earth.json` (committed) from Natural Earth country
+  shapes (the public-domain `world-atlas` package) and `tools/earth-defs.mjs`. Each country is split into
+  regions with a Voronoi diagram around listed centres, clipped to the real border and projected with Natural
+  Earth. Land links come from shared border vertices; islands and exclaves get strait links; the defs add sea
+  lanes and overland corridors so the graph is connected. Shapes stay out of saves: region ids index the
+  static data, and the world stores only the gameplay state. Saves from the earlier fictional-world version
+  (save version 1) are rejected with a message.
 - **Modules:** `sim/` (rules), `ai/` (behaviour), `ui/` (screens), `data/` (tables). Later systems plug in
   through `sim/systems.ts` hooks, so depth can be added without touching the loop.
 
 ## The simulated society
 
-- **Full AI citizens** (default 36 per nation) have identity, persona (worker, soldier, industrialist,
+- **Full AI citizens** (default 24 per nation, 16/24/36 selectable) have identity, persona (worker, soldier, industrialist,
   merchant, politician, builder, journalist, investor), ideology, traits, relationships, skills, inventory,
   jobs, parties and units. They work, train, shop, eat, fight, vote, run for office, legislate, found and
   manage companies, invest, bid, study, mine, build and write.
@@ -68,6 +76,7 @@ names and writing are original. Where the brief marks a rule as **documented** (
 | Combat rewards | Round-side pools from 2 to 64 gold at damage thresholds of 40k×4ⁿ, shared by damage: 40% paid now, 60% to a claimable reserve capped at 30 gold (replacing the gem-gated bank). Hero medal goes to the top damage per side per battle. |
 | Elections | Individual citizen voters weigh ideology, influence, party support, relationships, incumbent approval, war score and their own income. Background blocs add votes equal to the citizen electorate, split by party support. Seats use D'Hondt. |
 | Studies | Energy +6% or an item bundle +15%; unlock at 75% (DOC); decay 0.25%/h (0 disables it). |
+| Geography | Sixteen real countries, 4–10 regions each (105 total). Region borders inside a country are approximate. Terrain and resource types are hand-picked; richness, population and occasional extra deposits are rolled per seed. Leader and legislature titles differ by country, but every nation uses the same rules. Other countries are neutral scenery. |
 | Travel | Walk to a neighbour for 15 energy, or use a ticket (range 1/2/3/4/6 hops by quality, 5 energy per hop, −10% per quality). |
 | Mining | Yields 0.5/0.8 gold (WIKI) × equipment × (1 + 0.02·eco skill) × studies × world multiplier. |
 | Other values | Everything in `balance.ts` tagged `SOLO`: recipes, living costs, household spending, starting wages, AI pricing, tournament sponsorship, pirate strength and so on. |
@@ -108,8 +117,10 @@ tests `tests/e2e.mjs` and `tests/e2e-play.mjs` check every screen and the tutori
 
 These are deliberate simplifications or gaps against the brief's full wish list:
 
-- **World scale:** eight fictional nations on a ~70-region hex map, with about 300 full citizens by default
-  (24/36/48 per nation is selectable). There is no real-world geography.
+- **World scale:** sixteen playable countries on a 105-region Earth map, with about 400 full citizens by
+  default (16/24/36 per nation is selectable). Other countries are unplayable neutral land, so some borders
+  (e.g. Germany–Turkey) are modelled as corridors. Real governments, parties and politicians are not
+  modelled: every country starts with generated citizens and parties and uses the same political rules.
 - **Holdings:** role assignment in the UI is basic ("assign to top shareholder"). There is no UI for holding
   storage transfers or holding-level currency exchange. Public/private disclosure is simplified.
 - **Contracts and negotiation:** NPCs accept or reject with a stated reason. They make no counter-offers.

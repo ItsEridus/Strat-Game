@@ -27,7 +27,8 @@ export function emptyDay(day: number): DayRecord {
 }
 
 export function companyName(w: World, ind: Industry) {
-  return `${pick(w, COMPANY_WORDS)} ${INDUSTRY_INFO[ind].name.split(' ')[0]} ${pick(w, COMPANY_SUFFIX)}`;
+  const kind = INDUSTRY_INFO[ind].name.split(' ')[0];
+  return `${pick(w, COMPANY_WORDS.filter((x) => x !== kind))} ${kind} ${pick(w, COMPANY_SUFFIX)}`;
 }
 
 export function createCompany(w: World, owner: AccountRef, ind: Industry, q: number, region: Id, name?: string): Company {

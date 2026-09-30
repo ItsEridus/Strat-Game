@@ -8,6 +8,7 @@ import { DAY } from '../src/engine/clock';
 import { cref, natref, player } from '../src/sim/query';
 import { propose, voteProposal } from '../src/sim/congress';
 import { netWage } from '../src/sim/company';
+import { taxCeilings } from '../src/sim/taxes';
 import { contributeLabor, donateMaterials, startProject } from '../src/sim/construction';
 import { travel } from '../src/sim/travel';
 import { withAuthority, AUTH_ANY } from '../src/sim/worldgen';
@@ -45,12 +46,14 @@ test('an enacted tax law changes subsequent net wages and needs congress', () =>
   assert.equal(propose(w, p, 'workTax', { value: 20 }).ok, false);
   const co = Object.values(w.companies).find((c) => c.offer && w.regions[c.region].owner === 0)!;
   const before = netWage(w, co, p).net;
-  const r = propose(w, pres, 'workTax', { value: 20 });
+  const value = Math.min(20, Math.floor(taxCeilings(w, n).work));
+  assert.ok(value > n.taxes.work, 'ceiling leaves room to raise');
+  const r = propose(w, pres, 'workTax', { value });
   assert.ok(r.ok, r.msg);
   const prop = Object.values(w.proposals).find((x) => x.type === 'workTax' && x.status === 'open')!;
   for (const d of n.deputies) if (!w.citizens[d].player) voteProposal(w, w.citizens[d], prop.id, true);
   assert.equal(prop.status, 'passed');
-  assert.equal(n.taxes.work, 20);
+  assert.equal(n.taxes.work, value);
   assert.ok(netWage(w, co, p).net < before);
 });
 

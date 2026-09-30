@@ -47,7 +47,7 @@ export function libraryDaily(w: World) {
 /** Export the whole chronicle as Markdown. */
 export function exportHistory(w: World): string {
   const p = player(w);
-  const parts = [`# Chronicle of the Meridian Reach`, `_As lived by ${p.name}, citizen of ${w.nations[p.nation].name}. Seed ${w.seed}._`, ''];
+  const parts = [`# A Chronicle of Our Times`, `_As lived by ${p.name}, citizen of ${w.nations[p.nation].name}. Seed ${w.seed}._`, ''];
   const chapters = [...w.chapters, composeChapter(w, w.chapters.length ? w.chapters[w.chapters.length - 1].to : 0, w.time + 1, 'The present')];
   for (const c of chapters) { parts.push(`## ${c.title}`, '', ...c.text.map((t) => t + '\n')); }
   parts.push('## Timeline of notable events', '');

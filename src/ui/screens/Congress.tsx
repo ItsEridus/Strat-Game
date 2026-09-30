@@ -22,8 +22,8 @@ export function Congress({ w }: { w: World }) {
   const member = eligibleVoters(n).includes(p.id);
   return (
     <div class="grid">
-      <Panel title={<span>Congress — <NationChip w={w} id={nid} /></span>} class="wide" right={<Select value={nid} options={w.nations.map((x) => [x.id, x.name])} onChange={(v) => store.go('congress', { conNation: v })} />}>
-        <Help>{n.deputies.length} deputies plus the president vote. Most laws close as soon as an absolute majority is reached; money printing, impeachment, new elections and war run the full {B.politics.voteHours} hours and pass on a majority of votes cast. Each deputy may author {B.politics.proposalsPerDeputy} proposals per mandate. {member ? 'You have a vote.' : 'You are not a member of congress.'}</Help>
+      <Panel title={<span>{n.legislature} — <NationChip w={w} id={nid} /></span>} class="wide" right={<Select value={nid} options={w.nations.map((x) => [x.id, x.name])} onChange={(v) => store.go('congress', { conNation: v })} />}>
+        <Help>{n.deputies.length} deputies plus the {n.leader.toLowerCase()} vote (every nation’s legislature uses the same “congress” rules). Most laws close as soon as an absolute majority is reached; money printing, impeachment, new elections and war run the full {B.politics.voteHours} hours and pass on a majority of votes cast. Each deputy may author {B.politics.proposalsPerDeputy} proposals per mandate. {member ? 'You have a vote.' : 'You are not a member of congress.'}</Help>
       </Panel>
       <Panel title="Open proposals" class="wide">
         {open.length ? open.map((pr) => <ProposalCard w={w} pr={pr} />) : <Empty>Nothing on the floor.</Empty>}

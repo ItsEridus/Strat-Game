@@ -60,7 +60,7 @@ export function Dashboard({ w }: { w: World }) {
       </Panel>
       <Panel title={<span>Your nation: <NationChip w={w} id={n.id} /></span>}>
         <div class="stats">
-          <Stat label="President"><CitLink w={w} id={n.president} /></Stat>
+          <Stat label={n.leader}><CitLink w={w} id={n.president} /></Stat>
           <Stat label="Work tax / VAT / Import">{n.taxes.work}% / {n.taxes.vat}% / {n.taxes.import}%</Stat>
           <Stat label="Treasury"><Amt asset={n.cur} v={n.wallet[n.cur] ?? 0} /></Stat>
           <Stat label="Approval">{Math.round(n.approval)}%</Stat>

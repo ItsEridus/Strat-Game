@@ -13,7 +13,9 @@ import type { World } from '../src/sim/types';
 registerSystems();
 const fresh = (seed = 31) => generateWorld(seed, 'Tester', 0, { citizensPerNation: 20 });
 function neighbours(w: World) {
-  for (const r of w.regions) for (const l of r.links) { const o = w.regions[l]; if (o.owner !== r.owner) return { a: r.owner, b: o.owner, border: o.id }; }
+  // A non-capital border region, so losing it doesn't trigger capital-loss behaviour.
+  const capitals = new Set(w.nations.map((n) => n.capital));
+  for (const r of w.regions) for (const l of r.links) { const o = w.regions[l]; if (o.owner !== r.owner && !capitals.has(o.id)) return { a: r.owner, b: o.owner, border: o.id }; }
   throw new Error('no border');
 }
 
@@ -94,7 +96,8 @@ test('losing all territory creates a nation in exile with a comeback path', () =
   const w = fresh(35);
   const victim = w.nations[3];
   const cores = w.regions.filter((r) => r.owner === 3);
-  const taker = w.regions[cores[0].links.find((l) => w.regions[l].owner !== 3)!].owner;
+  const edge = cores.find((r) => r.links.some((l) => w.regions[l].owner !== 3))!;
+  const taker = w.regions[edge.links.find((l) => w.regions[l].owner !== 3)!].owner;
   for (const r of cores) r.owner = taker;
   updateExile(w);
   assert.equal(victim.exile, true);

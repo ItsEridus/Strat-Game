@@ -1,40 +1,116 @@
+import { memo } from 'preact/compat';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import type { Region, World } from '../../sim/types';
 import { Btn, CitLink, NationChip, Panel, Tabs, Amt } from '../common';
 import { store } from '../store';
 import { controller, player } from '../../sim/query';
 import { INDUSTRY_INFO } from '../../data/items';
+import { EARTH } from '../../data/earth';
 import { RegionActions } from './RegionActions';
 
-const HEX = 40;
 const TERRAIN_COLOR: Record<string, string> = { plains: '#9bbf5a', mountains: '#8a7f73', forest: '#3f7d4a', desert: '#d8c27a' };
 const RES_ICON: Record<string, string> = { grain: '🌾', iron: '🪨', titanium: '💠', oil: '🛢️' };
 type Mode = 'political' | 'economic' | 'terrain' | 'pollution' | 'buildings' | 'supply' | 'war';
 
-function hexPoints(r: Region) {
-  const pts: string[] = [];
-  for (let i = 0; i < 6; i++) {
-    const a = (Math.PI / 180) * (60 * i - 30);
-    pts.push(`${(r.x + (HEX - 1) * Math.cos(a)).toFixed(1)},${(r.y + (HEX - 1) * Math.sin(a)).toFixed(1)}`);
-  }
-  return pts.join(' ');
+const MW = EARTH.width, MH = EARTH.height;
+const MAX_ZOOM = 14;
+interface View { x: number; y: number; w: number }
+// The camera survives screen changes (module state, not saved).
+let camera: View = { x: 0, y: 0, w: MW };
+
+function clampView(v: View): View {
+  const w = Math.max(MW / MAX_ZOOM, Math.min(MW, v.w));
+  const h = (w * MH) / MW;
+  return { w, x: Math.max(0, Math.min(MW - w, v.x)), y: Math.max(0, Math.min(MH - h, v.y)) };
 }
+
+/** Route lines; ones that cross the map edge (e.g. the Pacific) are drawn as two stubs. */
+function routeSegments(a: Region, b: Region): [number, number, number, number][] {
+  if (Math.abs(a.x - b.x) <= MW / 2) return [[a.x, a.y, b.x, b.y]];
+  const [l, r] = a.x < b.x ? [a, b] : [b, a];
+  const dx = l.x + MW - r.x;
+  const yEdge = l.y + ((r.y - l.y) * l.x) / dx;
+  return [[l.x, l.y, 0, yEdge], [r.x, r.y, MW, yEdge]];
+}
+
+const routeName = (a: number, b: number) => EARTH.routes.find((x) => (x.a === a && x.b === b) || (x.a === b && x.b === a))?.name;
+
+// Static layers: neutral countries and graticule never change, so they skip re-rendering.
+const Backdrop = memo(() => (
+  <>
+    <rect x={0} y={0} width={MW} height={MH} class="ocean" />
+    <path d={EARTH.graticule} class="graticule" />
+    <path d={EARTH.background} class="land" />
+  </>
+));
+
 
 export function MapScreen({ w }: { w: World }) {
   const p = player(w);
   const mode: Mode = store.sel.mapMode ?? 'political';
   const selId = store.sel.region ?? p.loc;
   const sel = w.regions[selId];
-  const maxX = Math.max(...w.regions.map((r) => r.x)) + HEX * 1.2;
-  const maxY = Math.max(...w.regions.map((r) => r.y)) + HEX * 1.2;
+  const [view, setViewState] = useState<View>(camera);
+  const setView = (v: View) => { camera = clampView(v); setViewState(camera); };
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [pxWidth, setPxWidth] = useState(1000);
+  const drag = useRef<{ sx: number; sy: number; v: View; moved: boolean } | null>(null);
+  const suppressClick = useRef(false);
+
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
+    const measure = () => setPxWidth(el.clientWidth || 1000);
+    measure();
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    ro?.observe(el);
+    // Wheel zoom needs a non-passive listener to stop the page scrolling.
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      zoomAt(e.deltaY < 0 ? 1.25 : 0.8, (e.clientX - rect.left) / rect.width, (e.clientY - rect.top) / rect.height);
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => { ro?.disconnect(); el.removeEventListener('wheel', onWheel); };
+  }, []);
+
+  function zoomAt(factor: number, fx = 0.5, fy = 0.5) {
+    const v = camera;
+    const h = (v.w * MH) / MW;
+    const nw = Math.max(MW / MAX_ZOOM, Math.min(MW, v.w / factor));
+    const nh = (nw * MH) / MW;
+    setView({ w: nw, x: v.x + fx * v.w - fx * nw, y: v.y + fy * h - fy * nh });
+  }
+  const focus = (r: Region, zoom = 4) => { const nw = MW / zoom; setView({ w: nw, x: r.x - nw / 2, y: r.y - (nw * MH) / MW / 2 }); };
+
+  const onPointerDown = (e: PointerEvent) => {
+    drag.current = { sx: e.clientX, sy: e.clientY, v: camera, moved: false };
+    suppressClick.current = false;
+  };
+  const onPointerMove = (e: PointerEvent) => {
+    const d = drag.current;
+    if (!d || !svgRef.current) return;
+    const dx = e.clientX - d.sx, dy = e.clientY - d.sy;
+    if (!d.moved && Math.hypot(dx, dy) < 4) return;
+    if (!d.moved) { d.moved = true; (e.currentTarget as Element).setPointerCapture?.(e.pointerId); }
+    const k = d.v.w / svgRef.current.clientWidth;
+    setView({ w: d.v.w, x: d.v.x - dx * k, y: d.v.y - dy * k });
+  };
+  const onPointerUp = () => { if (drag.current?.moved) suppressClick.current = true; drag.current = null; };
+  const pick = (r: Region) => { if (suppressClick.current) { suppressClick.current = false; return; } store.go('map', { region: r.id }); };
+
+  const zoom = MW / view.w;
+  const u = view.w / pxWidth; // map units per screen pixel, for constant-size text
   const battleRegions = new Set(Object.values(w.battles).filter((b) => !b.done && b.kind === 'war').map((b) => b.region));
-  const capitals = new Set(w.nations.map((n) => n.capital));
+  const capitals = new Set(w.nations.filter((n) => !n.exile).map((n) => n.capital));
+  const warPairs = new Set(Object.values(w.wars).filter((x) => x.status === 'active').flatMap((x) => [`${x.att}:${x.def}`, `${x.def}:${x.att}`]));
   const goalRegions = new Set(Object.values(w.wars).filter((x) => x.status === 'active').flatMap((x) => x.goals));
   const fill = (r: Region) => {
     const ctl = w.nations[controller(r)];
     switch (mode) {
       case 'terrain': return TERRAIN_COLOR[r.terrain];
       case 'pollution': return `hsl(${Math.round(120 - r.pollution * 120)}, 55%, 42%)`;
-      case 'economic': return `hsl(210, 20%, ${22 + Math.min(40, r.pop / 3000)}%)`;
+      case 'economic': return `hsl(210, 25%, ${22 + Math.min(40, r.pop / 3000)}%)`;
       case 'buildings': { const t = r.bld.hospital + r.bld.fields + r.bld.industrial + r.bld.base; return `hsl(40, 60%, ${18 + t * 3}%)`; }
       case 'supply': return r.supplied ? ctl.color : '#5a1d1d';
       default: return ctl.color;
@@ -47,42 +123,83 @@ export function MapScreen({ w }: { w: World }) {
     if (mode === 'terrain') return r.terrain;
     return '';
   };
+  const tip = (r: Region) => {
+    const ctl = controller(r);
+    return `${r.name} — ${w.nations[r.owner].name}${r.occ ? ` (occupied by ${w.nations[ctl].name})` : ''}${r.core !== r.owner ? ` · rightful: ${w.nations[r.core].name}` : ''}`;
+  };
+  const showRegionNames = zoom >= 2.4;
+  const showDetail = zoom >= 1.6;
   return (
     <div class="map-layout">
       <Panel title="World map" class="map-panel" right={
         <Tabs<Mode> tabs={[['political', 'Political'], ['economic', 'Resources'], ['terrain', 'Terrain'], ['pollution', 'Pollution'], ['buildings', 'Buildings'], ['supply', 'Supply'], ['war', 'War']]} value={mode} onChange={(m) => store.go('map', { mapMode: m })} />
       }>
-        <svg viewBox={`0 0 ${maxX.toFixed(0)} ${maxY.toFixed(0)}`} class="map">
-          {/* connections */}
-          {w.regions.flatMap((r) => r.links.filter((l) => l > r.id).map((l) => {
-            const o = w.regions[l];
-            const border = controller(o) !== controller(r);
-            return <line x1={r.x} y1={r.y} x2={o.x} y2={o.y} class={`link-line ${border ? 'border' : ''}`} />;
-          }))}
-          {w.regions.map((r) => {
-            const occ = r.occ != null;
-            return (
-              <g onClick={() => store.go('map', { region: r.id })} class="hexg">
-                <polygon points={hexPoints(r)} fill={fill(r)} class={`hex ${r.id === selId ? 'sel' : ''} ${occ ? 'occ' : ''} ${mode === 'war' && goalRegions.has(r.id) ? 'goal' : ''}`} />
-                {occ && mode !== 'terrain' && <polygon points={hexPoints(r)} fill="url(#hatch)" style={{ color: w.nations[r.occ!.nation].color }} class="occ-overlay" />}
-                {r.core !== r.owner && mode === 'political' && <circle cx={r.x + 22} cy={r.y - 20} r={5} fill={w.nations[r.core].color} stroke="#000" />}
-                <text x={r.x} y={r.y + 16} class="rname">{r.name}</text>
-                <text x={r.x} y={r.y - 2} class="ricon">
-                  {battleRegions.has(r.id) ? '⚔️' : capitals.has(r.id) ? '★' : ''}{r.id === p.loc ? '📍' : ''}
-                </text>
-                {label(r) && <text x={r.x} y={r.y + 27} class="rlabel">{label(r)}</text>}
-              </g>
-            );
-          })}
-          <defs>
-            <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-              <rect width="3" height="6" fill="currentColor" opacity="0.75" />
-            </pattern>
-          </defs>
-        </svg>
+        <div class="map-wrap">
+          <svg ref={svgRef} viewBox={`${view.x.toFixed(1)} ${view.y.toFixed(1)} ${view.w.toFixed(1)} ${((view.w * MH) / MW).toFixed(1)}`} class="map"
+            style={{ aspectRatio: `${MW} / ${MH}` }}
+            onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerLeave={onPointerUp}
+            onDblClick={(e) => { const rect = svgRef.current!.getBoundingClientRect(); zoomAt(2, (e.clientX - rect.left) / rect.width, (e.clientY - rect.top) / rect.height); }}>
+            <defs>
+              <pattern id="hatch" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                <rect width="2" height="4" fill="currentColor" opacity="0.8" />
+              </pattern>
+            </defs>
+            <Backdrop />
+            {w.regions.map((r) => {
+              const e = EARTH.regions[r.id];
+              const cls = `region ${r.id === selId ? 'sel' : ''} ${mode === 'war' && goalRegions.has(r.id) ? 'goal' : ''} ${mode === 'supply' && !r.supplied ? 'cut' : ''}`;
+              return (
+                <g onClick={() => pick(r)} class="rg">
+                  <path d={e.path} fill={fill(r)} class={cls}><title>{tip(r)}</title></path>
+                  {r.occ && mode !== 'terrain' && <path d={e.path} fill="url(#hatch)" style={{ color: w.nations[r.occ.nation].color }} class="occ-overlay" />}
+                </g>
+              );
+            })}
+            {/* the selected region's outline on top of its neighbours */}
+            {sel && <path d={EARTH.regions[sel.id].path} class="sel-outline" />}
+            {EARTH.routes.flatMap((rt) => routeSegments(w.regions[rt.a], w.regions[rt.b]).map(([x1, y1, x2, y2]) => (
+              <line x1={x1} y1={y1} x2={x2} y2={y2} class={`route ${rt.name === 'Strait' ? 'strait' : ''} ${warPairs.has(`${controller(w.regions[rt.a])}:${controller(w.regions[rt.b])}`) ? 'front' : ''}`}><title>{rt.name === 'Strait' ? 'Strait' : `${rt.name} route`}: {w.regions[rt.a].name} ↔ {w.regions[rt.b].name}</title></line>
+            )))}
+            {!showRegionNames && w.nations.filter((n) => !n.exile).map((n) => {
+              const e = EARTH.nations[n.id];
+              // Small countries get their three-letter code until zoomed in.
+              const text = e.span / u > n.name.length * 9 ? n.name : e.code;
+              return <text x={e.label[0]} y={e.label[1]} class="nlabel" style={{ fontSize: `${(text === n.name ? 12 : 10) * u}px`, strokeWidth: `${3 * u}px` }}>{text}</text>;
+            })}
+            {w.regions.map((r) => {
+              const icon = `${battleRegions.has(r.id) ? '⚔️' : capitals.has(r.id) ? '★' : ''}${r.id === p.loc ? '📍' : ''}`;
+              const extra = showDetail ? label(r) : '';
+              return (
+                <g class="rtext">
+                  {icon && <text x={r.x} y={r.y - (showRegionNames ? 7 * u : -4 * u)} class="ricon" style={{ fontSize: `${13 * u}px` }}>{icon}</text>}
+                  {showRegionNames && (EARTH.regions[r.id].span / u > r.name.length * 5.5 || zoom >= 9) && <text x={r.x} y={r.y + 4 * u} class="rname" style={{ fontSize: `${11 * u}px`, strokeWidth: `${2.5 * u}px` }}>{r.name}</text>}
+                  {extra && <text x={r.x} y={r.y + (showRegionNames ? 16 : 6) * u} class="rlabel" style={{ fontSize: `${10 * u}px`, strokeWidth: `${2.5 * u}px` }}>{extra}</text>}
+                  {r.core !== r.owner && mode === 'political' && showDetail && <circle cx={r.x + 12 * u} cy={r.y - 12 * u} r={4 * u} fill={w.nations[r.core].color} stroke="#000" stroke-width={u} />}
+                </g>
+              );
+            })}
+          </svg>
+          <div class="map-controls">
+            <button class="btn sm" title="Zoom in" onClick={() => zoomAt(1.6)}>＋</button>
+            <button class="btn sm" title="Zoom out" onClick={() => zoomAt(1 / 1.6)}>－</button>
+            <button class="btn sm" title="Whole world" onClick={() => setView({ x: 0, y: 0, w: MW })}>🌍</button>
+            <button class="btn sm" title="Your location" onClick={() => focus(w.regions[p.loc])}>📍</button>
+            {sel && <button class="btn sm" title="Selected region" onClick={() => focus(sel)}>🔎</button>}
+          </div>
+        </div>
+        <div class="row small map-find">
+          <span class="muted">Scroll or ＋/－ to zoom, drag to pan, double-click to zoom in. Find:</span>
+          <select value={selId} onChange={(e) => { const r = w.regions[Number((e.target as HTMLSelectElement).value)]; store.go('map', { region: r.id }); focus(r); }}>
+            {w.nations.map((n) => (
+              <optgroup label={n.name}>
+                {w.regions.filter((r) => r.core === n.id).map((r) => <option value={r.id}>{r.name}{r.owner !== n.id ? ` (${w.nations[r.owner].name})` : ''}</option>)}
+              </optgroup>
+            ))}
+          </select>
+        </div>
         <div class="legend">
           {w.nations.map((n) => <NationChip w={w} id={n.id} />)}
-          <span class="muted small">★ capital · 📍 you · ⚔️ battle · hatched = occupied (occupier colour) · dot = rightful owner · red edge = border</span>
+          <span class="muted small">★ capital · 📍 you · ⚔️ battle · hatched = occupied (occupier colour) · dot = rightful owner · dashed = sea lane / corridor (red between nations at war)</span>
         </div>
       </Panel>
       {sel && <RegionInfo w={w} r={sel} />}
@@ -94,6 +211,7 @@ function RegionInfo({ w, r }: { w: World; r: Region }) {
   const companies = Object.values(w.companies).filter((c) => c.region === r.id);
   const residents = Object.values(w.citizens).filter((c) => c.loc === r.id);
   const owner = w.nations[r.owner];
+  const ruler = w.nations[controller(r)];
   const battles = Object.values(w.battles).filter((b) => !b.done && b.region === r.id);
   const proj = r.project != null ? w.projects[r.project] : null;
   return (
@@ -111,7 +229,12 @@ function RegionInfo({ w, r }: { w: World; r: Region }) {
         <tr><td>Buildings</td><td>🏥 {r.bld.hospital} · 🌾 fields {r.bld.fields} · 🏭 industrial {r.bld.industrial} · 🛡️ base {r.bld.base}</td></tr>
         <tr><td>Construction</td><td>{proj ? <span class="link" onClick={() => store.go('construction', { project: proj.id })}>{proj.type} L{proj.level}: {Math.round(proj.points)}/{proj.needPts} pts</span> : 'none'}</td></tr>
         <tr><td>Treasury (owner)</td><td><Amt asset={owner.cur} v={owner.wallet[owner.cur] ?? 0} /></td></tr>
-        <tr><td>Governor</td><td>President <CitLink w={w} id={w.nations[controller(r)].president} /></td></tr>
+        <tr><td>Governed by</td><td>{ruler.leader} <CitLink w={w} id={ruler.president} /></td></tr>
+        <tr><td>Connections</td><td class="small">{r.links.map((l) => {
+          const o = w.regions[l];
+          const via = routeName(r.id, l);
+          return <div><span class="link" onClick={() => store.go('map', { region: l })}>{o.name}</span> <span class="muted">({w.nations[controller(o)].name}{via ? ` · ${via === 'Strait' ? 'strait' : via}` : ''})</span></div>;
+        })}</td></tr>
       </tbody></table>
       {battles.map((b) => <p>⚔️ Battle: <NationChip w={w} id={b.att} /> vs <NationChip w={w} id={b.def} /> <Btn small onClick={() => store.go('battle', { battle: b.id })}>Open</Btn></p>)}
       <h4>Companies ({companies.length})</h4>

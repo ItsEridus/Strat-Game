@@ -8,12 +8,19 @@
     "watch": "node build.mjs --watch",
     "typecheck": "tsc --noEmit",
     "test": "node tests/run.mjs",
-    "sim": "node tests/run.mjs --sim"
+    "sim": "node tests/run.mjs --sim",
+    "earth": "node tools/build-earth.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.20.4",
+    "d3-delaunay": "^6.0.4",
+    "d3-geo": "^3.1.1",
     "esbuild": "^0.28.2",
-    "typescript": "^5.9.3"
+    "polygon-clipping": "^0.15.7",
+    "topojson-client": "^3.1.0",
+    "topojson-simplify": "^3.0.3",
+    "typescript": "^5.9.3",
+    "world-atlas": "^2.0.2"
   },
   "dependencies": {
     "lz-string": "^1.5.0",

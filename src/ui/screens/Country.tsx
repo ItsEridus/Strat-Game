@@ -21,7 +21,7 @@ export function Country({ w }: { w: World }) {
     <div class="grid">
       <Panel title={<span>🏛️ <NationChip w={w} id={id} /></span>} class="wide" right={<Select value={id} options={w.nations.map((x) => [x.id, x.name])} onChange={(v) => store.go('country', { nation: v })} />}>
         <div class="stats">
-          <Stat label="President"><CitLink w={w} id={n.president} /></Stat>
+          <Stat label={n.leader}><CitLink w={w} id={n.president} /></Stat>
           <Stat label="Approval">{Math.round(n.approval)}%</Stat>
           <Stat label="Treasury"><Amt asset={n.cur} v={n.wallet[n.cur] ?? 0} /> · <Amt asset={GOLD} v={n.wallet[GOLD] ?? 0} /></Stat>
           <Stat label="Citizens">{citizensOf(w, id).length} (+{w.households[id].pop.toLocaleString()} residents)</Stat>
@@ -55,7 +55,7 @@ export function Country({ w }: { w: World }) {
           ))}
         </tbody></table>
       </Panel>
-      <Panel title={`Congress (${n.deputies.length} deputies + president)`}>
+      <Panel title={`${n.legislature} (${n.deputies.length} deputies + ${n.leader.toLowerCase()})`}>
         <ul class="small">{n.deputies.map((d) => <li><CitLink w={w} id={d} /> <span class="muted">{w.citizens[d]?.party != null ? w.parties[w.citizens[d].party!]?.name : ''}</span></li>)}</ul>
       </Panel>
       <Panel title="Regions">

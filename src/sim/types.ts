@@ -138,10 +138,8 @@ export interface TradeStat { day: number; qty: number; value: number; lo: number
 export interface Region {
   id: Id;
   name: string;
-  x: number;
+  x: number; // label point on the Earth map (projected map units)
   y: number;
-  col: number;
-  row: number;
   links: Id[];
   core: Id; // original / rightful nation
   owner: Id; // legal owner
@@ -165,6 +163,9 @@ export interface Nation {
   adj: string;
   color: string;
   cur: AssetId;
+  iso: string; // ISO 3166 numeric code of the real country
+  leader: string; // display title of the head of government
+  legislature: string; // display name of congress
   capital: Id; // rightful capital region
   wallet: Wallet; // treasury
   inv: Inventory; // national storage

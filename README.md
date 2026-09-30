@@ -1,8 +1,10 @@
 # Meridian Reach
 
 A single-player society strategy game inspired by the systems of browser strategy MMOs such as Eclesiar
-(original world, names and writing). You live as **one citizen** among ~300 simulated people in eight
-fictional nations. Work, trade, found companies and holdings, publish a newspaper, win elections, legislate,
+(original names and writing). You live as **one citizen** among ~400 simulated people on an interactive map
+of **Earth**, split between sixteen real countries: the United States, Canada, Mexico, Brazil, Argentina, the
+United Kingdom, Germany, Russia, Turkey, Saudi Arabia, South Africa, India, China, Japan, South Korea and
+Australia. Work, trade, found companies and holdings, publish a newspaper, win elections, legislate,
 build, and fight in wars. AI citizens, businesses, parties, deputies, ministers, soldiers, investors and
 journalists keep the world running whether or not you take part.
 
@@ -29,6 +31,7 @@ npm install
 npm run build      # rebuild dist/game.js
 npm test           # 35 simulation & acceptance tests
 npm run sim -- 90  # 90-day headless world run with an asset audit
+npm run earth      # regenerate src/data/earth.json from tools/earth-defs.mjs (only if you edit the map)
 ```
 
 ## Short play guide
@@ -64,6 +67,15 @@ some income. **Public works** (dashboard) is a low-paid fallback job funded by t
 - **Also available:** gold mining, the Academy (studies), auctions, contracts, the Stadium, pirate
   invasions, espionage, and more.
 
+**The map.** World Map shows Earth with each country divided into regions (US states grouped into areas such
+as Texas or New England, Russian federal districts, Chinese and Indian provinces, and so on). Scroll or use
+＋/－ to zoom, drag to pan, and click a region for its owner, resources, buildings, companies and connections.
+Regions connect by land borders, plus dashed **sea lanes and corridors** (e.g. the North Atlantic, the Bering
+Strait, the Korea Strait) that join nations with no shared border. Travel, supply lines and ground invasions
+follow these connections; anything else is an air assault. Each country keeps its real currency, and shows its
+own title for its leader and legislature (Prime Minister and National Diet, Chancellor and Bundestag, …),
+although every country plays by the same election and congress rules.
+
 **Wars** are declared by congress with goals and a deadline. Battles occupy regions, but ownership only changes
 at settlement. The **Wars** and **Battle** screens explain the scoring ticks, supply and win conditions.
 
@@ -77,3 +89,5 @@ Settings → *Money supply* explains every unit of money created or destroyed an
 
 See [`docs/DESIGN.md`](docs/DESIGN.md) for the architecture, the rules chosen where sources were silent, the
 acceptance checklist and known limitations.
+
+Map data: [Natural Earth](https://www.naturalearthdata.com/) country shapes (public domain), via the `world-atlas` package.
