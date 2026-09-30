@@ -17,8 +17,9 @@ import { placeOrder } from './fx';
 import { seedPolitics } from './politics';
 import { initPlayerProgress } from './quests';
 import { seedLate } from './seedLate';
+import { initGovs } from './stategov';
 
-export const SAVE_VERSION = 2; // 2: Earth map (region ids index src/data/earth.json)
+export const SAVE_VERSION = 3; // 3: real states/provinces with regional governments
 
 export function defaultSettings(): Settings {
   const pauseOn: Record<string, boolean> = {};
@@ -32,24 +33,41 @@ export function defaultSettings(): Settings {
   };
 }
 
-/** Regions come from the Earth map; richness, population and extra deposits are rolled per seed. */
+/**
+ * Regions are the real subdivisions on the Earth map. Procedural per seed:
+ * deposit richness, extra deposits (weighted by terrain) and the background
+ * population, which follows each region's real urban population (compressed so
+ * no nation's economy is swamped by demand).
+ */
 function genRegions(w: World): Region[] {
-  return EARTH.regions.map((e, i): Region => {
+  const regions = EARTH.regions.map((e, i): Region => {
     const res: Region['res'] = {};
-    for (const k of e.res) res[k] = randInt(w, 1, 3);
-    // Occasionally a second, smaller deposit.
-    if (chance(w, 0.25)) {
-      const extra = weighted(w, RAWS.filter((k) => !res[k]), (x) => ({ grain: e.terrain === 'plains' ? 4 : 1.5, iron: e.terrain === 'mountains' ? 3 : 1.5, titanium: e.terrain === 'mountains' ? 2 : 1, oil: e.terrain === 'desert' ? 3 : 1 }[x]));
-      if (extra) res[extra] = 1;
+    for (const k of e.res) res[k] = randInt(w, 2, 3); // notable real deposits and farm belts
+    const byTerrain = (x: RawRes) => ({ grain: e.terrain === 'plains' ? 5 : e.terrain === 'forest' ? 1.5 : 0.8, iron: e.terrain === 'mountains' ? 4 : 1.2, titanium: e.terrain === 'mountains' ? 2 : 0.6, oil: e.terrain === 'desert' ? 4 : 0.8 }[x]);
+    for (const p of [0.5, 0.12]) {
+      if (!chance(w, p)) continue;
+      const extra = weighted(w, RAWS.filter((k) => !res[k]), byTerrain);
+      if (extra) res[extra] = randInt(w, 1, 2);
     }
     return {
       id: i, name: e.name, x: e.x, y: e.y, links: [...e.links], core: e.nation, owner: e.nation, occ: null,
-      terrain: e.terrain, res, pop: randInt(w, 18, 70) * 1000,
+      terrain: e.terrain, res, pop: 0,
       prodWindow: new Array(B.pollution.windowDays).fill(0), pollution: 0,
       bld: { hospital: 0, fields: 0, industrial: 0, base: 0 }, project: null, supplied: true,
     };
   });
+  NATION_DEFS.forEach((d, ni) => {
+    const own = regions.filter((r) => r.owner === ni);
+    const total = Math.min(520000, Math.max(150000, 270000 * (d.pop / 1e8) ** 0.2)) * rand(w, 0.9, 1.1);
+    const weight = (r: Region) => EARTH.regions[r.id].popReal ** 0.75;
+    const sum = own.reduce((t, r) => t + weight(r), 0);
+    for (const r of own) r.pop = Math.max(3000, Math.round((total * weight(r)) / sum / 100) * 100);
+  });
+  return regions;
 }
+
+/** Larger countries field somewhat more full citizens (0.75×–1.35× the setting). */
+export const citizenScale = (pop: number) => Math.min(1.35, Math.max(0.75, (pop / 1e8) ** 0.15));
 
 function personName(w: World, cur: string, used: Set<string>) {
   const pool = NAME_POOLS[cur];
@@ -101,7 +119,7 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
   const w: World = {
     version: SAVE_VERSION, seed, rng: seed | 0, time: DAY + 8 * HOUR, nextId: 1, seq: 1, settings,
     playerId: -1, player: null as any,
-    regions: [], nations: [], households: [], citizens: {}, companies: {}, listings: {}, fx: {}, fxTrades: {}, trades: {}, lastPrice: {},
+    regions: [], govs: [], nations: [], households: [], citizens: {}, companies: {}, listings: {}, fx: {}, fxTrades: {}, trades: {}, lastPrice: {},
     parties: {}, elections: {}, proposals: {}, projects: {}, wars: {}, battles: {}, units: {}, gear: {}, holdings: {}, shareOrders: {},
     shareTrades: [], contracts: {}, auctions: {}, papers: {}, articles: {}, tournaments: {}, events: {}, nukes: {}, inbox: [], log: [],
     chapters: [], notices: [], queue: [], stats: { supply: {}, minted: {}, burned: {}, items: {}, itemFlows: {} }, ledger: [],
@@ -110,8 +128,7 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
   const regions = (w.regions = genRegions(w));
 
   const count = NATION_DEFS.length;
-  const seeds = NATION_DEFS.map((_, i) => EARTH.regions.findIndex((e) => e.nation === i && e.capital));
-  for (const id of seeds) regions[id].pop = Math.round(regions[id].pop * 1.6);
+  const seeds = NATION_DEFS.map((d) => d.capital);
 
   // Ensure every nation has grain and iron somewhere so its economy can start.
   for (let i = 0; i < count; i++) {
@@ -137,7 +154,8 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
   for (const n of w.nations) {
     const own = regions.filter((r) => r.owner === n.id);
     const nationIdeos = shuffle(w, [...IDEOLOGY_LIST]).slice(0, randInt(w, 3, 4));
-    for (let k = 0; k < settings.citizensPerNation; k++) {
+    const count = Math.round(settings.citizensPerNation * citizenScale(NATION_DEFS[n.id].pop));
+    for (let k = 0; k < count; k++) {
       const persona = k < CORE_ROLES.length ? CORE_ROLES[k] : weighted(w, PERSONA_MIX, (x) => x[1])![0];
       const loc = weighted(w, own, (r) => r.pop + (r.id === n.capital ? 30000 : 0))!.id;
       const ideo = chance(w, 0.85) ? pick(w, nationIdeos) : pick(w, IDEOLOGY_LIST);
@@ -254,6 +272,7 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
   }
 
   seedPolitics(w);
+  initGovs(w);
   seedLate(w);
 
   for (const n of w.nations) record(w, 'genesis', `${n.name} enters the new era with ${regions.filter((r) => r.owner === n.id).length} regions.`, { nation: n.id });

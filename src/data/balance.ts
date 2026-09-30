@@ -186,10 +186,27 @@ export const BALANCE = {
   season: { days: 60, tiers: 30, prestigePerTier: 100 }, // SOLO
   mining: { yields: { 1: 0.5, 2: 0.8 } as Record<number, number>, globalMult: 1 }, // WIKI yields
   studies: { unlockAt: 75, decayPerHour: 0.25 }, // unlock DOC; decay SOLO (wiki: 4/h; set 0 to disable upkeep)
-  travel: { energyPerHop: 5, ticketRange: [1, 2, 3, 4, 6], walkEnergy: 15, qualityDiscount: 0.1 }, // SOLO
+  travel: { energyPer1000km: 5, ticketRangeKm: [800, 2000, 4000, 8000, 20100], walkEnergy: 15, qualityDiscount: 0.1 }, // SOLO: walk to a land neighbour; tickets fly by great-circle distance
   citizenship: { cost: 2 }, // SOLO gold
   nuke: { gold: 750, oil: 12500, iron: 2500, titanium: 5000, prodHours: 48, flightHours: 8 }, // DOC
   spy: { recon: [0.7, 0.2, 0.1], defuse: [0.25, 0.25, 0.5], cooldownHours: 24, defuseGold: 5, defuseTickets: 5, defuseIntel: 10 }, // DOC outcomes; costs SOLO
+  state: {
+    termDays: 60, // SOLO state/provincial election cycle (staggered across regions)
+    regDays: 5, // SOLO candidate registration window before an election
+    candLevel: 5, // SOLO level to run for governor/premier
+    maxTax: 12, // SOLO ceiling on a state wage tax (%)
+    taxStep: 3, // SOLO largest change per decision
+    taxCooldownDays: 7, // SOLO
+    startPerPop: 0.004, // SOLO starting treasury per resident (currency)
+    residentBase: 3, // SOLO baseline sales/property levy (%) every regional government collects from residents, on top of its wage tax
+    residentShare: 0.2, // SOLO share of the levy rate applied daily to the residents' share of household money
+    grantShare: 0.03, // SOLO share of yesterday's national revenue paid to regional governments as block grants (by population)
+    salary: 6, // SOLO daily salary of a citizen head of government (currency)
+    devCostPerPop: 0.004, // SOLO infrastructure spending per resident per level
+    devBonus: 0.02, // SOLO production bonus per infrastructure level
+    devMax: 5,
+    turnout: 0.55, // SOLO background turnout
+  },
   pirates: { ships: 6, defenders: 10, depotBonus: 0.1, depotDiscount: 0.02, cutlass: 0.2, everyDays: 45, lengthDays: 10 }, // DOC numbers; schedule SOLO
   tournaments: { level: 10, everyDays: 7, fee: 1, cap: 16 }, // level WIKI; rest SOLO
   ai: {
@@ -245,7 +262,8 @@ export const PROVENANCE: { key: string; src: Source; note: string }[] = [
   { key: 'taxes.ceiling*', src: 'DOC', note: 'Ceiling = 25 + 0.5×communist% − 0.4/0.3×capitalist% (interpretation)' },
   { key: 'taxes.occupierShare', src: 'DOC', note: 'Occupied regions: 80% work tax to occupier, 20% to owner' },
   { key: 'households / living', src: 'SOLO', note: 'Aggregated background consumers funded by citizens’ living costs and treasury transfers (closed money loop); they leave 30% of listed stock for citizens each round' },
-  { key: 'world map', src: 'SOLO', note: 'Sixteen real countries split into 4–10 approximate regions each; terrain and resource types are hand-picked flavour, richness and population are rolled per seed; sea lanes and overland corridors link nations that share no land border' },
+  { key: 'world map', src: 'SOLO', note: 'Sixteen real countries and their 492 real first-level subdivisions (Natural Earth). Seats, terrain and population weights derive from the data; notable deposits are hand-listed, other deposits, richness and background population are rolled per seed; sea lanes and corridors link nations with no land border' },
+  { key: 'state governments', src: 'SOLO', note: 'Real titles and elected/appointed heads; wage tax 0–12% (0% in US no-wage-tax states), resident levy, block grants, welfare/infrastructure/business budgets and 60-day election cycles are chosen defaults (balance: state)' },
   { key: 'politics.days', src: 'WIKI', note: 'President ~1st, party ~10th, congress ~25th of month' },
   { key: 'politics.congressMin/Max', src: 'WIKI', note: '3–20 deputies by population' },
   { key: 'politics.proposalsPerDeputy', src: 'WIKI', note: 'Five proposals per mandate' },

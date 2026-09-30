@@ -36,7 +36,14 @@ await page.click('.speeds button:nth-child(5)');
 await page.waitForTimeout(1500);
 await page.click('.speeds button:nth-child(1)');
 const t0 = Date.now();
-await page.evaluate(() => { const s = window.meridian; s.w.settings.pauseOn = {}; s.jump(45 * 1440); });
+const stops = await page.evaluate(() => {
+  // Critical alerts (e.g. an attack on your nation) stop an advance; keep going like a player pressing play again.
+  const s = window.meridian; s.w.settings.pauseOn = {};
+  const end = s.w.time + 45 * 1440, reasons = [];
+  for (let i = 0; i < 20 && s.w.time < end; i++) { s.jumpTo(end); if (s.w.time < end) reasons.push(s.pauseReason); }
+  return reasons;
+});
+if (stops.length) console.log('advance paused for:', stops.join(' | '));
 console.log('45-day jump took', Date.now() - t0, 'ms');
 const n2 = await tour('b');
 console.log('clock:', await page.textContent('.clock b'));

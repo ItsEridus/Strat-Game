@@ -29,6 +29,7 @@ import { NUKE_PROPOSAL, nuclearAI, onNukeArrive, onNukeBuilt } from './nuclear';
 import { terrainDaily } from './terrainEvents';
 import { propose } from './congress';
 import { aiClaimReserves, defenseBudget, diplomacyDaily, militaryHourly, soldiersTick } from '../ai/military';
+import { stateDaily } from './stategov';
 
 let done = false;
 export function registerSystems() {
@@ -53,6 +54,7 @@ export function registerSystems() {
     dailyOpinion(w);
     partyRecruitment(w);
     payOfficials(w);
+    stateDaily(w);
   });
   // Stage 3: military
   EXTRA_PROPOSALS.war = WAR_PROPOSAL;

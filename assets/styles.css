@@ -161,6 +161,13 @@ pre { overflow: auto; max-height: 400px; background: var(--bg); padding: .6rem; 
 .map .ocean { fill: #0c2233; }
 .map .graticule { fill: none; stroke: #ffffff0d; stroke-width: .6px; vector-effect: non-scaling-stroke; }
 .map .land { fill: #262d38; stroke: #3a4452; stroke-width: .5px; vector-effect: non-scaling-stroke; }
+.lakes { fill: #0c2233; stroke: none; pointer-events: none; }
+.nation-borders { fill: none; stroke: #05080cdd; stroke-width: 1.3px; vector-effect: non-scaling-stroke; pointer-events: none; }
+.seatbar { display: inline-flex; width: 140px; height: 10px; border-radius: 3px; overflow: hidden; vertical-align: middle; background: var(--line); }
+.seatbar span { display: block; height: 100%; }
+.ideo-chip { display: inline-block; padding: 0 .4rem; border-radius: 9px; font-size: .75rem; color: #fff; }
+.scroll-x { overflow-x: auto; max-height: 520px; overflow-y: auto; }
+.card { border: 1px solid var(--line); border-radius: 6px; padding: .5rem; margin: .4rem 0; background: var(--panel-2); }
 .region { stroke: #0b111899; stroke-width: .7px; vector-effect: non-scaling-stroke; cursor: pointer; }
 .rg:hover .region { filter: brightness(1.25); }
 .region.goal { stroke: #ff5a4f; stroke-width: 2px; stroke-dasharray: 5 3; }

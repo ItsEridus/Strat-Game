@@ -32,19 +32,41 @@ invented. Where the brief marks a rule as **documented** (current announcements)
 - **Actions** validate first and return a reason (level, location, authority, money, energy, material). The
   UI shows these reasons on disabled buttons. AI citizens call the **same functions** with the same permission
   checks (`src/sim/authority.ts`). Only background households use a system actor.
-- **Earth map:** `tools/build-earth.mjs` builds `src/data/earth.json` (committed) from Natural Earth country
-  shapes (the public-domain `world-atlas` package) and `tools/earth-defs.mjs`. Each country is split into
-  regions with a Voronoi diagram around listed centres, clipped to the real border and projected with Natural
-  Earth. Land links come from shared border vertices; islands and exclaves get strait links; the defs add sea
-  lanes and overland corridors so the graph is connected. Shapes stay out of saves: region ids index the
-  static data, and the world stores only the gameplay state. Saves from the earlier fictional-world version
-  (save version 1) are rejected with a message.
+- **Earth map:** `tools/build-earth.mjs` builds `src/data/earth.json` (committed, ~1.8 MB) from Natural Earth
+  1:10m data (downloaded to `tools/ne/` on first run, not committed) and `tools/earth-defs.mjs`. Regions are the
+  real admin-1 units of each playable country (the UK's are merged into its four countries). All units go into
+  one TopoJSON topology, so neighbouring regions share identical border arcs; the topology is simplified
+  (keeping ~12% of points) and projected with Natural Earth. **Links** come from shared arcs, plus a
+  near-coincident-vertex check for borders digitised separately; islands and exclaves get strait links; the
+  defs add sea lanes and corridors, and the build fails unless the graph is connected. **Derived from data:**
+  label points, seats of government and largest cities (populated places), a population weight (sum of
+  populated places), terrain (sampled points against Natural Earth deserts and mountain ranges, then broad
+  climate zones; dense urban regions count as plains), national capitals and populations. **Hand-written:**
+  names, government titles and selection methods, notable resource deposits and farm belts, and sea lanes.
+  Shapes stay out of saves; region ids index the static data. Older saves (versions 1–2) are rejected with a
+  message.
+- **Procedural per seed** (where it adds replay value without contradicting geography): deposit richness and
+  extra deposits (weighted by terrain), background population (each nation's total follows its real population,
+  compressed; regions share it by real urban population), full citizens per nation (0.75×–1.35× the setting by
+  population), each region's electorate leaning (the nation's citizen mix, tilted by how urban it is), election
+  cycles, generated officials and candidates, starting state taxes and budgets from the ruling ideology.
+- **State governments** (`src/sim/stategov.ts`): one per region with a real government (`null` for England).
+  Treasury account `reg`, included in the audit. Revenue: state wage tax on shifts worked in the region,
+  a resident levy on the region's share of household money ((wage tax + 3%) × 0.2 per day), and block grants
+  (3% of the nation's previous-day revenue, by population). Spending (a share of the treasury per day): welfare
+  and infrastructure to households, business support to local companies per worker; infrastructure points buy
+  levels (+2% production each, max 5). Elected heads: 60-day staggered cycles, 5-day registration, background
+  vote by leaning × incumbent approval × candidate influence × campaign spending, plus citizens' ballots; the
+  legislature is apportioned half by vote, half by leaning. Appointed heads are named by the national leader
+  (AI: a loyal official of their ideology; the player chooses). Tax changes need legislature support (seats
+  whose ideology favours that direction, neutral ideologies counting half), at most 3 points per 7 days.
+  Occupation suspends a government; annexation replaces it with an appointed administrator.
 - **Modules:** `sim/` (rules), `ai/` (behaviour), `ui/` (screens), `data/` (tables). Later systems plug in
   through `sim/systems.ts` hooks, so depth can be added without touching the loop.
 
 ## The simulated society
 
-- **Full AI citizens** (default 24 per nation, 16/24/36 selectable) have identity, persona (worker, soldier, industrialist,
+- **Full AI citizens** (default 24 per nation scaled by population, 16/24/36 selectable) have identity, persona (worker, soldier, industrialist,
   merchant, politician, builder, journalist, investor), ideology, traits, relationships, skills, inventory,
   jobs, parties and units. They work, train, shop, eat, fight, vote, run for office, legislate, found and
   manage companies, invest, bid, study, mine, build and write.
@@ -76,8 +98,9 @@ invented. Where the brief marks a rule as **documented** (current announcements)
 | Combat rewards | Round-side pools from 2 to 64 gold at damage thresholds of 40k×4ⁿ, shared by damage: 40% paid now, 60% to a claimable reserve capped at 30 gold (replacing the gem-gated bank). Hero medal goes to the top damage per side per battle. |
 | Elections | Individual citizen voters weigh ideology, influence, party support, relationships, incumbent approval, war score and their own income. Background blocs add votes equal to the citizen electorate, split by party support. Seats use D'Hondt. |
 | Studies | Energy +6% or an item bundle +15%; unlock at 75% (DOC); decay 0.25%/h (0 disables it). |
-| Geography | Sixteen real countries, 4–10 regions each (105 total). Region borders inside a country are approximate. Terrain and resource types are hand-picked; richness, population and occasional extra deposits are rolled per seed. Leader and legislature titles differ by country, but every nation uses the same rules. Other countries are neutral scenery. |
-| Travel | Walk to a neighbour for 15 energy, or use a ticket (range 1/2/3/4/6 hops by quality, 5 energy per hop, −10% per quality). |
+| Geography | Sixteen real countries, 492 real first-level subdivisions with real borders. Other countries are neutral scenery. |
+| Regional government | Real titles and selection methods; state wage tax 0–12% (0% where US states have no wage tax); see Architecture. |
+| Travel | Overland to a land-bordering region for 15 energy, or a ticket by great-circle distance (800/2,000/4,000/8,000 km/anywhere by quality; 5 energy per 1,000 km, −10% per quality). |
 | Mining | Yields 0.5/0.8 gold (WIKI) × equipment × (1 + 0.02·eco skill) × studies × world multiplier. |
 | Other values | Everything in `balance.ts` tagged `SOLO`: recipes, living costs, household spending, starting wages, AI pricing, tournament sponsorship, pirate strength and so on. |
 
@@ -117,10 +140,14 @@ tests `tests/e2e.mjs` and `tests/e2e-play.mjs` check every screen and the tutori
 
 These are deliberate simplifications or gaps against the brief's full wish list:
 
-- **World scale:** sixteen playable countries on a 105-region Earth map, with about 400 full citizens by
-  default (16/24/36 per nation is selectable). Other countries are unplayable neutral land, so some borders
-  (e.g. Germany–Turkey) are modelled as corridors. Real governments, parties and politicians are not
-  modelled: every country starts with generated citizens and parties and uses the same political rules.
+- **World scale:** sixteen playable countries on a 492-region Earth map, with about 400 full citizens by
+  default. Most regions therefore have few or no full citizens; their economies and electorates are the
+  aggregated background population. Other countries are unplayable neutral land, so some borders (e.g.
+  Germany–Turkey) are modelled as corridors. Crimea and Sevastopol are left out of Russia and the Paracel
+  Islands out of China; a few tiny remote territories (Jervis Bay, Macquarie Island) are omitted.
+- **Governments:** real titles and selection methods, but not real politicians or parties. National politics
+  uses the same election/congress rules everywhere. Regional legislatures are modelled by their composition only
+  (they vote on tax changes); regional elections are single-round; terrain is a coarse four-way classification.
 - **Holdings:** role assignment in the UI is basic ("assign to top shareholder"). There is no UI for holding
   storage transfers or holding-level currency exchange. Public/private disclosure is simplified.
 - **Contracts and negotiation:** NPCs accept or reject with a stated reason. They make no counter-offers.

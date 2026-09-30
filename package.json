@@ -13,14 +13,12 @@
   },
   "devDependencies": {
     "@types/node": "^22.20.4",
-    "d3-delaunay": "^6.0.4",
     "d3-geo": "^3.1.1",
     "esbuild": "^0.28.2",
-    "polygon-clipping": "^0.15.7",
     "topojson-client": "^3.1.0",
+    "topojson-server": "^3.0.1",
     "topojson-simplify": "^3.0.3",
-    "typescript": "^5.9.3",
-    "world-atlas": "^2.0.2"
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "lz-string": "^1.5.0",

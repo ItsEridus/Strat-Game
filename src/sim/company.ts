@@ -14,6 +14,7 @@ import { authorize } from './authority';
 import { addXp } from './citizen';
 import { companyCurrency, controller, coref, cref, effEco, natref, seatShare, studyActive, today } from './query';
 import { remitWorkTax, workTaxFor } from './taxes';
+import { infraBonus } from './stategov';
 import { bump } from './progress';
 import { pick } from '../engine/rng';
 import { addPoints } from './construction';
@@ -63,6 +64,8 @@ export function productionFactors(w: World, co: Company, worker: Citizen | null)
   const share = seatShare(w, n);
   const ideo = co.state ? (share.socialism ?? 0) * IDEOLOGIES.socialism.fx.stateProduction : (share.capitalism ?? 0) * IDEOLOGIES.capitalism.fx.production;
   if (ideo) f.push({ label: co.state ? 'Socialist state production' : 'Capitalist production', mult: 1 + ideo });
+  const infra = infraBonus(w, co.region);
+  if (infra > 1 && !r.occ) f.push({ label: `State infrastructure L${w.govs[co.region]!.dev}`, mult: infra });
   const depotLvl = depotBonusFor(w, co);
   if (depotLvl) f.push({ label: `Resource depots (${depotLvl})`, mult: 1 + depotLvl * B.pirates.depotBonus });
   if (worker && studyActive(w, worker, 'hustler')) f.push({ label: 'Hustler study', mult: 1.1 });
@@ -145,7 +148,7 @@ function runProduction(w: World, co: Company, unitsF: number, why: string): numb
 export function netWage(w: World, co: Company, worker: Citizen) {
   const gross = co.offer?.wage ?? 0;
   const t = workTaxFor(w, co.region, worker, gross);
-  return { gross, tax: t.tax, net: gross - t.tax, rate: t.rate };
+  return { gross, tax: t.tax, net: gross - t.tax, rate: t.rate, stateRate: t.stateRate, natRate: t.natRate };
 }
 
 export function shiftCheck(w: World, c: Citizen): string | null {
@@ -186,7 +189,7 @@ export function workShift(w: World, c: Citizen): Result {
   c.eco = +(c.eco + B.eco.gainBase / (1 + c.eco / 5)).toFixed(3);
   addXp(w, c, B.xp.work);
   if (c.player) bump(w, 'work');
-  return ok(`Worked at ${co.name}: produced ${made} ${itemName(outputKey(co.industry, co.q))}, earned ${fmtAmt(cur, gross - t.tax)} net (${fmtAmt(cur, t.tax)} work tax).`);
+  return ok(`Worked at ${co.name}: produced ${made} ${itemName(outputKey(co.industry, co.q))}, earned ${fmtAmt(cur, gross - t.tax)} net (${fmtAmt(cur, t.tax)} tax${t.stateRate ? `, incl. ${t.stateRate}% ${w.regions[co.region].name} state tax` : ''}).`);
 }
 
 export function applyCheck(w: World, c: Citizen, co: Company | undefined): string | null {

@@ -10,7 +10,9 @@ import { controller, cref, player, studyActive } from './query';
 import { bump } from './progress';
 import { authorize } from './authority';
 import { leaveParty } from './politics';
+import { EARTH } from '../data/earth';
 
+/** Hops through the region graph (land borders, straits and sea lanes). */
 export function distance(w: World, from: Id, to: Id): number {
   if (from === to) return 0;
   const seen = new Map<Id, number>([[from, 0]]);
@@ -26,23 +28,38 @@ export function distance(w: World, from: Id, to: Id): number {
   return Infinity;
 }
 
+/** Great-circle distance in km between two regions' label points. */
+export function kmBetween(from: Id, to: Id): number {
+  if (from === to) return 0;
+  const a = EARTH.regions[from], b = EARTH.regions[to];
+  const rad = Math.PI / 180;
+  const h = Math.sin(((b.lat - a.lat) * rad) / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(((b.lon - a.lon) * rad) / 2) ** 2;
+  return Math.round(2 * 6371 * Math.asin(Math.min(1, Math.sqrt(h))));
+}
+
+/** Neighbours reachable on foot: shared land borders (sea lanes and straits need a ticket). */
+export function landNeighbour(w: World, from: Id, to: Id): boolean {
+  if (!w.regions[from].links.includes(to)) return false;
+  return !EARTH.routes.some((r) => (r.a === from && r.b === to) || (r.a === to && r.b === from));
+}
+
 export interface TravelOption { id: string; label: string; ticket: string | null; energy: number; why: string | null }
 
 export function travelOptions(w: World, c: Citizen, dest: Id): TravelOption[] {
-  const d = distance(w, c.loc, dest);
+  const km = kmBetween(c.loc, dest);
   const light = studyActive(w, c, 'packinglight') ? 0.75 : 1;
   const opts: TravelOption[] = [];
   const base = c.mining ? 'Travel is blocked while mining.' : c.loc === dest ? 'You are already here.' : null;
-  if (d === 1) {
+  if (landNeighbour(w, c.loc, dest)) {
     const e = Math.round(B.travel.walkEnergy * light);
-    opts.push({ id: 'walk', label: 'Walk (neighbouring region)', ticket: null, energy: e, why: base ?? (c.energy < e ? `Needs ${e} energy.` : null) });
+    opts.push({ id: 'walk', label: 'Go overland (bordering region)', ticket: null, energy: e, why: base ?? (c.energy < e ? `Needs ${e} energy.` : null) });
   }
   for (let q = 1; q <= 5; q++) {
-    const range = B.travel.ticketRange[q - 1];
-    const e = Math.round(B.travel.energyPerHop * d * (1 - B.travel.qualityDiscount * (q - 1)) * light);
+    const range = B.travel.ticketRangeKm[q - 1];
+    const e = Math.max(1, Math.round(B.travel.energyPer1000km * Math.max(1, km / 1000) * (1 - B.travel.qualityDiscount * (q - 1)) * light));
     const key = `ticket:${q}`;
-    const why = base ?? (d > range ? `Q${q} tickets reach ${range} region${range > 1 ? 's' : ''} (this trip is ${d}).` : (c.inv[key] ?? 0) < 1 ? `You have no Q${q} tickets.` : c.energy < e ? `Needs ${e} energy.` : null);
-    opts.push({ id: `t${q}`, label: `Q${q} ticket (range ${range})`, ticket: key, energy: e, why });
+    const why = base ?? (km > range ? `Q${q} tickets reach ${range.toLocaleString()} km (this trip is ${km.toLocaleString()} km).` : (c.inv[key] ?? 0) < 1 ? `You have no Q${q} tickets.` : c.energy < e ? `Needs ${e} energy.` : null);
+    opts.push({ id: `t${q}`, label: `Q${q} ticket (up to ${range >= 20000 ? 'anywhere' : `${range.toLocaleString()} km`})`, ticket: key, energy: e, why });
   }
   return opts;
 }

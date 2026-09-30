@@ -66,8 +66,12 @@ export function onMineEnd(w: World, citId: number, end: number) {
 
 /** A new site elsewhere: for the player within two regions; AI sites stay home. */
 export function assignSite(w: World, c: Citizen) {
-  const near = w.regions.filter((r) => r.id !== c.loc && distance(w, c.loc, r.id) <= 2);
-  c.mineSite = c.player ? (near.length ? pick(w, near).id : c.loc) : c.loc;
+  if (!c.player) { c.mineSite = c.loc; return; }
+  const near = new Set<number>();
+  for (const a of w.regions[c.loc].links) { near.add(a); for (const b of w.regions[a].links) near.add(b); }
+  near.delete(c.loc);
+  const opts = [...near].sort((a, b) => a - b);
+  c.mineSite = opts.length ? pick(w, opts) : c.loc;
 }
 
 /** AI: some citizens mine when at their site with energy to spare. */

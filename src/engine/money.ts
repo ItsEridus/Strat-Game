@@ -8,10 +8,18 @@ export const toWhole = (asset: string, minor: number) => minor / scaleOf(asset);
 export const g = (whole: number) => Math.round(whole * 1000); // gold → minor
 export const c = (whole: number) => Math.round(whole * 100); // currency → minor
 
+// Formatters are expensive to create, so they are cached by fraction digits.
+const FORMATS = new Map<number, Intl.NumberFormat>();
+const fmt = (d: number) => {
+  let f = FORMATS.get(d);
+  if (!f) FORMATS.set(d, (f = new Intl.NumberFormat('en-US', { minimumFractionDigits: d, maximumFractionDigits: d })));
+  return f;
+};
+
 export function fmtAmt(asset: string, minor: number, opts: { sign?: boolean } = {}): string {
   const whole = toWhole(asset, minor);
   const digits = asset === GOLD ? (Math.abs(whole) < 10 ? 3 : 2) : 2;
-  const s = whole.toLocaleString('en-US', { minimumFractionDigits: Math.abs(whole) >= 10000 ? 0 : digits, maximumFractionDigits: Math.abs(whole) >= 10000 ? 0 : digits });
+  const s = fmt(Math.abs(whole) >= 10000 ? 0 : digits).format(whole);
   const sign = opts.sign && minor > 0 ? '+' : '';
   return asset === GOLD ? `${sign}${s} g` : `${sign}${s} ${asset}`;
 }

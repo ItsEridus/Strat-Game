@@ -136,7 +136,8 @@ function require_company() { return companyMod; }
 test('4. businesses stop production without funds, labour, inputs or capacity', () => {
   const w = fresh(54);
   const p = player(w);
-  const co = createCompany(w, cref(p.id), 'grain', 1, p.loc);
+  const farm = w.regions.find((r) => r.owner === p.nation && r.res.grain)!;
+  const co = createCompany(w, cref(p.id), 'grain', 1, farm.id);
   produce(w, coref(co.id), 'grain', Math.floor(6000 / 1) - 5, 'test'); // nearly full warehouse
   assert.match(productionBlock(w, co, shiftPreview(w, co, null).units) ?? '', /storage is full/);
   const f = createCompany(w, cref(p.id), 'food', 1, p.loc);

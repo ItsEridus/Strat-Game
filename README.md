@@ -31,7 +31,7 @@ npm install
 npm run build      # rebuild dist/game.js
 npm test           # 35 simulation & acceptance tests
 npm run sim -- 90  # 90-day headless world run with an asset audit
-npm run earth      # regenerate src/data/earth.json from tools/earth-defs.mjs (only if you edit the map)
+npm run earth      # regenerate src/data/earth.json (downloads Natural Earth data to tools/ne/ on first run)
 ```
 
 ## Short play guide
@@ -67,14 +67,31 @@ some income. **Public works** (dashboard) is a low-paid fallback job funded by t
 - **Also available:** gold mining, the Academy (studies), auctions, contracts, the Stadium, pirate
   invasions, espionage, and more.
 
-**The map.** World Map shows Earth with each country divided into regions (US states grouped into areas such
-as Texas or New England, Russian federal districts, Chinese and Indian provinces, and so on). Scroll or use
-＋/－ to zoom, drag to pan, and click a region for its owner, resources, buildings, companies and connections.
-Regions connect by land borders, plus dashed **sea lanes and corridors** (e.g. the North Atlantic, the Bering
-Strait, the Korea Strait) that join nations with no shared border. Travel, supply lines and ground invasions
-follow these connections; anything else is an air assault. Each country keeps its real currency, and shows its
-own title for its leader and legislature (Prime Minister and National Diet, Chancellor and Bundestag, …),
-although every country plays by the same election and congress rules.
+**The map.** World Map shows Earth with every playable country divided into its **real first-level
+subdivisions** with real borders: all 50 US states and DC, all 10 Canadian provinces and 3 territories, the
+32 Mexican states, 27 Brazilian states, 24 Argentine provinces, England/Scotland/Wales/Northern Ireland, the 16
+German Länder, Russia's 83 federal subjects, Turkey's 81 provinces, Saudi Arabia's 13 regions, South Africa's
+9 provinces, India's states and union territories, China's 31 provinces, Japan's 47 prefectures, South Korea's
+17 provinces and cities, and Australia's 8 states and territories (492 regions). Scroll or use ＋/－ to zoom,
+drag to pan, and click a region for its seat of government, resources, buildings, companies, connections and
+government. Regions connect by their real land borders (Texas borders four Mexican states, Washington borders
+British Columbia, …), by straits to islands (Hawaii, Tasmania, Hokkaidō) and by dashed **sea lanes and
+corridors** (North Atlantic, Bering Strait, Korea Strait, …) between nations with no shared border. Supply and
+ground invasions follow these connections; anything else is an air assault. You can go overland to a bordering
+region; tickets fly by real great-circle distance. Each country keeps its real currency and its own titles for
+its leader and legislature, although every country plays by the same national rules.
+
+**State and provincial governments.** Every state, province and region with a real government has one: a
+Governor and State Legislature (General Assembly, General Court… by state), a Premier and Legislative or
+National Assembly in Canada, a Minister-President and Landtag in Germany, a First Minister in Scotland, Wales and
+Northern Ireland (England has none), Chief Ministers in India, Governors in Japan, Mexico, Brazil and Russia, and
+so on. Heads are **elected** by residents or **appointed** by the national leader where that is the real system
+(Chinese provinces, Turkish provinces, Saudi emirs, Indian union territories). Each government taxes wages worked
+there (0% in the nine US states with no wage tax) and its residents, receives block grants, and spends on
+welfare, infrastructure (+2% production per level) and business support. Live in a state and reach level 5 to
+run for its governorship: register, campaign, vote, then set the tax (the legislature must agree) and the
+budget. As national leader you appoint heads where they are appointed. Country → *States, provinces & regions*
+lists every government; the map's *Governments* view colours regions by the ideology in power.
 
 **Wars** are declared by congress with goals and a deadline. Battles occupy regions, but ownership only changes
 at settlement. The **Wars** and **Battle** screens explain the scoring ticks, supply and win conditions.
@@ -90,4 +107,4 @@ Settings → *Money supply* explains every unit of money created or destroyed an
 See [`docs/DESIGN.md`](docs/DESIGN.md) for the architecture, the rules chosen where sources were silent, the
 acceptance checklist and known limitations.
 
-Map data: [Natural Earth](https://www.naturalearthdata.com/) country shapes (public domain), via the `world-atlas` package.
+Map data: [Natural Earth](https://www.naturalearthdata.com/) 1:10m admin-0/admin-1 boundaries, populated places, geography regions and lakes (public domain).

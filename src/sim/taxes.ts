@@ -3,7 +3,8 @@
 import type { AccountRef, Citizen, Id, Nation, World } from './types';
 import { B } from '../data/balance';
 import { pay } from '../engine/ledger';
-import { natref, seatShare } from './query';
+import { natref, regref, seatShare } from './query';
+import { stateTaxRate } from './stategov';
 
 export function taxCeilings(w: World, n: Nation) {
   const s = seatShare(w, n);
@@ -33,15 +34,24 @@ export function workTaxFor(w: World, rid: Id, worker: Citizen, gross: number) {
   // Exile relief: a host holding an exiled nation's rightful regions grants its citizens relief (DOC; size SOLO).
   const home = w.nations[worker.nation];
   if (home.exile && home.id !== taxNation.id && w.regions.some((x) => x.core === home.id && x.owner === taxNation.id)) rate *= 1 - B.taxes.exileRelief;
-  const tax = Math.round((gross * rate) / 100);
-  if (!r.occ) return { tax, parts: [{ nation: r.owner, amt: tax }], rate };
-  const occ = Math.round(tax * B.taxes.occupierShare);
-  return { tax, parts: [{ nation: r.occ.nation, amt: occ }, { nation: r.owner, amt: tax - occ }], rate };
+  const natTax = Math.round((gross * rate) / 100);
+  // State/provincial wage tax on top (suspended under occupation).
+  const stateRate = stateTaxRate(w, rid);
+  const stTax = Math.round((gross * stateRate) / 100);
+  const state: TaxPart[] = stTax > 0 ? [{ region: rid, amt: stTax }] : [];
+  const tax = natTax + stTax;
+  if (!r.occ) return { tax, parts: [{ nation: r.owner, amt: natTax }, ...state], rate: rate + stateRate, stateRate, natRate: rate };
+  const occ = Math.round(natTax * B.taxes.occupierShare);
+  return { tax, parts: [{ nation: r.occ.nation, amt: occ }, { nation: r.owner, amt: natTax - occ }], rate, stateRate: 0, natRate: rate };
 }
 
+export type TaxPart = { nation: Id; amt: number } | { region: Id; amt: number };
+
 /** Pay the work-tax parts from `payer` (who holds the gross) to the treasuries. */
-export function remitWorkTax(w: World, payer: AccountRef, cur: string, parts: { nation: Id; amt: number }[]) {
+export function remitWorkTax(w: World, payer: AccountRef, cur: string, parts: TaxPart[]) {
   for (const p of parts) {
-    if (p.amt > 0 && pay(w, payer, natref(p.nation), cur, p.amt, 'Work tax')) w.nations[p.nation].stats.revToday += p.amt;
+    if (p.amt <= 0) continue;
+    if ('region' in p) { if (pay(w, payer, regref(p.region), cur, p.amt, 'State wage tax')) w.govs[p.region]!.stats.revToday += p.amt; }
+    else if (pay(w, payer, natref(p.nation), cur, p.amt, 'Work tax')) w.nations[p.nation].stats.revToday += p.amt;
   }
 }

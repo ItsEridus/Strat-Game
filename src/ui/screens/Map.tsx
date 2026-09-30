@@ -7,10 +7,12 @@ import { controller, player } from '../../sim/query';
 import { INDUSTRY_INFO } from '../../data/items';
 import { EARTH } from '../../data/earth';
 import { RegionActions } from './RegionActions';
+import { StateGovPanel } from './StateGov';
+import { IDEOLOGIES, IDEOLOGY_LIST } from '../../data/ideologies';
 
 const TERRAIN_COLOR: Record<string, string> = { plains: '#9bbf5a', mountains: '#8a7f73', forest: '#3f7d4a', desert: '#d8c27a' };
 const RES_ICON: Record<string, string> = { grain: '🌾', iron: '🪨', titanium: '💠', oil: '🛢️' };
-type Mode = 'political' | 'economic' | 'terrain' | 'pollution' | 'buildings' | 'supply' | 'war';
+type Mode = 'political' | 'government' | 'economic' | 'terrain' | 'pollution' | 'buildings' | 'supply' | 'war';
 
 const MW = EARTH.width, MH = EARTH.height;
 const MAX_ZOOM = 14;
@@ -36,6 +38,14 @@ function routeSegments(a: Region, b: Region): [number, number, number, number][]
 const routeName = (a: number, b: number) => EARTH.routes.find((x) => (x.a === a && x.b === b) || (x.a === b && x.b === a))?.name;
 
 // Static layers: neutral countries and graticule never change, so they skip re-rendering.
+// Lakes and national borders/coastlines sit above the region fills.
+const Overlay = memo(() => (
+  <>
+    <path d={EARTH.lakes} class="lakes" />
+    <path d={EARTH.nationBorders} class="nation-borders" />
+  </>
+));
+
 const Backdrop = memo(() => (
   <>
     <rect x={0} y={0} width={MW} height={MH} class="ocean" />
@@ -113,6 +123,7 @@ export function MapScreen({ w }: { w: World }) {
       case 'economic': return `hsl(210, 25%, ${22 + Math.min(40, r.pop / 3000)}%)`;
       case 'buildings': { const t = r.bld.hospital + r.bld.fields + r.bld.industrial + r.bld.base; return `hsl(40, 60%, ${18 + t * 3}%)`; }
       case 'supply': return r.supplied ? ctl.color : '#5a1d1d';
+      case 'government': { const s = w.govs[r.id]; return s ? IDEOLOGIES[s.head.ideo].color : '#3a414d'; }
       default: return ctl.color;
     }
   };
@@ -132,7 +143,7 @@ export function MapScreen({ w }: { w: World }) {
   return (
     <div class="map-layout">
       <Panel title="World map" class="map-panel" right={
-        <Tabs<Mode> tabs={[['political', 'Political'], ['economic', 'Resources'], ['terrain', 'Terrain'], ['pollution', 'Pollution'], ['buildings', 'Buildings'], ['supply', 'Supply'], ['war', 'War']]} value={mode} onChange={(m) => store.go('map', { mapMode: m })} />
+        <Tabs<Mode> tabs={[['political', 'Political'], ['government', 'Governments'], ['economic', 'Resources'], ['terrain', 'Terrain'], ['pollution', 'Pollution'], ['buildings', 'Buildings'], ['supply', 'Supply'], ['war', 'War']]} value={mode} onChange={(m) => store.go('map', { mapMode: m })} />
       }>
         <div class="map-wrap">
           <svg ref={svgRef} viewBox={`${view.x.toFixed(1)} ${view.y.toFixed(1)} ${view.w.toFixed(1)} ${((view.w * MH) / MW).toFixed(1)}`} class="map"
@@ -156,6 +167,7 @@ export function MapScreen({ w }: { w: World }) {
               );
             })}
             {/* the selected region's outline on top of its neighbours */}
+            <Overlay />
             {sel && <path d={EARTH.regions[sel.id].path} class="sel-outline" />}
             {EARTH.routes.flatMap((rt) => routeSegments(w.regions[rt.a], w.regions[rt.b]).map(([x1, y1, x2, y2]) => (
               <line x1={x1} y1={y1} x2={x2} y2={y2} class={`route ${rt.name === 'Strait' ? 'strait' : ''} ${warPairs.has(`${controller(w.regions[rt.a])}:${controller(w.regions[rt.b])}`) ? 'front' : ''}`}><title>{rt.name === 'Strait' ? 'Strait' : `${rt.name} route`}: {w.regions[rt.a].name} ↔ {w.regions[rt.b].name}</title></line>
@@ -198,7 +210,10 @@ export function MapScreen({ w }: { w: World }) {
           </select>
         </div>
         <div class="legend">
-          {w.nations.map((n) => <NationChip w={w} id={n.id} />)}
+          {mode === 'government'
+            ? IDEOLOGY_LIST.map((i) => <span class="ideo-chip" style={{ background: IDEOLOGIES[i].color }}>{IDEOLOGIES[i].name}</span>)
+            : w.nations.map((n) => <NationChip w={w} id={n.id} />)}
+          {mode === 'government' && <span class="muted small">Colour = ideology of each state/provincial head · grey = no regional government.</span>}
           <span class="muted small">★ capital · 📍 you · ⚔️ battle · hatched = occupied (occupier colour) · dot = rightful owner · dashed = sea lane / corridor (red between nations at war)</span>
         </div>
       </Panel>
@@ -224,12 +239,13 @@ function RegionInfo({ w, r }: { w: World; r: Region }) {
         <tr><td>Supply to capital</td><td>{r.supplied ? 'connected' : <b class="warn">cut</b>}</td></tr>
         <tr><td>Terrain</td><td>{r.terrain}</td></tr>
         <tr><td>Resources</td><td>{Object.entries(r.res).map(([k, v]) => `${RES_ICON[k]} ${k} ${'●'.repeat(v)}`).join('  ') || 'none'}</td></tr>
+        <tr><td>Seat · largest city</td><td>{EARTH.regions[r.id].seat}{EARTH.regions[r.id].city !== EARTH.regions[r.id].seat ? ` · ${EARTH.regions[r.id].city}` : ''}</td></tr>
         <tr><td>Population</td><td>{r.pop.toLocaleString()} residents · {residents.length} citizens here</td></tr>
         <tr><td>Pollution</td><td>{Math.round(r.pollution * 100)}% (output ×{(1 - 0.9 * r.pollution).toFixed(2)})</td></tr>
         <tr><td>Buildings</td><td>🏥 {r.bld.hospital} · 🌾 fields {r.bld.fields} · 🏭 industrial {r.bld.industrial} · 🛡️ base {r.bld.base}</td></tr>
         <tr><td>Construction</td><td>{proj ? <span class="link" onClick={() => store.go('construction', { project: proj.id })}>{proj.type} L{proj.level}: {Math.round(proj.points)}/{proj.needPts} pts</span> : 'none'}</td></tr>
         <tr><td>Treasury (owner)</td><td><Amt asset={owner.cur} v={owner.wallet[owner.cur] ?? 0} /></td></tr>
-        <tr><td>Governed by</td><td>{ruler.leader} <CitLink w={w} id={ruler.president} /></td></tr>
+        <tr><td>National leader</td><td>{ruler.leader} <CitLink w={w} id={ruler.president} /></td></tr>
         <tr><td>Connections</td><td class="small">{r.links.map((l) => {
           const o = w.regions[l];
           const via = routeName(r.id, l);
@@ -239,6 +255,7 @@ function RegionInfo({ w, r }: { w: World; r: Region }) {
       {battles.map((b) => <p>⚔️ Battle: <NationChip w={w} id={b.att} /> vs <NationChip w={w} id={b.def} /> <Btn small onClick={() => store.go('battle', { battle: b.id })}>Open</Btn></p>)}
       <h4>Companies ({companies.length})</h4>
       <ul class="small">{companies.slice(0, 12).map((c) => <li>{INDUSTRY_INFO[c.industry].icon} {c.name} Q{c.q} · {c.workers.length} workers</li>)}</ul>
+      <StateGovPanel w={w} r={r} />
       <RegionActions w={w} r={r} />
     </Panel>
   );

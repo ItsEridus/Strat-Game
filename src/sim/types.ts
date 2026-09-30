@@ -21,7 +21,7 @@ export type Ministry = 'vp' | 'development' | 'defense' | 'economy' | 'labor' | 
 export type GearSlot = 'helmet' | 'vest' | 'elbows' | 'gloves' | 'pants' | 'boots';
 export type GearFamily = 'combat' | 'construction' | 'mining' | 'plains' | 'mountains' | 'forest' | 'desert';
 
-export type AccountKind = 'cit' | 'co' | 'nat' | 'hh' | 'hold' | 'unit' | 'paper' | 'party';
+export type AccountKind = 'cit' | 'co' | 'nat' | 'hh' | 'hold' | 'unit' | 'paper' | 'party' | 'reg';
 export interface AccountRef { k: AccountKind; id: Id }
 
 export interface Buff { type: string; until: number; value: number; source?: string }
@@ -449,6 +449,34 @@ export interface PlayerState {
   following: Id[];
 }
 
+/** Head of a state/provincial government: a full citizen (cit) or a generated official. */
+export interface StateHead { name: string; ideo: Ideology; cit: Id | null; since: number }
+export interface StateCandidate { name: string; ideo: Ideology; cit: Id | null; campaign: number; votes?: number }
+
+/** A region's own government (US state, Canadian province, German Land, Russian oblast, …). */
+export interface StateGov {
+  region: Id;
+  wallet: Wallet; // treasury, in the owning nation's currency
+  inv: Inventory;
+  cur: AssetId;
+  head: StateHead;
+  seats: Partial<Record<Ideology, number>>; // legislature composition
+  size: number; // legislature seats
+  lean: Record<Ideology, number>; // electorate's ideological leaning (sums to 1)
+  tax: number; // state wage tax, % on shifts worked in the region
+  budget: { welfare: number; infra: number; business: number }; // shares of daily spending
+  spendRate: number; // share of the treasury spent each day
+  dev: number; // infrastructure level 0–5 (production bonus)
+  devPts: number;
+  approval: number;
+  nextElection: number; // election (elected) or term review (appointed)
+  candidates: StateCandidate[];
+  voted: Id[]; // full citizens who voted this cycle
+  last?: { at: number; turnout: number; results: { name: string; ideo: Ideology; votes: number }[] };
+  lastTaxChange: number;
+  stats: { revToday: number; spendToday: number; revHist: number[]; spendHist: number[] };
+}
+
 export interface World {
   version: number;
   seed: number;
@@ -460,6 +488,7 @@ export interface World {
   playerId: Id;
   player: PlayerState;
   regions: Region[];
+  govs: (StateGov | null)[]; // indexed by region id; null where there is no regional government
   nations: Nation[];
   households: Households[];
   citizens: Record<Id, Citizen>;

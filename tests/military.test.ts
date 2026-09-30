@@ -68,6 +68,7 @@ test('deadlines settle wars and return occupations', () => {
   const w = fresh(33);
   const { a, b, border } = neighbours(w);
   const war = declareWar(w, w.nations[a], { target: b, days: 8, goals: [border] });
+  war.quota = 99; // AI armies keep fighting during the advance: make sure the quota stays out of reach
   const bt = createBattle(w, 'war', border, a, b, war.id);
   war.battles.push(bt.id);
   finishBattle(w, bt, 'a');
@@ -118,6 +119,7 @@ test('peace terms need both congresses and then settle consistently', async () =
   const w = fresh(36);
   const { a, b, border } = neighbours(w);
   const war = declareWar(w, w.nations[a], { target: b, days: 21, goals: [border] });
+  war.quota = 99; // no conquest or forced surrender while the peace votes run
   const bt = createBattle(w, 'war', border, a, b, war.id);
   war.battles.push(bt.id);
   finishBattle(w, bt, 'a');

@@ -8,6 +8,7 @@ import { IDEOLOGIES } from '../../data/ideologies';
 import { GOLD, fmtAmt } from '../../engine/money';
 import { itemName } from '../../data/items';
 import { CountryExtras } from './CountryExtras';
+import { StatesTable } from './StateGov';
 
 export function Country({ w }: { w: World }) {
   const p = player(w);
@@ -58,10 +59,16 @@ export function Country({ w }: { w: World }) {
       <Panel title={`${n.legislature} (${n.deputies.length} deputies + ${n.leader.toLowerCase()})`}>
         <ul class="small">{n.deputies.map((d) => <li><CitLink w={w} id={d} /> <span class="muted">{w.citizens[d]?.party != null ? w.parties[w.citizens[d].party!]?.name : ''}</span></li>)}</ul>
       </Panel>
-      <Panel title="Regions">
-        <ul class="small">{regions.map((r) => <li><RegionLink w={w} id={r.id} />{r.occ ? <> — occupied by <NationChip w={w} id={r.occ.nation} /></> : ''}{r.core !== id ? ' (conquered)' : ''}</li>)}</ul>
+      <Panel title="Occupied & conquered regions">
+        {regions.some((r) => r.occ || r.core !== id) || w.regions.some((r) => r.core === id && r.owner !== id)
+          ? <ul class="small">
+              {regions.filter((r) => r.occ || r.core !== id).map((r) => <li><RegionLink w={w} id={r.id} />{r.occ ? <> — occupied by <NationChip w={w} id={r.occ.nation} /></> : ''}{r.core !== id ? ' (conquered)' : ''}</li>)}
+              {w.regions.filter((r) => r.core === id && r.owner !== id).map((r) => <li><RegionLink w={w} id={r.id} /> — lost to <NationChip w={w} id={r.owner} /></li>)}
+            </ul>
+          : <p class="small muted">All {regions.length} regions are held and unoccupied. Every region is listed with its government below.</p>}
       </Panel>
       <CountryExtras w={w} id={id} />
+      <StatesTable w={w} nation={id} />
     </div>
   );
 }
