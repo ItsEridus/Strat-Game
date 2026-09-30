@@ -753,6 +753,6 @@ export interface NarrativeState {
   memories: Record<Id, Memory[]>; // NPC id -> what they remember about the player
   nextAmbient: number; // earliest time for the next everyday situation
   settings: { frequency: 'off' | 'rare' | 'normal' | 'frequent' };
-  local: { familiarity: Record<Id, number>; discovered: Record<string, number>; district: string | null; venue: string | null; region: Id | null };
-  appointments: { id: Id; npc: Id; at: number; venue: string | null; region: Id; story?: Id; what: string }[];
+  local: { familiarity: Record<Id, number>; discovered: Record<string, number>; district: string | null; venue: string | null; region: Id | null; lastExplore?: number; done?: Record<string, number> }; // done: daily venue activities (key -> day)
+  appointments: { id: Id; npc: Id; at: number; venue: string; region: Id; story?: Id; what: string; reminded?: boolean }[];
 }

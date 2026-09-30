@@ -25,7 +25,12 @@ export interface Outcome {
   end?: string; // ending name: the story is complete
   decline?: boolean; // the player turned it down
   fail?: boolean; // the action could not be carried out: nothing is recorded and the stage stays
+  /** Arrange a meeting with a bound person (at a venue kind); the next stage waits for it (data.met = 1 if kept, 0 if missed). */
+  meet?: { role: string; venue: string; what: string };
 }
+
+/** Set by sim/places.ts: books a story meeting; returns its time, or null if it cannot be arranged. */
+export const MEET_HOOK: { fn?: (w: World, inst: StoryInstance, meet: { role: string; venue: string; what: string }) => number | null } = {};
 export interface Choice {
   id: string;
   label: string;
@@ -190,6 +195,20 @@ function finish(w: World, inst: StoryInstance, status: StoryInstance['status'], 
 function apply(w: World, inst: StoryInstance, o: Outcome) {
   if (o.decline) return finish(w, inst, 'declined', o.text);
   if (o.end) return finish(w, inst, 'completed', o.text, o.end);
+  if (o.meet && o.next && MEET_HOOK.fn) {
+    const at = MEET_HOOK.fn(w, inst, o.meet);
+    if (at != null) {
+      const who = w.citizens[inst.bind[o.meet.role] as number]?.name ?? 'them';
+      inst.status = 'waiting';
+      inst.stage = o.next;
+      inst.waitUntil = at + 3 * HOUR; // goes on without you if you miss it
+      inst.waitWhy = `Meeting ${who}: ${o.meet.what}`;
+      inst.deadline = undefined;
+      inst.updated = w.time;
+      journal(w, { story: inst.id, title: storyTitle(w, inst), text: `You arranged to ${o.meet.what} with ${who}.`, kind: 'lead' });
+      return;
+    }
+  }
   if (o.wait && o.next) {
     inst.status = 'waiting';
     inst.stage = o.next;
@@ -292,6 +311,16 @@ function ambient(w: World, p: Citizen) {
   // One everyday situation at a time.
   if (Object.values(w.story.instances).some((i) => i.status === 'offered' && STORIES[i.def]?.ambient)) return;
   w.story.nextAmbient = w.time + Math.round(randInt(w, 14, 34) / f) * HOUR;
+  offerAmbient(w, p);
+}
+
+/**
+ * Offer one everyday situation now (the director's pick, or an explorer's find).
+ * Returns the new instance, or null if nothing fits or one is already waiting.
+ */
+export function offerAmbient(w: World, p: Citizen): StoryInstance | null {
+  if (!FREQ[w.story.settings.frequency]) return null;
+  if (Object.values(w.story.instances).some((i) => i.status === 'offered' && STORIES[i.def]?.ambient)) return null;
   let pool = Object.values(STORIES).filter((d) => d.ambient && d.bind && (w.story.cooldowns[d.id] ?? 0) <= w.time);
   for (let tries = 0; tries < 5 && pool.length; tries++) {
     const d = weighted(w, pool, (x) => x.ambient!.weight)!;
@@ -299,8 +328,9 @@ function ambient(w: World, p: Citizen) {
     const b = d.bind!(w, p);
     if (!b) continue;
     const inst = startStory(w, d.id, b);
-    if (inst) { w.story.cooldowns[d.id] = w.time + d.ambient!.cooldownDays * DAY; return; }
+    if (inst) { w.story.cooldowns[d.id] = w.time + d.ambient!.cooldownDays * DAY; return inst; }
   }
+  return null;
 }
 
 /** Keep finished stories for a while (the journal keeps their history). */

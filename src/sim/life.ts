@@ -24,16 +24,16 @@ export const DOING_INFO: Record<Doing, { icon: string; label: string }> = {
 };
 
 /** What a citizen is doing at this hour, from their schedule and circumstances. */
-export function nowDoing(w: World, c: Citizen): Doing {
-  if (jailed(w, c)) return 'prison';
-  if (c.mining) return 'mining';
+export function nowDoing(w: World, c: Citizen, t = w.time): Doing {
+  if (c.sec.jailUntil > t) return 'prison';
+  if (c.mining && c.mining.end > t) return 'mining';
   if (c.loc !== c.home) return 'away';
-  const h = Math.floor((w.time % DAY) / HOUR);
+  const h = Math.floor((t % DAY) / HOUR);
   const battle = activeBattles(w).find((b) => b.region === c.loc || w.regions[c.loc]?.links.includes(b.region));
   if (battle && (c.persona === 'soldier' || c.mil.branch) && (battle.att === c.nation || battle.def === c.nation)) return 'front';
   if (h < 6 || h >= 23) return 'sleep';
   if (c.job != null && h >= c.workHour && h < c.workHour + 8) return 'work';
-  if (c.mil.branch && c.mil.lastDuty === today(w) && h >= 8 && h < 17) return 'duty';
+  if (c.mil.branch && c.mil.lastDuty === Math.floor(t / DAY) && h >= 8 && h < 17) return 'duty';
   if (h === c.trainHour) return 'train';
   if (h >= 17 && h < 20) return (c.id + h) % 3 === 0 ? 'shop' : 'out';
   if (h >= 20) return (c.id % 2) ? 'home' : 'out';

@@ -355,6 +355,20 @@ ul.news li { padding: .3rem 0; border-bottom: 1px solid var(--line); line-height
 .milestones { padding-left: 1.1rem; margin: .2rem 0; }
 .milestones li { margin: .25rem 0; line-height: 1.4; }
 
+/* ---------- places ---------- */
+.places .fam { margin: -.2rem 0 .7rem; }
+.places .fam .bar { height: 5px; }
+.places .tabs { margin-bottom: .3rem; }
+.venue-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: .5rem; margin: .6rem 0; }
+.venue-card { position: relative; display: flex; flex-direction: column; gap: .2rem; text-align: left; font: inherit; color: var(--text); cursor: pointer; padding: .6rem .7rem; border-radius: var(--radius); border: 1px solid var(--line); background: linear-gradient(180deg, var(--ink-3), var(--ink-2)); transition: border-color .15s, transform .12s, box-shadow .15s; }
+.venue-card:hover:not(:disabled) { border-color: var(--line-3); transform: translateY(-1px); }
+.venue-card.on { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(230, 180, 79, .3), 0 6px 18px -8px rgba(230, 180, 79, .5); background: linear-gradient(180deg, rgba(230, 180, 79, .12), var(--ink-2)); }
+.venue-card.unknown { cursor: default; border-style: dashed; background: transparent; }
+.venue-card small { font-size: .74rem; line-height: 1.35; }
+.venue-card .people-count { position: absolute; top: .45rem; right: .55rem; color: var(--teal); font-weight: 600; }
+.place-detail { border-top: 1px solid var(--line); margin-top: .6rem; padding-top: .6rem; }
+.avail { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem; }
+
 /* ---------- quests ---------- */
 .quest { display: grid; grid-template-columns: 1fr 140px auto; gap: .6rem; align-items: center; padding: .35rem 0; border-bottom: 1px solid var(--line); }
 .quest.claimed { opacity: .5; }

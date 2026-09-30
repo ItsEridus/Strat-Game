@@ -15,7 +15,7 @@ what remains, and the known limitations, so work can resume from here.
 | M1 | Military: civilian control (office holders go to the reserve), head of government as Commander-in-Chief, service age limits, veterans | Done |
 | UI1 | Premium design system and game shell | Done |
 | CLK | Clock overhaul: real calendar, descriptive date and time, seasons, slower time | Done |
-| N3 | Narrative stage 3: districts, venues, familiarity, availability, appointments | Planned |
+| N3 | Narrative stage 3: districts, venues, familiarity, availability, appointments | Done |
 | L2 | Family graph with real children, pregnancy, adoption, guardians, siblings; hobbies, pets, gifts; story protagonists and memory subjects; budgets | Planned |
 | L3 | Schools, universities, clinics and offices as funded institutions; education ladder; qualifications; service careers (teaching, clinical care, administration, technical); work history; promotions; military academy | Planned |
 | L4 | Housing (rent/buy/sell); obligations (loans, mortgages, student loans); conditions and treatment; leave; retirement and funded pensions (incl. veterans); living-cost split | Planned |
@@ -23,6 +23,10 @@ what remains, and the known limitations, so work can resume from here.
 | L6 | Succession to heirs; legacy archive; 8 life chains + 16 standalone encounters; narrative stage 4's five chains; NPC AI parity | Planned |
 | UI2 | Every screen restyled; cinematic story, review and succession; map polish; optional UI sound; screenshots | Planned |
 | L7 | Calibration, performance, docs, tests, e2e, release 1.4.0 (with narrative stage 5) | Planned |
+
+After 1.4.0 (requested; planned for the next release): natural disasters overhaul; a prison system; policing and
+crime careers overhaul; careers and employment overhaul (small businesses, trades, self-employment, freelancing,
+public sector, apprenticeships, the full employment cycle for player and AI).
 
 ## Implemented
 
@@ -114,10 +118,29 @@ what remains, and the known limitations, so work can resume from here.
   `bornYearsAgo` sets exact birth dates. A long advance to the next birthday on a full-size world now takes minutes
   of real time (simulation speed bound), shown with progress and resumable.
 
+### N3: places, availability, appointments
+- `src/data/places.ts`, `src/sim/places.ts`: five districts (neighbourhood, civic quarter, downtown, industrial,
+  transport) and venues laid out per region from a hash (no world dice; stable across saves): home, park, café,
+  community centre, gym, library, lookout; city hall, party rooms, police, newsroom, clinic/hospital; market,
+  restaurant, bank, back room; each real company as a workplace, union hall; station, harbour (coastal regions),
+  barracks (bases and garrisons). Venues are views of real things and link to their screens.
+- Local position under the authoritative region (`w.story.local`); arriving in another region puts you at its
+  station (or home in your home region).
+- Familiarity per region with diminishing returns from exploring (energy, hourly), visits, conversations, work and
+  time spent; it opens extra places (community centre 5, gym and newsroom 10, better first impressions 20, lookout
+  40, back room 60) and never hides essentials. The next discovery is always hinted.
+- Where people are each hour, from their schedules and roles (workplace, gym, police desk, party rooms in the
+  evening, city hall for a sitting governor, cafés and parks…); `availability` says whether someone can be met now,
+  why not, and when next, with a "Wait" control on the clock. Sleeping people cannot be talked to.
+- Appointments at a time that suits them (next free evening), reminders an hour before, keeping one starts a
+  conversation (+memory), missing it is remembered; stories can book a meeting (`Outcome.meet`) and wait for it.
+- Everyday acts at places: coffee at the café (paid), a walk in the park, an hour of volunteering.
+
 ## Tests
 - `tests/life.test.ts` (6): death/estate/offices, special election, emigration, coming of age, the player's romance,
   population churn with the audit.
 - `tests/forces.test.ts`: civilian control, reserve and return, Commander-in-Chief appointments.
+- `tests/places.test.ts` (7): fixed layouts, discovery, travel reset, availability, appointments, story meetings, venue acts.
 - `tests/lifecycle.test.ts` (7): birthdays before the epoch and across save/load, one review per birthday, coming of
   age at 18, age gates for direct calls and the AI, no double shift pay, chunked vs single advance identical, pace
   change keeps ages.

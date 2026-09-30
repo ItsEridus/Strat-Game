@@ -4,11 +4,12 @@
 // residents stand for a slice of their region's electorate, so persuading them
 // moves real votes: state elections blend the residents' choices with the
 // region's standing mood, and national voters weigh relationships and pledges.
+import { familiarity, gainFamiliarity, position, venueById, venueOf } from './places';
 import { fmtDay } from '../engine/calendar';
 import { lifeGate } from './lifecycle';
 import { bump } from './progress';
 import type { Citizen, Convo, Id, Ideology, World } from './types';
-import { localNews } from './life';
+import { localNews, nowDoing } from './life';
 import { B } from '../data/balance';
 import { IDEOLOGIES } from '../data/ideologies';
 import { fail, ok, type Result } from '../engine/result';
@@ -118,6 +119,8 @@ export function talkCheck(w: World, p: Citizen, npc: Citizen | undefined): strin
   if (jailed(w, p)) return 'You are in prison.';
   if (jailed(w, npc)) return `${npc.name} is in prison.`;
   if (npc.loc !== p.loc) return `${npc.name} is in ${w.regions[npc.loc].name}; travel there to talk.`;
+  if (npc.gone) return `${npc.name} is no longer here.`;
+  if (nowDoing(w, npc) === 'sleep') return `${npc.name} is asleep. Arrange a meeting, or come back in the morning.`;
   if (p.energy < B.social.talkEnergy) return `Needs ${B.social.talkEnergy} energy.`;
   return null;
 }
@@ -139,12 +142,17 @@ export function startTalk(w: World, npcId: Id): Result {
     : pick(w, [`“Hello there,” says ${npc.name}.`, `${npc.name} nods at you. “Can I help you?”`, `“${greeting(w)},” says ${npc.name}, looking up from ${npc.job != null ? 'work' : 'the paper'}.`]);
   say(convo, 'npc', greet);
   if (first) {
-    const warmth = Math.round(2 + p.attrs.lead * 0.3 + (npc.ideo === p.ideo ? 2 : 0) + (p.sec.fame > 10 ? 1 : 0) - (p.sec.notoriety > 10 ? 2 : 0));
+    const local = familiarity(w, p.loc) >= 20 ? 2 : 0; // locals greet a familiar face by name
+    const warmth = Math.round(2 + local + p.attrs.lead * 0.3 + (npc.ideo === p.ideo ? 2 : 0) + (p.sec.fame > 10 ? 1 : 0) - (p.sec.notoriety > 10 ? 2 : 0));
     adjustRel(npc, p.id, warmth);
     if (warmth > 0) say(convo, 'note', `${npc.name} warms to you a little (+${warmth}).`);
   }
   w.player.convo = convo;
   offerChoices(w, convo);
+  // You go over to where they are; knowing people makes a place familiar.
+  const at = venueOf(w, npc);
+  if (at) { position(w); w.story.local.venue = at; w.story.local.district = venueById(w, p.loc, at)?.district ?? w.story.local.district; }
+  gainFamiliarity(w, p.loc, 0.5);
   practise(w, p, 'lead', B.practice.talk);
   bump(w, 'talk');
   return ok('');

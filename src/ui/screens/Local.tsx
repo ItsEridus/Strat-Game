@@ -1,6 +1,7 @@
 // Neighbourhood: the place you are in right now — its people, what they are
 // doing this hour, what worries them, its businesses and its news — and the
 // things you can do here in person: talk, canvass, hold a rally.
+import { AppointmentsPanel, MeetControls, PlacesPanel } from './Places';
 import { SEASON_ICON, fmtDate, partOfDay, seasonAt } from '../../engine/calendar';
 import { latitudeOf } from '../../data/earth';
 import { fmtDay } from '../../engine/calendar';
@@ -61,6 +62,9 @@ export function Local({ w }: { w: World }) {
         </div>
       </section>
 
+      <PlacesPanel w={w} />
+      <AppointmentsPanel w={w} />
+
       <Panel title="📣 Win people over" class="wide">
         <div class="row">
           <ActBtn kind="primary" why={canvassCheck(w, p)} run={(w) => canvass(w)}>🚪 Canvass door to door (−15⚡)</ActBtn>
@@ -106,6 +110,7 @@ function PersonCard({ w, c }: { w: World; c: Citizen }) {
         <b class="link" onClick={() => store.go('citizen', { citizen: c.id })}>{c.name}</b>
         <small class="muted">{c.persona} · {ageOf(w, c)}{job ? ` · ${job.name}` : ''}</small>
         <small>{DOING_INFO[d].icon} {DOING_INFO[d].label}{c.home !== c.loc ? ` · visiting from ${w.regions[c.home].name}` : ''}</small>
+        <MeetControls w={w} c={c} />
         <small><span class={rel >= 10 ? 'good' : rel <= -10 ? 'bad' : 'muted'}>{attitude(rel)}</span>{issue ? <> · cares about {ISSUE_INFO[issue].icon}</> : null}{pledged ? <> · <span class="good">🗳️ your vote</span></> : null}</small>
       </div>
       <ActBtn small why={talkCheck(w, p, c)} showWhy={false} run={(w) => startTalk(w, c.id)}>💬 Talk</ActBtn>

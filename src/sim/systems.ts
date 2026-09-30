@@ -1,5 +1,7 @@
 // Wires every subsystem's hooks into the simulation loop, once, in a fixed order.
 // The order is part of determinism: do not reorder casually.
+import { appointmentsHourly, meetForStory, placesDaily } from './places';
+import { MEET_HOOK } from './story';
 import { civilianControl, serviceRetirements } from './forces';
 import { wellbeingDaily } from './wellbeing';
 import { lifecycleTick } from './lifecycle';
@@ -150,6 +152,9 @@ export function registerSystems() {
   tickHooks.push(lifecycleTick);
   hourlyHooks.push(routineHourly);
   hourlyHooks.push(civilianControl);
+  hourlyHooks.push(appointmentsHourly);
+  MEET_HOOK.fn = meetForStory;
+  dailyHooks.push(placesDaily);
   dailyHooks.push(serviceRetirements);
 
   REPLY_HANDLERS.ministerOffer = (w, m, o) => ministerOfferReply(w, m.payload!, o);
