@@ -59,6 +59,8 @@ function daily(w: World) {
   for (const n of w.nations) {
     n.stats.revHist.push(n.stats.revToday);
     if (n.stats.revHist.length > 30) n.stats.revHist.shift();
+    n.stats.spendHist.push(n.stats.spendToday);
+    if (n.stats.spendHist.length > 30) n.stats.spendHist.shift();
     n.stats.revenue += n.stats.revToday;
     n.stats.spending += n.stats.spendToday;
     n.stats.revToday = 0;

@@ -186,10 +186,15 @@ export interface Nation {
   intel: number;
   priorities: { battle: Id | null; side: 'a' | 'd' | null; project: Id | null };
   termStart: number;
-  stats: { revenue: number; spending: number; revToday: number; spendToday: number; revHist: number[] };
+  stats: { revenue: number; spending: number; revToday: number; spendToday: number; revHist: number[]; spendHist: number[] };
   aiPlan: { lastWarCheck: number; lastBuild: number };
   recruitGoal: number;
   fxAnchor: number; // central-bank reference rate (currency minor per gold)
+  requests: { cit: Id; t: number }[]; // pending citizenship applications
+  propCount: Record<Id, number>; // proposals authored this mandate, per deputy
+  warScore: number; // recent military performance (-100..100), feeds voters
+  unemployment: number; // share of citizens without a job (0..1)
+  procure: Record<ItemKey, number>; // government demand not met by the market (signals producers)
 }
 
 export interface Households { nation: Id; wallet: Wallet; inv: Inventory; pop: number; unmet: number }
@@ -219,6 +224,7 @@ export interface Election {
   regClose: number;
   candidates: Id[];
   done: boolean;
+  playerVote?: Id; // candidate (president/party) or party id (congress)
   result?: {
     turnout: number;
     electorate: number;

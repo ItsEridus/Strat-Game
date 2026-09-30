@@ -147,7 +147,8 @@ function recordTrade(w: World, market: Id, item: ItemKey, n: number, unit: numbe
 
 export function buyCheck(w: World, actor: Id, buyer: AccountRef, l: Listing | undefined, n: number): string | null {
   if (!l) return 'Listing no longer exists.';
-  const auth = authorize(w, actor, buyer, buyer.k === 'nat' ? 'publicTrade' : 'trade');
+  // Nations buy through the labour ministry (public trade) or, for construction supplies, the development ministry.
+  const auth = buyer.k === 'nat' ? (authorize(w, actor, buyer, 'publicTrade') && authorize(w, actor, buyer, 'build')) : authorize(w, actor, buyer, 'trade');
   if (auth) return auth;
   if (!Number.isInteger(n) || n < 1) return 'Enter a quantity of at least 1.';
   if (n > l.qty) return `Only ${l.qty} available in this listing.`;

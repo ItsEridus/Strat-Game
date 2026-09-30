@@ -89,13 +89,15 @@ export function manageCompany(w: World, co: Company) {
     const vacancies = slots - workers;
     const listedStock = listingsFor(w, market, key).filter((l) => l.seller.k === 'co' && l.seller.id === co.id).reduce((s, l) => s + l.qty, 0);
     const dailyOut = baseUnits(co) * Math.max(1, workers);
-    const glut = listedStock > dailyOut * 4;
+    const procured = n.procure[key] ?? 0;
+    const glut = listedStock > dailyOut * 4 + procured;
     const profit3 = co.hist.slice(-3).reduce((s, h) => s + h.profit, 0);
     if (vacancies > 0) wage = Math.round(wage * 1.03);
     else if (profit3 < 0 && wage > n.minWage) wage = Math.round(wage * 0.98);
     const ikShort = ik && (co.inv[ik] ?? 0) < inputPerUnit(co) * 2;
     if (glut || ikShort) slots = Math.max(workers > 0 ? workers - (glut ? 1 : 0) : 0, 0);
-    else if (vacancies <= 0 && funds() > payroll * 6 && profit3 >= 0) slots = Math.min(B.company.maxWorkers[co.q - 1], slots + 1);
+    else if (vacancies <= 0 && funds() > payroll * 6 && (profit3 >= 0 || procured > listedStock)) slots = Math.min(B.company.maxWorkers[co.q - 1], slots + 1);
+    if (procured > listedStock && slots === 0) slots = 1;
     wage = Math.max(wage, n.minWage);
     if (wage !== offer.wage || slots !== offer.slots || !co.offer) setOffer(w, actor, co.id, wage, slots, offer.minEco);
   }

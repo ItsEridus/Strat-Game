@@ -7,6 +7,7 @@ import { chance } from '../engine/rng';
 import { GOLD, c as cur, g } from '../engine/money';
 import { applyJob, netWage, openOffers, publicWorksShift, quitJob, workShift } from '../sim/company';
 import { eat, train } from '../sim/citizen';
+import { contributeLabor } from '../sim/construction';
 import { buyBest, listingsFor } from '../sim/market';
 import { buyGold, sellGold, midRate } from '../sim/fx';
 import { controller, cref, effEco, maxEnergy, today } from '../sim/query';
@@ -89,6 +90,14 @@ export function citizenHourly(w: World, c: Citizen) {
 
   // Train (first daily session) — nearly everyone, soldiers always.
   if (h === c.trainHour && c.lastTrainDay !== d && (c.persona === 'soldier' || chance(w, 0.7 * c.traits.activity))) train(w, c);
+
+  // Builders (and some civic-minded others) put labour into the national priority project.
+  if (h === (c.trainHour + 2) % 24 && (c.persona === 'builder' || chance(w, 0.12))) {
+    const nat = controller(w.regions[c.loc]);
+    const pid = w.nations[nat].priorities.project;
+    const proj = pid != null ? w.projects[pid] : undefined;
+    if (proj && !proj.done && c.energy >= 40) contributeLabor(w, c, proj.id, c.persona === 'builder' ? 3 : 1);
+  }
 
   // Evening shopping.
   if (h === 18) {

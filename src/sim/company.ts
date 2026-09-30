@@ -16,6 +16,8 @@ import { companyCurrency, controller, coref, cref, effEco, natref, seatShare, st
 import { remitWorkTax, workTaxFor } from './taxes';
 import { bump } from './progress';
 import { pick } from '../engine/rng';
+import { addPoints } from './construction';
+import { list as listFn } from './market';
 import { COMPANY_SUFFIX, COMPANY_WORDS } from '../data/names';
 
 export const isRawIndustry = (ind: Industry) => INDUSTRY_INFO[ind].raw;
@@ -130,6 +132,7 @@ function runProduction(w: World, co: Company, unitsF: number, why: string): numb
   co.frac = Math.max(0, Math.min(0.999, total - Math.floor(total)));
   co.today.produced += units;
   co.lifetime.produced += units;
+  if (units > 0 && co.auto.sell) autoList(w, co);
   // pollution record
   const r = w.regions[co.region];
   const wgt = isRawIndustry(co.industry) ? B.pollution.weights.raw : B.pollution.weights.finished;
@@ -434,10 +437,22 @@ export function publicWorksShift(w: World, c: Citizen): Result {
   addXp(w, c, B.xp.work);
   let extra = '';
   const proj = n.priorities.project != null ? w.projects[n.priorities.project] : undefined;
-  if (proj && !proj.done) {
-    proj.points = Math.min(proj.needPts, proj.points + B.construction.ptsPerAction / 2);
+  if (proj && !proj.done && proj.points < proj.needPts) {
+    addPoints(w, proj, c.id, B.construction.ptsPerAction / 2);
+    c.buildTotal += B.construction.ptsPerAction / 2;
     extra = ` (+${B.construction.ptsPerAction / 2} construction points to ${w.regions[proj.region].name})`;
   }
   if (c.player) bump(w, 'work');
   return ok(`Public works shift: earned ${fmtAmt(n.cur, wage)}${extra}.`);
+}
+
+/** Automated sales: list fresh output immediately at the company's current asking price. */
+function autoList(w: World, co: Company) {
+  const key = outputKey(co.industry, co.q);
+  const price = co.prices[key];
+  const stock = co.inv[key] ?? 0;
+  if (!price || stock <= 0) return;
+  const operator = co.owner.k === 'cit' ? co.owner.id : co.owner.k === 'hold' ? w.holdings[co.owner.id]?.ceo : co.owner.k === 'nat' ? w.nations[co.owner.id]?.president : null;
+  if (operator == null) return;
+  listFn(w, operator, coref(co.id), controller(w.regions[co.region]), key, stock, price);
 }

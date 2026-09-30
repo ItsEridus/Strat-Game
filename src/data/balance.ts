@@ -119,7 +119,7 @@ export const BALANCE = {
   },
   living: { perDay: 4, discretionary: 0.05, comfort: 150 }, // SOLO daily living costs + 5%/day of cash above 150 spent on lifestyle; paid to the background economy (closes the money loop)
   wages: { start: 8, min: 5 }, // SOLO starting offer and minimum wage (currency)
-  treasury: { householdTransfer: 0.03, publicWorksFrac: 0.6, startPerCitizen: 400 }, // SOLO daily transfer share, fallback wage share
+  treasury: { householdTransfer: 0.02, publicWorksFrac: 0.6, startPerCitizen: 400 }, // SOLO daily transfer share, fallback wage share
   politics: {
     voteLevel: 3, // SOLO
     partyLevel: 3, // SOLO
@@ -133,17 +133,21 @@ export const BALANCE = {
     voteHours: 24, // WIKI
     days: { president: 1, party: 10, congress: 25 }, // WIKI day-of-month
     regCloseHours: 24, // SOLO
-    bgVoterWeight: 0.2, // SOLO votes per background resident (aggregated blocs)
+    bgVoterRatio: 1, // SOLO background voter blocs, as a multiple of the citizen electorate
+    regOpenDays: 7, // SOLO registration opens a week before each election
+    specialElectionDays: 3, // SOLO after impeachment / new-election law
+    printGoldShare: 0.25, // SOLO printing N currency burns 25% of its value in treasury gold
+    impeachApproval: 25, // SOLO opposition considers impeachment below this approval
   },
   construction: {
     ptsPerAction: 20, // WIKI 10 energy → 20 points
     needPtsPerLevel: 400, // SOLO × level × population factor
     popFactorPer: 5000, // SOLO
     mats: { // SOLO material needs per level
-      hospital: { grain: 200, iron: 100 },
-      fields: { grain: 150, oil: 100 },
-      industrial: { iron: 250, oil: 100 },
-      base: { iron: 300, titanium: 100 },
+      hospital: { grain: 120, iron: 80 },
+      fields: { grain: 100, oil: 50 },
+      industrial: { iron: 150, oil: 60 },
+      base: { iron: 200, titanium: 60 },
     } as Record<string, Record<string, number>>,
     builderRankStep: [0, 2000, 8000, 25000, 70000, 180000], // SOLO lifetime points
     builderRankBonus: 0.1, // SOLO per builder rank
@@ -181,7 +185,7 @@ export const BALANCE = {
   season: { days: 60, tiers: 30, prestigePerTier: 100 }, // SOLO
   mining: { yields: { 1: 0.5, 2: 0.8 } as Record<number, number>, globalMult: 1 }, // WIKI yields
   studies: { unlockAt: 75, decayPerHour: 1 }, // unlock DOC; decay SOLO (wiki: 4/h)
-  travel: { energyPerHop: 5, ticketRange: [1, 2, 3, 4, 6] }, // SOLO
+  travel: { energyPerHop: 5, ticketRange: [1, 2, 3, 4, 6], walkEnergy: 15, qualityDiscount: 0.1 }, // SOLO
   citizenship: { cost: 2 }, // SOLO gold
   nuke: { gold: 750, oil: 12500, iron: 2500, titanium: 5000, prodHours: 48, flightHours: 8 }, // DOC
   spy: { recon: [0.7, 0.2, 0.1], defuse: [0.25, 0.25, 0.5], cooldownHours: 24, defuseGold: 5, defuseTickets: 5, defuseIntel: 10 }, // DOC outcomes; costs SOLO

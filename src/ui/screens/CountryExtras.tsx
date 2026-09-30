@@ -1,6 +1,110 @@
-// Government actions and diplomacy panels for the Country screen. Filled by later stages.
-import type { Id, World } from '../../sim/types';
+// Government action panels on the Country screen. Each panel appears only for
+// officials holding the matching authority; actions run through permission checks.
+import { useState } from 'preact/hooks';
+import type { Id, Ministry, World } from '../../sim/types';
+import { ActBtn, CitLink, Empty, Item, Num, Panel, Select, Help } from '../common';
+import { store } from '../store';
+import { citizensOf, natref, player } from '../../sim/query';
+import { MINISTRY_INFO, nationPerm } from '../../sim/authority';
+import { appoint, resignOffice } from '../../sim/politics';
+import { decideCitizenship } from '../../sim/travel';
+import { list } from '../../sim/market';
+import { placeOrder, ordersOf, cancelOrder } from '../../sim/fx';
+import { GOLD, c as cur, fmtAmt, g } from '../../engine/money';
+import { itemName } from '../../data/items';
+import { fmtWhen } from '../../engine/clock';
+import { Diplomacy } from './Diplomacy';
 
-export function CountryExtras(_: { w: World; id: Id }) {
-  return null;
+export function CountryExtras({ w, id }: { w: World; id: Id }) {
+  const p = player(w);
+  const n = w.nations[id];
+  const mine = p.nation === id;
+  const offices = Object.entries(n.cabinet).filter(([, v]) => v === p.id).map(([k]) => k as Ministry);
+  return (
+    <>
+      {mine && n.president === p.id && <Cabinet w={w} />}
+      {mine && offices.length > 0 && (
+        <Panel title="Your office">
+          <p>You serve as {offices.map((m) => MINISTRY_INFO[m].name).join(', ')}.</p>
+          <ActBtn kind="danger" run={(w) => resignOffice(w, p)} confirm="Resign your ministry?">Resign</ActBtn>
+        </Panel>
+      )}
+      {mine && nationPerm(w, p.id, id, 'exchange') && <TreasuryFx w={w} />}
+      {mine && nationPerm(w, p.id, id, 'publicTrade') && <PublicTrade w={w} />}
+      {mine && nationPerm(w, p.id, id, 'recruit') && <Applications w={w} />}
+      <Diplomacy w={w} id={id} />
+    </>
+  );
+}
+
+function Cabinet({ w }: { w: World }) {
+  const p = player(w);
+  const n = w.nations[p.nation];
+  const pool = citizensOf(w, n.id).filter((c) => c.id !== p.id).sort((a, b) => b.influence - a.influence);
+  return (
+    <Panel title="👑 Appoint your cabinet" class="wide">
+      <Help>Ministers act with national authority in their portfolio; AI ministers carry out their priorities daily. Loyal, competent allies from your party work best — appointments improve their opinion of you.</Help>
+      <table class="table compact"><tbody>
+        {(Object.keys(MINISTRY_INFO) as Ministry[]).map((m) => (
+          <tr><td title={MINISTRY_INFO[m].desc}>{MINISTRY_INFO[m].name}</td><td><CitLink w={w} id={n.cabinet[m]} /></td>
+            <td><Select value={n.cabinet[m] ?? -1} options={[[-1, '— vacant —'], ...pool.map((c) => [c.id, `${c.name} (${c.persona}, infl ${Math.round(c.influence)}${c.party === p.party ? ', your party' : ''})`] as [number, string])]} onChange={(v) => store.act((w) => appoint(w, p, m, v === -1 ? null : v))} /></td></tr>
+        ))}
+      </tbody></table>
+    </Panel>
+  );
+}
+
+function TreasuryFx({ w }: { w: World }) {
+  const p = player(w);
+  const n = w.nations[p.nation];
+  const [amt, setAmt] = useState(10);
+  const [rate, setRate] = useState(n.fxAnchor / 100);
+  const orders = ordersOf(w, natref(n.id));
+  return (
+    <Panel title="💱 Treasury exchange (economy)">
+      <p class="small">Treasury: {fmtAmt(n.cur, n.wallet[n.cur] ?? 0)} · {fmtAmt(GOLD, n.wallet[GOLD] ?? 0)} · reference rate {fmtAmt(n.cur, n.fxAnchor)}/g</p>
+      <div class="form row">
+        <label>Gold <Num value={amt} onInput={setAmt} /></label>
+        <label>Rate <Num value={rate} step={0.5} onInput={setRate} /></label>
+        <ActBtn run={(w) => placeOrder(w, p.id, natref(n.id), n.cur, 'sellGold', g(amt), cur(rate))}>Sell treasury gold</ActBtn>
+        <ActBtn run={(w) => placeOrder(w, p.id, natref(n.id), n.cur, 'sellCur', g(amt), cur(rate))}>Buy gold for treasury</ActBtn>
+      </div>
+      {orders.map((o) => <div class="small">{o.side === 'sellGold' ? 'Ask' : 'Bid'} @ {fmtAmt(n.cur, o.rate)} · {fmtAmt(o.side === 'sellGold' ? GOLD : n.cur, o.amount)} <ActBtn small kind="ghost" run={(w) => cancelOrder(w, p.id, o.id)}>Cancel</ActBtn></div>)}
+      <p class="small muted">While you hold this post the AI central bank stops re-quoting; you manage liquidity.</p>
+    </Panel>
+  );
+}
+
+function PublicTrade({ w }: { w: World }) {
+  const p = player(w);
+  const n = w.nations[p.nation];
+  const keys = Object.keys(n.inv).filter((k) => (n.inv[k] ?? 0) > 0);
+  const [key, setKey] = useState(keys[0] ?? 'food:1');
+  const [qty, setQty] = useState(10);
+  const [price, setPrice] = useState(5);
+  return (
+    <Panel title="📦 National storage (labour)">
+      <ul class="inv-list">{keys.map((k) => <li><Item k={k} n={n.inv[k]} /></li>)}</ul>
+      {!keys.length && <Empty>Empty.</Empty>}
+      <div class="form row">
+        <Select value={key} options={keys.map((k) => [k, itemName(k)])} onChange={setKey} />
+        <Num value={qty} onInput={setQty} /> <label>@ <Num value={price} step={0.1} onInput={setPrice} /> {n.cur}</label>
+        <ActBtn why={!keys.length ? 'Nothing to sell.' : null} run={(w) => list(w, p.id, natref(n.id), n.id, key, qty, cur(price))}>List on market</ActBtn>
+      </div>
+    </Panel>
+  );
+}
+
+function Applications({ w }: { w: World }) {
+  const p = player(w);
+  const n = w.nations[p.nation];
+  return (
+    <Panel title="🛂 Citizenship applications (recruitment)">
+      {n.requests.length ? n.requests.map((r) => (
+        <div class="row"><CitLink w={w} id={r.cit} /> from {w.nations[w.citizens[r.cit]?.nation]?.name} · {fmtWhen(w, r.t)}
+          <ActBtn small run={(w) => decideCitizenship(w, p.id, n.id, r.cit, true)}>Approve</ActBtn>
+          <ActBtn small kind="danger" run={(w) => decideCitizenship(w, p.id, n.id, r.cit, false)}>Deny</ActBtn></div>
+      )) : <Empty>No pending applications.</Empty>}
+    </Panel>
+  );
 }
