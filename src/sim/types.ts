@@ -757,6 +757,7 @@ export interface World {
   queue: ScheduledEvent[];
   stats: Stats;
   ledger: { t: number; text: string; amount: number; asset: AssetId; ref: string }[]; // player's transaction history
+  budget?: import('../engine/budget').BudgetMonth[]; // the player's money by category and month (engine/budget.ts)
   calendar: { nextDaily: number; terrainDone?: Id[]; baseCitizens?: number; basePop?: number };
 }
 

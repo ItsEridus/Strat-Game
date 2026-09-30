@@ -13,6 +13,8 @@ import { bereave, fam } from '../src/sim/family';
 import { populationDaily } from '../src/sim/population';
 import { adoptChildCheck, adoptionsDaily, applyToAdopt, adoptPet, careForPet, conceive, expecting, giftCheck, giveGift, petsOf, siblingsOf } from '../src/sim/kinship';
 import { deserialize, serialize } from '../src/engine/save';
+import { familyRegard, memoriesOf, remember } from '../src/sim/story';
+import { budgetCategory } from '../src/engine/budget';
 import { hobbyCheck, pursueHobby } from '../src/sim/hobbies';
 import { lifeOf, routineOf } from '../src/sim/lifecycle';
 
@@ -160,4 +162,24 @@ test('a child coming of age gets a start from the family, and children cost mone
   advance(w, 2 * DAY, false);
   assert.ok(w.ledger.some((e) => e.text === 'Raising children'));
   assert.ok(audit(w).ok, audit(w).problems.join('; '));
+});
+
+test('memories have a subject; stories a protagonist; the budget keeps whole months by category', () => {
+  const w = fresh(409);
+  const p = player(w);
+  const [a, b] = census(w).all.filter((c) => !c.player && !c.gone);
+  remember(w, a, 5, 'helped me', 'private');
+  remember(w, a, -4, 'insulted me', 'private', undefined, b.id);
+  assert.equal(memoriesOf(w, a.id).length, 1, 'about the player');
+  assert.equal(memoriesOf(w, a.id, b.id).length, 1, 'about someone else');
+  fam(p).parents = [b.id];
+  assert.equal(familyRegard(w, a.id, p), -1, 'what they think of your family rubs off');
+  const code = w.nations[p.nation].cur;
+  mint(w, cref(p.id), code, cur(100), 'Official salary');
+  advance(w, 2 * DAY, false);
+  const m = w.budget!.at(-1)!;
+  assert.ok(m.asset[code].Wages >= cur(100));
+  assert.ok(m.asset[code]['Living costs'] < 0);
+  assert.equal(budgetCategory('Food and care for Rex'), 'Pets');
+  assert.equal(deserialize(serialize(w)).budget!.length, w.budget!.length);
 });

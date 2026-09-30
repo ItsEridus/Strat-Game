@@ -35,7 +35,7 @@ stages go out in slices.
 | UI1 | Premium design system and game shell | Done |
 | CLK | Clock overhaul: real calendar, descriptive date and time, seasons, slower time | Done |
 | N3 | Narrative stage 3: districts, venues, familiarity, availability, appointments | Done |
-| L2 | Family graph with real children, pregnancy, adoption, guardians, siblings; hobbies, pets, gifts; story protagonists and memory subjects; budgets | In progress: groundwork 1.3.2; pregnancy, siblings, gifts, pets 1.3.6; hobbies 1.3.7; adoption, care, guardians, child costs 1.3.8 |
+| L2 | Family graph with real children, pregnancy, adoption, guardians, siblings; hobbies, pets, gifts; story protagonists and memory subjects; budgets | Done: groundwork 1.3.2; pregnancy, siblings, gifts, pets 1.3.6; hobbies 1.3.7; adoption, care, guardians, child costs 1.3.8; memory subjects, protagonists, budgets 1.3.9 |
 | L3 | Schools, universities, clinics and offices as funded institutions; education ladder; qualifications; service careers (teaching, clinical care, administration, technical); work history; promotions; military academy | Planned |
 | L4 | Housing (rent/buy/sell); obligations (loans, mortgages, student loans); conditions and treatment; leave; retirement and funded pensions (incl. veterans); living-cost split | Planned |
 | L5 | Birth start; childhood and parenting; player mortality; wills, trusts, estates, heirlooms | Planned |
@@ -170,6 +170,21 @@ and employment (1.5), policing, crime careers and prisons (1.7), and weather and
   conversation (+memory), missing it is remembered; stories can book a meeting (`Outcome.meet`) and wait for it.
 - Everyday acts at places: coffee at the café (paid), a walk in the park, an hour of volunteering.
 
+### L2: families and personal life (1.3.6–1.3.9)
+- `src/sim/kinship.ts`: pregnancies (due about nine months later on the pace of life, born hourly); siblings; gifts
+  (flowers paid to households, items moved with the ledger, one a day per person, remembered); pets (adoption fee,
+  daily upkeep, care, bond, ageing, death with grief, rehoming after neglect); adoption (fees to the state, about a
+  month of assessment, placement of a child in care); the care system (children with no relative left, NPC
+  adoptions, leaving care at 18 with a state grant).
+- `src/sim/hobbies.ts`: eight hobbies learned by practice, supplies paid, fitness and social effects, milestones,
+  routine slot; wellbeing counts hobbies kept up in the last week.
+- `Family.kids` records how a child joined the family (`Kid.how`); grandparents and grown-up siblings become
+  guardians. Each child at home costs `B.family.childPerDay` (everyone). Coming of age is funded by the family
+  (`newResident({ funded })`), not minted.
+- Memories carry a subject (`Memory.about`; `remember(…, about)`, `memoriesOf(w, id, about)`), stories a protagonist
+  (`protagonist`, used by `Ctx.p`); `familyRegard` gives reputation by association. Succession (L6) switches both.
+- `src/engine/budget.ts`: every player money movement summed by category and calendar month (13 months kept).
+
 ## Tests
 - `tests/life.test.ts` (6): death/estate/offices, special election, emigration, coming of age, the player's romance,
   population churn with the audit.
@@ -183,6 +198,5 @@ and employment (1.5), policing, crime careers and prisons (1.7), and weather and
 - NPC children are compact records until 18; only the player's own family will get full child citizens (L2/L5).
 - Player mortality is not enabled until succession exists (L5/L6).
 - Institutions (schools, clinics), housing, obligations, wills and heirs are not built yet (L3–L6).
-- Story protagonists and memory subjects are still implicit (L2).
 - A daily-hook chunk can take one to two seconds on a full-size world, so a long advance is responsive between
   chunks rather than continuously; measured: a 36-day year in about 30 s at 8 people per region in the browser.

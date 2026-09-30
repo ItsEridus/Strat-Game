@@ -5,6 +5,7 @@ import type { AccountRef, AssetId, Inventory, ItemKey, Wallet, World } from '../
 import { B } from '../data/balance';
 import { weightOf } from '../data/items';
 import { GOLD } from './money';
+import { budgetRecord } from './budget';
 
 export interface Account { wallet: Wallet; inv: Inventory; cap: number }
 
@@ -56,6 +57,7 @@ function track(w: World, ref: AccountRef, text: string, amount: number, asset: A
   if (ref.k === 'cit' && ref.id === w.playerId) {
     w.ledger.unshift({ t: w.time, text, amount, asset, ref: refKey(ref) });
     if (w.ledger.length > 300) w.ledger.length = 300;
+    budgetRecord(w, text, amount, asset);
   }
 }
 

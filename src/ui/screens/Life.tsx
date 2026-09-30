@@ -1,11 +1,12 @@
+import { useState } from 'preact/hooks';
 // The life hub: one place for who you are, how you are, the people in your life,
 // your money, your routine and what comes next.
-import { fmtDate } from '../../engine/calendar';
+import { MONTHS, fmtDate } from '../../engine/calendar';
 import type { Citizen, World } from '../../sim/types';
 import { ActBtn, Bar, Btn, CitLink, Empty, Help, Panel, RegionLink, Stat } from '../common';
 import { store } from '../store';
 import { B } from '../../data/balance';
-import { DAY, fmtDur } from '../../engine/clock';
+import { fmtDur } from '../../engine/clock';
 import { c as cur, fmtAmt } from '../../engine/money';
 import { player, maxEnergy } from '../../sim/query';
 import { ageOf, calendarPace, nextBirthday, reputation } from '../../sim/growth';
@@ -181,23 +182,34 @@ function People({ w, p }: { w: World; p: Citizen }) {
 }
 
 function Budget({ w, p }: { w: World; p: Citizen }) {
-  const cur = w.nations[p.nation].cur;
-  const since = w.time - 30 * DAY;
-  const rows = w.ledger.filter((e) => e.t >= since && e.asset === cur);
-  const income = rows.filter((e) => e.amount > 0).reduce((t, e) => t + e.amount, 0);
-  const spend = rows.filter((e) => e.amount < 0).reduce((t, e) => t - e.amount, 0);
-  const cats = new Map<string, number>();
-  for (const e of rows) { const k = e.text.replace(/ (from|to|at|in|for) .*$/, '').replace(/[0-9#]+/g, '').trim() || 'Other'; cats.set(k, (cats.get(k) ?? 0) + e.amount); }
-  const top = [...cats.entries()].sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 6);
+  const code = w.nations[p.nation].cur;
+  const months = (w.budget ?? []).filter((m) => m.asset[code]);
+  const [idx, setIdx] = useState(-1);
+  const m = months.at(idx) ?? months.at(-1);
+  const cats = Object.entries(m?.asset[code] ?? {});
+  const inc = cats.filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+  const out = cats.filter(([, v]) => v < 0).sort((a, b) => a[1] - b[1]);
+  const total = (xs: [string, number][]) => xs.reduce((t, [, v]) => t + v, 0);
+  const kids = p.family?.kids.length ?? 0;
+  const fixed = cur(B.living.perDay) + cur(B.family.childPerDay) * kids + petsOf(w, p).reduce((t, x) => t + cur(PET_KINDS[x.kind].upkeep), 0);
+  const cash = p.wallet[code] ?? 0;
+  const label = (key: string) => { const [y, mo] = key.split('-').map(Number); return `${MONTHS[mo - 1]} ${y}`; };
+  const row = ([k, v]: [string, number]) => <tr><td>{k}</td><td class={`num ${v >= 0 ? 'good' : 'bad'}`}>{v >= 0 ? '+' : '−'}{fmtAmt(code, Math.abs(v))}</td></tr>;
   return (
     <div>
-      <div class="stats">
-        <Stat label="Cash">{fmtAmt(cur, p.wallet[cur] ?? 0)}</Stat>
-        <Stat label="In (30 days)">{fmtAmt(cur, income)}</Stat>
-        <Stat label="Out (30 days)">{fmtAmt(cur, spend)}</Stat>
+      <div class="row between">
+        <Btn small kind="ghost" why={!m || months.indexOf(m) <= 0 ? 'No earlier month' : null} onClick={() => setIdx(months.indexOf(m!) - 1 - months.length)}>‹</Btn>
+        <b>{m ? label(m.key) : 'This month'}</b>
+        <Btn small kind="ghost" why={!m || months.indexOf(m) >= months.length - 1 ? 'No later month' : null} onClick={() => setIdx(months.indexOf(m!) + 1 - months.length)}>›</Btn>
       </div>
-      {top.length ? <table class="table compact small"><tbody>{top.map(([k, v]) => <tr><td>{k}</td><td class={`num ${v >= 0 ? 'good' : 'bad'}`}>{v >= 0 ? '+' : '−'}{fmtAmt(cur, Math.abs(v))}</td></tr>)}</tbody></table> : <Empty>No transactions in the last 30 days.</Empty>}
-      <small class="muted">From your actual transactions (last 300 kept). Daily living costs are paid automatically.</small>
+      <div class="stats">
+        <Stat label="Cash">{fmtAmt(code, cash)}</Stat>
+        <Stat label="Money in">{fmtAmt(code, total(inc))}</Stat>
+        <Stat label="Money out">{fmtAmt(code, -total(out))}</Stat>
+        <Stat label="Net">{total(cats) >= 0 ? '+' : '−'}{fmtAmt(code, Math.abs(total(cats)))}</Stat>
+      </div>
+      {cats.length ? <table class="table compact small"><tbody>{inc.map(row)}{out.map(row)}</tbody></table> : <Empty>No money in or out yet this month.</Empty>}
+      <p class="small muted">Fixed costs: {fmtAmt(code, fixed)} a day (living{kids ? `, ${kids} child${kids > 1 ? 'ren' : ''}` : ''}{petsOf(w, p).length ? ', pets' : ''}). {fixed > 0 ? `Your cash covers about ${Math.floor(cash / fixed)} days of them.` : ''}</p>
     </div>
   );
 }

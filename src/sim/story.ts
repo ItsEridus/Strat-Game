@@ -88,7 +88,8 @@ export function registerStory(...defs: StoryDef[]) {
 /** Everything a stage needs to describe itself and act. */
 export class Ctx {
   constructor(readonly w: World, readonly inst: StoryInstance) {}
-  get p() { return player(this.w); }
+  /** The story's protagonist: whoever it is about (the player at the time it began, or their heir after succession). */
+  get p() { return protagonist(this.w, this.inst); }
   get def() { return STORIES[this.inst.def]; }
   cit(role: string): Citizen | undefined { const id = this.inst.bind[role]; return typeof id === 'number' ? this.w.citizens[id] : undefined; }
   num(key: string): number { return Number(this.inst.data[key] ?? this.inst.bind[key] ?? 0); }
@@ -129,12 +130,14 @@ export function journal(w: World, e: Omit<JournalEntry, 'id' | 't'>) {
 }
 
 /** Relationship change with a reason the person remembers. */
-export function remember(w: World, npc: Citizen, delta: number, text: string, visibility: Memory['visibility'] = 'private', story?: Id) {
-  const p = player(w);
-  if (delta) adjustRel(npc, p.id, delta);
+export function remember(w: World, npc: Citizen, delta: number, text: string, visibility: Memory['visibility'] = 'private', story?: Id, about: Id = w.playerId) {
+  if (delta) adjustRel(npc, about, delta);
   const list = (w.story.memories[npc.id] ??= []);
-  list.push({ t: w.time, text, delta, visibility, story, about: p.id });
-  if (list.length > 10) list.splice(0, list.length - 10);
+  list.push({ t: w.time, text, delta, visibility, story, about });
+  // Up to ten memories per subject (the player now, their heir later).
+  const mine = list.filter((m) => m.about === about);
+  if (mine.length > 10) list.splice(list.indexOf(mine[0]), 1);
+  if (list.length > 30) list.splice(0, list.length - 30);
   // Bounded overall: forget the people with the oldest memories first.
   const ids = Object.keys(w.story.memories);
   if (ids.length > 600) {
@@ -142,7 +145,23 @@ export function remember(w: World, npc: Citizen, delta: number, text: string, vi
     for (const x of byAge.slice(0, ids.length - 500)) delete w.story.memories[+x.id];
   }
 }
-export const memoriesOf = (w: World, id: Id): Memory[] => w.story.memories[id] ?? [];
+/** What someone remembers about a person (the player by default). */
+export const memoriesOf = (w: World, id: Id, about: Id = w.playerId): Memory[] => (w.story.memories[id] ?? []).filter((m) => (m.about ?? w.playerId) === about);
+/** Whom a story is about: its protagonist while alive, else the current player. */
+export function protagonist(w: World, inst: StoryInstance): Citizen {
+  const c = inst.who != null ? w.citizens[inst.who] : undefined;
+  return c && !c.gone ? c : player(w);
+}
+/**
+ * Reputation by association: what someone remembers about one's close family
+ * (partner, parents, children), counted at a quarter. Heirs start with it.
+ */
+export function familyRegard(w: World, npcId: Id, c: Citizen): number {
+  const f = c.family;
+  if (!f) return 0;
+  const kin = new Set<Id>([...(f.partner != null ? [f.partner] : []), ...f.parents, ...f.children]);
+  return Math.round((w.story.memories[npcId] ?? []).filter((m) => m.about != null && kin.has(m.about)).reduce((t, m) => t + m.delta, 0) / 4);
+}
 
 export const isOpen = (i: StoryInstance) => i.status === 'offered' || i.status === 'active' || i.status === 'waiting';
 

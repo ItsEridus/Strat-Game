@@ -3,6 +3,17 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.3.9: your monthly budget
+
+- **A real budget.** The Life screen's money panel now covers whole calendar months: money in and out by category
+  (wages, investments, living costs, children, pets, hobbies, gifts, taxes, trade, business and more), the net
+  result, and arrows to look back up to a year. Before, it only read your last 300 transactions.
+- **Fixed costs.** It shows what you pay every day for living, children and pets, and how many days your cash
+  would cover them.
+- **People remember your family.** A person's profile now says when they think well of your family, or hold
+  something against it. What someone remembers about your partner, parents or children counts for a little.
+- **Dates in memories.** "What they remember about you" shows real dates instead of day numbers.
+
 ### New in 1.3.8: adoption, guardians and the cost of children
 
 - **Adopt a child.** Apply from the Life screen, on your own or as a married couple. The fees go to the state. A
