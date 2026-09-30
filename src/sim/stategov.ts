@@ -10,6 +10,7 @@
 // treasury, and spends on welfare (to households), infrastructure (raises a
 // production bonus) and business support (subsidies to local companies).
 // Heads are generated officials or full citizens, including the player.
+import { fmtDay } from '../engine/calendar';
 import { isAdult, repNeed, standing } from './growth';
 import type { Company, Id, Ideology, StateCandidate, StateGov, World } from './types';
 import { localNews } from './life';
@@ -170,7 +171,7 @@ function openRegistration(w: World, s: StateGov, announce = true) {
     const p = player(w);
     if (p.loc === r.id && p.nation === r.owner) {
       const tpl = govTemplate(w, r.id)!;
-      notify(w, 'politics', `🗳️ ${r.name} elects its ${tpl.title} on day ${dayOf(s.nextElection)}. Residents can vote; well-known citizens can still run (Map → ${r.name}).`, { link: 'map' });
+      notify(w, 'politics', `🗳️ ${r.name} elects its ${tpl.title} on ${fmtDay(s.nextElection)}. Residents can vote; well-known citizens can still run (Map → ${r.name}).`, { link: 'map' });
     }
   }
 }
@@ -296,7 +297,7 @@ export function runCheck(w: World, cid: Id, rid: Id): string | null {
   if (why) return why;
   const s = w.govs[rid]!;
   if (s.candidates.some((c) => c.cit === cid)) return 'You are already a candidate.';
-  if (w.time < s.nextElection - B.state.regDays * DAY) return `Registration opens on day ${dayOf(s.nextElection - B.state.regDays * DAY)}.`;
+  if (w.time < s.nextElection - B.state.regDays * DAY) return `Registration opens on ${fmtDay(s.nextElection - B.state.regDays * DAY)}.`;
   if (Object.values(w.govs).some((x) => x && x.region !== rid && x.candidates.some((c) => c.cit === cid))) return 'You are already running elsewhere.';
   return null;
 }
@@ -307,7 +308,7 @@ export function runForHead(w: World, cid: Id, rid: Id): Result {
   const s = w.govs[rid]!;
   const c = w.citizens[cid];
   s.candidates.push({ name: c.name, ideo: c.ideo, cit: cid, campaign: 0 });
-  return ok(`You are a candidate for ${govTemplate(w, rid)!.title} of ${w.regions[rid].name} (election day ${dayOf(s.nextElection)}).`);
+  return ok(`You are a candidate for ${govTemplate(w, rid)!.title} of ${w.regions[rid].name} (election on ${fmtDay(s.nextElection)}).`);
 }
 
 export function voteCheck(w: World, cid: Id, rid: Id, idx: number): string | null {
@@ -315,7 +316,7 @@ export function voteCheck(w: World, cid: Id, rid: Id, idx: number): string | nul
   const tpl = govTemplate(w, rid);
   const c = w.citizens[cid];
   if (!s || !tpl || tpl.mode !== 'elected') return 'No election here.';
-  if (!s.candidates.length) return `No race open yet (election day ${dayOf(s.nextElection)}).`;
+  if (!s.candidates.length) return `No race open yet (election on ${fmtDay(s.nextElection)}).`;
   if (c.nation !== w.regions[rid].owner || c.loc !== rid) return `Only ${w.nations[w.regions[rid].owner].adj} citizens living in ${w.regions[rid].name} can vote.`;
   if (s.voted.includes(cid)) return 'You already voted in this election.';
   if (!s.candidates[idx]) return 'Unknown candidate.';
@@ -355,7 +356,7 @@ export function setStateTax(w: World, actor: Id | 'npc', rid: Id, value: number)
   if (!Number.isInteger(value) || value < 0 || value > cap) return fail(cap === 0 ? `${w.regions[rid].name} does not tax wages.` : `The tax must be between 0% and ${cap}%.`);
   if (value === s.tax) return fail('That is the current rate.');
   if (Math.abs(value - s.tax) > B.state.taxStep) return fail(`Change the tax by at most ${B.state.taxStep} points at a time.`);
-  if (w.time - s.lastTaxChange < B.state.taxCooldownDays * DAY) return fail(`The legislature considered the tax recently; wait until day ${dayOf(s.lastTaxChange + B.state.taxCooldownDays * DAY)}.`);
+  if (w.time - s.lastTaxChange < B.state.taxCooldownDays * DAY) return fail(`The legislature considered the tax recently; wait until ${fmtDay(s.lastTaxChange + B.state.taxCooldownDays * DAY)}.`);
   const tpl = govTemplate(w, rid)!;
   const support = tpl.mode === 'appointed' ? 1 : legislatureSupport(s, Math.sign(value - s.tax));
   s.lastTaxChange = w.time;

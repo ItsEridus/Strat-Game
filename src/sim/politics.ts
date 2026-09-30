@@ -2,6 +2,7 @@
 //  - Elections run on the in-game calendar without player intervention.
 //  - Voters are individual AI citizens plus aggregated background blocs.
 //  - Every result stores turnout, tallies, seats and a readable explanation.
+import { fmtDay } from '../engine/calendar';
 import { lifeGate } from './lifecycle';
 import { ageOf, isAdult, repNeed, standing } from './growth';
 import type { Citizen, Election, Id, Ministry, Nation, Party, World } from './types';
@@ -216,7 +217,7 @@ export function scheduleElections(w: World) {
         w.elections[e.id] = e;
         schedule(w, e.regClose, 'electionRegClose', { id: e.id });
         schedule(w, at, 'election', { id: e.id });
-        if (n.id === player(w).nation && kind !== 'party') notify(w, 'politics', `🗳️ ${kind === 'president' ? 'Presidential' : 'Congressional'} election in ${n.name} on day ${dayOf(at)} (registration closes 24h before).`, { link: 'politics' });
+        if (n.id === player(w).nation && kind !== 'party') notify(w, 'politics', `🗳️ ${kind === 'president' ? 'Presidential' : 'Congressional'} election in ${n.name} on ${fmtDay(at)} (registration closes 24h before).`, { link: 'politics' });
       }
     }
   }

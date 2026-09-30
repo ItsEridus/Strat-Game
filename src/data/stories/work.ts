@@ -1,12 +1,13 @@
 // Story chains about work and money: the wage dispute (from three sides), the
 // price of a meal, and borrowed trust. Each binds real companies, strikes,
 // market prices and people, and acts only through their existing rules.
+import { fmtDay } from '../../engine/calendar';
 import type { Citizen, Company, World } from '../../sim/types';
 import type { Choice, Outcome, StoryDef } from '../../sim/story';
 import { Ctx } from '../../sim/story';
 import { moveItems, pay } from '../../engine/ledger';
 import { c as cur } from '../../engine/money';
-import { DAY, HOUR, dayOf } from '../../engine/clock';
+import { DAY, HOUR } from '../../engine/clock';
 import { record } from '../../engine/events';
 import { controller, coref, cref, hhref, today } from '../../sim/query';
 import { residents } from '../../sim/census';
@@ -79,7 +80,7 @@ const WAGE_OWNER: StoryDef = {
         const s = c.cit('spokes'), h = c.cit('hard');
         const bread = listingsFor(c.w, controller(c.w.regions[co.region]), 'food:1')[0]?.price;
         const profit = weekProfit(co);
-        return `In the canteen, ${s?.name ?? 'the spokesperson'} does the talking: “I've worked here since day ${dayOf(s?.jobSince ?? co.founded)}. We're not asking to get rich.${bread ? ` Bread is ${money(code, bread)} now.` : ''}” ${h && h !== s ? `${h.name} cuts in: ` : ''}“${profit > 0 ? `This place made ${money(code, profit)} last week. We saw none of it.` : 'Times are hard for everyone — so share it fairly.'}”`;
+        return `In the canteen, ${s?.name ?? 'the spokesperson'} does the talking: “I've worked here since ${fmtDay(s?.jobSince ?? co.founded)}. We're not asking to get rich.${bread ? ` Bread is ${money(code, bread)} now.` : ''}” ${h && h !== s ? `${h.name} cuts in: ` : ''}“${profit > 0 ? `This place made ${money(code, profit)} last week. We saw none of it.` : 'Times are hard for everyone — so share it fairly.'}”`;
       },
       choices: (c) => {
         const avgRel = staff(c).reduce((t, x) => t + (x.rel[c.p.id] ?? 0), 0) / Math.max(1, staff(c).length);
@@ -372,15 +373,15 @@ const LOAN: StoryDef = {
       text: (c) => { const f = lender(c)!, code = loanCode(c), a = c.num('amount'); return `${f.name} has noticed things are tight for you and offers ${money(code, a)}, to be repaid as ${money(code, Math.round(a * 1.1))} within ten days.${c.num('asked') ? ` (You know they have ${money(code, cash(c.w, f))} of their own${cash(c.w, f) < a * 3 ? ' — this would stretch them' : ''}.)` : ''}`; },
       choices: (c) => [
         ...(c.num('asked') ? [] : [{ id: 'ask', label: '“Can you really spare it?”', hint: 'find out what it costs them', run: (c: Ctx) => { c.set('asked', 1); c.remember(lender(c), 2, 'asked whether I could really afford the loan'); return { text: `${first(lender(c)!.name)} tells you honestly.`, next: 'offer' }; } }]),
-        reply('accept', 'Accept the loan', 'money now; repay in ten days (automatic on the due date)', (c) => { const due = dueAt(c) || c.w.time + 10 * DAY; return { text: `The money is yours. It's due on day ${dayOf(due)}.`, next: 'due', wait: { minutes: Math.max(10, due - 2 * DAY - c.w.time), why: `${money(loanCode(c), owed(c))} due to ${lender(c)?.name} on day ${dayOf(due)}.` } }; }),
+        reply('accept', 'Accept the loan', 'money now; repay in ten days (automatic on the due date)', (c) => { const due = dueAt(c) || c.w.time + 10 * DAY; return { text: `The money is yours. It's due on ${fmtDay(due)}.`, next: 'due', wait: { minutes: Math.max(10, due - 2 * DAY - c.w.time), why: `${money(loanCode(c), owed(c))} due to ${lender(c)?.name} on ${fmtDay(due)}.` } }; }),
         reply('decline', 'Thank them, but decline', 'no debt', (c) => { c.remember(lender(c), 1, 'turned down my loan politely'); return done('They respect it.', 'declined'); }),
       ],
       onExpire: () => done('The offer lapsed.', 'lapsed'),
     },
     due: {
       stale: (c) => (!lender(c) ? 'Your lender is gone.' : null),
-      lead: (c) => `${money(loanCode(c), owed(c))} is due to ${lender(c)?.name} on day ${dayOf(dueAt(c))}.`,
-      text: (c) => `${lender(c)!.name} mentions, lightly, that the loan is due on day ${dayOf(dueAt(c))}: ${money(loanCode(c), owed(c))}. You have ${money(loanCode(c), c.p.wallet[loanCode(c)] ?? 0)}.`,
+      lead: (c) => `${money(loanCode(c), owed(c))} is due to ${lender(c)?.name} on ${fmtDay(dueAt(c))}.`,
+      text: (c) => `${lender(c)!.name} mentions, lightly, that the loan is due on ${fmtDay(dueAt(c))}: ${money(loanCode(c), owed(c))}. You have ${money(loanCode(c), c.p.wallet[loanCode(c)] ?? 0)}.`,
       choices: (c) => {
         const f = lender(c)!, amt = owed(c), code = loanCode(c);
         const odds = Ctx.odds(0.3 + (f.rel[c.p.id] ?? 0) / 150);
@@ -398,9 +399,9 @@ const LOAN: StoryDef = {
             if (!c.roll(odds)) { c.remember(f, -4, 'asked for more time on the loan'); return { text: `${first(f.name)} winces: “I need it on time.”`, next: 'due' }; }
             c.p.flags[`loanDue_${f.id}`] = dueAt(c) + 5 * DAY;
             c.remember(f, -2, 'needed five more days to repay');
-            return { text: `“Fine. Five more days.” New due date: day ${dayOf(dueAt(c))}.`, next: 'due', wait: { minutes: Math.max(10, dueAt(c) - DAY - c.w.time), why: `Loan now due on day ${dayOf(dueAt(c))}.` } };
+            return { text: `“Fine. Five more days.” New due date: ${fmtDay(dueAt(c))}.`, next: 'due', wait: { minutes: Math.max(10, dueAt(c) - DAY - c.w.time), why: `Loan now due on ${fmtDay(dueAt(c))}.` } };
           } });
-          out.push({ id: 'fine', label: 'It will be paid on the day', hint: 'repaid automatically if you have the money', run: (c) => ({ text: 'You make a note.', next: 'settle', wait: { minutes: Math.max(10, dueAt(c) + HOUR * 2 - c.w.time), why: `Repayment due on day ${dayOf(dueAt(c))}.` } }) });
+          out.push({ id: 'fine', label: 'It will be paid on the day', hint: 'repaid automatically if you have the money', run: (c) => ({ text: 'You make a note.', next: 'settle', wait: { minutes: Math.max(10, dueAt(c) + HOUR * 2 - c.w.time), why: `Repayment due on ${fmtDay(dueAt(c))}.` } }) });
         }
         return out;
       },

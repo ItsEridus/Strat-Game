@@ -1,14 +1,14 @@
 // Journal: the stories you are part of — what you know, what is next, what you
 // promised — and what happened. Continue any open story from here.
+import { fmtDay } from '../../engine/calendar';
 import { useState } from 'preact/hooks';
 import type { StoryInstance, World } from '../../sim/types';
 import { Btn, Empty, Help, Panel, RegionLink, Select } from '../common';
 import { store } from '../store';
 import { Ctx, STORIES, openStories, setStoryFrequency, storyIcon, storyTitle } from '../../sim/story';
-import { dayOf } from '../../engine/clock';
 import { player } from '../../sim/query';
 
-const when = (t: number) => `day ${dayOf(t)}, ${String(Math.floor((t % 1440) / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
+const when = (t: number) => `${fmtDay(t)}, ${String(Math.floor((t % 1440) / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
 
 export function Journal({ w }: { w: World }) {
   const [page, setPage] = useState(0);

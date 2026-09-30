@@ -2,6 +2,7 @@
 // rivals and allies form around the player and act on it; NPCs make offers,
 // requests and threats through the inbox; journalists investigate; NPCs build
 // their own relationships and feuds; and everyone reacts to what the player does.
+import { fmtDay } from '../engine/calendar';
 import { ageOf, practise, standing } from './growth';
 import type { Citizen, Id, World } from './types';
 import { remember } from './story';
@@ -190,7 +191,7 @@ export function replyLoan(w: World, payload: Record<string, any>, option: string
   p.flags[`loanDue_${f.id}`] = w.time + 10 * DAY;
   delete p.flags[`loanResult_${f.id}`];
   remember(w, f, 5, `borrowed ${fmtAmt(code, payload.amount)}, to repay ${fmtAmt(code, Math.round(payload.amount * 1.1))}`);
-  return ok(`Borrowed ${fmtAmt(code, payload.amount)} from ${f.name}. Repay ${fmtAmt(code, Math.round(payload.amount * 1.1))} by day ${dayOf(w.time + 10 * DAY)} (automatic).`);
+  return ok(`Borrowed ${fmtAmt(code, payload.amount)} from ${f.name}. Repay ${fmtAmt(code, Math.round(payload.amount * 1.1))} by ${fmtDay(w.time + 10 * DAY)} (automatic).`);
 }
 
 function loansDaily(w: World) {
@@ -405,7 +406,7 @@ export function inTheKnow(w: World, c: Citizen): boolean {
 }
 
 export function activityOf(w: World, c: Citizen): string {
-  if (jailed(w, c)) return `In prison until day ${dayOf(c.sec.jailUntil)}`;
+  if (jailed(w, c)) return `In prison until ${fmtDay(c.sec.jailUntil)}`;
   const n = w.nations[c.nation];
   if (n.president === c.id) return `${n.leader} of ${n.name}`;
   const gov = headOf(w, c.id);

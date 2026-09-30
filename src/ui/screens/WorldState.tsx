@@ -1,16 +1,16 @@
 // World Situation: the business cycle, commodity markets, disasters, epidemics,
 // strikes and unrest — and what you can do about them.
+import { MONTHS, dateAt } from '../../engine/calendar';
+import { fmtDay } from '../../engine/calendar';
 import { useState } from 'preact/hooks';
 import type { World } from '../../sim/types';
 import { ActBtn, Empty, Help, Num, Panel, RegionLink, Sparkline } from '../common';
 import { player } from '../../sim/query';
-import { dayOf } from '../../engine/clock';
 import { c as cur, fmtAmt } from '../../engine/money';
 import { EARTH } from '../../data/earth';
 import { HAZARDS } from '../../data/hazards';
 import { KIND_ICON, activeCrises, donate, joinProtest, joinProtestCheck, lockdownCheck, monthOf, reliefCheck, toggleLockdown, volunteer } from '../../sim/dynamics';
 
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const PHASE: Record<string, string> = { boom: '📈 Boom', expansion: '↗️ Expansion', slowdown: '↘️ Slowdown', recession: '📉 Recession' };
 
 export function WorldState({ w }: { w: World }) {
@@ -34,7 +34,7 @@ export function WorldState({ w }: { w: World }) {
         <Help>The world economy moves in cycles: booms lift household spending (and wage pressure), recessions cut it and push crime and unrest up. Commodity shocks change raw-material output for every producer.</Help>
       </Panel>
 
-      <Panel title={`📅 ${MONTHS[month - 1]} (year ${Math.floor(dayOf(w.time) / (12 * w.settings.monthLen)) + 1})`}>
+      <Panel title={`📅 ${MONTHS[month - 1]} ${dateAt(w.time).year}`}>
         <p class="small">In season for {w.nations[p.nation].name}: {season.join(', ') || 'no major hazards'}.</p>
         <Help>Disasters strike their real hazard zones in season: hurricanes on the Gulf coast, typhoons in East Asia, earthquakes along fault lines, monsoon floods, wildfires, blizzards and droughts. Epidemics can start anywhere and spread along borders.</Help>
       </Panel>
@@ -45,7 +45,7 @@ export function WorldState({ w }: { w: World }) {
           const natural = ['hurricane', 'earthquake', 'flood', 'wildfire', 'blizzard', 'drought', 'epidemic'].includes(c.kind);
           return (
             <div class="card">
-              <b>{KIND_ICON[c.kind]} {c.name}</b> <small class="muted">since day {dayOf(c.start)} · until ~day {dayOf(c.end)}{c.severity > 1 ? ` · severity ${c.severity}` : ''}{c.deaths ? ` · ${c.deaths.toLocaleString()} dead` : ''}{c.relief ? ` · relief ${fmtAmt(c.nation != null ? w.nations[c.nation].cur : 'USD', c.relief)}` : ''}</small>
+              <b>{KIND_ICON[c.kind]} {c.name}</b> <small class="muted">since {fmtDay(c.start)} · until ~{fmtDay(c.end)}{c.severity > 1 ? ` · severity ${c.severity}` : ''}{c.deaths ? ` · ${c.deaths.toLocaleString()} dead` : ''}{c.relief ? ` · relief ${fmtAmt(c.nation != null ? w.nations[c.nation].cur : 'USD', c.relief)}` : ''}</small>
               {c.regions.length > 0 && <p class="small">Affected: {c.regions.slice(0, 12).map((r, i) => <>{i ? ', ' : ''}<RegionLink w={w} id={r} />{c.lockdown?.includes(r) ? ' 🔒' : ''}</>)}{c.regions.length > 12 ? ` +${c.regions.length - 12} more` : ''}</p>}
               <div class="row small">
                 {natural && <ActBtn small why={reliefCheck(w, p, c.id)} showWhy={here} run={(w) => volunteer(w, p, c.id)}>Volunteer (−20⚡)</ActBtn>}
@@ -59,7 +59,7 @@ export function WorldState({ w }: { w: World }) {
       </Panel>
 
       <Panel title="🗓️ Recent history">
-        {past.length ? <ul class="small">{past.map((c) => <li>{KIND_ICON[c.kind]} {c.name} (day {dayOf(c.start)}–{dayOf(c.end)}){c.deaths ? `, ${c.deaths.toLocaleString()} dead` : ''}</li>)}</ul> : <Empty>No past events yet.</Empty>}
+        {past.length ? <ul class="small">{past.map((c) => <li>{KIND_ICON[c.kind]} {c.name} ({fmtDay(c.start)} – {fmtDay(c.end)}){c.deaths ? `, ${c.deaths.toLocaleString()} dead` : ''}</li>)}</ul> : <Empty>No past events yet.</Empty>}
       </Panel>
     </div>
   );

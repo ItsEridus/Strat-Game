@@ -2,7 +2,9 @@ import { useState } from 'preact/hooks';
 import { Emblem, HUD_ICONS } from './icons';
 import { SPEED_LABELS, store, useStore } from './store';
 import { Bar, Amt } from './common';
-import { DAY, fmtClock, fmtDur } from '../engine/clock';
+import { DAY, dayOf, fmtDur } from '../engine/clock';
+import { SEASON_ICON, fmtDate, fmtTime, partOfDay, seasonAt } from '../engine/calendar';
+import { latitudeOf } from '../data/earth';
 import { GOLD } from '../engine/money';
 import { allowanceCap, allowanceEta, energyEta } from '../sim/citizen';
 import { controller, maxEnergy, player } from '../sim/query';
@@ -23,14 +25,18 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
     <header class="topbar">
       <button class="menu-btn" onClick={onMenu} aria-label="Menu"><HUD_ICONS.menu size={18} /></button>
       <div class="brand"><Emblem size={30} /><span class="word">MERIDIAN&nbsp;REACH</span></div>
-      <div class="clock">
-        <b>{fmtClock(w)}</b>
+      <div class="clock" title={`Day ${dayOf(w.time)} of the campaign · ${SPEED_LABELS[speed]}`}>
+        <div class="clock-face">
+          <b class="clock-time">{fmtTime(w.time + s.pendingMinutes, !!w.settings.clock24)}</b>
+          <span class="clock-date">{fmtDate(w.time, 'long')}</span>
+        </div>
         <div class="speeds">
           {[0, 1, 2, 3, 4].map((k) => (
             <button class={speed === k ? 'on' : ''} title={SPEED_LABELS[k]} onClick={() => store.setSpeed(k)}>
               {k === 0 ? '⏸' : '▶'.repeat(k)}
             </button>
           ))}
+          <span class="clock-desc">{partOfDay(w.time).icon} {partOfDay(w.time).name} · {SEASON_ICON[seasonAt(w.time, latitudeOf(p.loc))]} {seasonAt(w.time, latitudeOf(p.loc))}</span>
           <div class="adv">
             <button onClick={() => setOpen(!open)} title="Advance time to an event">⏭ Advance</button>
             {open && (

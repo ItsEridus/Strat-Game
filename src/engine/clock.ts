@@ -1,5 +1,6 @@
 // Simulation clock. Time is integer minutes since day 0 00:00. The engine steps in
 // 10-minute ticks; hourly and daily processing hang off tick boundaries.
+import { fmtDate, fmtTime } from './calendar';
 import type { World } from '../sim/types';
 
 export const TICK = 10;
@@ -16,11 +17,9 @@ export function monthOf(w: World, t = w.time) {
   return { month: Math.floor(d / len) + 1, dom: (d % len) + 1 };
 }
 
+/** Date and time for logs and panels, e.g. "Tue 14 Mar 2030 · 9:40 am". */
 export function fmtClock(w: World, t = w.time): string {
-  const { month, dom } = monthOf(w, t);
-  const h = String(hourOf(t)).padStart(2, '0');
-  const m = String(t % 60).padStart(2, '0');
-  return `Day ${dayOf(t)} · M${month} D${dom} · ${h}:${m}`;
+  return `${fmtDate(t, 'medium')} · ${fmtTime(t, !!w.settings.clock24)}`;
 }
 
 export function fmtDur(min: number): string {
@@ -28,6 +27,8 @@ export function fmtDur(min: number): string {
   const d = Math.floor(min / DAY);
   const h = Math.floor((min % DAY) / HOUR);
   const m = min % 60;
+  if (d >= 730) return `${(d / 365).toFixed(1)} years`;
+  if (d >= 60) return `${Math.round(d / 30.4)} months`;
   if (d) return `${d}d ${h}h`;
   if (h) return `${h}h ${m}m`;
   return `${m}m`;

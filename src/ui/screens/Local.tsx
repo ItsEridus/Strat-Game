@@ -1,6 +1,9 @@
 // Neighbourhood: the place you are in right now — its people, what they are
 // doing this hour, what worries them, its businesses and its news — and the
 // things you can do here in person: talk, canvass, hold a rally.
+import { SEASON_ICON, fmtDate, partOfDay, seasonAt } from '../../engine/calendar';
+import { latitudeOf } from '../../data/earth';
+import { fmtDay } from '../../engine/calendar';
 import { ageOf } from '../../sim/growth';
 import { useState } from 'preact/hooks';
 import type { Citizen, World } from '../../sim/types';
@@ -14,13 +17,9 @@ import { ISSUES, ISSUE_INFO, attitude, canvass, canvassCheck, holdRally, localIs
 import { govTemplate } from '../../sim/stategov';
 import { IDEOLOGIES } from '../../data/ideologies';
 import { INDUSTRY_INFO } from '../../data/items';
-import { dayOf, hourOf } from '../../engine/clock';
-import { monthOf } from '../../sim/dynamics';
 
 type Filter = 'here' | 'residents' | 'friends' | 'pledged';
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-function timeOfDay(h: number) { return h < 5 ? 'Night' : h < 12 ? 'Morning' : h < 17 ? 'Afternoon' : h < 21 ? 'Evening' : 'Night'; }
 
 export function Local({ w }: { w: World }) {
   const p = player(w);
@@ -44,13 +43,12 @@ export function Local({ w }: { w: World }) {
   const shown = pool.slice(page * per, page * per + per);
   const cos = companiesIn(w, r.id).slice().sort((a, b) => (b.offer && b.workers.length < b.offer.slots ? 1 : 0) - (a.offer && a.workers.length < a.offer.slots ? 1 : 0) || b.workers.length - a.workers.length);
   const news = (r.news ?? []).slice().reverse();
-  const h = hourOf(w.time);
   return (
     <div class="grid local">
       <section class="panel wide local-hero">
         <div>
           <h2>{r.name}</h2>
-          <p class="muted">{timeOfDay(h)} · {MONTHS[(monthOf(w) - 1) % 12]} · {n.name}{r.occ ? ` (occupied by ${w.nations[r.occ.nation].name})` : ''}
+          <p class="muted">{partOfDay(w.time).icon} {partOfDay(w.time).name} · {fmtDate(w.time, 'long')} · {SEASON_ICON[seasonAt(w.time, latitudeOf(r.id))]} {seasonAt(w.time, latitudeOf(r.id))} · {n.name}{r.occ ? ` (occupied by ${w.nations[r.occ.nation].name})` : ''}
             {s?.head.name ? <> · {tpl?.title} {s.head.cit != null ? <CitLink w={w} id={s.head.cit} /> : s.head.name} ({IDEOLOGIES[s.head.ideo].name})</> : null}</p>
           <p>{pop.length.toLocaleString()} citizens live here among {r.pop.toLocaleString()} residents. The mood is <b class={mood > 0.15 ? 'good' : mood < -0.15 ? 'bad' : ''}>{mood > 0.3 ? 'upbeat' : mood > 0.1 ? 'content' : mood > -0.1 ? 'uneasy' : 'angry'}</b>.</p>
           <div class="doing-row">{(Object.keys(DOING_INFO) as (keyof typeof DOING_INFO)[]).filter((k) => counts[k] > 0).map((k) => <span class="chip">{DOING_INFO[k].icon} {counts[k]} {DOING_INFO[k].label}</span>)}</div>
@@ -87,7 +85,7 @@ export function Local({ w }: { w: World }) {
       </Panel>
 
       <Panel title="📰 Local news">
-        {news.length ? <ul class="news small">{news.map((x) => <li><small class="muted">day {dayOf(x.t)}</small> {x.text}</li>)}</ul> : <Empty>A quiet place. Nothing has made the local paper lately.</Empty>}
+        {news.length ? <ul class="news small">{news.map((x) => <li><small class="muted">{fmtDay(x.t)}</small> {x.text}</li>)}</ul> : <Empty>A quiet place. Nothing has made the local paper lately.</Empty>}
         <div class="row small">Elsewhere: {w.regions[r.id].links.slice(0, 6).map((l) => <RegionLink w={w} id={l} />).reduce((a: any[], x, i) => (i ? [...a, ', ', x] : [x]), [])}</div>
       </Panel>
     </div>

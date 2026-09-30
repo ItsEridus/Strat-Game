@@ -1,5 +1,6 @@
 // State / provincial government: the region panel on the map, and the table of
 // a nation's states on the Country screen.
+import { fmtDay } from '../../engine/calendar';
 import { census } from '../../sim/census';
 import { useState } from 'preact/hooks';
 import type { Id, Region, World } from '../../sim/types';
@@ -9,7 +10,7 @@ import { player } from '../../sim/query';
 import { B } from '../../data/balance';
 import { EARTH } from '../../data/earth';
 import { IDEOLOGIES, IDEOLOGY_LIST } from '../../data/ideologies';
-import { dayOf, DAY } from '../../engine/clock';
+import { DAY } from '../../engine/clock';
 import { c as cur } from '../../engine/money';
 import {
   appointCheck, appointHead, campaign, govTemplate, headOf, legislatureSupport, resignHead, runCheck, runForHead,
@@ -40,17 +41,17 @@ export function StateGovPanel({ w, r }: { w: World; r: Region }) {
       <h4>{tpl.mode === 'appointed' ? '🏛️' : '🗳️'} {r.name} government <small class="muted">· seat {e.seat}</small></h4>
       {r.occ && <p class="small warn">Suspended while occupied: no state taxes, spending or elections.</p>}
       <table class="table compact"><tbody>
-        <tr><td>{tpl.title}</td><td>{s.head.cit != null ? <CitLink w={w} id={s.head.cit} /> : s.head.name} <span class="ideo-chip" style={{ background: IDEOLOGIES[s.head.ideo].color }}>{IDEOLOGIES[s.head.ideo].name}</span> <small class="muted">{tpl.mode === 'appointed' ? 'appointed' : 'elected'} day {dayOf(s.head.since)}</small></td></tr>
+        <tr><td>{tpl.title}</td><td>{s.head.cit != null ? <CitLink w={w} id={s.head.cit} /> : s.head.name} <span class="ideo-chip" style={{ background: IDEOLOGIES[s.head.ideo].color }}>{IDEOLOGIES[s.head.ideo].name}</span> <small class="muted">{tpl.mode === 'appointed' ? 'appointed' : 'elected'} {fmtDay(s.head.since)}</small></td></tr>
         <tr><td>Approval</td><td>{Math.round(s.approval)}%</td></tr>
         <tr><td>{tpl.legislature}</td><td><SeatBar seats={s.seats} size={s.size} /> <small class="muted">{s.size} seats</small></td></tr>
         <tr><td>State wage tax</td><td>{s.tax}%{taxCap(w, r.id) === 0 ? <small class="muted"> (no wage tax by law)</small> : null} <small class="muted">on shifts worked here, on top of national {w.nations[r.owner].taxes.work}%</small></td></tr>
         <tr><td>Treasury</td><td><Amt asset={code} v={s.wallet[code] ?? 0} /> <Sparkline values={s.stats.revHist} width={80} height={18} /></td></tr>
         <tr><td>Budget</td><td class="small">welfare {Math.round(s.budget.welfare * 100)}% · infrastructure {Math.round(s.budget.infra * 100)}% · business {Math.round(s.budget.business * 100)}% · police {Math.round(s.budget.police * 100)}% · spends {Math.round(s.spendRate * 100)}%/day</td></tr>
         <tr><td>Infrastructure</td><td>level {s.dev}/{B.state.devMax} <small class="muted">(+{Math.round(s.dev * B.state.devBonus * 100)}% production)</small></td></tr>
-        <tr><td>{tpl.mode === 'elected' ? 'Next election' : 'Term review'}</td><td>day {dayOf(s.nextElection)}</td></tr>
+        <tr><td>{tpl.mode === 'elected' ? 'Next election' : 'Term review'}</td><td>{fmtDay(s.nextElection)}</td></tr>
         <tr><td>Electorate leans</td><td class="small">{IDEOLOGY_LIST.filter((i) => s.lean[i] > 0.08).sort((a, b) => s.lean[b] - s.lean[a]).map((i) => `${IDEOLOGIES[i].name} ${Math.round(s.lean[i] * 100)}%`).join(' · ')}</td></tr>
       </tbody></table>
-      {s.last && <p class="small muted">Last election (day {dayOf(s.last.at)}): {s.last.results.map((x) => `${x.name} ${Math.round((x.votes / Math.max(1, s.last!.turnout)) * 100)}%`).join(' · ')}</p>}
+      {s.last && <p class="small muted">Last election ({fmtDay(s.last.at)}): {s.last.results.map((x) => `${x.name} ${Math.round((x.votes / Math.max(1, s.last!.turnout)) * 100)}%`).join(' · ')}</p>}
       {tpl.mode === 'elected' && <ElectionBox w={w} r={r} regOpen={regOpen} />}
       {tpl.mode === 'appointed' && <AppointBox w={w} r={r} />}
       {isHead && <HeadControls w={w} r={r} />}
@@ -73,7 +74,7 @@ function ElectionBox({ w, r, regOpen }: { w: World; r: Region; regOpen: boolean 
               <td><ActBtn small why={voteCheck(w, p.id, r.id, i)} showWhy={false} run={(w) => voteState(w, p.id, r.id, i)}>Vote</ActBtn></td></tr>
           ))}</tbody></table>
         </>
-      ) : <p class="small muted">{regOpen ? 'Registration is open.' : `Registration opens on day ${dayOf(s.nextElection - B.state.regDays * DAY)}.`}</p>}
+      ) : <p class="small muted">{regOpen ? 'Registration is open.' : `Registration opens on ${fmtDay(s.nextElection - B.state.regDays * DAY)}.`}</p>}
       {!mine && <ActBtn small why={runCheck(w, p.id, r.id)} run={(w) => runForHead(w, p.id, r.id)}>Run for {govTemplate(w, r.id)!.title}</ActBtn>}
       {mine && (
         <div class="row small">Campaign spending <Num value={amt} onInput={setAmt} min={1} width={80} /> {s.cur}
@@ -156,7 +157,7 @@ export function StatesTable({ w, nation }: { w: World; nation: Id }) {
                 <td>{s.tax}%</td>
                 <td><Amt asset={s.cur} v={s.wallet[s.cur] ?? 0} /></td>
                 <td>{s.dev}</td>
-                <td>{tpl.mode === 'elected' ? `day ${dayOf(s.nextElection)}` : 'appointed'}</td>
+                <td>{tpl.mode === 'elected' ? `${fmtDay(s.nextElection)}` : 'appointed'}</td>
               </> : <td colSpan={7} class="muted">governed directly by the national government</td>}
             </tr>
           );

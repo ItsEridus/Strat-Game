@@ -136,7 +136,10 @@ a { color: var(--gold); }
 .brand .word { background: linear-gradient(180deg, var(--gold-hi), var(--gold) 55%, var(--gold-lo)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .menu-btn { display: none; align-items: center; justify-content: center; background: var(--ink-3); border: 1px solid var(--line-2); color: var(--text); border-radius: 8px; width: 36px; height: 36px; cursor: pointer; }
 .clock { display: flex; flex-direction: column; gap: 4px; }
-.clock b { font: 600 1.08rem/1 var(--font-display); letter-spacing: .06em; font-variant-numeric: tabular-nums; color: var(--text); }
+.clock-face { display: flex; align-items: baseline; gap: .6rem; white-space: nowrap; }
+.clock-time { font: 700 1.35rem/1 var(--font-display); letter-spacing: .04em; font-variant-numeric: tabular-nums; color: var(--text); min-width: 5.2ch; }
+.clock-date { font: 600 .9rem/1 var(--font-display); letter-spacing: .08em; text-transform: uppercase; color: var(--gold-hi); }
+.clock-desc { font-size: .74rem; color: var(--text-2); margin: 0 .2rem 0 .6rem; white-space: nowrap; }
 .speeds { display: flex; gap: 0; align-items: center; }
 .speeds > button { background: var(--ink-3); border: 1px solid var(--line-2); border-left-width: 0; color: var(--text-2); padding: .2rem .55rem; font: 600 .72rem/1.2 var(--font-ui); cursor: pointer; transition: all .15s; }
 .speeds > button:first-child { border-left-width: 1px; border-radius: 7px 0 0 7px; }

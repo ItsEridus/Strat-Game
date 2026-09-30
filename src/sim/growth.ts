@@ -5,6 +5,7 @@
 // opens doors is who you are in the world: your age, your record, your
 // reputation (influence and fame), your years of service. Used identically for
 // the player and AI citizens.
+import { calendarAge, dateAt, nextAnniversary, timeOfDate } from '../engine/calendar';
 import type { Attr, Citizen, World } from './types';
 import { B } from '../data/balance';
 import { DAY } from '../engine/clock';
@@ -18,12 +19,32 @@ import { notify } from '../engine/events';
  */
 export const lifeYear = (w: World) => (w.settings.lifeYearDays ?? 365) * DAY;
 
-/** Age in whole years (negative birth times are people born before the campaign began). */
-export const ageOf = (w: World, c: { born: number }) => Math.floor((w.time - c.born) / lifeYear(w));
+/** Is the pace of life the calendar's own (a year of age per calendar year)? */
+export const calendarPace = (w: World) => (w.settings.lifeYearDays ?? 365) === 365;
+
+/**
+ * Age in whole years. At the calendar pace, ages and birthdays follow real dates
+ * (leap years included); at a faster pace, a year of age is `lifeYearDays` days.
+ * Negative birth times are people born before the campaign began.
+ */
+export const ageOf = (w: World, c: { born: number }) => (calendarPace(w) ? calendarAge(c.born, w.time) : Math.floor((w.time - c.born) / lifeYear(w)));
 /** Exact age in years (fractional). */
 export const ageExact = (w: World, c: { born: number }) => (w.time - c.born) / lifeYear(w);
+/**
+ * The birth time of someone who is `years` old today and had their last birthday
+ * `sinceBirthday` days ago (0 = today is their birthday). Exact under the calendar
+ * (leap years) and at any pace of life.
+ */
+export function bornYearsAgo(w: World, years: number, sinceBirthday = 0): number {
+  if (!calendarPace(w)) return w.time - years * lifeYear(w) - Math.min(sinceBirthday, (w.settings.lifeYearDays ?? 365) - 1) * DAY;
+  const last = w.time - Math.min(sinceBirthday, 364) * DAY; // the date of the last birthday
+  const d = dateAt(last);
+  const y = d.year - years;
+  return timeOfDate(y, d.month, Math.min(d.day, new Date(Date.UTC(y, d.month + 1, 0)).getUTCDate()));
+}
+
 /** When someone next has a birthday. */
-export const nextBirthday = (w: World, c: { born: number }) => c.born + (ageOf(w, c) + 1) * lifeYear(w);
+export const nextBirthday = (w: World, c: { born: number }) => (calendarPace(w) ? nextAnniversary(c.born, w.time) : c.born + (ageOf(w, c) + 1) * lifeYear(w));
 export const isAdult = (w: World, c: Citizen) => ageOf(w, c) >= B.life.adultAge;
 export const cleanRecord = (c: Citizen) => c.sec.record.convictions === 0;
 

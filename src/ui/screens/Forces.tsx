@@ -1,5 +1,6 @@
 // Armed Forces: your nation's army, navy and air force, your service career,
 // command of formations, the defence ministry's controls and the war at sea.
+import { fmtDay } from '../../engine/calendar';
 import { appointChief, appointChiefCheck, commanderInChief, publicOffice, returnToDuty, returnToDutyCheck } from '../../sim/forces';
 import { nationals } from '../../sim/census';
 import { serviceDays } from '../../sim/growth';
@@ -11,7 +12,6 @@ import { nationPerm } from '../../sim/authority';
 import { B } from '../../data/balance';
 import { EARTH } from '../../data/earth';
 import { ALERT_NAMES, BRANCH_ICON, BRANCH_NAME, KINDS, RANKS } from '../../data/military';
-import { dayOf } from '../../engine/clock';
 import {
   canOrder, commandCheck, discharge, disband, dutyCheck, enlist, enlistCheck, formationsOf, navalPower, orderCheck, power, raiseCheck, raiseFormation,
   rankName, reportForDuty, seasOf, setAlert, setDefenseBudget, setOrder, superiority, takeCommand, visible,
@@ -169,7 +169,7 @@ function ServicePanel({ w }: { w: World }) {
   const eligible = formationsOf(w, p.nation).filter((f) => !commandCheck(w, p, f.id));
   return (
     <Panel title={`${BRANCH_ICON[p.mil.branch]} ${rankName(p)}, ${n.adj} ${BRANCH_NAME[p.mil.branch]}`}>
-      <p class="small">Service points {Math.floor(p.mil.sp)} · serving since day {dayOf(p.mil.since)}{cmd ? ` · commanding the ${cmd.name}` : ''}{n.defense.chief === p.id ? ' · Chief of Staff' : ''}</p>
+      <p class="small">Service points {Math.floor(p.mil.sp)} · serving since {fmtDay(p.mil.since)}{cmd ? ` · commanding the ${cmd.name}` : ''}{n.defense.chief === p.id ? ' · Chief of Staff' : ''}</p>
       {next ? <Bar v={p.mil.sp} max={next.sp} color="#e0a526" label={`next: ${next.name} at ${next.sp} SP and ${next.days} days' service${next.flag ? ', 10 days in command' : ''}`} /> : <p class="good small">Highest rank reached.</p>}
       <div class="row">
         <ActBtn kind="primary" why={dutyCheck(w, p)} run={(w) => reportForDuty(w, p)}>Report for duty (−{B.forces.dutyEnergy}⚡)</ActBtn>
@@ -220,7 +220,7 @@ function SeasPanel({ w }: { w: World }) {
     <Panel title="🌊 The seas">
       <table class="table compact small"><thead><tr><th>Sea</th><th>Our power</th><th>Strongest rival seen</th><th>Control</th></tr></thead><tbody>{rows}</tbody></table>
       {blockaded.length > 0 && <p class="small bad">Blockaded: {blockaded.map((r) => r.name).join(', ')} (−{B.forces.blockade * 100}% production; sea lanes cut).</p>}
-      <ul class="small">{w.navalLog.slice(0, 6).map((l) => <li>Day {dayOf(l.t)}: {l.text}</li>)}</ul>
+      <ul class="small">{w.navalLog.slice(0, 6).map((l) => <li>{fmtDay(l.t)}: {l.text}</li>)}</ul>
       <Help>Superiority (20% more naval power than the enemy in a sea) allows amphibious landings on its coasts, blockades enemy coasts during war (production and sea-lane supply cut), and lets armies cross sea lanes.</Help>
     </Panel>
   );

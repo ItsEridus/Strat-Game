@@ -4,6 +4,7 @@
 // residents stand for a slice of their region's electorate, so persuading them
 // moves real votes: state elections blend the residents' choices with the
 // region's standing mood, and national voters weigh relationships and pledges.
+import { fmtDay } from '../engine/calendar';
 import { lifeGate } from './lifecycle';
 import { bump } from './progress';
 import type { Citizen, Convo, Id, Ideology, World } from './types';
@@ -13,7 +14,6 @@ import { IDEOLOGIES } from '../data/ideologies';
 import { fail, ok, type Result } from '../engine/result';
 import { pay } from '../engine/ledger';
 import { c as cur, fmtAmt } from '../engine/money';
-import { dayOf } from '../engine/clock';
 import { record } from '../engine/events';
 import { chance, pick, rand, randInt } from '../engine/rng';
 import { controller, cref, hhref, jailed, player, today } from './query';
@@ -349,7 +349,7 @@ function rumour(w: World, c: Citizen): string {
     },
     () => {
       const s = w.govs[c.home];
-      return s && s.nextElection - w.time < 12 * 1440 ? `“${w.regions[c.home].name} votes on day ${dayOf(s.nextElection)}. ${s.candidates.length ? `${s.candidates.map((x) => x.name).join(', ')} are in the running.` : 'Nobody’s declared yet.'}”` : null;
+      return s && s.nextElection - w.time < 12 * 1440 ? `“${w.regions[c.home].name} votes on ${fmtDay(s.nextElection)}. ${s.candidates.length ? `${s.candidates.map((x) => x.name).join(', ')} are in the running.` : 'Nobody’s declared yet.'}”` : null;
     },
     () => {
       const synd = Object.values(w.syndicates).find((x) => x.turf.includes(c.home) || x.home === c.home);

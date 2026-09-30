@@ -1,12 +1,13 @@
 // The life hub: one place for who you are, how you are, the people in your life,
 // your money, your routine and what comes next.
+import { fmtDate } from '../../engine/calendar';
 import type { Citizen, World } from '../../sim/types';
 import { ActBtn, Bar, Btn, CitLink, Empty, Help, Panel, RegionLink, Stat } from '../common';
 import { store } from '../store';
-import { DAY, fmtClock, fmtDur } from '../../engine/clock';
+import { DAY, fmtDur } from '../../engine/clock';
 import { fmtAmt } from '../../engine/money';
 import { player, maxEnergy } from '../../sim/query';
-import { ageOf, nextBirthday, reputation } from '../../sim/growth';
+import { ageOf, calendarPace, nextBirthday, reputation } from '../../sim/growth';
 import { STAGE_INFO, lifeOf, lifeStage, occupation, routineBudget, routineOf } from '../../sim/lifecycle';
 import { familyTime, familyTimeCheck, rest, restCheck, wellbeingLabel } from '../../sim/wellbeing';
 import { healthLabel } from '../../sim/population';
@@ -32,7 +33,7 @@ export function Life({ w }: { w: World }) {
           <Stat label="Relationship">{STATUS_LABEL[fam.status]}{partner ? <> · <CitLink w={w} id={partner.id} /></> : null}</Stat>
           <Stat label="Reputation">{rep.icon} {rep.name}</Stat>
         </div>
-        <p class="small muted">{fmtClock(w)} · next birthday in {fmtDur(bday - w.time)} · this is a time of {stage.can}. One year of life is {w.settings.lifeYearDays ?? 365} days of world time.</p>
+        <p class="small muted">{fmtDate(w.time, 'long')} · {calendarPace(w) ? `born ${fmtDate(p.born, 'long')} · ` : ''}next birthday {calendarPace(w) ? `on ${fmtDate(bday, 'dayMonth')} (in ${fmtDur(bday - w.time)})` : `in ${fmtDur(bday - w.time)}`} · a time of {stage.can}.{calendarPace(w) ? '' : ` People age ${Math.round(365 / (w.settings.lifeYearDays ?? 365))} years per calendar year.`}</p>
       </Panel>
 
       <Panel title="How you are">

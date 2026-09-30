@@ -14,6 +14,7 @@ what remains, and the known limitations, so work can resume from here.
 | L1 | Lifecycle: pace of life, stages, age gates, birthdays, annual review, long advances, routine, Life hub | Done (see below) |
 | M1 | Military: civilian control (office holders go to the reserve), head of government as Commander-in-Chief, service age limits, veterans | Done |
 | UI1 | Premium design system and game shell | Done |
+| CLK | Clock overhaul: real calendar, descriptive date and time, seasons, slower time | Done |
 | N3 | Narrative stage 3: districts, venues, familiarity, availability, appointments | Planned |
 | L2 | Family graph with real children, pregnancy, adoption, guardians, siblings; hobbies, pets, gifts; story protagonists and memory subjects; budgets | Planned |
 | L3 | Schools, universities, clinics and offices as funded institutions; education ladder; qualifications; service careers (teaching, clinical care, administration, technical); work history; promotions; military academy | Planned |
@@ -47,8 +48,8 @@ what remains, and the known limitations, so work can resume from here.
   influence and fame; gates use age, a clean record, fitness and years of service. Save version 8 migrates.
 
 ### L1: lifecycle
-- **Pace of life** (`Settings.lifeYearDays`): world days per year of age. New campaigns default to 36 (a lifetime is
-  about two hours at top speed); saves from before keep 365; changing it rescales birth times so ages are kept.
+- **Pace of life** (`Settings.lifeYearDays`): world days per year of age. New campaigns now age with the calendar
+  (365; see CLK below); faster paces are options; changing it rescales birth times so ages are kept.
   `ageOf`, `nextBirthday`, `lifeYear` in `growth.ts` derive everything from the single `Citizen.born`.
 - **Stages** (`lifecycle.ts`): early childhood 0–4, childhood 5–12, adolescence 13–17, adulthood 18–64, later life 65+
   (thresholds in `B.life.stages`).
@@ -98,6 +99,20 @@ what remains, and the known limitations, so work can resume from here.
 - Line icons (Lucide) for navigation and the HUD (`src/ui/icons.tsx`), a brand emblem, screen headings, a cinematic
   title screen with a drifting Earth, and a "Charting the world" veil while a campaign is generated.
 - The release workflow no longer republishes an existing version on branch pushes (tests still run).
+
+### CLK: clock overhaul
+- `src/engine/calendar.ts`: world day 1 is Tuesday 1 January 2030; one world day is one calendar day (Gregorian,
+  leap years). Descriptive dates ("Tuesday, 14 March 2030"), 12- or 24-hour times, parts of the day (dawn, morning,
+  midday, afternoon, evening, late evening, night) and seasons by hemisphere (`latitudeOf` from the map's
+  projection; wet and dry seasons in the tropics). Seasonal hazards follow calendar months.
+- The top bar shows the time, the full date, the part of the day and the local season; the clock shows each minute
+  between the ten-minute simulation steps. Dates replace "day N" across screens and messages; profiles show dates
+  of birth.
+- Slower time: 1× is a minute per second (a day lasts 24 real minutes), up to 3 hours a second at 4×.
+- Ages follow the calendar by default (a year of age per calendar year, birthdays on the date of birth, 29 February
+  birthdays on the 28th); faster paces (3, 5 or 10 years of age per calendar year) remain as options.
+  `bornYearsAgo` sets exact birth dates. A long advance to the next birthday on a full-size world now takes minutes
+  of real time (simulation speed bound), shown with progress and resumable.
 
 ## Tests
 - `tests/life.test.ts` (6): death/estate/offices, special election, emigration, coming of age, the player's romance,

@@ -1,5 +1,6 @@
 // Law & Order: your standing with the law, street crime, organised crime,
 // the police career and national police powers.
+import { fmtDay } from '../../engine/calendar';
 import { census } from '../../sim/census';
 import { useState } from 'preact/hooks';
 import type { World } from '../../sim/types';
@@ -7,7 +8,6 @@ import { ActBtn, Amt, Bar, CitLink, Empty, Help, Panel, RegionLink, Select } fro
 import { controller, jailed, player } from '../../sim/query';
 import { nationPerm } from '../../sim/authority';
 import { B } from '../../data/balance';
-import { dayOf } from '../../engine/clock';
 import {
   CRIMES, CRIME_NAME, PRANKS, SRANKS, SYND_JOBS, commitCrime, crimeCheck, crimeLabel, investigate, investigateCheck, jobCheck, joinPolice, joinPoliceCheck,
   joinSyndicate, joinSyndicateCheck, leavePolice, leaveSyndicate, orderRaid, patrol, patrolCheck, policeName, raidCheck, setPoliceFunding, syndicateJob,
@@ -28,7 +28,7 @@ export function Crime({ w }: { w: World }) {
           <div class="stat"><small>Notoriety</small><b>{p.sec.notoriety.toFixed(0)}</b></div>
           <div class="stat"><small>Fame</small><b>{p.sec.fame.toFixed(0)}</b></div>
           <div class="stat"><small>Record</small><b>{p.sec.record.crimes} crimes · {p.sec.record.arrests} arrests · {p.sec.record.convictions} convictions</b></div>
-          <div class="stat"><small>Status</small><b class={jailed(w, p) ? 'bad' : ''}>{jailed(w, p) ? `In prison until day ${dayOf(p.sec.jailUntil)}` : 'Free'}</b></div>
+          <div class="stat"><small>Status</small><b class={jailed(w, p) ? 'bad' : ''}>{jailed(w, p) ? `In prison until ${fmtDay(p.sec.jailUntil)}` : 'Free'}</b></div>
         </div>
         {mine.filter((k) => k.status === 'open').map((k) => (
           <div class="track"><span>🚨 {CRIME_NAME[k.kind]} investigation in {w.regions[k.region].name} ({w.nations[k.nation].name})</span><Bar v={k.evidence} max={100} color="#e39b3a" label={`evidence ${Math.round(k.evidence)}% (arrest at ${B.police.arrestAt}%)`} /></div>
@@ -84,7 +84,7 @@ export function Crime({ w }: { w: World }) {
       {nationPerm(w, p.id, p.nation, 'police') && <InteriorPanel w={w} />}
 
       <Panel title="📰 Crime & justice news" class="wide">
-        <ul class="small">{w.log.filter((e) => (e.type === 'crime' || e.type === 'justice') && (e.nation == null || e.nation === p.nation || e.nation === nat)).slice(-15).reverse().map((e) => <li>Day {dayOf(e.t)}: {e.text}</li>)}</ul>
+        <ul class="small">{w.log.filter((e) => (e.type === 'crime' || e.type === 'justice') && (e.nation == null || e.nation === p.nation || e.nation === nat)).slice(-15).reverse().map((e) => <li>{fmtDay(e.t)}: {e.text}</li>)}</ul>
       </Panel>
     </div>
   );

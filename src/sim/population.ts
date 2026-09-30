@@ -13,14 +13,13 @@ import { B } from '../data/balance';
 import { EARTH } from '../data/earth';
 import { NAME_POOLS } from '../data/names';
 import { IDEOLOGY_LIST } from '../data/ideologies';
-import { DAY } from '../engine/clock';
 import { burn, consume, mint, moveItems, pay, produce } from '../engine/ledger';
 import { GOLD, c as cur, g } from '../engine/money';
 import { notify, record } from '../engine/events';
 import { chance, pick, rand, randInt, weighted } from '../engine/rng';
 import { census, companiesIn, invalidateCensus, residents } from './census';
 import { controller, cref, jailed, natref, player, today } from './query';
-import { lifeYear, ageOf, isAdult, seniority } from './growth';
+import { ageOf, bornYearsAgo, isAdult, seniority } from './growth';
 import { autoAllocate, newCitizen, residentsFor } from './worldgen';
 import { localNews } from './life';
 import { quitJob } from './company';
@@ -246,7 +245,7 @@ export function newResident(w: World, nation: Nation, rid: Id, opts: { name?: st
   const name = opts.name ?? `${pick(w, pool.first)} ${pick(w, pool.last)}`;
   const persona = opts.persona ?? weighted(w, PERSONAS, (x) => x[1])![0];
   const c = newCitizen(w, name, nation.id, rid, persona, opts.ideo ?? pick(w, IDEOLOGY_LIST));
-  c.born = w.time - (opts.age ?? 18) * lifeYear(w) - randInt(w, 0, Math.max(0, (w.settings.lifeYearDays ?? 365) - 2)) * DAY;
+  c.born = bornYearsAgo(w, opts.age ?? 18, randInt(w, 0, 300));
   autoAllocate(c, 2 + seniority(w, c) * rand(w, 0.8, 1.6));
   c.eco = +(1 + seniority(w, c) * rand(w, 0.05, 0.2)).toFixed(2);
   c.influence = Math.round(rand(w, 0, 5) + seniority(w, c) * 0.3);
@@ -283,7 +282,7 @@ function immigrant(w: World, r: Region) {
   if (chance(w, 0.3)) {
     const d = newResident(w, n, r.id, { name: `${pick(w, pool.first)} ${name.split(' ').slice(-1)[0]}`, age: Math.max(18, ageOf(w, c) + randInt(w, -5, 5)), savings: randInt(w, 30, 150) });
     fam(c).partner = d.id; fam(c).status = 'married'; fam(d).partner = c.id; fam(d).status = 'married';
-    fam(c).since = fam(d).since = w.time - randInt(w, 1, 10) * lifeYear(w);
+    fam(c).since = fam(d).since = bornYearsAgo(w, randInt(w, 1, 10), randInt(w, 0, 300));
   }
   return c;
 }
@@ -341,7 +340,7 @@ export function populationDaily(w: World) {
   for (const c of all) {
     const f = c.family;
     if (!f?.kids.length) continue;
-    for (const k of [...f.kids]) if (w.time - k.born >= B.life.adultAge * lifeYear(w)) kidComesOfAge(w, c, k);
+    for (const k of [...f.kids]) if (ageOf(w, k) >= B.life.adultAge) kidComesOfAge(w, c, k);
   }
   // Regions: how attractive they are, and people coming and going accordingly.
   let targetSum = 0, baseSum = 0;

@@ -9,7 +9,7 @@ import { newLifeState } from '../sim/lifecycle';
 import { initFamilies, initPlayerFamily } from '../sim/family';
 import { initPopulation } from '../sim/population';
 import { autoAllocate } from '../sim/worldgen';
-import { lifeYear } from '../sim/growth';
+import { ageOf, bornYearsAgo } from '../sim/growth';
 import { B } from '../data/balance';
 import LZ from 'lz-string';
 import type { World } from '../sim/types';
@@ -57,9 +57,9 @@ function migrate(w: World, from: number): World {
     for (const c of Object.values(w.citizens)) {
       const o = c as typeof c & { level?: number; xp?: number; attrPts?: number };
       if (o.attrPts) autoAllocate(c, o.attrPts);
-      const age = (w.time - c.born) / lifeYear(w);
-      if (c.player) { if (age < B.life.adultAge) c.born = w.time - B.life.playerAge * lifeYear(w); }
-      else if (age < B.life.adultAge) c.born = w.time - (B.life.adultAge + Math.min(40, (o.level ?? 1) * 1.5 + (c.id % 7))) * lifeYear(w);
+      const age = ageOf(w, c);
+      if (c.player) { if (age < B.life.adultAge) c.born = bornYearsAgo(w, B.life.playerAge, c.id % 300); }
+      else if (age < B.life.adultAge) c.born = bornYearsAgo(w, B.life.adultAge + Math.min(40, Math.round((o.level ?? 1) * 1.5) + (c.id % 7)), (c.id * 37) % 360);
       delete o.level; delete o.xp; delete o.attrPts;
     }
     for (const t of Object.values(w.tournaments)) { const o = t as typeof t & { minLevel?: number }; if (t.minPower == null) t.minPower = B.tournaments.power; delete o.minLevel; }

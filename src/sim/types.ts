@@ -589,6 +589,7 @@ export interface Settings {
   balance: Record<string, any>;
   notifyFilter: Record<string, boolean>;
   adminUsed?: boolean; // the admin panel changed this campaign
+  clock24?: boolean; // show times on a 24-hour clock
   advanceStops?: 'personal' | 'all'; // what interrupts a long advance (default: personal matters only)
   lifeYearDays?: number; // pace of life: world days per year of age (undefined = 365, for older saves)
   fixedFate?: boolean; // reproducible: never mix outside randomness into the world's dice (see ui/store.ts)

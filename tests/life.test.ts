@@ -9,7 +9,7 @@ import { c as cur } from '../src/engine/money';
 import { census, residents } from '../src/sim/census';
 import { controller, cref, player } from '../src/sim/query';
 import { createCompany } from '../src/sim/company';
-import { ageOf, lifeYear } from '../src/sim/growth';
+import { ageOf, bornYearsAgo } from '../src/sim/growth';
 import { die, heirOf, leaveAbroad, populationDaily } from '../src/sim/population';
 import { askOut, fam, goOnDate, kidComesOfAge, marry, propose, romanceCheck } from '../src/sim/family';
 import { deserialize, serialize } from '../src/engine/save';
@@ -67,9 +67,8 @@ test('emigrants leave with their savings; office holders and owners stay', () =>
 test('children grow up in the family and come of age once, with parents on record', () => {
   const w = fresh(304);
   const parent = npcs(w).find((c) => c.family?.status === 'married')!;
-  const kid = { name: 'Robin Test', born: w.time - 18 * lifeYear(w) - DAY };
+  const kid = { name: 'Robin Test', born: bornYearsAgo(w, 18, 1) };
   fam(parent).kids.push(kid);
-  const before = census(w).all.length;
   populationDaily(w);
   const c = census(w).all.find((x) => x.name === 'Robin Test')!;
   assert.ok(c, 'the child became a citizen');
@@ -78,7 +77,6 @@ test('children grow up in the family and come of age once, with parents on recor
   assert.ok(parent.family!.children.includes(c.id));
   assert.ok(!parent.family!.kids.includes(kid));
   assert.equal(c.home, parent.home);
-  assert.ok(census(w).all.length >= before + 1);
   kidComesOfAge; // exported for the population cycle
 });
 

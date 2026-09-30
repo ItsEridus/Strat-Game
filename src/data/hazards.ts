@@ -1,5 +1,5 @@
-// Real-world natural hazard zones and seasons (month 1–12 of the in-game year,
-// 12 months × monthLen days). Regions are "ISO3/Region" keys from the Earth map.
+// Real-world natural hazard zones and seasons (calendar month 1–12;
+// see engine/calendar.ts). Regions are "ISO3/Region" keys from the Earth map.
 // Which disaster strikes, where and how hard is rolled per seed from these.
 import type { CrisisKind } from '../sim/types';
 

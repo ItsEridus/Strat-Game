@@ -27,8 +27,9 @@ function stir(w: World) {
 registerSystems();
 
 /** Simulated minutes per real second at each speed. */
-export const SPEEDS = [0, 10, 60, 360, 1440];
-export const SPEED_LABELS = ['Paused', '1× (10 min/s)', '2× (1 h/s)', '3× (6 h/s)', '4× (1 day/s)'];
+// World minutes per real second at each speed: at 1× a day lasts 24 real minutes.
+export const SPEEDS = [0, 1, 5, 30, 180];
+export const SPEED_LABELS = ['Paused', '1× — a minute each second', '2× — 5 minutes a second', '3× — half an hour a second', '4× — 3 hours a second'];
 
 type Toast = { id: number; text: string; ok: boolean };
 
@@ -51,7 +52,7 @@ class Store {
 
   get paused() { return !this.w || this.w.settings.paused || this.w.settings.speed === 0; }
 
-  newGame(seed: number | null, name: string, nation: number, citizensPerRegion: number, difficulty: World['settings']['difficulty'], advanced: World['settings']['advanced'], lifeYearDays = 36) {
+  newGame(seed: number | null, name: string, nation: number, citizensPerRegion: number, difficulty: World['settings']['difficulty'], advanced: World['settings']['advanced'], lifeYearDays = 365) {
     this.w = generateWorld(seed ?? entropy() % 1e9, name, nation, { citizensPerRegion, difficulty, advanced, fixedFate: seed != null, lifeYearDays });
     this.tab = 'dashboard';
     this.save('autosave');
@@ -169,6 +170,10 @@ class Store {
   // yielding to the window between chunks so it stays responsive. A pausing
   // event stops the run where it is (the target is kept, so it can resume);
   // cancelling stops at the time actually reached.
+  /** Minutes of the current ten-minute step already elapsed on the clock (display only). */
+  get pendingMinutes() { return this.paused || this.advRunning ? 0 : Math.min(9, Math.floor(this.acc)); }
+  private shownMinute = 0;
+
   advRunning = false;
   advStopped = '';
   private advCancel = false;
@@ -254,7 +259,11 @@ class Store {
     if (!w || this.paused || this.advRunning) return;
     this.acc += (SPEEDS[w.settings.speed] * dtMs) / 1000;
     const whole = Math.floor(this.acc / 10) * 10;
-    if (whole <= 0) return;
+    if (whole <= 0) {
+      // The world moves in ten-minute steps; the clock shows the minutes in between.
+      if (Math.floor(this.acc) !== this.shownMinute) { this.shownMinute = Math.floor(this.acc); this.emit(); }
+      return;
+    }
     this.acc -= whole;
     stir(w);
     const r = advance(w, whole, true);

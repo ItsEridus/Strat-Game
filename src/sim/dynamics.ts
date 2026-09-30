@@ -3,6 +3,7 @@
 // along borders, strikes, protests and riots driven by conditions on the ground,
 // internal migration, and new people arriving. Governments (AI or player)
 // respond with relief spending, lockdowns, crackdowns or concessions.
+import { dateAt } from '../engine/calendar';
 import { lifeGate } from './lifecycle';
 import type { Citizen, Crisis, CrisisKind, Id, World } from './types';
 import { presentIn } from './census';
@@ -20,7 +21,8 @@ import { practise } from './growth';
 import { govTemplate } from './stategov';
 
 const regionKey = new Map(EARTH.regions.map((e, i) => [`${EARTH.nations[e.nation].iso}/${e.name}`, i]));
-export const monthOf = (w: World) => Math.floor((dayOf(w.time) % (12 * w.settings.monthLen)) / w.settings.monthLen) + 1;
+/** The calendar month (1–12), for seasonal hazards. */
+export const monthOf = (w: World) => dateAt(w.time).month + 1;
 export const activeCrises = (w: World) => Object.values(w.crises).filter((c) => c.status === 'active');
 export const KIND_ICON: Record<CrisisKind, string> = { hurricane: '🌀', earthquake: '🌋', flood: '🌊', wildfire: '🔥', blizzard: '❄️', drought: '🏜️', epidemic: '🦠', strike: '✊', protest: '📢', riot: '🔥', boom: '📈', shock: '📉' };
 
@@ -79,7 +81,7 @@ function disastersDaily(w: World) {
   const p = player(w);
   for (const h of HAZARDS) {
     if (h.months.length && !h.months.includes(m)) continue;
-    const perDay = (h.weight / (h.months.length ? h.months.length * w.settings.monthLen : 360)) * B.dynamics.disasterChance;
+    const perDay = (h.weight / (h.months.length ? h.months.length * 30.4 : 365)) * B.dynamics.disasterChance;
     if (!chance(w, perDay)) continue;
     const keys = h.regions.filter((k) => regionKey.has(k));
     if (!keys.length) continue;

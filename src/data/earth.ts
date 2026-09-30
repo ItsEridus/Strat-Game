@@ -19,3 +19,11 @@ export const EARTH = raw as unknown as {
   nations: EarthNation[]; regions: EarthRegion[]; routes: EarthRoute[];
   seas: { name: string; x: number; y: number; adj: string[] }[];
 };
+
+/**
+ * Approximate latitude of a region's centre (degrees north). The map uses the
+ * Natural Earth projection, whose parallels are horizontal: the equator sits at
+ * y = 518.3 and the pole at y = -6.1 (from the graticule), and y is close to
+ * linear in latitude — plenty for hemispheres, tropics and seasons.
+ */
+export const latitudeOf = (rid: number) => ((518.3 - EARTH.regions[rid].y) / 524.4) * 90;

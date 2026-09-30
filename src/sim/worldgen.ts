@@ -25,7 +25,7 @@ import { initGovs } from './stategov';
 import { initCrime } from './crime';
 import { initForces, seedOfficers } from './forces';
 import { newNarrative } from './story';
-import { lifeYear, seniority } from './growth';
+import { bornYearsAgo, seniority } from './growth';
 import { AGENCY_NAMES } from '../data/names';
 
 export const SAVE_VERSION = 8; // 5: armed forces; 6: per-region population, home regions; 7: stories, journal, memories, places; 8: no levels (skills, age, reputation)
@@ -38,7 +38,7 @@ export function defaultSettings(): Settings {
   return {
     speed: 1, paused: true, monthLen: 30, difficulty: 'normal', pauseOn, autoTrain: false,
     advanced: { nuclear: true, pirates: true, terrainEvents: false, tournaments: true },
-    citizensPerRegion: 24, balance: {}, notifyFilter, lifeYearDays: 36,
+    citizensPerRegion: 24, balance: {}, notifyFilter, lifeYearDays: 365,
   };
 }
 
@@ -143,7 +143,7 @@ const CORE_ROLES: Persona[] = ['industrialist', 'industrialist', 'merchant', 'in
 
 function makeGenesisCitizen(w: World, n: Nation, loc: Id, persona: Persona, ideo: Ideology, used: Set<string>) {
   const c = newCitizen(w, personName(w, n.cur, used), n.id, loc, persona, ideo);
-  c.born = w.time - randInt(w, 18, 72) * lifeYear(w) - randInt(w, 0, (w.settings.lifeYearDays ?? 365) - 1) * DAY;
+  c.born = bornYearsAgo(w, randInt(w, 18, 72), randInt(w, 0, 364));
   // Experience comes with years: a veteran knows more than a school leaver.
   const exp = seniority(w, c) * rand(w, 0.35, 0.7) + (persona === 'politician' ? 4 : 0) + 1;
   autoAllocate(c, exp * 3);
@@ -279,7 +279,7 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
   const birthplace = weighted(w, regions.filter((r) => r.owner === pn.id), (r) => Math.sqrt(Math.max(1, EARTH.regions[r.id].popReal)))?.id ?? pn.capital;
   const p = newCitizen(w, playerName.trim().slice(0, 28) || 'Citizen', pn.id, birthplace, 'worker', 'capitalism');
   p.player = true;
-  p.born = w.time - B.life.playerAge * lifeYear(w);
+  p.born = bornYearsAgo(w, B.life.playerAge, randInt(w, 20, 340)); // a birthday later in the year
   autoAllocate(p, 3);
   p.workHour = 9; p.trainHour = 8; p.traits = { ambition: 1, risk: 0.5, loyalty: 0.5, greed: 0.5, activity: 1 };
   p.energy = B.energy.baseMax;

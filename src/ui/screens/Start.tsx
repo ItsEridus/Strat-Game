@@ -14,7 +14,7 @@ export function StartScreen() {
   const [seed, setSeed] = useState(Math.floor(Math.random() * 1e6));
   const [fixed, setFixed] = useState(false);
   const [cpn, setCpn] = useState(24);
-  const [pace, setPace] = useState(36);
+  const [pace, setPace] = useState(365);
   const [difficulty, setDifficulty] = useState<Settings['difficulty']>('normal');
   const [adv, setAdv] = useState({ nuclear: true, pirates: true, terrainEvents: false, tournaments: true });
   const [importing, setImporting] = useState(false);
@@ -52,7 +52,7 @@ export function StartScreen() {
           <label>Your name <input value={name} maxLength={28} onInput={(e) => setName((e.target as HTMLInputElement).value)} /></label>
           <label>Difficulty <Select value={difficulty} options={[['easy', 'Easy — more starting funds'], ['normal', 'Normal'], ['hard', 'Hard — leaner start']]} onChange={setDifficulty} /></label>
           <label>AI citizens per region <Select value={cpn} options={[[8, '8 (≈4,000 people · fastest)'], [16, '16 (≈8,000 people)'], [24, '24 (≈12,500 people · default)'], [32, '32 (≈16,500 people · slowest)']]} onChange={setCpn} /></label>
-          <label>Pace of life <Select value={pace} options={[[24, 'Brisk — a year of age every 24 days'], [36, 'Lifetime — a year every 36 days (default)'], [72, 'Unhurried — a year every 72 days'], [365, 'Real time — a year every 365 days']]} onChange={setPace} /></label>
+          <label>Pace of life <Select value={pace} options={[[365, 'With the calendar — one year of age per year (default)'], [120, 'Quick — three years of age per calendar year'], [72, 'Brisk — five years of age per calendar year'], [36, 'Generations — ten years of age per calendar year']]} onChange={setPace} /></label>
         </div>
         <h4>Choose your nation</h4>
         <svg class="start-map" viewBox={`0 0 ${EARTH.width} ${EARTH.height}`}>

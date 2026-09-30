@@ -2,7 +2,7 @@
 // "admin" anywhere). Money and items are minted or burned through the ledger
 // with the reason "Admin", so the asset audit stays balanced. Using them marks
 // the campaign (settings.adminUsed).
-import { lifeYear, reputation } from './growth';
+import { bornYearsAgo, reputation } from './growth';
 import { census } from './census';
 import type { Attr, Id, ItemKey, World } from './types';
 import { fail, ok, type Result } from '../engine/result';
@@ -49,7 +49,7 @@ export function adminSetStanding(w: World, value: number): Result {
 export function adminSetAge(w: World, years: number): Result {
   if (!Number.isInteger(years) || years < 16 || years > 100) return fail('Age must be 16–100.');
   const p = player(w);
-  p.born = w.time - years * lifeYear(w);
+  p.born = bornYearsAgo(w, years, 1);
   mark(w);
   return ok(`You are now ${years}.`);
 }

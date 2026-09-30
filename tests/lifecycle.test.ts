@@ -7,6 +7,7 @@ import { audit } from '../src/engine/ledger';
 import { DAY, HOUR } from '../src/engine/clock';
 import { player } from '../src/sim/query';
 import { ageOf, lifeYear, nextBirthday } from '../src/sim/growth';
+import { calendarAge, dateAt, fmtDate, fmtTime, partOfDay, seasonAt, timeOfDate } from '../src/engine/calendar';
 import { lifeGate, lifeOf, lifeStage, pendingReview, routineOf, setLifePace } from '../src/sim/lifecycle';
 import { applyJob, workShift } from '../src/sim/company';
 import { bestOffer, citizenHourly } from '../src/ai/citizens';
@@ -15,12 +16,41 @@ import { newResident } from '../src/sim/population';
 import { deserialize, serialize } from '../src/engine/save';
 
 registerSystems();
-const fresh = (seed = 401) => generateWorld(seed, 'Tester', 0, { citizensPerRegion: 2 });
+const fresh = (seed = 401) => generateWorld(seed, 'Tester', 0, { citizensPerRegion: 2, lifeYearDays: 36 }); // a fast pace keeps birthday tests short
+const calendarWorld = (seed = 409) => generateWorld(seed, 'Tester', 0, { citizensPerRegion: 2 });
+
+test('the calendar: real dates, leap years, weekdays and seasons by hemisphere', () => {
+  assert.equal(fmtDate(DAY, 'long'), 'Tuesday, 1 January 2030', 'world day 1');
+  assert.equal(fmtDate(timeOfDate(2032, 1, 29), 'long'), 'Sunday, 29 February 2032', 'a leap day');
+  assert.equal(fmtDate(-400 * DAY, 'short'), '26 Nov 2028', 'before the campaign began (day 1 − 401 days)');
+  assert.equal(fmtTime(DAY + 9 * HOUR + 40), '9:40 am');
+  assert.equal(fmtTime(DAY + 21 * HOUR + 5, true), '21:05');
+  assert.equal(partOfDay(DAY + 19 * HOUR).name, 'Evening');
+  const july = timeOfDate(2030, 6, 15);
+  assert.equal(seasonAt(july, 45), 'Summer');
+  assert.equal(seasonAt(july, -35), 'Winter', 'southern hemisphere');
+  assert.equal(seasonAt(july, 10), 'Wet season', 'tropics');
+  assert.equal(calendarAge(timeOfDate(2012, 1, 29), timeOfDate(2030, 1, 27)), 17, 'leap-day birthday not yet');
+  assert.equal(calendarAge(timeOfDate(2012, 1, 29), timeOfDate(2030, 1, 28)), 18, 'celebrated on 28 February');
+});
+
+test('at the calendar pace, ages and birthdays follow real dates', () => {
+  const w = calendarWorld();
+  const p = player(w);
+  assert.equal(w.settings.lifeYearDays, 365, 'new campaigns age with the calendar');
+  assert.equal(ageOf(w, p), 24);
+  const b = nextBirthday(w, p), bd = dateAt(b), born = dateAt(p.born);
+  assert.deepEqual([bd.month, bd.day], [born.month, born.day], 'the birthday is the date of birth');
+  assert.equal(bd.year, born.year + 25);
+  const kid = newResident(w, w.nations[0], p.home, { age: 18 });
+  assert.equal(ageOf(w, kid), 18, 'exactly 18, leap days included');
+  for (const c of Object.values(w.citizens)) assert.ok(ageOf(w, c) >= 18, `${c.name} is ${ageOf(w, c)}`);
+});
 
 test('age comes from one birth time: before the campaign began, on the birthday, across save/load', () => {
   const w = fresh();
   const p = player(w);
-  assert.equal(w.settings.lifeYearDays, 36, 'new campaigns use the lifetime pace');
+  assert.equal(w.settings.lifeYearDays, 36);
   assert.ok(p.born < 0, 'the player was born before day 0');
   assert.equal(ageOf(w, p), 24);
   const b = nextBirthday(w, p);
@@ -106,7 +136,7 @@ test('advancing in short chunks gives exactly the same world as one long advance
 });
 
 test('changing the pace of life keeps everyone\'s age', () => {
-  const w = fresh(407);
+  const w = fresh(407); // from 36 to 72 days a year
   const ages = Object.values(w.citizens).slice(0, 50).map((c) => ageOf(w, c));
   assert.ok(setLifePace(w, 72));
   assert.deepEqual(Object.values(w.citizens).slice(0, 50).map((c) => ageOf(w, c)), ages);

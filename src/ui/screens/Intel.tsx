@@ -1,5 +1,6 @@
 // Intelligence: your nation's service, networks, dossiers, operations, careers,
 // and the double life of an asset.
+import { fmtDay } from '../../engine/calendar';
 import { census } from '../../sim/census';
 import { useState } from 'preact/hooks';
 import type { Id, OpKind, World } from '../../sim/types';
@@ -8,7 +9,6 @@ import { controller, player } from '../../sim/query';
 import { visible } from '../../sim/forces';
 import { nationPerm } from '../../sim/authority';
 import { B } from '../../data/balance';
-import { dayOf } from '../../engine/clock';
 import { ARANKS, OPS, analyze, analyzeCheck, joinAgency, joinAgencyCheck, knownDossier, launchOp, leaveAgency, opCheck, quitAsset, setAgencyBudget } from '../../sim/intel';
 
 export function Intel({ w }: { w: World }) {
@@ -43,16 +43,16 @@ export function Intel({ w }: { w: World }) {
       <Panel title="📁 Dossiers">
         {foreign.filter((o) => knownDossier(w, p.nation, o.id)).map((o) => {
           const d = knownDossier(w, p.nation, o.id)!;
-          return <details><summary><NationChip w={w} id={o.id} /> <small class="muted">day {dayOf(d.t)}</small></summary><ul class="small">{d.lines.map((l) => <li>{l}</li>)}</ul></details>;
+          return <details><summary><NationChip w={w} id={o.id} /> <small class="muted">{fmtDay(d.t)}</small></summary><ul class="small">{d.lines.map((l) => <li>{l}</li>)}</ul></details>;
         })}
         {!foreign.some((o) => knownDossier(w, p.nation, o.id)) && <Empty>No current dossiers. "Gather intelligence" operations produce them (valid 10 days).</Empty>}
       </Panel>
 
       <Panel title="📜 Operations">
         {ops.length ? <table class="table compact small"><tbody>{ops.map((o) => (
-          <tr><td>{OPS[o.kind].name}</td><td>{o.kind === 'counter' ? 'home' : <NationChip w={w} id={o.target} />}</td><td class={o.status === 'exposed' ? 'bad' : o.status === 'success' ? 'good' : ''}>{o.status}</td><td class="muted">{o.result ?? `ends day ${dayOf(o.ends)}`}</td></tr>
+          <tr><td>{OPS[o.kind].name}</td><td>{o.kind === 'counter' ? 'home' : <NationChip w={w} id={o.target} />}</td><td class={o.status === 'exposed' ? 'bad' : o.status === 'success' ? 'good' : ''}>{o.status}</td><td class="muted">{o.result ?? `ends ${fmtDay(o.ends)}`}</td></tr>
         ))}</tbody></table> : <Empty>{official || p.sec.agency != null ? 'No operations yet.' : 'Operations are classified. Join the service or hold office to see them.'}</Empty>}
-        {against.length > 0 && <><h4>Foreign operations exposed at home</h4><ul class="small">{against.map((o) => <li>{w.nations[o.nation].name}: {OPS[o.kind].name.toLowerCase()} (day {dayOf(o.ends)})</li>)}</ul></>}
+        {against.length > 0 && <><h4>Foreign operations exposed at home</h4><ul class="small">{against.map((o) => <li>{w.nations[o.nation].name}: {OPS[o.kind].name.toLowerCase()} ({fmtDay(o.ends)})</li>)}</ul></>}
       </Panel>
     </div>
   );

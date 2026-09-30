@@ -14,7 +14,7 @@ import { chance, pick, rand, randInt, shuffle } from '../engine/rng';
 import { fail, ok, type Result } from '../engine/result';
 import { census, invalidateCensus, residents } from './census';
 import { controller, cref, hhref, jailed, player, today } from './query';
-import { lifeYear, ageOf, isAdult, standing } from './growth';
+import { ageOf, bornYearsAgo, isAdult, standing } from './growth';
 import { ideoDistance } from './interact';
 import { localNews } from './life';
 import { remember } from './story';
@@ -217,7 +217,7 @@ export function initFamilies(w: World) {
       if (!b) continue;
       const years = Math.max(0, Math.min(ageOf(w, a), ageOf(w, b)) - randInt(w, 20, 32));
       const married = years > 0 && chance(w, 0.8);
-      pair(w, a, b, married ? 'married' : 'dating', married ? w.time - years * lifeYear(w) : w.time - randInt(w, 10, 300) * DAY);
+      pair(w, a, b, married ? 'married' : 'dating', married ? bornYearsAgo(w, years, randInt(w, 0, 300)) : w.time - randInt(w, 10, 300) * DAY);
       bumpRel(a, b, randInt(w, 40, 80));
       if (!married) continue;
       // Children still at home: born after the wedding, under 18 now.
@@ -226,7 +226,7 @@ export function initFamilies(w: World) {
       for (let i = 0; i < n; i++) {
         const kidAge = randInt(w, 0, Math.min(17, years, young - 20));
         if (kidAge < 0) continue;
-        fam(a).kids.push({ name: babyName(w, a), born: w.time - kidAge * lifeYear(w) - randInt(w, 0, (w.settings.lifeYearDays ?? 365) - 1) * DAY });
+        fam(a).kids.push({ name: babyName(w, a), born: bornYearsAgo(w, kidAge, randInt(w, 0, 364)) });
       }
     }
     // Grown-up children: an older resident with a younger one who shares their surname or simply lives nearby.

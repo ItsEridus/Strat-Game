@@ -1,4 +1,6 @@
 import type { World } from '../../sim/types';
+import { calendarPace } from '../../sim/growth';
+import { fmtDate } from '../../engine/calendar';
 import { militaryTitle } from '../../sim/forces';
 import { askOut, romanceCheck } from '../../sim/family';
 import { ageOf, reputation } from '../../sim/growth';
@@ -30,7 +32,7 @@ export function CitizenProfile({ w }: { w: World }) {
         <div class="stats">
           <Stat label="Citizenship"><NationChip w={w} id={c.nation} /></Stat>
           <Stat label="Location"><RegionLink w={w} id={c.loc} /></Stat>
-          <Stat label="Age">{ageOf(w, c)}</Stat><Stat label="Reputation">{reputation(c).icon} {reputation(c).name}</Stat>
+          <Stat label="Age">{ageOf(w, c)}{calendarPace(w) ? <small class="muted"> · born {fmtDate(c.born, 'short')}</small> : null}</Stat><Stat label="Reputation">{reputation(c).icon} {reputation(c).name}</Stat>
           <Stat label="Profile">{c.player ? 'you' : c.persona}</Stat>
           <Stat label="Ideology">{IDEOLOGIES[c.ideo].name}</Stat>
           <Stat label="Party">{party ? party.name : '—'}</Stat>
