@@ -16,6 +16,7 @@ import LZ from 'lz-string';
 import type { World } from '../sim/types';
 import { applyBalance } from '../data/balance';
 import { SAVE_VERSION } from '../sim/worldgen';
+import { initEducation } from '../sim/education';
 import { newNarrative } from '../sim/story';
 
 const PREFIX = 'meridian-save:';
@@ -78,6 +79,10 @@ function migrate(w: World, from: number): World {
     // 9: timber, cotton and copper (1.3.3). Deposits from a stable hash, so upgrading rolls no dice;
     // entrepreneurs found the first companies in the new industries over the following days.
     placeNewDeposits(w.regions, (r, salt) => hash01(r.id, salt, 1303));
+  }
+  if (from < 10) {
+    // 10: education (1.3.10). Qualifications from a stable hash by country and age; funding at national defaults.
+    initEducation(w);
   }
   normalizeLife(w);
   w.version = SAVE_VERSION;

@@ -42,7 +42,14 @@ export function App() {
     return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('mousedown', onMouse); window.removeEventListener('mouseup', onMouse); };
   }, []);
   // Each new screen opens at its top; going back returns to where you were on it.
-  useEffect(() => { window.scrollTo(0, store.scrollTo); }, [s.page, !!s.w]);
+  useEffect(() => {
+    // Restore the scroll position; retry for a few frames while the page is still laying out (fonts, late panels).
+    const y = store.scrollTo;
+    let tries = 0, raf = 0;
+    const go = () => { window.scrollTo(0, y); if (Math.abs(window.scrollY - y) > 1 && ++tries < 30) raf = requestAnimationFrame(go); };
+    go();
+    return () => cancelAnimationFrame(raf);
+  }, [s.page, !!s.w]);
   if (!s.w) return <><StartScreen /><WhatsNew /></>;
   const w = s.w;
   const screen = SCREENS.find((x) => x.id === s.tab) ?? SCREENS[0];

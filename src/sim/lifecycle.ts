@@ -105,6 +105,7 @@ export function occupation(w: World, c: Citizen): string {
   if (c.gone) return c.gone.why === 'died' ? 'Deceased' : 'Emigrated';
   if (c.job != null && w.companies[c.job]) return `${w.companies[c.job].name}`;
   if (c.retired) return 'Retired';
+  if (c.edu?.enrolled) return c.edu.enrolled.course === 'vocational' ? 'Student (college)' : 'Student (university)';
   const a = ageOf(w, c);
   if (a < B.life.stages.child) return 'At home';
   if (a < B.life.adultAge) return 'At school';

@@ -16,6 +16,7 @@ import { GOLD } from '../../engine/money';
 import { CitizenExtras } from './CitizenExtras';
 import { ActBtn } from '../common';
 import { familyRegard, memoriesOf } from '../../sim/story';
+import { levelLabel } from '../../sim/education';
 import { startTalk, talkCheck } from '../../sim/interact';
 
 export function CitizenProfile({ w }: { w: World }) {
@@ -49,6 +50,7 @@ export function CitizenProfile({ w }: { w: World }) {
           {!c.player && <Stat label="Relationship with you">{Math.round(c.rel[p.id] ?? 0)}</Stat>}
           <Stat label="Doing">{activityOf(w, c)}</Stat>
           {!c.player && c.sec.goal && (Math.abs(c.rel[p.id] ?? 0) >= 20 || c.sec.fame > 5 || c.influence > 30) && <Stat label="Ambition">{goalText(w, c)}</Stat>}
+          <Stat label="Education">{levelLabel(c)}</Stat>
           <Stat label="Fame">{c.sec.fame.toFixed(0)}</Stat>
           <Stat label="Public record">{c.sec.record.convictions ? `${c.sec.record.convictions} conviction${c.sec.record.convictions > 1 ? 's' : ''}` : 'clean'}{jailed(w, c) ? ' · in prison' : ''}</Stat>
           {p.sec.rivals.includes(c.id) && <Stat label="Status">😠 your rival</Stat>}

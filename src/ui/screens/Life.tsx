@@ -14,6 +14,10 @@ import { STAGE_INFO, lifeOf, lifeStage, occupation, routineBudget, routineOf } f
 import { familyTime, familyTimeCheck, rest, restCheck, wellbeingLabel } from '../../sim/wellbeing';
 import { healthLabel } from '../../sim/population';
 import { KID_HOW, adoptChildCheck, adoptionOf, applyToAdopt, inCare, PET_KINDS, adoptCheck, adoptPet, careCheck, careForPet, dueText, expecting, petAge, petsOf, siblingsOf } from '../../sim/kinship';
+import { courseDays, dropOut, eduOfCitizen, enroll, enrollCheck, hasUniversity, levelLabel, schoolQuality, setEduFunding, study, studyCheck } from '../../sim/education';
+import { COURSES, FIELDS, eduOf, type Course, type Field } from '../../data/education';
+import { nationPerm } from '../../sim/authority';
+import { controller } from '../../sim/query';
 import { HOBBIES, HOBBY_ENERGY, hobbyCheck, hobbyLevel, pursueHobby } from '../../sim/hobbies';
 import { STATUS_LABEL, breakUp, familyOf, goOnDate, marry, partnerOf, propose, romanceCheck, tryForChild } from '../../sim/family';
 
@@ -71,6 +75,8 @@ export function Life({ w }: { w: World }) {
         {!partner && <Help>Single. Get to know people in your Neighbourhood; once someone likes you (relationship 30+), you can ask them out from their profile.</Help>}
       </Panel>
 
+      <Panel title="Education"><EducationPanel w={w} p={p} /></Panel>
+
       <Panel title="Pets"><Pets w={w} p={p} /></Panel>
 
       <Panel title="Hobbies"><Hobbies w={w} p={p} /></Panel>
@@ -88,6 +94,46 @@ export function Life({ w }: { w: World }) {
           {([['character', '🧍 Character'], ['jobs', '💼 Work'], ['local', '🏘️ Neighbourhood'], ['market', '🛒 Market'], ['companies', '🏭 Companies'], ['politics', '🗳️ Politics'], ['forces', '🎖️ Military'], ['journal', '📓 Journal']] as const).map(([id, label]) => <Btn small kind="ghost" onClick={() => store.go(id)}>{label}</Btn>)}
         </div>
       </Panel>
+    </div>
+  );
+}
+
+function EducationPanel({ w, p }: { w: World; p: Citizen }) {
+  const e = eduOfCitizen(p);
+  const r = w.regions[p.home];
+  const nat = controller(r);
+  const code = w.nations[nat].cur;
+  const [course, setCourse] = useState<Course>('bachelor');
+  const [field, setField] = useState<Field>('business');
+  const [share, setShare] = useState(Math.round((w.nations[p.nation].eduFunding ?? eduOf(w.nations[p.nation].iso).funding) * 100));
+  const fee = (k: Course) => cur(Math.round(eduOf(w.nations[nat].iso).tuition * COURSES[k].tuition));
+  return (
+    <div>
+      <p><b>{levelLabel(p)}</b></p>
+      {e.enrolled ? (
+        <>
+          <p class="small">{COURSES[e.enrolled.course].icon} Studying for a {COURSES[e.enrolled.course].label.toLowerCase()} in {FIELDS[e.enrolled.field].label.toLowerCase()} in {w.regions[e.enrolled.region].name}: {Math.floor(e.enrolled.days)} of {e.enrolled.need} study days.</p>
+          <Bar v={e.enrolled.days} max={e.enrolled.need} color="#3fb5a8" />
+          <div class="row">
+            <ActBtn small kind="primary" why={studyCheck(w, p)} run={(w) => study(w)}>📚 Go to classes</ActBtn>
+            <ActBtn small kind="ghost" confirm="Leave your course? Fees already paid are not refunded." run={(w) => dropOut(w)}>Drop out</ActBtn>
+          </div>
+          <Help>Classes run in your daily routine at 09:00 ("School / studies"). A year's fees are due at the start of each academic year.</Help>
+        </>
+      ) : (
+        <>
+          <div class="row wrap small">
+            <select value={course} onChange={(ev) => setCourse((ev.target as HTMLSelectElement).value as Course)}>{(Object.keys(COURSES) as Course[]).map((k) => <option value={k}>{COURSES[k].icon} {COURSES[k].label} ({COURSES[k].years} yr)</option>)}</select>
+            <select value={field} onChange={(ev) => setField((ev.target as HTMLSelectElement).value as Field)}>{(Object.keys(FIELDS) as Field[]).map((k) => <option value={k}>{FIELDS[k].icon} {FIELDS[k].label}</option>)}</select>
+            <ActBtn small why={enrollCheck(w, p, course, field)} run={(w) => enroll(w, course, field)}>Enrol ({fee(course) ? `${fmtAmt(code, fee(course))} a year` : 'no fees'})</ActBtn>
+          </div>
+          <Help>About {courseDays(w, course)} study days. Studying builds the skills of your field.</Help>
+        </>
+      )}
+      <p class="small muted">Schools in {r.name}: quality {schoolQuality(w, r)}/100 · {hasUniversity(w, r) ? `University of ${r.name}` : 'no university (colleges offer vocational courses)'}.</p>
+      {nationPerm(w, p.id, p.nation, 'money') && <div class="row small">Education funding
+        <select value={share} onChange={(ev) => setShare(+(ev.target as HTMLSelectElement).value)}>{[0, 2, 3, 4, 5, 6, 8, 10, 12, 15].map((x) => <option value={x}>{x}% of revenue</option>)}</select>
+        <ActBtn small run={(w) => setEduFunding(w, p.id, p.nation, share / 100)}>Set</ActBtn></div>}
     </div>
   );
 }
@@ -217,12 +263,13 @@ function Budget({ w, p }: { w: World; p: Citizen }) {
 function RoutinePanel({ w, p }: { w: World; p: Citizen }) {
   const r = routineOf(w);
   const b = routineBudget(w, r);
-  const toggle = (k: 'work' | 'train' | 'family' | 'rest' | 'jobHunt') => { r[k] = !r[k]; if (k === 'train') w.settings.autoTrain = r.train; store.emit(); };
+  const toggle = (k: 'work' | 'train' | 'family' | 'rest' | 'jobHunt' | 'school') => { r[k] = !r[k]; if (k === 'train') w.settings.autoTrain = r.train; store.emit(); };
   const hh = (h: number) => `${String(h).padStart(2, '0')}:00`;
   return (
     <div>
       <label class="check"><input type="checkbox" checked={r.work} onChange={() => toggle('work')} /> Work my shift at {hh(p.workHour)} {p.job == null ? <small class="muted">(no job yet)</small> : null}</label>
       <label class="check"><input type="checkbox" checked={!!r.jobHunt} onChange={() => toggle('jobHunt')} /> Look for work when unemployed (apply to the best offer nearby)</label>
+      {p.edu?.enrolled && <label class="check"><input type="checkbox" checked={r.school} onChange={() => toggle('school')} /> Classes at 09:00</label>}
       <label class="check"><input type="checkbox" checked={r.train} onChange={() => toggle('train')} /> Train at {hh(p.trainHour)}</label>
       <label class="check"><input type="checkbox" checked={r.family} onChange={() => toggle('family')} /> Evening with family at 19:00</label>
       <label class="check">Hobby at 20:00: <select value={r.hobby ?? ''} onChange={(e) => { r.hobby = (e.target as HTMLSelectElement).value || null; store.emit(); }}>

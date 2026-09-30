@@ -3,6 +3,27 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.3.10: schools and universities
+
+- **Education for everyone.** Every person now has a qualification: secondary school, a vocational diploma, or a
+  bachelor's, master's or doctorate in one of eight fields. The shares follow each real country, from about one
+  adult in eight with a tertiary qualification in India to three in five in Canada. Profiles show it.
+- **Go back to school.** From the Life screen, enrol at a college (vocational courses, everywhere) or a university
+  (in capitals and larger cities). Each course needs the one below it.
+- **Fees.** A year's fees are paid to the state at the start of each academic year, at real-country levels: high in
+  the United States and United Kingdom, low in Germany, free in Brazil, Argentina and Saudi Arabia.
+- **Studying.** A course takes about 180 study days per year of the course. Go to classes each day (or put them in
+  your daily routine at 09:00). Your field's skills grow as you study, and graduating is a milestone.
+- **Funded institutions.** Governments spend a share of daily revenue on schools and universities. That money pays
+  teachers, through the households. The quality of schools follows funding over the years. The head of government
+  or economy minister can change the funding.
+- **Students.** Some young people are at college or university and graduate over time. People studying show as
+  students.
+
+### Fixed in 1.3.10
+
+- Going back to a screen now restores where it was scrolled even when the page is still laying out.
+
 ### New in 1.3.9: your monthly budget
 
 - **A real budget.** The Life screen's money panel now covers whole calendar months: money in and out by category

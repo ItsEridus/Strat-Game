@@ -34,6 +34,7 @@ import { closeContract } from './contracts';
 import { activeCrises } from './dynamics';
 import { applyCitizenship } from './travel';
 import { fam, bereave, kidComesOfAge } from './family';
+import { assignEducation } from './education';
 
 // ---------- health ----------
 
@@ -261,6 +262,7 @@ export function newResident(w: World, nation: Nation, rid: Id, opts: { name?: st
     mint(w, cref(c.id), GOLD, g(rand(w, 0.2, 1.5)), 'Arrival savings');
   }
   produce(w, cref(c.id), 'food:1', randInt(w, 2, 6), 'arrival');
+  assignEducation(w, c);
   return c;
 }
 

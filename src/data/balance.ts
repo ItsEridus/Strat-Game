@@ -19,8 +19,9 @@ export const BALANCE = {
   },
   cost: { work: 10, train: 10, hit: 10, build: 10, manager: 10, mineStart: 10, article: 10 }, // train/hit/build: DOC/WIKI; others SOLO
   // No levels: skills grow by practice (sim/growth.ts). Effort per activity ≈ one day's worth.
-  practice: { work: 1, train: 1.2, trainDonate: 0.6, hit: 0.03, build: 1, manager: 1, article: 1, rally: 1.5, canvass: 0.8, talk: 0.1, volunteer: 0.6, crime: 0.5, patrol: 0.6, spy: 0.6 }, // SOLO
-  growth: { rate: 0.6, soft: 20 }, // SOLO gain = effort × rate × youth / (1 + skill / soft)
+  practice: { work: 1, train: 1.2, trainDonate: 0.6, hit: 0.03, build: 1, manager: 1, article: 1, rally: 1.5, canvass: 0.8, study: 0.8, talk: 0.1, volunteer: 0.6, crime: 0.5, patrol: 0.6, spy: 0.6 }, // SOLO
+  growth: { rate: 0.6, soft: 20 },
+  edu: { studyEnergy: 8 }, // SOLO a day of classes // SOLO gain = effort × rate × youth / (1 + skill / soft)
   family: { dateCost: 12, weddingCost: 150, flowers: 8, childPerDay: 1.5, adoptFee: 250, adoptDays: 30, startInLife: 0.1, startMax: 60, careLeaver: 30 }, // SOLO currency
   places: { exploreEnergy: 5, exploreGain: 6, exploreStory: 0.3 }, // SOLO exploring a district: energy, familiarity (diminishing), chance of a situation
   life: { adultAge: 18, playerAge: 24, retireAge: 65, stages: { child: 5, teen: 13, adult: 18, senior: 65 } }, // SOLO; the pace of life is Settings.lifeYearDays

@@ -3,6 +3,7 @@ import { civilianControl } from './forces';
 import { lifeOf, newLifeState } from './lifecycle';
 import { initFamilies, initPlayerFamily } from './family';
 import { initPopulation } from './population';
+import { initEducation } from './education';
 import type { Citizen, Company, Id, Ideology, Industry, Nation, Persona, RawRes, Region, Settings, World } from './types';
 import { B, applyBalance } from '../data/balance';
 import { NAME_POOLS, NATION_DEFS } from '../data/names';
@@ -29,7 +30,7 @@ import { newNarrative } from './story';
 import { bornYearsAgo, seniority } from './growth';
 import { AGENCY_NAMES } from '../data/names';
 
-export const SAVE_VERSION = 9; // 5: armed forces; 6: per-region population, home regions; 7: stories, journal, memories, places; 8: no levels (skills, age, reputation); 9: timber, cotton, copper
+export const SAVE_VERSION = 10; // 5: armed forces; 6: per-region population, home regions; 7: stories, journal, memories, places; 8: no levels (skills, age, reputation); 9: timber, cotton, copper; 10: education
 
 export function defaultSettings(): Settings {
   const pauseOn: Record<string, boolean> = {};
@@ -388,6 +389,7 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
   initFamilies(w);
   initPlayerFamily(w);
   initPopulation(w);
+  initEducation(w);
   w.player.routine = { work: true, train: true, family: true, rest: true, hobby: null, school: false, jobHunt: true };
   lifeOf(p);
 

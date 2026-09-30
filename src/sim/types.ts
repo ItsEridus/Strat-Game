@@ -43,6 +43,7 @@ export interface Citizen {
   health?: number; // 0..100 (sim/population.ts); undefined = 90
   life?: LifeProfile; // personal life: wellbeing, milestones, hobbies, goals (sim/lifecycle.ts, sim/wellbeing.ts)
   family?: Family; // partner, parents, children (sim/family.ts)
+  edu?: import('./education').Education; // qualifications and current course (sim/education.ts)
   retired?: boolean;
   veteran?: { branch: Branch; rank: number; title: string; days: number; until: number }; // past military service (pensions, standing)
   trip?: { until: number; why: string } | null; // travelling away from home (AI)
@@ -371,6 +372,8 @@ export interface Nation {
   warMood: number; // public appetite for war shaped by the press (-5..5)
   agency: Agency; // intelligence service
   policeFunding: number;
+  eduFunding?: number; // share of daily revenue for schools and universities (sim/education.ts)
+  eduQ?: number; // quality of public education, 0..100, follows funding slowly
   defense: { budget: number; chief: Id | null; unpaid: number; appointed?: boolean }; // appointed: chosen by the Commander-in-Chief // military budget (share of revenue), chief of staff, days unpaid
   alert: number; // national security alert 1 (normal) .. 5 (maximum) // share of daily revenue for national police (regions without their own government, federal crimes)
 }

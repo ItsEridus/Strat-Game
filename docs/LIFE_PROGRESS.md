@@ -36,7 +36,7 @@ stages go out in slices.
 | CLK | Clock overhaul: real calendar, descriptive date and time, seasons, slower time | Done |
 | N3 | Narrative stage 3: districts, venues, familiarity, availability, appointments | Done |
 | L2 | Family graph with real children, pregnancy, adoption, guardians, siblings; hobbies, pets, gifts; story protagonists and memory subjects; budgets | Done: groundwork 1.3.2; pregnancy, siblings, gifts, pets 1.3.6; hobbies 1.3.7; adoption, care, guardians, child costs 1.3.8; memory subjects, protagonists, budgets 1.3.9 |
-| L3 | Schools, universities, clinics and offices as funded institutions; education ladder; qualifications; service careers (teaching, clinical care, administration, technical); work history; promotions; military academy | Planned |
+| L3 | Schools, universities, clinics and offices as funded institutions; education ladder; qualifications; service careers (teaching, clinical care, administration, technical); work history; promotions; military academy | In progress: schools, universities, education ladder 1.3.10 |
 | L4 | Housing (rent/buy/sell); obligations (loans, mortgages, student loans); conditions and treatment; leave; retirement and funded pensions (incl. veterans); living-cost split | Planned |
 | L5 | Birth start; childhood and parenting; player mortality; wills, trusts, estates, heirlooms | Planned |
 | L6 | Succession to heirs; legacy archive; 8 life chains + 16 standalone encounters; narrative stage 4's five chains; NPC AI parity | Planned |
