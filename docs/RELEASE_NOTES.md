@@ -3,6 +3,39 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.3.1: a preview of 1.4 — a whole life
+
+A preview on the way to 1.4 (the life simulation). More is coming, and the Windows game updates itself.
+
+- **A real calendar and a slower clock.** Dates like "Tuesday, 14 March 2030", the time of day, and seasons by
+  hemisphere (summer in Sydney while Chicago has winter; wet and dry seasons in the tropics). Time runs slower: at 1×
+  a minute passes each second.
+- **Growing older.** Everyone has an age and a birthday on a real date, and stages of life from childhood to old age.
+  Each birthday brings a review of your year. "Advance to next birthday" (and +1 day, +1 week, +30 days) fast-forwards
+  while the window stays responsive, and stops for things that need you.
+- **No more levels.** You get better at what you do: training builds strength and endurance, shifts build economic
+  aptitude, managing and speaking build leadership. Your reputation (from newcomer to famous) opens the doors levels
+  used to: founding a party, standing for office, joining the police or the intelligence service.
+- **A population that lives.** People are born, come of age, move, emigrate, arrive from abroad, fall ill, retire
+  and die; regions grow and shrink (roughly 24 to 100 people) with how good a place they are to live. Estates pass to
+  family, and empty offices are filled (a head of government who dies in office triggers a special election).
+- **Love and family.** People date, marry, divorce and have children. You have parents, and you can ask someone
+  out, go on dates, propose, marry and start a family — but a neglected partner may leave.
+- **My Life.** A new hub: health, happiness and stress (with the reasons), family and friends, your money from real
+  transactions, a daily routine (work, look for work, training, family time, rest) and milestones.
+- **Places.** Every region has districts and places — cafés, parks, city hall, the police, the market, workplaces,
+  the station, the harbour. Explore to get to know a place, see who is where and when they are free, arrange to
+  meet people, have a coffee, walk in the park or volunteer.
+- **Civilian control of the military.** Public office and active duty don't mix: office holders pass to the
+  reserve and keep their rank. The head of government is Commander-in-Chief and appoints the Chief of Staff. Service
+  ends at 62 (64 for generals) with veteran status.
+- **A new look.** A redesigned interface: title screen, typography, icons, panels and animation.
+- **An unscripted future.** No two playthroughs — or reloads — unfold the same way, and you are born in a random
+  region of your nation (a fixed seed is still available for sharing a world).
+
+Saves from 1.3 load and are upgraded (levels become skills; everyone gets an age). On a full-size world a long
+advance runs at the speed of the simulation, about a few seconds per in-game day.
+
 ### New in 1.3: stories, a journal, and automatic updates
 
 - **Automatic updates (Windows).** From this version on, `MeridianReach.exe` checks for new releases when it
