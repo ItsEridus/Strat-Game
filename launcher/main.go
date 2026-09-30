@@ -1,7 +1,8 @@
-// Meridian Reach launcher: a self-contained executable that serves the embedded
-// game on a fixed local port and shows it. On Windows it opens a native game
-// window (WebView2); elsewhere, or when WebView2 is missing, it opens the default
-// browser. The fixed port keeps the game's origin, and so its save storage
+// Meridian Reach launcher: a self-contained executable that embeds the game.
+// On Windows it opens a native game window (WebView2) that loads the game files
+// straight from disk, with no network port involved. Elsewhere, or when WebView2
+// is missing, it serves the game on a fixed local port and opens the default
+// browser; the fixed port keeps the game's origin, and so its save storage
 // (localStorage), the same between runs.
 package main
 
@@ -32,32 +33,44 @@ var gameURL = fmt.Sprintf("http://127.0.0.1:%d/", port)
 
 // In browser mode the page sends a heartbeat; the launcher exits about a minute
 // after the game tab is closed.
-var (
-	browserMode atomic.Bool
-	lastBeat    atomic.Int64
-)
+var lastBeat atomic.Int64
 
 const heartbeat = `<script>setInterval(function(){fetch('/__alive',{cache:'no-store'}).catch(function(){})},5000);fetch('/__alive').catch(function(){});</script>`
 
-func main() {
-	ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
-	if err != nil {
-		if running() {
-			alreadyRunning()
-			return
-		}
-		fail(fmt.Errorf("port %d is in use by another program, so the game cannot start: %w", port, err))
-	}
-	go serve(ln)
-	show(gameURL) // platform-specific: returns when the game is closed
-}
+func main() { show() } // platform-specific: returns when the game is closed
 
-// serve runs the local web server for the embedded game files.
-func serve(ln net.Listener) {
+func gameFiles() fs.FS {
 	web, err := fs.Sub(files, "web")
 	if err != nil {
 		fail(err)
 	}
+	return web
+}
+
+// runInBrowser serves the game on the local port, opens it in the default
+// browser and blocks until the tab has been closed for a minute.
+func runInBrowser() {
+	ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
+	if err != nil {
+		if running() {
+			openBrowser(gameURL)
+			return
+		}
+		fail(fmt.Errorf("port %d is in use by another program (an older Meridian Reach may still be running: end MeridianReach.exe in Task Manager): %w", port, err))
+	}
+	go serve(ln)
+	fmt.Println("Meridian Reach is running at", gameURL, "- close the game tab to quit.")
+	openBrowser(gameURL)
+	for range time.Tick(10 * time.Second) {
+		b := lastBeat.Load()
+		if b > 0 && time.Now().Unix()-b > 60 {
+			return
+		}
+	}
+}
+
+func serve(ln net.Listener) {
+	web := gameFiles()
 	mux := http.NewServeMux()
 	static := http.FileServer(http.FS(web))
 	mux.HandleFunc("/__alive", func(w http.ResponseWriter, r *http.Request) {
@@ -67,7 +80,7 @@ func serve(ln net.Listener) {
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-cache")
-		if (r.URL.Path == "/" || r.URL.Path == "/index.html") && browserMode.Load() {
+		if r.URL.Path == "/" || r.URL.Path == "/index.html" {
 			page, err := fs.ReadFile(web, "index.html")
 			if err != nil {
 				http.Error(w, "missing index.html", 500)
@@ -85,7 +98,7 @@ func serve(ln net.Listener) {
 	}
 }
 
-// running reports whether another launcher already owns the port.
+// running reports whether another Meridian Reach launcher already owns the port.
 func running() bool {
 	c := http.Client{Timeout: 2 * time.Second}
 	resp, err := c.Get(gameURL + "__alive")
@@ -94,20 +107,6 @@ func running() bool {
 	}
 	resp.Body.Close()
 	return resp.Header.Get("X-Meridian-Reach") != ""
-}
-
-// runInBrowser opens the game in the default browser and blocks until the tab
-// has been closed for a minute.
-func runInBrowser() {
-	browserMode.Store(true)
-	fmt.Println("Meridian Reach is running at", gameURL, "- close the game tab to quit.")
-	openBrowser(gameURL)
-	for range time.Tick(10 * time.Second) {
-		b := lastBeat.Load()
-		if b > 0 && time.Now().Unix()-b > 60 {
-			return
-		}
-	}
 }
 
 func openBrowser(url string) {

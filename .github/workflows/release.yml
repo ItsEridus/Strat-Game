@@ -54,8 +54,8 @@ jobs:
             release/MeridianReach.exe
             release/MeridianReach-*-web.zip
 
-  # Runs the EXE on real Windows: the game window must open, serve the game and
-  # close cleanly from its close button. The screenshot is kept as an artifact.
+  # Runs the EXE on real Windows: the game window must open (even with the old
+  # launcher port taken), stay single-instance and close cleanly from its close button. The screenshot is kept as an artifact.
   smoke-windows:
     needs: build
     runs-on: windows-latest
@@ -71,21 +71,27 @@ jobs:
           public static class U { [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr h, uint m, IntPtr w, IntPtr l); }
           "@
           Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          # Something else holds the old launcher port: the window must not care.
+          $blocker = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, 27183)
+          $blocker.Start()
           $p = Start-Process -FilePath .\MeridianReach.exe -PassThru
           Start-Sleep -Seconds 20
           if ($p.HasExited) { throw "the game exited on start (code $($p.ExitCode))" }
-          $r = Invoke-WebRequest -UseBasicParsing http://127.0.0.1:27183/__alive
-          Write-Host "server version: $($r.Headers['X-Meridian-Reach'])"
           $proc = Get-Process -Id $p.Id
           Write-Host "window: '$($proc.MainWindowTitle)'"
           if ($proc.MainWindowTitle -ne 'Meridian Reach') { throw "no game window (title '$($proc.MainWindowTitle)')" }
+          if (-not (Test-Path "$env:LOCALAPPDATA\MeridianReach\game\index.html")) { throw "game files were not extracted" }
+          # A second launch must hand over to the open window and exit.
+          $second = Start-Process -FilePath .\MeridianReach.exe -PassThru
+          if (-not $second.WaitForExit(10000)) { throw "a second launch did not exit" }
+          if ((Get-Process -Name MeridianReach).Count -ne 1) { throw "more than one game process" }
           $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
           $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
           [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
           $bmp.Save("$PWD\window.png")
-          if (-not (Test-Path "$env:APPDATA\MeridianReach")) { throw "no data folder in %APPDATA%" }
           [U]::PostMessage($proc.MainWindowHandle, 0x10, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null
           if (-not $p.WaitForExit(15000)) { throw "the game did not close from its close button" }
+          $blocker.Stop()
           Write-Host "closed cleanly"
       - uses: actions/upload-artifact@v4
         if: always()

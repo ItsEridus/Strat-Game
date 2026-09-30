@@ -3,13 +3,16 @@
 package main
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
+	"reflect"
 	"sync"
 	"time"
 	"unsafe"
 
 	webview2 "github.com/jchv/go-webview2"
+	"github.com/jchv/go-webview2/pkg/edge"
 	"github.com/jchv/go-webview2/webviewloader"
 	"golang.org/x/sys/windows"
 )
@@ -21,6 +24,7 @@ var (
 	procFindWindow     = user32.NewProc("FindWindowW")
 	procSetWindowLong  = user32.NewProc("SetWindowLongPtrW")
 	procCallWindowProc = user32.NewProc("CallWindowProcW")
+	procCreateMutex    = windows.NewLazySystemDLL("kernel32.dll").NewProc("CreateMutexW")
 )
 
 const (
@@ -28,19 +32,31 @@ const (
 	swMaximize  = 3
 	wmClose     = 0x0010
 	gwlpWndProc = ^uintptr(3) // -4
+	// The game is served to the window from this virtual host, which maps to the
+	// extracted game files. A fixed origin keeps the saves in one place.
+	gameHost = "meridian-reach.example"
 )
 
 // show opens the game in a native window, or in the browser when the WebView2
 // runtime is not installed (e.g. Windows 7/8 without Edge).
-func show(url string) {
+func show() {
+	name, _ := windows.UTF16PtrFromString("Local\\MeridianReachGame")
+	// One game at a time: a second launch brings the open window to the front.
+	if h, _, err := procCreateMutex.Call(0, 0, uintptr(unsafe.Pointer(name))); h != 0 && err == windows.ERROR_ALREADY_EXISTS {
+		focusRunning()
+		return
+	}
 	if v, err := webviewloader.GetInstalledVersion(); err != nil || v == "" {
 		runInBrowser()
 		return
 	}
-	data := filepath.Join(appData(), "MeridianReach")
-	_ = os.MkdirAll(data, 0o755)
+	home := filepath.Join(localAppData(), "MeridianReach")
+	gameDir := filepath.Join(home, "game")
+	if err := extract(gameDir); err != nil {
+		fail(err)
+	}
 	w := webview2.NewWithOptions(webview2.WebViewOptions{
-		DataPath:  data,
+		DataPath:  filepath.Join(home, "WebView"),
 		AutoFocus: true,
 		WindowOptions: webview2.WindowOptions{
 			Title:  title,
@@ -58,8 +74,49 @@ func show(url string) {
 	hwnd := uintptr(w.Window())
 	procShowWindow.Call(hwnd, swMaximize)
 	saveOnClose(w, hwnd)
-	w.Navigate(url)
+	if c := chromium(w); c != nil && c.GetICoreWebView2_3() != nil &&
+		c.GetICoreWebView2_3().SetVirtualHostNameToFolderMapping(gameHost, gameDir, edge.COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_ALLOW) == nil {
+		w.Navigate("https://" + gameHost + "/index.html")
+	} else {
+		// Very old WebView2 runtime: load the files directly.
+		w.Navigate("file:///" + filepath.ToSlash(filepath.Join(gameDir, "index.html")))
+	}
 	w.Run()
+}
+
+// extract writes the embedded game files to dir (replacing an older version).
+func extract(dir string) error {
+	web := gameFiles()
+	_ = os.RemoveAll(dir)
+	return fs.WalkDir(web, ".", func(p string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		dst := filepath.Join(dir, filepath.FromSlash(p))
+		if d.IsDir() {
+			return os.MkdirAll(dst, 0o755)
+		}
+		b, err := fs.ReadFile(web, p)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(dst, b, 0o644)
+	})
+}
+
+// chromium returns the WebView2 controller behind w. go-webview2 keeps it in an
+// unexported field; it is needed to map the virtual host.
+func chromium(w webview2.WebView) *edge.Chromium {
+	v := reflect.ValueOf(w)
+	if v.Kind() != reflect.Ptr || v.Elem().Kind() != reflect.Struct {
+		return nil
+	}
+	f := v.Elem().FieldByName("browser")
+	if !f.IsValid() {
+		return nil
+	}
+	c, _ := reflect.NewAt(f.Type(), unsafe.Pointer(f.UnsafeAddr())).Elem().Interface().(*edge.Chromium)
+	return c
 }
 
 // saveOnClose makes the window's close button autosave the campaign before the
@@ -88,8 +145,8 @@ func saveOnClose(w webview2.WebView, hwnd uintptr) {
 	prev, _, _ = procSetWindowLong.Call(hwnd, gwlpWndProc, proc)
 }
 
-// alreadyRunning brings the existing game window to the front.
-func alreadyRunning() {
+// focusRunning brings the already-open game window to the front.
+func focusRunning() {
 	cls, _ := windows.UTF16PtrFromString("webview")
 	name, _ := windows.UTF16PtrFromString(title)
 	if h, _, _ := procFindWindow.Call(uintptr(unsafe.Pointer(cls)), uintptr(unsafe.Pointer(name))); h != 0 {
@@ -100,7 +157,10 @@ func alreadyRunning() {
 	openBrowser(gameURL) // the other instance is in browser mode
 }
 
-func appData() string {
+func localAppData() string {
+	if d := os.Getenv("LOCALAPPDATA"); d != "" {
+		return d
+	}
 	if d, err := os.UserConfigDir(); err == nil {
 		return d
 	}
