@@ -16,12 +16,13 @@ import { BUSINESS_STORIES } from './business';
 import { NATION_STORIES } from './nation';
 import { JUSTICE_STORIES } from './justice';
 import { DEFENCE_STORIES } from './defence';
+import { NATURE_STORIES } from './nature';
 
 let done = false;
 export function registerAllStories() {
   if (done) return;
   done = true;
-  registerStory(...EVERYDAY, ...ADOPTED, ...WORK_CHAINS, ...LIFE_CHAINS, ...LIFE_ENCOUNTERS, ...SYSTEM_CHAINS, ...BUSINESS_STORIES, ...NATION_STORIES, ...JUSTICE_STORIES, ...DEFENCE_STORIES);
+  registerStory(...EVERYDAY, ...ADOPTED, ...WORK_CHAINS, ...LIFE_CHAINS, ...LIFE_ENCOUNTERS, ...SYSTEM_CHAINS, ...BUSINESS_STORIES, ...NATION_STORIES, ...JUSTICE_STORIES, ...DEFENCE_STORIES, ...NATURE_STORIES);
 }
 
 /** Scheduled repayments of loans and investments made in stories. */

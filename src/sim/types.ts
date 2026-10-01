@@ -257,7 +257,7 @@ export interface SpyOp {
   start: number; ends: number; status: 'active' | 'success' | 'failed' | 'exposed'; result?: string;
   formation?: Id | null; // target of military sabotage
 }
-export type CrisisKind = 'hurricane' | 'earthquake' | 'flood' | 'wildfire' | 'blizzard' | 'drought' | 'epidemic' | 'strike' | 'protest' | 'riot' | 'boom' | 'shock';
+export type CrisisKind = 'hurricane' | 'earthquake' | 'flood' | 'wildfire' | 'blizzard' | 'drought' | 'heatwave' | 'eruption' | 'tsunami' | 'epidemic' | 'strike' | 'protest' | 'riot' | 'boom' | 'shock';
 export interface Crisis {
   id: Id; kind: CrisisKind; name: string; regions: Id[]; nation: Id | null; start: number; end: number; severity: number;
   status: 'active' | 'over'; relief: number; // money spent on relief
@@ -778,6 +778,7 @@ export interface World {
   settings: Settings;
   playerId: Id;
   player: PlayerState;
+  warnings?: import('./naturalHazards').Warning[]; // hazards forecast to strike within a day (1.9)
   weather?: import('./weather').WeatherState; // today's and tomorrow's weather by region (1.9)
   story: NarrativeState; // stories, journal, relationship memories, places (see sim/story.ts)
   life: LifeState; // life simulation: reviews, long advances (see sim/lifecycle.ts)

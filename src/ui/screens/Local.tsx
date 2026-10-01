@@ -139,6 +139,7 @@ function WeatherPanel({ w }: { w: World }) {
       <table class="table compact small"><tbody>
         <tr><td>Today</td><td>{WX_INFO[x.kind].label} · {x.t}°C{x.mm ? ` · ${x.mm} mm` : ''} · wind {x.wind} km/h</td></tr>
         <tr><td>Tomorrow (forecast)</td><td>{WX_INFO[f.kind].icon} {f.t}°C · {f.rainChance}% chance of rain or snow</td></tr>
+        {(w.warnings ?? []).filter((x) => x.regions.includes(p.loc)).map((x) => <tr><td class="bad">⚠️ Warning</td><td class="bad">{x.label} expected within a day</td></tr>)}
         <tr><td>Climate</td><td>{ZONE_LABEL[zoneOf(w, p.loc)]}</td></tr>
         <tr><td>Growing season</td><td class={g < 0.9 ? 'bad' : g > 1.05 ? 'good' : ''}>{g < 0.9 ? 'poor (dry, frost or heat)' : g > 1.05 ? 'good' : 'normal'} · farms at {Math.round(g * 100)}%</td></tr>
       </tbody></table>

@@ -3,6 +3,7 @@
 // along borders, strikes, protests and riots driven by conditions on the ground,
 // internal migration, and new people arriving. Governments (AI or player)
 // respond with relief spending, lockdowns, crackdowns or concessions.
+import { hazardArrives } from './naturalHazards';
 import { dateAt } from '../engine/calendar';
 import { lifeGate } from './lifecycle';
 import type { Citizen, Crisis, CrisisKind, Id, World } from './types';
@@ -24,7 +25,7 @@ const regionKey = new Map(EARTH.regions.map((e, i) => [`${EARTH.nations[e.nation
 /** The calendar month (1–12), for seasonal hazards. */
 export const monthOf = (w: World) => dateAt(w.time).month + 1;
 export const activeCrises = (w: World) => Object.values(w.crises).filter((c) => c.status === 'active');
-export const KIND_ICON: Record<CrisisKind, string> = { hurricane: '🌀', earthquake: '🌋', flood: '🌊', wildfire: '🔥', blizzard: '❄️', drought: '🏜️', epidemic: '🦠', strike: '✊', protest: '📢', riot: '🔥', boom: '📈', shock: '📉' };
+export const KIND_ICON: Record<CrisisKind, string> = { hurricane: '🌀', earthquake: '🌋', flood: '🌊', wildfire: '🔥', blizzard: '❄️', drought: '🏜️', heatwave: '🥵', eruption: '🌋', tsunami: '🌊', epidemic: '🦠', strike: '✊', protest: '📢', riot: '🔥', boom: '📈', shock: '📉' };
 
 /** Production multiplier from crises touching this region (and industry). */
 export function crisisFactor(w: World, rid: Id, industry: string): { label: string; mult: number } | null {
@@ -78,7 +79,6 @@ export function addCrisis(w: World, kind: CrisisKind, name: string, regions: Id[
 
 function disastersDaily(w: World) {
   const m = monthOf(w);
-  const p = player(w);
   for (const h of HAZARDS) {
     if (h.months.length && !h.months.includes(m)) continue;
     const perDay = (h.weight / (h.months.length ? h.months.length * 30.4 : 365)) * B.dynamics.disasterChance;
@@ -86,33 +86,10 @@ function disastersDaily(w: World) {
     const keys = h.regions.filter((k) => regionKey.has(k));
     if (!keys.length) continue;
     const origin = regionKey.get(pick(w, keys))!;
-    const severity = weighted(w, [1, 2, 3], (s) => ({ 1: 5, 2: 3, 3: 1 }[s]!))!;
+    // Spread: big events reach neighbouring regions of the same country (sim/naturalHazards.ts decides how big).
     const regions = [origin];
-    if (h.spread) for (const l of w.regions[origin].links) if (w.regions[l].owner === w.regions[origin].owner && chance(w, 0.25 * severity)) regions.push(l);
-    const r0 = w.regions[origin];
-    const names = { 1: '', 2: 'Severe ', 3: 'Catastrophic ' } as Record<number, string>;
-    const c = addCrisis(w, h.kind, `${names[severity]}${h.label.toLowerCase().replace(/^./, (x) => x.toUpperCase())} in ${r0.name}`, regions, r0.owner, severity + randInt(w, 1, 3), severity);
-    let deaths = 0;
-    for (const rid of regions) {
-      const r = w.regions[rid];
-      if (h.kind !== 'drought') r.disrupted = Math.max(r.disrupted, w.time + severity * DAY);
-      const lost = Math.round(r.pop * 0.002 * severity * (h.kind === 'earthquake' ? 2 : 1));
-      if (h.kind !== 'drought' && h.kind !== 'blizzard') { r.pop = Math.max(2000, r.pop - lost); deaths += lost; }
-      r.unrest = Math.min(100, r.unrest + 4 * severity);
-      if (h.kind !== 'drought') r.crime = Math.min(100, r.crime + 3 * severity); // looting
-      if (severity >= 2 && (h.kind === 'earthquake' || h.kind === 'hurricane' || h.kind === 'flood')) {
-        const b = (['hospital', 'industrial', 'fields', 'base'] as const).filter((k) => r.bld[k] > 0);
-        if (b.length && chance(w, 0.5)) r.bld[pick(w, b)]--;
-        const s = w.govs[rid];
-        if (s && s.dev > 0 && severity === 3) s.dev--;
-      }
-      if (h.kind === 'wildfire' || h.kind === 'hurricane' || h.kind === 'earthquake') for (const co of Object.values(w.companies)) if (co.region === rid && chance(w, 0.3 * severity)) co.halt = { until: w.time + severity * DAY, why: `${h.label} damage` };
-    }
-    c.deaths = deaths;
-    const where = regions.length > 1 ? `${r0.name} and ${regions.length - 1} neighbouring region${regions.length > 2 ? 's' : ''}` : r0.name;
-    record(w, 'disaster', `${KIND_ICON[h.kind]} ${c.name} (${w.nations[r0.owner].name}): ${where} hit${deaths ? `, ${deaths.toLocaleString()} dead` : ''}.`, { region: origin, nation: r0.owner, important: true });
-    if (regions.includes(p.loc)) notify(w, 'personal', `${KIND_ICON[h.kind]} ${c.name} — you are in the affected area. Relief work is on the World screen.`, { critical: severity >= 2, link: 'world' });
-    else if (r0.owner === p.nation) notify(w, 'politics', `${KIND_ICON[h.kind]} ${c.name} in ${w.nations[r0.owner].name}.`, { link: 'world' });
+    if (h.spread) for (const l of w.regions[origin].links) if (w.regions[l].owner === w.regions[origin].owner && chance(w, 0.35)) regions.push(l);
+    hazardArrives(w, h.kind, h.label, regions);
   }
 }
 
@@ -143,7 +120,7 @@ export function reliefCheck(w: World, c: Citizen, crisisId: Id): string | null {
   const tooYoung = lifeGate(w, c, 13, 'Relief volunteering');
   if (tooYoung) return tooYoung;
   const k = w.crises[crisisId];
-  if (!k || k.status !== 'active' || !['hurricane', 'earthquake', 'flood', 'wildfire', 'blizzard', 'drought', 'epidemic'].includes(k.kind)) return 'No relief effort here.';
+  if (!k || k.status !== 'active' || !['hurricane', 'earthquake', 'flood', 'wildfire', 'blizzard', 'drought', 'heatwave', 'eruption', 'tsunami', 'epidemic'].includes(k.kind)) return 'No relief effort here.';
   if (!k.regions.includes(c.loc)) return `Relief work happens on the ground: go to ${k.regions.map((r) => w.regions[r].name).slice(0, 3).join(', ')}.`;
   if (jailed(w, c)) return 'You are in prison.';
   if (c.energy < 20) return 'Needs 20 energy.';

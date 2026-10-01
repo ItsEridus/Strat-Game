@@ -3,6 +3,28 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.8.2: natural hazards
+
+- **Heavy-tailed disasters.** Most events are minor, about one in ten is major, and a few in a hundred are
+  catastrophic. Deaths, damage and recovery time grow steeply with size. Even the worst events kill no more than a
+  few per cent of a region.
+- **New hazards.**
+  - Volcanic eruptions where real volcanoes are: Japan, Hawaii, the Cascades, Alaska, Popocatépetl and Kamchatka.
+  - Tsunamis after great coastal earthquakes.
+  - Heatwaves when the weather passes 38°C.
+- **Preparedness.** Building standards, warning systems and emergency services start from each country's record:
+  Japan is the best prepared and India the least. Investing in infrastructure raises preparedness. The same
+  earthquake kills far more where buildings are weaker.
+- **Early warning.** Storms, floods, eruptions and blizzards are forecast a day ahead, and evacuation saves lives.
+  In "The storm warning" story, you choose whether to evacuate, board up and shelter, or carry on.
+- **The response.** The army deploys at home, saving lives. After a major disaster, allies and friendly countries
+  send aid, and relations improve.
+- **Insurance.** Insurers (State Farm, Tokio Marine, Allianz, PICC and others) pay companies for disaster losses, in
+  proportion to how much of each economy is insured: about half in the United States, a twentieth in India.
+- **Reconstruction.** AI governments start rebuilding destroyed buildings through the construction system. A player
+  government is told what was lost.
+- **Warnings** for where you are appear on the Neighbourhood screen.
+
 ### New in 1.8.1: weather and climate
 
 The first part of 1.9 Sky & ground.
