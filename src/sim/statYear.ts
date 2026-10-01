@@ -38,6 +38,7 @@ import { intelOrgDaily } from './intelOrg';
 import { collectionDaily } from './collection';
 import { counterIntelDaily } from './counterIntel';
 import { beliefsDaily } from './beliefs';
+import { warDecisionDaily } from './warDecision';
 import { treatiesDaily } from './treaties';
 import { relationsDaily } from './relations';
 import { diplomacyActionsDaily } from './diplomacyActions';
@@ -137,7 +138,7 @@ export function skipMonth(w: World, target: number) {
     runQueue(w); // elections, war deadlines and anything else scheduled in the month, in order
     peopleMonth(w, days);
     // The monthly national turn (these run on the first of the month).
-    withScope(() => { beliefsDaily(w, days); treatiesDaily(w); relationsDaily(w, days); diplomacyActionsDaily(w, days); intlDaily(w, days); balanceOfPowerDaily(w); crisesDaily(w, days); });
+    withScope(() => { warDecisionDaily(w, days); beliefsDaily(w, days); treatiesDaily(w); relationsDaily(w, days); diplomacyActionsDaily(w, days); intlDaily(w, days); balanceOfPowerDaily(w); crisesDaily(w, days); });
     intelOrgDaily(w); collectionDaily(w); counterIntelDaily(w);
     strategicDaily(w); arsenalDaily(w); energyDaily(w); foodDaily(w); powerMonthly(w); budgetDaily(w);
     for (const c of census(w).all) { c.energy = Math.max(c.energy, 50); c.lastWorkDay = Math.floor(w.time / DAY) - 1; }

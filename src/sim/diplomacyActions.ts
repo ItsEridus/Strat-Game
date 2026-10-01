@@ -94,6 +94,7 @@ export function dipCheck(w: World, n: Nation, a: DipAction, p: DipParams): strin
       const war = w.wars[p.war!];
       if (!war || war.status !== 'active') return 'Pick a war under way.';
       if (war.att === n.id || war.def === n.id) return 'You cannot mediate your own war.';
+      if (w.time - war.declared < 7 * DAY) return 'Too soon: neither side will talk in the first week of fighting.';
       return null;
     }
   }

@@ -3,6 +3,40 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.1.1: why wars start
+
+The first part of 2.2 War & peace.
+
+- **A war calculation.** Governments no longer drift into wars because a hawkish deputy spots a weaker neighbour.
+  Each weighs a war against each neighbour using what its intelligence believes. The chance of winning is its
+  forces against the target's and its allies', as estimated.
+- **What it hopes to gain** (weighted by that chance):
+  - territorial claims and the prize itself;
+  - nationalism;
+  - a distraction from trouble at home;
+  - striking a rising rival before it is too late;
+  - the target's weakness (busy with another war, or divided at home);
+  - fear of the target.
+- **What it fears it will cost:**
+  - the fighting;
+  - lost trade;
+  - the world's reaction;
+  - war-weariness after a recent war, and other wars under way;
+  - a war of choice with no quarrel behind it;
+  - public opinion in a free country (the democratic peace);
+  - above all, nuclear deterrence: attacking a nuclear power, or a nuclear power's ally, is almost never worth it.
+
+  The leader's appetite for risk scales the whole.
+- **Wars are rare, as between real states.** Only a war the calculation favours is put to congress, and deputies
+  vote on the government's case as well as their own hawkishness and the public mood. In test runs, real-time play
+  now sees a war every few years at most rather than several a year, and ten-year runs see between none and a
+  couple.
+- **Wars start during a statistical skip too.** A government that finds a war worth it asks congress, which votes
+  on the merits.
+- Mediators wait until a war is a week old: neither side talks in the first days of fighting.
+- **The war chronicle** now includes the government's own calculation: its estimated chance of winning, what it
+  hoped to gain and what it feared it would cost.
+
 ### New in 2.1.0: Shadows
 
 2.1 is complete. Over 2.0.1 to 2.0.4, intelligence became something governments live by:

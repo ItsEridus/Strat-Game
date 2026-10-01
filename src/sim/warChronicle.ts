@@ -4,6 +4,7 @@
 // weights congress voted on (balance of power, relations, ideology, public
 // mood, other wars), the prize and old grievances, and each side's appetite for
 // peace when terms were offered.
+import { warCase } from './warDecision';
 import type { Battle, Id, Ideology, Nation, PeaceOffer, Proposal, War, WarBattleRecord, WarCause, WarChronicle, WarEnding, WarEvent, WarFactor, World } from './types';
 import { B } from '../data/balance';
 import { IDEOLOGIES } from '../data/ideologies';
@@ -107,6 +108,11 @@ export function explainDeclaration(w: World, n: Nation, t: Nation, goals: Id[], 
     { label: 'Alliances', weight: -0.08 * tAllies.length + 0.04 * nAllies.length, short: 'friends abroad',
       detail: `${t.name}'s allies: ${list(tAllies) || 'none'}. ${n.name}'s allies: ${list(nAllies) || 'none'}.` },
   ];
+  // The government's own calculation, as its intelligence saw things (warDecision.ts).
+  const calc = warCase(w, n, t);
+  const top = (xs: [string, number][]) => xs.slice().sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `${k} (${v.toFixed(2)})`);
+  f.push({ label: 'The calculation', weight: Math.max(-0.3, Math.min(0.3, calc.value * 0.3)), short: calc.value > 0 ? 'a calculation that favoured war' : 'against the government\'s own calculation',
+    detail: `The government put its chance of winning at ${Math.round(calc.pWin * 100)}% (on what its intelligence believed). It expected to gain from ${list(top(calc.gains)) || 'nothing much'}, and feared the cost of ${list(top(calc.costs))}. On balance the case was ${calc.value > 0 ? 'for' : 'against'} war (${calc.value.toFixed(2)}).` });
   const tipped = f.filter((x) => x.weight > 0.02).sort((a, b) => b.weight - a.weight).slice(0, 3).map((x) => x.short);
   const held = f.filter((x) => x.weight < -0.02).sort((a, b) => a.weight - b.weight).slice(0, 2).map((x) => x.short);
   const aims = goals.length ? goals.map((g) => `Take ${w.regions[g].name}`) : ['Punish and weaken the enemy (no territorial goal)'];
