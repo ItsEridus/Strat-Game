@@ -266,8 +266,9 @@ real starting condition in the simulation, not a cosmetic flag, and the look can
   - 1.4.9: world commodity prices, import parity, AI exports and trade statistics.
   - 1.4.10: monthly statistics (GDP, CPI, inflation, unemployment, pay, trade) and an Economy panel.
   - 1.4.11: central banks (a Taylor rule), rates that follow them, interest on savings and business loans.
-  - Still to come in Part A: a five-year calibration of prices, wages and employment (with Part B's labour
-    market).
+  - 1.4.17–1.4.18: calibration fixes (runaway wages and minimum wages, empty economies, firm churn, speed).
+  - 1.5.0: Part A complete. A one-year test run stays within 91–97% employment, and every treasury but one stays
+    solvent. Longer runs and growth calibration continue in 1.6.
 
 ### Part B: work & enterprise (GEO 1: companies expand or disband)
 
@@ -338,7 +339,7 @@ merge, go public and go bust.
 - **Progress:** 1.4.12 brought occupations (67 in 14 families), industry pay levels, redundancy pay, unemployment
   benefit by country and collective bargaining; 1.4.13 self-employment and owned cafés and restaurants; 1.4.14 company closures
   (insolvency and winding up, settled in legal order), business demography and an industry overview with HHI;
-  1.4.15 takeovers, the competition authority and four stories of working life.
+  1.4.15 takeovers, the competition authority and four stories of working life. **Part B is complete in 1.5.0.**
 
 ## 1.6.0 — The strategic engine (GEO 2: nations advance over time)
 

@@ -3,6 +3,40 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.5.0: the real economy, and work and enterprise
+
+1.5.0 completes the economic overhaul. Releases 1.4.4 to 1.4.18 delivered it step by step:
+
+- **Real money and pay.** Every currency starts at its real exchange rate. Pay and minimum wages follow each
+  country's real 2025 levels, and gold is worth the same everywhere at market rates. Your payslip shows gross pay,
+  income tax, pension and net pay.
+- **Households.** Budgets are split the way real households spend. Each country's page shows inequality and
+  poverty.
+- **Companies.** They pay rent, energy and corporate tax at real rates, and keep accounts. They take business loans,
+  export surplus stock, and buy struggling rivals if the competition authority allows it. They go bust and settle
+  with their staff first.
+- **Work.** There are 67 occupations, with industry pay levels and redundancy pay. Unemployment benefit and
+  collective bargaining follow each country's real rules. You can also work for yourself in eight kinds of small
+  business.
+- **The state.** Taxes start at real 2025 rates and income tax is progressive. Governments borrow, pay interest and
+  repay debt. Central banks set rates by a rule.
+- **Statistics.** Each country publishes GDP, prices, inflation, unemployment, pay, trade and public finances
+  every month. World commodity prices move with real volatility.
+
+**How it holds up.** In a one-year test run (16 countries, about 2,200 people), the economy stayed stable:
+
+| | Day 90 | Day 180 | Day 270 | Day 365 |
+|---|---|---|---|---|
+| Labour force in work | 97% | 94% | 94% | 91% |
+| Price index range (January = 100) | 88–132 | 77–172 | 85–168 | 74–198 |
+| Companies | 836 | 832 | 935 | 895 |
+
+- Every treasury but one stays solvent, and the ledger audit is clean throughout.
+- The remaining outliers come from wars. Countries reduced to a few regions lose most of their revenue and jobs.
+  War balance is planned for 2.2.
+- Goods markets in small societies are thin, so prices there can swing by a third or more within a few months.
+- Inflation figures appear once a year of data exists, and central banks hold their rates until then.
+
 ### Fixed in 1.4.18
 
 - **Long games stay fast.** After about a year of play, the simulation had slowed several times over. Three
