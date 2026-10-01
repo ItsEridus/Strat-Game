@@ -3,6 +3,25 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.3.23: a calmer Life screen, big moments on the big screen
+
+- **The Life screen in four tabs:** Overview (how you are, family, routine, milestones), Home & money (home, budget,
+  loans, retirement), Health & learning (health, education, hobbies, pets) and Legacy (will, heirlooms, family
+  history). It remembers the tab you were on.
+- **Cinematic moments.** Birthdays, long advances and your character's death now open with letterbox bars and a
+  slow reveal, and your heir's first moments get a screen of their own. They stay still if your system asks for
+  reduced motion.
+- **Optional sound.** Soft synthesised cues for actions, money, milestones, birthdays and a bell for a death. Off by
+  default; switch it on in Settings.
+- **Tidier tables.** Buttons you can't use yet explain why when you hover over them, instead of filling the Home
+  table with text.
+- **New screenshots** in the README: the Life screen, home and money, and succession.
+
+### Fixed in 1.3.23
+
+- The map's region panel now shows icons for timber, cotton and copper (it said "undefined").
+- "Money out" no longer shows −0.00 in a month with no spending.
+
 ### New in 1.3.22: a year at a time, and everyone lives a full life
 
 - **Advance a whole year.** The Advance menu has a new "+1 year" option. It takes you to the same date next year,

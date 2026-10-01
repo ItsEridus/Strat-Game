@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { sound } from '../sound';
 import { routineOf, setLifePace } from '../../sim/lifecycle';
 import { census } from '../../sim/census';
 import { UpdateSettings } from '../Updates';
@@ -73,6 +74,7 @@ function Game({ w }: { w: World }) {
       <label class="check"><input type="checkbox" checked={routineOf(w).train} onChange={() => { const r = routineOf(w); r.train = !r.train; s.autoTrain = r.train; store.emit(); }} /> Automatic first daily training</label>
       <label>Pace of life <Select value={s.lifeYearDays ?? 365} options={[[365, 'With the calendar — one year of age per year (default)'], [120, 'Quick — three years of age per calendar year'], [72, 'Brisk — five years of age per calendar year'], [36, 'Generations — ten years of age per calendar year']]} onChange={(v) => { setLifePace(w, v); store.emit(); }} /></label>
       <label>Long advances stop for <Select value={s.advanceStops ?? 'personal'} options={[['personal', 'Personal matters only (default)'], ['all', 'Everything set to pause below']]} onChange={(v) => { s.advanceStops = v; store.emit(); }} /></label>
+      <label class="check"><input type="checkbox" checked={!!s.uiSound} onChange={() => { s.uiSound = !s.uiSound; store.emit(); sound(w, 'chime'); }} /> Interface sound (soft cues for milestones, money and big moments)</label>
       <label class="check"><input type="checkbox" checked={!!s.playerMortality} onChange={() => { s.playerMortality = !s.playerMortality; store.emit(); }} /> Your character can die (play continues as your heir)</label>
       <label class="check"><input type="checkbox" checked={!!s.clock24} onChange={() => { s.clock24 = !s.clock24; store.emit(); }} /> 24-hour clock</label>
       <p class="small muted">How fast people age. With the calendar, birthdays fall on the real date each year. Changing it keeps everyone's current age; people simply age faster or slower from now on. The economy and elections keep their own calendar.</p>

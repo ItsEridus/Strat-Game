@@ -173,7 +173,8 @@ export interface LifeState {
   adoptions: { id: Id; parents: Id[]; ready: number; fee: number; cur: string }[]; // applications in progress
   orphans: { name: string; born: number; parents: Id[]; region: Id }[]; // children in the care system, waiting for a family
   pets: Pet[];
-  ended?: { t: number; name: string }; // the player's line ended with no heir (sim/legacy.ts)
+  ended?: { t: number; name: string };
+  succession?: { t: number; from: string; age: number; cause: string; to: string; toAge: number; heirlooms: number; seen?: boolean }; // shown once (ui) // the player's line ended with no heir (sim/legacy.ts)
   snap: { who: Id; t: number; age: number; cash: number; cur: string; job: string; status: string; kids: number; health: number; happiness: number } | null; // start of the current life year
 }
 
@@ -651,6 +652,7 @@ export interface Settings {
   adminUsed?: boolean; // the admin panel changed this campaign
   clock24?: boolean; // show times on a 24-hour clock
   advanceStops?: 'personal' | 'all'; // what interrupts a long advance (default: personal matters only)
+  uiSound?: boolean; uiVolume?: number; // optional interface sound (ui/sound.ts)
   playerMortality?: boolean; // the player can die (and play continues as their heir); off for saves from before 1.3.18
   startAge?: number; // the player's age at the start (0 = born into the world; default 24)
   lifeYearDays?: number; // pace of life: world days per year of age (undefined = 365, for older saves)

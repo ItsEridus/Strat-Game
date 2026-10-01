@@ -128,6 +128,7 @@ export function playerDies(w: World, cause: string, deps: { releaseRoles: (w: Wo
   heir.trip = null;
   invalidateCensus(w);
   lifeOf(heir).grief = Math.min(20, (lifeOf(heir).grief ?? 0) + 15);
+  w.life.succession = { t: w.time, from: p.name, age: entry.age, cause, to: heir.name, toAge: ageOf(w, heir), heirlooms: lifeOf(heir).heirlooms?.length ?? 0 };
   notify(w, 'personal', `🕯️ ${p.name} has died, aged ${entry.age} (${cause}). You carry on as ${heir.name}, ${ageOf(w, heir)}, who inherits${p.life?.heirlooms?.length ? ' the family heirlooms' : ''}.`, { critical: true, link: 'life' });
   return heir;
 }

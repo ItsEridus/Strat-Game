@@ -219,6 +219,8 @@ try {
   // Family life: adopt a cat on the Life screen (with the money for it).
   await page.evaluate(() => { const s = window.meridian; s.go('life'); });
   await page.waitForTimeout(200);
+  const healthTab = page.locator('.life-tabs button:has-text("Health")');
+  if (await healthTab.count()) { await healthTab.first().click(); await page.waitForTimeout(150); }
   const adopt = page.locator('.btn:has-text("Adopt a cat"):not([disabled])');
   if (await adopt.count()) {
     await adopt.first().click();

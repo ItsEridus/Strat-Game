@@ -17,7 +17,7 @@ const CRISIS_COLOR: Record<string, string> = { hurricane: '#5b8def', earthquake:
 import { IDEOLOGIES, IDEOLOGY_LIST } from '../../data/ideologies';
 
 const TERRAIN_COLOR: Record<string, string> = { plains: '#9bbf5a', mountains: '#8a7f73', forest: '#3f7d4a', desert: '#d8c27a' };
-const RES_ICON: Record<string, string> = { grain: '🌾', iron: '🪨', titanium: '💠', oil: '🛢️' };
+const RES_ICON: Record<string, string> = { grain: '🌾', iron: '🪨', titanium: '💠', oil: '🛢️', timber: '🪵', cotton: '🌿', copper: '🔶' };
 type Mode = 'political' | 'military' | 'government' | 'crime' | 'unrest' | 'crises' | 'economic' | 'terrain' | 'pollution' | 'buildings' | 'supply' | 'war';
 
 const MW = EARTH.width, MH = EARTH.height;

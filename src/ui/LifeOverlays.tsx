@@ -6,6 +6,8 @@ import { fmtClock, fmtDur } from '../engine/clock';
 import { fmtAmt } from '../engine/money';
 import type { World } from '../sim/types';
 import { pendingReview } from '../sim/lifecycle';
+import { useEffect } from 'preact/hooks';
+import { sound } from './sound';
 import { fmtDate } from '../engine/calendar';
 
 /** Shows a long advance in progress, or where it stopped and why. */
@@ -38,12 +40,14 @@ export function AdvanceBanner() {
 export function AnnualReviewModal({ w }: { w: World }) {
   useStore();
   const r = pendingReview(w);
-  if (!r || store.advRunning) return null;
+  const show = !!r && !store.advRunning;
+  useEffect(() => { if (show) sound(w, 'fanfare'); }, [show]);
+  if (!r || !show) return null;
   const delta = r.money.end - r.money.start;
   const close = () => { r.seen = true; store.emit(); };
   return (
-    <div class="modal-back" onClick={close}>
-      <div class="modal review" role="dialog" aria-label={`Age ${r.age}`} onClick={(e) => e.stopPropagation()}>
+    <div class="modal-back cinema" onClick={close}>
+      <div class="modal review cinema" role="dialog" aria-label={`Age ${r.age}`} onClick={(e) => e.stopPropagation()}>
         <header>
           <small class="muted">{fmtClock(w, r.from)} → {fmtClock(w, r.to)}</small>
           <h2>🎂 You are {r.age}</h2>
@@ -72,11 +76,14 @@ export function AnnualReviewModal({ w }: { w: World }) {
 export function PeriodModal({ w }: { w: World }) {
   useStore();
   const r = w.life.period;
-  if (!r || r.seen || store.advRunning || pendingReview(w)) return null;
+  const show = !!r && !r.seen && !store.advRunning && !pendingReview(w);
+  useEffect(() => { if (show) sound(w, 'chime'); }, [show]);
+  if (!r || !show) return null;
   const close = () => { r.seen = true; store.emit(); };
   return (
-    <div class="modal-back" onClick={close}>
-      <div class="modal review" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="What happened">
+    <div class="modal-back cinema" onClick={close}>
+      <div class="modal review cinema" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="What happened">
+        <p class="kicker">Time passes</p>
         <h2>⏩ {fmtDate(r.from, 'medium')} – {fmtDate(r.to, 'medium')}</h2>
         <p class="muted small">You advanced to {r.label}. The world was simulated in full.</p>
         <h4>Your life</h4>
@@ -84,6 +91,33 @@ export function PeriodModal({ w }: { w: World }) {
         <h4>The world</h4>
         <ul class="small">{r.world.map((x) => <li>{x}</li>)}</ul>
         <div class="row"><Btn kind="primary" onClick={close}>Continue</Btn></div>
+      </div>
+    </div>
+  );
+}
+
+/** The torch passes: shown once when the player's character dies and their heir carries on. */
+export function SuccessionModal({ w }: { w: World }) {
+  useStore();
+  const r = w.life.succession;
+  const show = !!r && !r.seen && !store.advRunning;
+  useEffect(() => { if (show) sound(w, 'toll'); }, [show]);
+  if (!r || !show) return null;
+  const close = () => { r.seen = true; store.emit(); };
+  return (
+    <div class="modal-back cinema" onClick={close}>
+      <div class="modal review cinema" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Succession">
+        <p class="kicker">{fmtDate(r.t, 'long')}</p>
+        <div class="portrait-line">🕯️</div>
+        <h2>{r.from}</h2>
+        <p style={{ textAlign: 'center' }} class="muted">died aged {r.age}, {r.cause}.</p>
+        <ul>
+          <li>The estate was settled: the will followed, taxes paid, trusts set up for the children.</li>
+          {r.heirlooms > 0 && <li>{r.heirlooms} heirloom{r.heirlooms > 1 ? 's' : ''} passed down the family.</li>}
+          <li>The life was written into the family history (Life → Legacy).</li>
+          <li><b>You carry on as {r.to}, {r.toAge}.</b></li>
+        </ul>
+        <div class="row"><Btn kind="primary" onClick={close}>Carry on</Btn></div>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 // UI-side game controller: owns the World, runs the real-time loop at the chosen
 // speed, applies player actions, autosaves, and notifies Preact to re-render.
+import { sound } from './sound';
 import { periodStart, periodSummary } from '../sim/periodReview';
 import { DAY } from '../engine/clock';
 import { useEffect, useState } from 'preact/hooks';
@@ -185,7 +186,7 @@ class Store {
     if (!this.w) return;
     const r = fn(this.w);
     invalidateCensus(this.w); // the action may have moved people or changed jobs
-    if (r) this.toast(r.msg, r.ok);
+    if (r) { this.toast(r.msg, r.ok); sound(this.w, r.ok ? (/[💸💰🪙]|earned|paid out|bought|sold/i.test(r.msg) ? 'coin' : 'click') : 'click'); }
     checkProgress(this.w);
     this.emit();
     return r;

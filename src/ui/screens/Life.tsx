@@ -3,7 +3,7 @@ import { useState } from 'preact/hooks';
 // your money, your routine and what comes next.
 import { MONTHS, fmtDate } from '../../engine/calendar';
 import type { Citizen, World } from '../../sim/types';
-import { ActBtn, Bar, Btn, CitLink, Empty, Help, Panel, RegionLink, Stat } from '../common';
+import { ActBtn, Bar, Btn, CitLink, Empty, Help, Panel, RegionLink, Stat, Tabs } from '../common';
 import { store } from '../store';
 import { B } from '../../data/balance';
 import { fmtDur } from '../../engine/clock';
@@ -27,6 +27,8 @@ import { continueAsNewcomer, successor, writeWill } from '../../sim/legacy';
 import { HOBBIES, HOBBY_ENERGY, hobbyCheck, hobbyLevel, pursueHobby } from '../../sim/hobbies';
 import { STATUS_LABEL, breakUp, familyOf, goOnDate, marry, partnerOf, propose, romanceCheck, tryForChild } from '../../sim/family';
 
+type LifeTab = 'overview' | 'money' | 'health' | 'legacy';
+
 export function Life({ w }: { w: World }) {
   const p = player(w);
   const L = lifeOf(p);
@@ -36,6 +38,8 @@ export function Life({ w }: { w: World }) {
   const age = ageOf(w, p);
   const bday = nextBirthday(w, p);
   const rep = reputation(p);
+  const [tab, setTabState] = useState<LifeTab>(() => { try { return (localStorage.getItem('meridian-life-tab') as LifeTab) || 'overview'; } catch { return 'overview'; } });
+  const setTab = (t: LifeTab) => { setTabState(t); try { localStorage.setItem('meridian-life-tab', t); } catch { /* not remembered */ } };
   return (
     <div class="grid life">
       {w.life.ended && (
@@ -55,64 +59,58 @@ export function Life({ w }: { w: World }) {
         </div>
         <p class="small muted">{fmtDate(w.time, 'long')} · {calendarPace(w) ? `born ${fmtDate(p.born, 'long')} · ` : ''}next birthday {calendarPace(w) ? `on ${fmtDate(bday, 'dayMonth')} (in ${fmtDur(bday - w.time)})` : `in ${fmtDur(bday - w.time)}`} · a time of {stage.can}.{calendarPace(w) ? '' : ` People age ${Math.round(365 / (w.settings.lifeYearDays ?? 365))} years per calendar year.`}</p>
       </Panel>
-
-      <Panel title="How you are">
-        <Gauge label="❤️ Health" v={p.health ?? 90} text={healthLabel(p.health ?? 90)} color="#e0605a" />
-        <Gauge label="🙂 Happiness" v={L.happiness} text={wellbeingLabel(L.happiness, 'happiness')} color="#e0a526" why={L.why?.happiness} />
-        <Gauge label="🌡️ Stress" v={L.stress} text={wellbeingLabel(L.stress, 'stress')} color="#8e7cc3" why={L.why?.stress} />
-        <Gauge label="⚡ Energy" v={(p.energy / maxEnergy(w, p)) * 100} text={`${Math.floor(p.energy)}/${maxEnergy(w, p)}`} color="#3fb5a8" />
-        <div class="row">
-          <ActBtn small why={restCheck(w, p)} run={(w) => rest(w)}>😌 Take the evening off</ActBtn>
-          <ActBtn small why={familyTimeCheck(w, p)} run={(w) => familyTime(w)}>🏡 Time with family</ActBtn>
-        </div>
-      </Panel>
-
-      {isMinor(w, p) && <Panel title="Growing up"><ChildhoodPanel w={w} p={p} /></Panel>}
-
-      <Panel title="Health"><HealthPanel w={w} p={p} /></Panel>
-
-      <Panel title="Family & close ones" right={<Btn small kind="ghost" onClick={() => store.go('people')}>People</Btn>}>
-        <People w={w} p={p} />
-        {partner && (
+      <div class="wide life-tabs"><Tabs tabs={[['overview', '🧭 Overview'], ['money', '🏠 Home & money'], ['health', '🩺 Health & learning'], ['legacy', '📜 Legacy']]} value={tab} onChange={setTab} /></div>
+      {tab === 'overview' && <>
+        <Panel title="How you are">
+          <Gauge label="❤️ Health" v={p.health ?? 90} text={healthLabel(p.health ?? 90)} color="#e0605a" />
+          <Gauge label="🙂 Happiness" v={L.happiness} text={wellbeingLabel(L.happiness, 'happiness')} color="#e0a526" why={L.why?.happiness} />
+          <Gauge label="🌡️ Stress" v={L.stress} text={wellbeingLabel(L.stress, 'stress')} color="#8e7cc3" why={L.why?.stress} />
+          <Gauge label="⚡ Energy" v={(p.energy / maxEnergy(w, p)) * 100} text={`${Math.floor(p.energy)}/${maxEnergy(w, p)}`} color="#3fb5a8" />
           <div class="row">
-            <ActBtn small why={romanceCheck(w, p, partner, 'date')} run={(w) => goOnDate(w)}>🌹 Evening out</ActBtn>
-            {fam.status === 'dating' && <ActBtn small why={romanceCheck(w, p, partner, 'propose')} run={(w) => propose(w)}>💍 Propose</ActBtn>}
-            {fam.status === 'engaged' && <ActBtn small kind="primary" why={romanceCheck(w, p, partner, 'wed')} run={(w) => marry(w)}>💒 Get married</ActBtn>}
-            {fam.status === 'married' && <ActBtn small why={romanceCheck(w, p, partner, 'child')} run={(w) => tryForChild(w)}>👶 Try for a child</ActBtn>}
-            <ActBtn small kind="danger" confirm={fam.status === 'married' ? 'Divorce? A quarter of your savings goes to the settlement.' : 'End the relationship?'} run={(w) => breakUp(w)}>{fam.status === 'married' ? 'Divorce' : 'Break up'}</ActBtn>
+            <ActBtn small why={restCheck(w, p)} run={(w) => rest(w)}>😌 Take the evening off</ActBtn>
+            <ActBtn small why={familyTimeCheck(w, p)} run={(w) => familyTime(w)}>🏡 Time with family</ActBtn>
           </div>
-        )}
-        {expecting(w, p) && <p class="small">🤰 A baby is on the way, due around {dueText(expecting(w, p)!.due)}.</p>}
-        <div class="row">
-          {adoptionOf(w, p) ? <small class="muted">📝 Adoption application being assessed: a decision around {dueText(adoptionOf(w, p)!.ready)}.</small>
-            : <ActBtn small why={adoptChildCheck(w, p)} confirm={`Apply to adopt? The fees (${fmtAmt(w.nations[p.nation].cur, cur(B.family.adoptFee))}) go to the state; the assessment takes about a month. ${inCare(w, p.nation).length} ${inCare(w, p.nation).length === 1 ? 'child is' : 'children are'} in care in ${w.nations[p.nation].name}.`} run={(w) => applyToAdopt(w)}>🏠 Adopt a child</ActBtn>}
-        </div>
-        {fam.kids.length > 0 && <Help>Each child at home costs {fmtAmt(w.nations[p.nation].cur, cur(B.family.childPerDay))} a day (food, clothes, school things), paid with your living costs. When they turn {B.life.adultAge} they set out on their own with a start from your savings.</Help>}
-        {!partner && <Help>Single. Get to know people in your Neighbourhood; once someone likes you (relationship 30+), you can ask them out from their profile.</Help>}
-      </Panel>
-
-      <Panel title="Home"><HomePanel w={w} p={p} /></Panel>
-
-      <Panel title="Education"><EducationPanel w={w} p={p} /></Panel>
-
-      <Panel title="Pets"><Pets w={w} p={p} /></Panel>
-
-      <Panel title="Hobbies"><Hobbies w={w} p={p} /></Panel>
-
-      <Panel title="Retirement"><RetirementPanel w={w} p={p} /></Panel>
-
-      <Panel title="Loans and credit"><LoansPanel w={w} p={p} /></Panel>
-
-      <Panel title="Money this month"><Budget w={w} p={p} /></Panel>
-
-      <Panel title="Daily routine"><RoutinePanel w={w} p={p} /></Panel>
-
-      <Panel title="Will and legacy" class="wide"><LegacyPanel w={w} p={p} /></Panel>
-
-      <Panel title="Recent milestones" right={<Btn small kind="ghost" onClick={() => store.go('journal')}>Journal</Btn>}>
-        {L.milestones.length ? <ul class="small milestones">{[...L.milestones].reverse().slice(0, 10).map((m) => <li><span class="muted">age {m.age}</span> {m.text}</li>)}</ul> : <Empty>Your story is just beginning.</Empty>}
-      </Panel>
-
+        </Panel>
+        {isMinor(w, p) && <Panel title="Growing up"><ChildhoodPanel w={w} p={p} /></Panel>}
+        <Panel title="Family & close ones" right={<Btn small kind="ghost" onClick={() => store.go('people')}>People</Btn>}>
+          <People w={w} p={p} />
+          {partner && (
+            <div class="row">
+              <ActBtn small why={romanceCheck(w, p, partner, 'date')} run={(w) => goOnDate(w)}>🌹 Evening out</ActBtn>
+              {fam.status === 'dating' && <ActBtn small why={romanceCheck(w, p, partner, 'propose')} run={(w) => propose(w)}>💍 Propose</ActBtn>}
+              {fam.status === 'engaged' && <ActBtn small kind="primary" why={romanceCheck(w, p, partner, 'wed')} run={(w) => marry(w)}>💒 Get married</ActBtn>}
+              {fam.status === 'married' && <ActBtn small why={romanceCheck(w, p, partner, 'child')} run={(w) => tryForChild(w)}>👶 Try for a child</ActBtn>}
+              <ActBtn small kind="danger" confirm={fam.status === 'married' ? 'Divorce? A quarter of your savings goes to the settlement.' : 'End the relationship?'} run={(w) => breakUp(w)}>{fam.status === 'married' ? 'Divorce' : 'Break up'}</ActBtn>
+            </div>
+          )}
+          {expecting(w, p) && <p class="small">🤰 A baby is on the way, due around {dueText(expecting(w, p)!.due)}.</p>}
+          <div class="row">
+            {adoptionOf(w, p) ? <small class="muted">📝 Adoption application being assessed: a decision around {dueText(adoptionOf(w, p)!.ready)}.</small>
+              : <ActBtn small why={adoptChildCheck(w, p)} confirm={`Apply to adopt? The fees (${fmtAmt(w.nations[p.nation].cur, cur(B.family.adoptFee))}) go to the state; the assessment takes about a month. ${inCare(w, p.nation).length} ${inCare(w, p.nation).length === 1 ? 'child is' : 'children are'} in care in ${w.nations[p.nation].name}.`} run={(w) => applyToAdopt(w)}>🏠 Adopt a child</ActBtn>}
+          </div>
+          {fam.kids.length > 0 && <Help>Each child at home costs {fmtAmt(w.nations[p.nation].cur, cur(B.family.childPerDay))} a day (food, clothes, school things), paid with your living costs. When they turn {B.life.adultAge} they set out on their own with a start from your savings.</Help>}
+          {!partner && <Help>Single. Get to know people in your Neighbourhood; once someone likes you (relationship 30+), you can ask them out from their profile.</Help>}
+        </Panel>
+        <Panel title="Daily routine"><RoutinePanel w={w} p={p} /></Panel>
+        <Panel title="Recent milestones" right={<Btn small kind="ghost" onClick={() => store.go('journal')}>Journal</Btn>}>
+          {L.milestones.length ? <ul class="small milestones">{[...L.milestones].reverse().slice(0, 10).map((m) => <li><span class="muted">age {m.age}</span> {m.text}</li>)}</ul> : <Empty>Your story is just beginning.</Empty>}
+        </Panel>
+      </>}
+      {tab === 'money' && <>
+        <Panel title="Home"><HomePanel w={w} p={p} /></Panel>
+        <Panel title="Money this month"><Budget w={w} p={p} /></Panel>
+        <Panel title="Loans and credit"><LoansPanel w={w} p={p} /></Panel>
+        <Panel title="Retirement"><RetirementPanel w={w} p={p} /></Panel>
+      </>}
+      {tab === 'health' && <>
+        <Panel title="Health"><HealthPanel w={w} p={p} /></Panel>
+        <Panel title="Education"><EducationPanel w={w} p={p} /></Panel>
+        <Panel title="Hobbies"><Hobbies w={w} p={p} /></Panel>
+        <Panel title="Pets"><Pets w={w} p={p} /></Panel>
+      </>}
+      {tab === 'legacy' && <>
+        <Panel title="Will and legacy" class="wide"><LegacyPanel w={w} p={p} /></Panel>
+      </>}
       <Panel title="Go to" class="wide">
         <div class="row wrap">
           {([['character', '🧍 Character'], ['jobs', '💼 Work'], ['local', '🏘️ Neighbourhood'], ['market', '🛒 Market'], ['companies', '🏭 Companies'], ['politics', '🗳️ Politics'], ['forces', '🎖️ Military'], ['journal', '📓 Journal']] as const).map(([id, label]) => <Btn small kind="ghost" onClick={() => store.go(id)}>{label}</Btn>)}
@@ -274,11 +272,12 @@ function HomePanel({ w, p }: { w: World; p: Citizen }) {
             <td>{SIZES[s].icon} {SIZES[s].label}</td>
             <td class="num">{fmtAmt(code, rentOf(w, here, s))}</td>
             <td class="num">{fmtAmt(code, priceOf(w, here, s))}</td>
-            <td class="row"><ActBtn small why={rentCheck(w, p, s)} run={(w) => rentHome(w, s)}>Rent</ActBtn><ActBtn small why={buyCheck(w, p, s)} run={(w) => buyHome(w, s)}>Buy</ActBtn><ActBtn small why={mortgageCheck(w, p, s)} run={(w) => buyWithMortgage(w, s)}>Mortgage</ActBtn></td>
+            <td class="row"><ActBtn small showWhy={false} why={rentCheck(w, p, s)} run={(w) => rentHome(w, s)}>Rent</ActBtn><ActBtn small showWhy={false} why={buyCheck(w, p, s)} run={(w) => buyHome(w, s)}>Buy</ActBtn><ActBtn small showWhy={false} why={mortgageCheck(w, p, s)} run={(w) => buyWithMortgage(w, s)}>Mortgage</ActBtn></td>
           </tr>
         ))}</tbody>
       </table>
       {h?.kind === 'own' && <ActBtn small kind="ghost" confirm={`Sell your home for about ${fmtAmt(homeCode, Math.floor(priceOf(w, h.region, h.size) * (1 - B.housing.fees)))} after fees?`} run={(w) => sellHome(w)}>Sell your home</ActBtn>}
+      <p class="small muted">Hover a greyed-out button to see why it isn't available.</p>
       <Help>Renting or buying where you are now makes it your home region; a spouse moves with you. Prices follow how sought-after a region is and change slowly. Renting needs a deposit and the first month; buying costs the price plus {Math.round(B.housing.fees * 100)}% fees.</Help>
     </div>
   );
@@ -432,14 +431,14 @@ function Budget({ w, p }: { w: World; p: Citizen }) {
   return (
     <div>
       <div class="row between">
-        <Btn small kind="ghost" why={!m || months.indexOf(m) <= 0 ? 'No earlier month' : null} onClick={() => setIdx(months.indexOf(m!) - 1 - months.length)}>‹</Btn>
+        <Btn small kind="ghost" showWhy={false} why={!m || months.indexOf(m) <= 0 ? 'No earlier month' : null} onClick={() => setIdx(months.indexOf(m!) - 1 - months.length)}>‹</Btn>
         <b>{m ? label(m.key) : 'This month'}</b>
-        <Btn small kind="ghost" why={!m || months.indexOf(m) >= months.length - 1 ? 'No later month' : null} onClick={() => setIdx(months.indexOf(m!) + 1 - months.length)}>›</Btn>
+        <Btn small kind="ghost" showWhy={false} why={!m || months.indexOf(m) >= months.length - 1 ? 'No later month' : null} onClick={() => setIdx(months.indexOf(m!) + 1 - months.length)}>›</Btn>
       </div>
       <div class="stats">
         <Stat label="Cash">{fmtAmt(code, cash)}</Stat>
         <Stat label="Money in">{fmtAmt(code, total(inc))}</Stat>
-        <Stat label="Money out">{fmtAmt(code, -total(out))}</Stat>
+        <Stat label="Money out">{fmtAmt(code, Math.abs(total(out)))}</Stat>
         <Stat label="Net">{total(cats) >= 0 ? '+' : '−'}{fmtAmt(code, Math.abs(total(cats)))}</Stat>
       </div>
       {cats.length ? <table class="table compact small"><tbody>{inc.map(row)}{out.map(row)}</tbody></table> : <Empty>No money in or out yet this month.</Empty>}

@@ -23,7 +23,9 @@ No accounts, payments, servers or AI services. Everything runs locally in your b
 | ![Law & order](docs/screenshots/law-and-order.png) **Law & order:** policing, crime syndicates and courts | ![World situation](docs/screenshots/world-situation.png) **World situation:** wars, crises and diplomacy as they unfold |
 | ![Country](docs/screenshots/country.png) **Country:** government, budget, laws and approval | ![Goods market](docs/screenshots/market.png) **Goods market:** a player-and-AI economy with real supply chains |
 | ![Neighbourhood](docs/screenshots/neighbourhood.png) **Neighbourhood:** the people where you live, what they're doing and what worries them | ![Conversation](docs/screenshots/conversation.png) **Conversations:** talk to anyone, learn what they care about, win their vote |
-| ![Encounter](docs/screenshots/encounter.png) **Situations:** decisions with visible consequences, about one a day | ![New campaign](docs/screenshots/start.png) **New campaign:** seeded, reproducible worlds |
+| ![My Life](docs/screenshots/life.png) **My Life:** health, happiness, family, routine and milestones, in four tabs | ![Home and money](docs/screenshots/life-money.png) **Home & money:** renting or buying, a monthly budget, loans, credit and pensions |
+| ![Succession](docs/screenshots/succession.png) **Succession:** when your character dies, your heir carries on | ![Encounter](docs/screenshots/encounter.png) **Situations:** decisions with visible consequences, about one a day |
+| ![New campaign](docs/screenshots/start.png) **New campaign:** seeded, reproducible worlds; start as a newborn or a grown-up | |
 
 Screenshots are regenerated with `node tools/screenshots.mjs` (needs Playwright).
 
