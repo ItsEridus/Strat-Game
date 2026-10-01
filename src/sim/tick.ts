@@ -17,7 +17,7 @@ import { train } from './citizen';
 import { HANDLERS, dailyHooks, hourlyHooks, tickHooks } from './hooks';
 import { census, nationals, referenceSociety } from './census';
 
-function runQueue(w: World) {
+export function runQueue(w: World) {
   while (w.queue.length && w.queue[0].at <= w.time) {
     const ev = w.queue.shift()!;
     const h = HANDLERS[ev.type];

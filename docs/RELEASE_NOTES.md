@@ -3,6 +3,28 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.9.2: skip a year in seconds
+
+- **Skip a year is now statistical, and takes seconds:** about 4 seconds for the default world, against 20 minutes
+  before. The world moves a month at a time:
+  - **Countries:** they take their monthly turn for growth, budgets and grand strategy, the arsenal and defence
+    industry, energy, food and the power ranking.
+  - **Money:** companies trade at their own recent averages, paying wages to their staff and costs back to the
+    economy. Governments collect and spend at their recent rates, and people pay their living costs. All of it goes
+    through the ledger.
+  - **People:** they age, die at the usual rates, and are replaced by arrivals and young people coming of age.
+  - **Elections and wars:** elections and other scheduled events happen on their dates, and battles under way are
+    settled by the strength of the two sides.
+  - **Your year:** it comes as the summary at the end.
+
+  Individual shifts, markets and conversations pick up again when the skip is over. "+1 year" still lives the year
+  in full.
+
+### Fixed in 1.9.2
+
+- **1×, 2× and 3× speeds did not move the clock** after 1.9.0. The guard that keeps 4× from falling behind also
+  stopped the slower speeds from ever building up a ten-minute step. The browser test now checks every speed.
+
 ### New in 1.9.1: skip a year
 
 - **Skip a year.** The ⏭ Advance menu has a new ⏩ Skip a year option. It runs straight to a year from now:

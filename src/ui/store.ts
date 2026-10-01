@@ -1,5 +1,6 @@
 // UI-side game controller: owns the World, runs the real-time loop at the chosen
 // speed, applies player actions, autosaves, and notifies Preact to re-render.
+import { skipMonth } from '../sim/statYear';
 import { sound } from './sound';
 import { periodStart, periodSummary } from '../sim/periodReview';
 import { DAY } from '../engine/clock';
@@ -284,14 +285,15 @@ class Store {
       // A week or more at once runs other countries at a coarser level of detail (sim/tick.ts); skipping a year
       // runs everyone outside your own region that way, and does not stop for notifications.
       lod.coarse = a.target - a.from >= 7 * DAY;
-      lod.local = !!a.skip;
       try {
-        while (w.time < a.target && Date.now() - t0 < budget) {
+        // Skipping a year moves statistically, a month at a time (sim/statYear.ts).
+        if (a.skip) { while (w.time < a.target && Date.now() - t0 < budget) skipMonth(w, a.target); }
+        else while (w.time < a.target && Date.now() - t0 < budget) {
           stir(w);
-          const r = advance(w, Math.min(60, a.target - w.time), !a.skip);
+          const r = advance(w, Math.min(60, a.target - w.time), true);
           if (r.stopped) { stopped = true; break; }
         }
-      } finally { lod.coarse = lod.local = false; }
+      } finally { lod.coarse = false; }
       if (w.time >= a.target) {
         if (a.start) w.life.period = periodSummary(w, a.start, a.label);
         w.life.advance = null;
@@ -331,8 +333,9 @@ class Store {
     const w = this.w;
     if (!w || this.paused || this.advRunning) return;
     this.acc += (SPEEDS[w.settings.speed] * dtMs) / 1000;
-    // Never fall behind: if the computer cannot keep up, run as fast as it can instead of piling up a backlog.
-    this.acc = Math.min(this.acc, SPEEDS[w.settings.speed] * 0.3);
+    // Never fall behind: if the computer cannot keep up, run as fast as it can instead of piling up a backlog
+    // (but always let a whole ten-minute step build up, or the slower speeds would never move).
+    this.acc = Math.min(this.acc, Math.max(20, SPEEDS[w.settings.speed] * 0.3));
     const whole = Math.floor(this.acc / 10) * 10;
     if (whole <= 0) {
       // The world moves in ten-minute steps; the clock shows the minutes in between.

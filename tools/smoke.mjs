@@ -186,6 +186,14 @@ try {
   await page.click('text=Start campaign');
   await inGame(page);
   log('new campaign: world generated');
+  // Every speed moves the clock (1× is a minute a second: the world takes a ten-minute step about every ten seconds).
+  for (const k of [1, 2, 3]) {
+    const a = await page.evaluate((k) => { const s = window.meridian; s.w.settings.pauseOn = {}; s.setSpeed(k); return s.w.time; }, k);
+    await page.waitForTimeout(k === 1 ? 11_000 : 3_000);
+    const b = await page.evaluate(() => { const s = window.meridian; s.setSpeed(0); return s.w.time; });
+    check(b > a, `new campaign: speed ${k}× did not move the clock`);
+  }
+  log('new campaign: speeds 1×, 2× and 3× move the clock');
   // Real time at the fastest speed for a few seconds.
   const t1 = await page.evaluate(() => { const s = window.meridian; s.w.settings.pauseOn = {}; s.setSpeed(4); return s.w.time; });
   await page.waitForTimeout(4000);
@@ -202,13 +210,14 @@ try {
   check(await page.evaluate(() => !window.meridian.w.life.advance), 'new campaign: the long advance never finished');
   check(await liveDays(page, 2), 'new campaign: time did not advance two days');
   log('new campaign: lived three days');
-  // Skip a year: runs without stopping in the background; cancel after a few seconds.
+  // Skip a year: statistical, a month at a time; it should finish in seconds and end with the year's summary.
   const s0 = await page.evaluate(() => { const s = window.meridian; s.startAdvance(s.w.time + 365 * 1440, 'a year from now', true); return s.w.time; });
-  await page.waitForTimeout(3000);
-  const skip = await page.evaluate(() => { const s = window.meridian; const a = s.w.life.advance; const r = { t: s.w.time, skip: !!a?.skip, banner: !!document.querySelector('.advance-banner') }; s.cancelAdvance(); return r; });
-  check(skip.skip && skip.banner && skip.t > s0, `new campaign: skipping a year did not run (${JSON.stringify(skip)})`);
-  log(`new campaign: skip a year ran ${((skip.t - s0) / 1440).toFixed(1)} days in 3 seconds, then cancelled`);
-  await page.waitForFunction(() => !window.meridian.advRunning, null, { timeout: 30_000 });
+  const t0 = Date.now();
+  await page.waitForFunction(() => !window.meridian.w.life.advance && !window.meridian.advRunning, null, { timeout: 120_000 });
+  const skip = await page.evaluate(() => { const s = window.meridian; return { t: s.w.time, summary: !!s.w.life.period }; });
+  check(skip.t - s0 >= 364 * 1440 && skip.summary, `new campaign: skipping a year did not finish (${JSON.stringify(skip)})`);
+  log(`new campaign: skipped a year in ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+  await page.evaluate(() => { const s = window.meridian; delete s.w.life.period; s.emit(); });
   await everyScreen(page, 'new campaign');
   // Story windows would cover the page from here on.
   await page.evaluate(() => { const s = window.meridian; s.w.story.settings.frequency = 'off'; for (const i of Object.values(s.w.story.instances)) if (i.status === 'offered' || i.status === 'active') i.status = 'declined'; s.emit(); });
