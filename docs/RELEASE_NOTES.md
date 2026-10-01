@@ -3,6 +3,25 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.1.2: the home front
+
+The second part of 2.2 War & peace.
+
+- **Mobilisation.** A country at war calls up its reservists, including you and your family if you are in the
+  reserve; office holders stay exempt. When its last war ends, they are stood down.
+- **Casualties among real citizens.** Soldiers on duty are killed and wounded, more while their country's forces
+  are in battle and more on the losing side. Their families mourn them, and you are told if one of your own falls.
+- **Prisoners of war.** A lost battle leaves some of the losing side's soldiers in enemy hands. They cannot serve
+  and come home when the war ends.
+- **Occupation and resistance.** Occupied regions seethe, and partisans wear down the occupier's divisions there.
+- **Refugees.** People flee regions that are being fought over or have just been occupied: to safer parts of
+  their own country or, failing that, across the border to a neighbour at peace, which pays for their keep.
+- **The war economy.** Fighting costs the treasury about a fifth of a day's revenue every day on top of the
+  normal budget; deficit borrowing then covers the gap. Patriotic savers buy war bonds (more when war fever runs
+  high), and arms industries are told to produce more.
+- **The toll.** Every war keeps a toll for each side (killed, wounded, captured, refugees and money spent), shown
+  on the Wars screen with each side's mobilisation. A surprise attack is marked as one.
+
 ### New in 2.1.1: why wars start
 
 The first part of 2.2 War & peace.

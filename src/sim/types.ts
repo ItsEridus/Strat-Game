@@ -113,6 +113,8 @@ export interface MilService {
   commands: number; // days in command of a formation (general/flag rank requirement)
   reserve?: boolean; // in the reserve: rank kept, no duty, pay, command or promotion (e.g. while holding public office)
   reserveSince?: number;
+  calledUp?: Id; // called up from the reserve for this war (2.2)
+  pow?: Id; // a prisoner of war, held by this nation (2.2)
 }
 
 export type FormationKind = 'infantry' | 'armored' | 'mountain' | 'marines' | 'fleet' | 'carrier' | 'submarine' | 'fighter' | 'bomber';
@@ -346,7 +348,7 @@ export interface Region {
   links: Id[];
   core: Id; // original / rightful nation
   owner: Id; // legal owner
-  occ: { nation: Id; war: Id } | null; // provisional occupier
+  occ: { nation: Id; war: Id; since?: number } | null; // provisional occupier (since when: 2.2)
   terrain: Terrain;
   res: Partial<Record<RawRes, number>>; // richness 1..3
   pop: number; // background population
@@ -414,6 +416,8 @@ export interface Nation {
   dip?: import('./diplomacyActions').DipState; // diplomatic capital, recent actions, causes for war (2.0)
   summits?: Record<Id, number>;
   imfRelief?: boolean;
+  mobilised?: number; // when it mobilised for its current war (2.2)
+  warBonds?: number; // war bonds sold to its people (2.2)
   interference?: { by: Id; party: Id; until: number }; // a foreign campaign backing a party in the coming election (2.1)
   beliefs?: Record<Id, import('./beliefs').Estimate>; // what the government believes about each other country (2.1)
   alignment?: { towards: Id; choice: 'balance' | 'bandwagon'; since: number }; // facing a far stronger threat (2.0) // under an IMF programme (2.0) // when its leader last met the other's (2.0)
@@ -543,6 +547,7 @@ export interface Battle {
 
 export interface War {
   id: Id;
+  toll?: import('./warHome').WarToll; // killed, wounded, captured, refugees, money spent (2.2)
   surprise?: boolean; // the defender's intelligence did not see it coming (2.1)
   intelGap?: { believed: number; truth: number }; // the attacker's estimate of the defender's strength, and the truth
   att: Id;

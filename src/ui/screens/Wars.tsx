@@ -1,4 +1,5 @@
 import type { War, World } from '../../sim/types';
+import { tollLine } from '../../sim/warHome';
 import { ActBtn, Btn, Empty, NationChip, Panel, RegionLink, Help } from '../common';
 import { store } from '../store';
 import { controller, player } from '../../sim/query';
@@ -58,6 +59,11 @@ function WarCard({ w, war }: { w: World; war: War }) {
       <p>Goals: {war.goals.length ? war.goals.map((g) => <><RegionLink w={w} id={g} />{war.occupied.includes(g) ? ' (held)' : ''} </>) : 'none (punitive war)'}</p>
       <p>Win condition: <b>{war.occupied.length}/{war.quota}</b> occupations held at once. Occupied by attacker: {war.occupied.map((r) => w.regions[r].name).join(', ') || 'none'}. Counter-occupied: {war.counter.map((r) => w.regions[r].name).join(', ') || 'none'}.</p>
       {war.occupied.some((r) => !war.goals.includes(r)) && <p class="small muted">Non-goal occupations count toward the quota but are returned at settlement.</p>}
+      {war.surprise && <p class="small warn">😱 The attack took {w.nations[war.def].name} by surprise.</p>}
+      <h4>The toll</h4>
+      <table class="table compact small"><tbody>{[war.att, war.def].map((s) => (
+        <tr><td><NationChip w={w} id={s} />{w.nations[s].mobilised ? ' · mobilised' : ''}</td><td>{tollLine(w, war, s)}</td></tr>
+      ))}</tbody></table>
       <h4>Battles</h4>
       {battles.length ? battles.map((b) => (
         <div class="row small"><RegionLink w={w} id={b.region} /> round {b.round} ({b.wins.a}–{b.wins.d}){b.airOnly ? ' · air' : ''}

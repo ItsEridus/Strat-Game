@@ -442,6 +442,7 @@ export function dutyCheck(w: World, c: Citizen): string | null {
   const tooYoung = lifeGate(w, c, 18, 'Military duty');
   if (tooYoung) return tooYoung;
   if (!c.mil.branch) return 'Enlist first.';
+  if (c.mil.pow != null) return `You are a prisoner of war, held by ${w.nations[c.mil.pow].name}.`;
   if (c.mil.reserve) return publicOffice(w, c) ? `You are in the reserve while serving as ${publicOffice(w, c)}.` : 'You are in the reserve: return to active duty first.';
   if (jailed(w, c)) return 'You are in prison.';
   if (c.mil.lastDuty === dayOf(w.time)) return 'You already reported for duty today.';

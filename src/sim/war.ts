@@ -4,6 +4,7 @@
 //  - Holding the quota of occupations settles the war: held goals transfer, other
 //    occupations return, retained regions lose one building level, a 7-day pact follows.
 //  - Deadlines and peace terms (armistice, surrender, demand, trade) also settle wars.
+import { releasePrisoners, takePrisoners } from './warHome';
 import { bestWarCase, warCase } from './warDecision';
 import { believed, believedPower } from './beliefs';
 import { scoped } from './scope';
@@ -270,6 +271,7 @@ export function onWarBattleWon(w: World, b: Battle, winner: 'a' | 'd') {
   const loseNat = winner === 'a' ? b.def : b.att;
   w.nations[winNat].warScore = Math.min(100, w.nations[winNat].warScore + 8);
   w.nations[loseNat].warScore = Math.max(-100, w.nations[loseNat].warScore - 8);
+  if (war && war.status === 'active') takePrisoners(w, war, loseNat); // the losers leave some soldiers in enemy hands
   if (!war || war.status !== 'active' || winner === 'd') {
     record(w, 'war', `🛡️ ${w.nations[b.def].name} held ${r.name} against ${w.nations[b.att].name}.`, { region: r.id, nation: b.def });
     if (war) battleEnded(w, war, b, winner, `${w.nations[b.def].name} kept ${r.name}; ${w.nations[b.att].name}'s war score fell to ${Math.round(w.nations[b.att].warScore)}.`);
@@ -285,7 +287,7 @@ export function onWarBattleWon(w: World, b: Battle, winner: 'a' | 'd') {
     const pl = player(w);
     if (b.att === pl.nation && (b.total[pl.id]?.a ?? 0) > 0) bump(w, 'liberations');
   } else {
-    r.occ = { nation: b.att, war: war.id };
+    r.occ = { nation: b.att, war: war.id, since: w.time };
     if (b.att === war.att) war.occupied.push(r.id); else war.counter.push(r.id);
     war.maxOcc = Math.max(war.maxOcc, war.occupied.length);
     record(w, 'war', `🏴 ${w.nations[b.att].name} occupied ${r.name} (${w.nations[r.owner].name})${war.goals.includes(r.id) ? ' — a war goal' : ''}. Occupations: ${war.occupied.length}/${war.quota}.`, { region: r.id, nation: b.att, important: true });
@@ -327,6 +329,7 @@ export function settle(w: World, war: War, kind: Terms['kind'], offer?: PeaceOff
   }
   for (const bid of war.battles) { const b = w.battles[bid]; if (b && !b.done) { finishBattle(w, b, null); battleEnded(w, war, b, null, 'called off by the peace'); } }
   war.status = 'ended';
+  releasePrisoners(w, war);
   const label = { conquest: 'conquest', deadline: 'deadline', armistice: 'armistice', surrender: 'surrender', demand: 'demand', trade: 'territorial trade' }[kind];
   war.outcome = `${label}${transferred.length ? `: ${transferred.join(', ')}` : ': no territory changed hands'}`;
   const until = w.time + B.war.pactDays * DAY;
