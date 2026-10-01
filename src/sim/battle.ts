@@ -34,10 +34,20 @@ export function createBattle(w: World, kind: Battle['kind'], region: Id, att: Id
     weaponsUsed: { a: 0, d: 0 }, done: false, winner: null, eventRef,
   };
   w.battles[b.id] = b;
+  battlesVersion++;
   return b;
 }
 
-export const activeBattles = (w: World) => Object.values(w.battles).filter((b) => !b.done).sort((a, b) => a.id - b.id);
+// Battles are kept after they end, so the active list is cached per tick (new battles or ones ending refresh it).
+let battlesVersion = 0; // bumped whenever a battle starts
+const activeCache = new WeakMap<World, { t: number; n: number; list: Battle[] }>();
+export function activeBattles(w: World): Battle[] {
+  const n = battlesVersion;
+  let c = activeCache.get(w);
+  if (!c || c.t !== w.time || c.n !== n) { c = { t: w.time, n, list: Object.values(w.battles).filter((b) => !b.done).sort((a, b) => a.id - b.id) }; activeCache.set(w, c); }
+  if (c.list.some((b) => b.done)) c.list = c.list.filter((b) => !b.done);
+  return c.list;
+}
 
 /** Can this citizen fight for `side`? Location rule (SOLO): be in territory controlled by that side or an ally. */
 export function fightCheck(w: World, c: Citizen, b: Battle | undefined, side: 'a' | 'd', weapon: WeaponSel): string | null {

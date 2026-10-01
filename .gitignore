@@ -4,3 +4,4 @@ tools/ne/
 launcher/web/
 release/
 launcher/*.syso
+tests/_*.ts

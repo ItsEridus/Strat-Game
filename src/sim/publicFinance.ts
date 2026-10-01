@@ -17,7 +17,8 @@ export function bondRate(n: Nation): number {
   const years = (n.debt ?? 0) / Math.max(1, dailyRevenue(n) * 365);
   return (n.policyRate ?? POLICY_RATE[n.iso] ?? 4) + 0.5 + Math.max(0, years - 1) * 1.5;
 }
-export const debtLimit = (n: Nation) => Math.round(dailyRevenue(n) * 365 * 3);
+/** Three years of revenue, and never less than six months of spending (so a collapsing government can still pay its staff). */
+export const debtLimit = (n: Nation) => Math.round(Math.max(dailyRevenue(n) * 365 * 3, dailySpending(n) * 180));
 
 export function publicFinanceDaily(w: World) {
   for (const n of w.nations) {

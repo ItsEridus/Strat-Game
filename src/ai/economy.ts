@@ -249,12 +249,14 @@ export function entrepreneurship(w: World) {
     const byKey = new Map<string, Company[]>();
     for (const co of companiesOf(w, n.id)) { if (!w.companies[co.id]) continue; const k = outputKey(co.industry, co.q); byKey.set(k, [...(byKey.get(k) ?? []), co]); }
     const maxProducers = Math.round(8 / representation(w, n.id));
+    // No more private firms than about one for every two people of working age (small societies were filling with empty firms).
+    const crowded = companiesOf(w, n.id).length >= Math.max(10, nationals(w, n.id).filter((c) => !c.retired && !c.gone).length * 0.5);
     const founder = () => nationals(w, n.id).filter((c) => !c.player && (c.persona === 'industrialist' || c.persona === 'investor' || c.persona === 'merchant') && (c.wallet.GOLD ?? 0) > g(B.company.foundCost[0]) * goldScale(w, n.id) * 1.5 && (c.wallet[n.cur] ?? 0) > cur(200)).sort((a, b) => b.traits.ambition - a.traits.ambition)[0];
     for (const kind of [...PRODUCTS, ...RAWS] as string[]) {
       // Nobody in the country makes this at all (a new industry, or the last maker failed): someone may start.
       if (![...byKey.keys()].some((k) => kindOf(k) === kind) && chance(w, 0.1)) {
         const f = founder();
-        if (f) { foundForDemand(w, f.id, kind, n.id); continue nations; }
+        if (f) { foundForDemand(w, f.id, kind, n.id); continue nations; } // a missing industry may always start
         // No private founder: for food and raw materials, the state steps in (a state enterprise).
         if ((kind === 'food' || (RAWS as string[]).includes(kind)) && stateFound(w, n.id, kind)) continue nations;
       }
@@ -265,7 +267,7 @@ export function entrepreneurship(w: World) {
         const makers = byKey.get(key) ?? [];
         const producers = makers.length;
         const busy = makers.every((co) => (co.hist[co.hist.length - 1]?.produced ?? 0) > 0 && (!co.offer || co.workers.length >= co.offer.slots));
-        if (traded > 0 && supply < traded / 3 && producers < maxProducers && busy && chance(w, 0.3)) {
+        if (!crowded && traded > 0 && supply < traded / 3 && producers < maxProducers && busy && chance(w, 0.3)) {
           const f = founder();
           if (!f) continue;
           foundForDemand(w, f.id, kindOf(key), n.id);
@@ -286,7 +288,8 @@ function stateFound(w: World, nation: Id, kind: string): boolean {
   const region = raw ? regions.slice().sort((a, b) => ((b.res as any)[kind] ?? 0) - ((a.res as any)[kind] ?? 0))[0] : regions.slice().sort((a, b) => b.pop - a.pop)[0];
   if (!region || (raw && !((region.res as any)[kind] > 0))) return false;
   const seed = cur(250);
-  if ((n.wallet[n.cur] ?? 0) < seed * 20) return false;
+  // An empty treasury borrows the seed money (bonds), as governments do to keep essentials going.
+  if ((n.wallet[n.cur] ?? 0) < seed * 2) { mint(w, natref(nation), n.cur, seed * 2, 'Government bonds issued'); n.debt = (n.debt ?? 0) + seed * 2; n.debtIssued = (n.debtIssued ?? 0) + seed * 2; }
   const co = createCompany(w, natref(nation), kind as any, 1, region.id);
   noteBirth(w, co);
   co.state = true;

@@ -3,6 +3,21 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### Fixed in 1.4.18
+
+- **Long games stay fast.** After about a year of play, the simulation had slowed several times over. Three
+  causes are fixed:
+  - AI citizens looking for spare gear to auction scanned every piece of gear in the world, one person at a time;
+  - the list of active battles was rebuilt from every battle ever fought, many times a minute;
+  - every bidder valued every open auction.
+
+  A year-old world now runs about three times faster.
+- **No more empty firms.** Small countries were filling up with companies that had no one to work in them. New
+  private firms now stop at about one for every two people of working age.
+- **Governments in trouble can still borrow.** A government whose revenue collapsed could not borrow, and so could
+  not pay its staff or restart its economy. Its borrowing limit is now at least six months of spending, and the state
+  can borrow to open an essential enterprise.
+
 ### Fixed in 1.4.17
 
 - **Going back keeps your place.** On a slow computer, going back to a long screen sometimes jumped to the top.

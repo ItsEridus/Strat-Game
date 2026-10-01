@@ -122,7 +122,10 @@ export function aiBidding(w: World) {
   const bidders = census(w).all.filter((c) => !c.player && isAdult(w, c) && (c.wallet[GOLD] ?? 0) > g(1));
   for (const a of open) {
     let best: { c: Citizen; v: number } | null = null;
-    for (const c of bidders) {
+    // A rotating sample of about forty interested people looks at each lot (valuing every lot for everyone grew with the world).
+    const step = Math.max(1, Math.floor(bidders.length / 40)), off = (Math.floor(w.time / 60) + a.id) % step;
+    for (let i = off; i < bidders.length; i += step) {
+      const c = bidders[i];
       if (c.id === a.seller || a.bid?.by === c.id) continue;
       const v = Math.min(lotValue(w, a, c) * (0.8 + ((c.id * 13) % 40) / 100), (c.wallet[GOLD] ?? 0) * 0.3);
       if (v >= nextMinBid(a) && (!best || v > best.v)) best = { c, v };
@@ -133,10 +136,14 @@ export function aiBidding(w: World) {
 
 /** AI citizens occasionally auction spare gear. */
 export function aiListings(w: World) {
+  // Index citizens' gear once (scanning all gear per citizen grew with the world).
+  const byOwner = new Map<number, (typeof w.gear)[number][]>();
+  for (const x of Object.values(w.gear)) if (x.owner?.k === 'cit') { const l = byOwner.get(x.owner.id); if (l) l.push(x); else byOwner.set(x.owner.id, [x]); }
+  const day = Math.floor(w.time / 1440);
   for (const c of census(w).all) {
-    if (c.player || !isAdult(w, c) || (c.wallet[GOLD] ?? 0) < g(B.auctions.listFee)) continue;
-    const spare = Object.values(w.gear).filter((x) => x.owner?.k === 'cit' && x.owner.id === c.id && !isEquipped(c, x.id));
-    if (!spare.length || (Math.floor(w.time / 1440) + c.id) % 5 !== 0) continue;
+    if ((day + c.id) % 5 !== 0 || c.player || !isAdult(w, c) || (c.wallet[GOLD] ?? 0) < g(B.auctions.listFee)) continue;
+    const spare = (byOwner.get(c.id) ?? []).filter((x) => !isEquipped(c, x.id));
+    if (!spare.length) continue;
     const gr = spare[0];
     createAuction(w, c, { gear: gr.id }, g([0.1, 0.4, 1.2, 3, 8][gr.rarity]), 24);
   }
