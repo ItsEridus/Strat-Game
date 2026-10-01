@@ -3,6 +3,30 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.9.3: relations 2.0
+
+The first part of 2.0 The great game.
+
+- **What a relationship is made of.** How one country sees another is now built from:
+  - trust: what each has done to the other, remembered and slowly fading;
+  - affinity: similar governments, a shared language and shared blocs;
+  - threat: the other side's military power, how close it is, and its intentions;
+  - trade and investment ties;
+  - grievances: territorial disputes and historical wrongs.
+
+  The relation score moves towards that blend day by day.
+- **The real world at the start.** The US and Britain, Canada and Australia are close, and China and Russia are
+  friends. The US is cold towards Russia and wary of China. The Falklands, the Kurils, the China–India border and
+  Japan's history with China and Korea are remembered as grievances.
+- **Nations remember.** Embargoes, wars and broken deals cut trust on both sides. Conquered land leaves a grievance
+  that takes decades to fade.
+- **Blocs.** The North Atlantic alliance, the US alliances with Japan, Korea and Australia, USMCA, Mercosur, BRICS,
+  Five Eyes and the Quad. Shared blocs bring countries closer, and allies keep a store of trust.
+- **Leaders matter.** The head of government's character, from hawk to dove, risk-taker, ideologue or pragmatist,
+  and nationalist, colours how threatening the world looks.
+- **A new Diplomacy view** on the Country screen shows every relation broken into its parts, the country's blocs,
+  its standing in the world and its leader's outlook.
+
 ### New in 1.9.2: skip a year in seconds
 
 - **Skip a year is now statistical, and takes seconds:** about 4 seconds for the default world, against 20 minutes

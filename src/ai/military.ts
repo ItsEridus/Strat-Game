@@ -1,22 +1,21 @@
 // AI soldiers, commanders, defense ministries and diplomacy. Soldiers fight with
 // their own energy, food and weapons (bought on the market); commanders and
 // ministries plan battles, supply units and seek peace.
+import { relationsDaily } from '../sim/relations';
 import { lod } from '../sim/tick';
 import type { Battle, Citizen, Id, Nation, World } from '../sim/types';
 import { census, representation } from '../sim/census';
 import { B } from '../data/balance';
-import { IDEOLOGIES } from '../data/ideologies';
 import { chance } from '../engine/rng';
 import { hourOf } from '../engine/clock';
 import { pay } from '../engine/ledger';
 import { activeBattles, battleTick, claimReserve, hit, segmentOf } from '../sim/battle';
 import type { WeaponSel } from '../sim/combatMath';
-import { controller, cref, natref, player, seatShare } from '../sim/query';
+import { controller, cref, natref, player } from '../sim/query';
 import { activeWars, computeSupply, enemyOf, invasionCheck, isBorder, seatOf, startInvasion } from '../sim/war';
 import { distribute, members, setOrder, unitRef } from '../sim/units';
 import { eatUp } from './citizens';
 import { buyBest, listingsFor } from '../sim/market';
-import { relation } from '../sim/congress';
 import { useSpecial } from '../sim/specials';
 
 /** Best weapon a citizen holds for this battle. */
@@ -244,30 +243,9 @@ export function defenseBudget(w: World) {
 }
 
 /** Relations drift for understandable reasons (borders, ideology, trade, wars, alliances). */
+/** Daily: relations move towards what they are made of (sim/relations.ts). */
 export function diplomacyDaily(w: World) {
-  const nations = w.nations;
-  for (let i = 0; i < nations.length; i++) for (let j = i + 1; j < nations.length; j++) {
-    const a = nations[i], b = nations[j];
-    const sa = seatShare(w, a), sb = seatShare(w, b);
-    let sim = 0;
-    for (const k of Object.keys(IDEOLOGIES)) sim += Math.min(sa[k] ?? 0, sb[k] ?? 0);
-    const border = w.regions.some((r) => controller(r) === a.id && r.links.some((l) => controller(w.regions[l]) === b.id));
-    const atWar = activeWars(w).some((x) => (x.att === a.id && x.def === b.id) || (x.att === b.id && x.def === a.id));
-    const hawk = ((sa.imperialism ?? 0) + (sb.imperialism ?? 0)) / 2;
-    const enemiesOf = (id: Id) => new Set(activeWars(w).filter((x) => x.att === id || x.def === id).map((x) => enemyOf(x, id)));
-    const ea = enemiesOf(a.id), eb = enemiesOf(b.id);
-    const sharedEnemy = [...ea].some((e) => eb.has(e));
-    let d = 0; const why: string[] = [];
-    if (sim > 0.3) { d += 0.6; why.push('similar governments'); }
-    if (border && hawk > 0.2) { d -= 0.8; why.push('border tension'); }
-    if (atWar) { d -= 1; why.push('ongoing war'); }
-    if (sharedEnemy) { d += 1.2; why.push('shared enemy'); }
-    if (a.alliances.includes(b.id)) { d += 0.4; why.push('alliance'); }
-    const cur = a.relations[b.id]?.score ?? 0;
-    d += -cur * 0.01; // slow regression toward neutral
-    if (Math.abs(d) >= 0.5) relation(w, a.id, b.id, Math.round(d * 10) / 10, why.join(', ') || 'drift');
-    else { a.relations[b.id].score += d; b.relations[a.id].score += d; }
-  }
+  relationsDaily(w);
 }
 
 export function aiClaimReserves(w: World) {

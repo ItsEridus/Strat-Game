@@ -404,6 +404,8 @@ export interface Nation {
   seats: Record<Id, number>; // partyId -> seats
   congressSize: number;
   relations: Record<Id, Relation>;
+  ties?: Record<Id, import('./relations').Ties>; // what the relation is made of (2.0)
+  relInit?: boolean;
   alliances: Id[];
   embargoes: Id[];
   pacts: Record<Id, number>; // nationId -> non-aggression until time

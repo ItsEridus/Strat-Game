@@ -1,6 +1,7 @@
 // Congress: deputies and the president draft proposals, vote, and enacted laws
 // change the simulation (taxes affect subsequent wages and sales, minimum wage
 // constrains job offers, printing mints currency, embargoes block trade…).
+import { noteTrust } from './relations';
 import { lifeGate } from './lifecycle';
 import type { Citizen, Id, Nation, Proposal, ProposalType, World } from './types';
 import { B } from '../data/balance';
@@ -280,6 +281,7 @@ function enact(w: World, n: Nation, p: Proposal): string {
 
 /** Change relations symmetrically with a recorded reason. */
 export function relation(w: World, a: Id, b: Id, delta: number, why: string) {
+  noteTrust(w, a, b, delta); // nations remember what was done to them (sim/relations.ts)
   for (const [x, y] of [[a, b], [b, a]]) {
     const n = w.nations[x];
     if (!n || !n.relations[y]) continue;

@@ -4,6 +4,7 @@
 //  - Holding the quota of occupations settles the war: held goals transfer, other
 //    occupations return, retained regions lose one building level, a 7-day pact follows.
 //  - Deadlines and peace terms (armistice, surrender, demand, trade) also settle wars.
+import { addGrievance } from './relations';
 import { afterActionReview } from './forceStructure';
 import type { Battle, Id, Nation, PeaceOffer, Proposal, War, World } from './types';
 import { census } from './census';
@@ -325,6 +326,8 @@ export function settle(w: World, war: War, kind: Terms['kind'], offer?: PeaceOff
   relation(w, att.id, def.id, 8, `peace (${label})`);
   if (kind === 'conquest' || keepAtt.length) { att.warScore = Math.min(100, att.warScore + 20); def.warScore = Math.max(-100, def.warScore - 20); }
   warEnded(w, war, kind, offer, transferred, keepAtt, relBefore);
+  if (keepAtt.length) addGrievance(w, war.def, war.att, Math.min(60, 20 * keepAtt.length)); // lost land is not forgotten
+  if (keepDef.length) addGrievance(w, war.att, war.def, Math.min(60, 20 * keepDef.length));
   afterActionReview(w, war, kind === 'conquest' || keepAtt.length ? war.att : keepDef.length || kind === 'surrender' ? war.def : null);
   record(w, 'war', `🕊️ War between ${att.name} and ${def.name} ended by ${war.outcome}. ${B.war.pactDays}-day non-aggression pact.`, { nation: att.id, important: true });
   const pl = player(w);
