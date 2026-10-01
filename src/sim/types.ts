@@ -229,6 +229,7 @@ export type CrimeKind = 'pickpocket' | 'burglary' | 'fraud' | 'smuggling' | 'ext
 export interface Case {
   id: Id; suspect: Id; kind: CrimeKind; region: Id; nation: Id; evidence: number; opened: number;
   status: 'open' | 'closed'; detective: Id | null; loot: number; outcome?: string; syndicate?: Id | null;
+  innocent?: boolean; plea?: boolean; appealed?: boolean; fine?: number; closedAt?: number; judge?: Id | null; // courts (1.7)
 }
 export interface Syndicate {
   id: Id; name: string; nation: Id; style: string; boss: Id | null; members: Id[]; turf: Id[]; home: Id;
@@ -352,7 +353,7 @@ export interface Region {
   pop0?: number; // background population at genesis
   draw?: number; // how attractive the region is to live in, -1..1, smoothed (sim/population.ts)
   blockade: Id | null; // nation whose navy blockades this coast
-  staff?: { school: number; clinic: number; offices: number };
+  staff?: { school: number; clinic: number; offices: number; courts?: number };
   housePx?: number; // housing price index, 0.5..2.5, drifts slowly (sim/housing.ts) // public-service staffing 0..1 (sim/services.ts)
 }
 
@@ -384,6 +385,7 @@ export interface Nation {
   infraBonus?: number; healthBonus?: number; // built up by public investment (strategic engine)
   strategy?: { kind: import('./nationalBudget').Strategy; since: number; why: string };
   powerHist?: import('./worldHistory').PowerPoint[]; // power index each month
+  courts?: import('./courts').CourtStats; // trials, pleas, appeals and exonerations (1.7)
   prison?: import('./prisons').PrisonSystem; // the national prison system (1.7)
   chronicle?: { t: number; text: string }[]; // the nation's history (strategy changes and other turning points)
   minWage: number; // minor units

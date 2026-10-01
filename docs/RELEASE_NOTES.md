@@ -3,6 +3,33 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.6.2: the courts
+
+- **Court careers.** Prosecutors, public defenders and judges are now public careers, listed with the other public
+  posts on the Jobs screen. You need a law degree, and judges must be 30 or older. Courts sit in the larger
+  places.
+- **Who sits on a case matters.** Every trial is heard by a judge and argued by a prosecutor and, if the accused can
+  afford one, a defence lawyer. The skill of the prosecutor and the defence moves the verdict. Lawyers' fees now go
+  to a real defence lawyer. If you hold one of these posts, you hear about the cases you sat on.
+- **Bail.** When you are arrested you can post bail. The court holds the money and your trial moves four days
+  later, which gives you time to hire a lawyer and prepare a defence. You get the bail back at trial. If you have
+  left the country, the bail is forfeit and a warrant waits for you.
+- **Plea deals.** Pleading guilty is a certain conviction, with a lighter sentence and a smaller fine. How often
+  defendants take the deal follows each country's practice: about 95% of convictions in the United States, about
+  70% in Britain, about 20% in Germany and very few in Japan.
+- **Appeals.** You can appeal a conviction within 14 days, unless you pleaded guilty. Weak convictions are
+  overturned more often, and NPCs appeal too. A quashed conviction comes off your record, sets you free and returns
+  your fine.
+- **Wrongful convictions.** Where crime is high and the rule of law is weak, a case about to go cold is sometimes
+  pinned on someone with a record. Some of the wrongly convicted are exonerated later and paid compensation;
+  exonerations come sooner where the press is free.
+- **Court statistics.** The Law & Order screen shows trials, the conviction rate, the share of convictions from
+  guilty pleas, appeals and exonerations for your country.
+
+### Fixed in 1.6.2
+
+- The arrest message showed lawyer and bribe costs as bare numbers; it now shows them in your currency.
+
 ### New in 1.6.1: prisons
 
 Prisons are now institutions, the first part of 1.7 Law & Order.

@@ -86,6 +86,8 @@ export const OCCUPATIONS: Record<string, Occupation> = {
   // Public administration
   civilservant: { label: 'Civil servant', family: 'public', pay: 1.2, edu: 'school' },
   lawyer: { label: 'Lawyer', family: 'public', pay: 3.0, edu: 'master', field: ['law'] },
+  prosecutor: { label: 'Prosecutor', family: 'public', pay: 2.4, edu: 'bachelor', field: ['law'] },
+  judge: { label: 'Judge', family: 'public', pay: 3.1, edu: 'master', field: ['law'] },
   // Security and defence
   guard: { label: 'Security guard', family: 'security', pay: 0.75, edu: 'school', industries: ['wg', 'wa', 'oil'] },
   police: { label: 'Police officer', family: 'security', pay: 1.5, edu: 'school' },

@@ -3,9 +3,10 @@ import assert from 'node:assert/strict';
 import { generateWorld } from '../src/sim/worldgen';
 import { registerSystems } from '../src/sim/systems';
 import { advance } from '../src/sim/tick';
-import { audit } from '../src/engine/ledger';
+import { audit, mint } from '../src/engine/ledger';
+import { c as cur } from '../src/engine/money';
 import { DAY } from '../src/engine/clock';
-import { jailed, player } from '../src/sim/query';
+import { cref, jailed, player } from '../src/sim/query';
 import { openCase, trial } from '../src/sim/crime';
 import { applyCheck } from '../src/sim/company';
 import { JUSTICE, admit, escapeChance, incarcerationRate, insideOf, occupancy, paroleCheck, paroleHearing, prisonClass, prisonOf, prisonWork, prisonWorkCheck, prisonsDaily, recordBars, release, sentenceFactor, tryEscape, vetted } from '../src/sim/prisons';
@@ -102,4 +103,79 @@ test('a month with prisons running keeps the ledger balanced', () => {
   assert.ok(!jailed(w, player(w)) || player(w).sec.inside);
   assert.ok(audit(w).ok, audit(w).problems.join('; '));
   for (const n of w.nations) if (!n.exile) assert.ok(prisonOf(w, n).hist.length >= 0);
+});
+
+import { appeal, appealCheck, bailAmount, benchFor, convictionChance, courtStats, courtsDaily, postBail, pleaRate } from '../src/sim/courts';
+import { replyArrest } from '../src/sim/crime';
+import { SERVICES } from '../src/sim/services';
+
+const arrested = (w: World, evidence = 90) => {
+  const p = player(w);
+  const k = openCase(w, p, 'burglary', p.loc, evidence, 0);
+  p.flags.pendingTrial = k.id; p.flags.trialAt = w.time + DAY;
+  return { p, k };
+};
+
+test('courts are staffed by law graduates; the bench moves the verdict', () => {
+  const w = fresh(86);
+  assert.ok(SERVICES.judge && SERVICES.prosecutor && SERVICES.defender);
+  const officials = Object.values(w.citizens).filter((c) => c.post && ['judge', 'prosecutor', 'defender'].includes(c.post.kind));
+  const { k } = arrested(w, 60);
+  const b = benchFor(w, k);
+  if (officials.length) assert.ok(b.judge || b.prosecutor || b.defender, 'someone sits on the case');
+  assert.ok(convictionChance(w, k, true) < convictionChance(w, k, false), 'a lawyer helps');
+});
+
+test('a guilty plea is a certain, lighter conviction; pleas follow national practice', () => {
+  const w = fresh(87);
+  const { p, k } = arrested(w, 50);
+  replyArrest(w, k.id, 'plea');
+  assert.equal(k.plea, true);
+  assert.match(k.outcome ?? '', /guilty plea/);
+  assert.ok(jailed(w, p));
+  assert.ok(courtStats(w.nations[k.nation]).pleas >= 1);
+  assert.match(appealCheck(w, p, k) ?? '', /pleaded guilty/);
+  const us = w.nations.find((n) => n.iso === 'USA'), jp = w.nations.find((n) => n.iso === 'JPN');
+  if (us && jp) assert.ok(pleaRate(us) > 0.9 && pleaRate(jp) < 0.1);
+});
+
+test('bail: the money is held, the trial waits, a lawyer prepares, the money comes back', () => {
+  const w = fresh(88);
+  const { p, k } = arrested(w, 40);
+  const code = w.nations[k.nation].cur;
+  mint(w, cref(p.id), code, bailAmount(w, k) * 3, 'test');
+  const before = p.wallet[code];
+  assert.ok(postBail(w, p, k).ok);
+  assert.equal(p.wallet[code], before - bailAmount(w, k));
+  assert.ok(!jailed(w, p) && k.status === 'open');
+  advance(w, 5 * DAY, false);
+  assert.equal(k.status, 'closed');
+  assert.equal(p.flags.bail, 0);
+  assert.ok(audit(w).ok, audit(w).problems.join('; '));
+});
+
+test('appeals overturn weak convictions; the wrongly convicted can be exonerated', () => {
+  const w = fresh(89);
+  const { p, k } = arrested(w, 35);
+  let tries = 0;
+  while (!(k.outcome ?? '').startsWith('convicted') && tries++ < 50) { k.status = 'open'; k.outcome = undefined; p.flags.pendingTrial = k.id; p.sec.jailUntil = 0; replyArrest(w, k.id, 'comply'); }
+  assert.match(k.outcome ?? '', /convicted/);
+  const code = w.nations[k.nation].cur;
+  mint(w, cref(p.id), code, cur(1000), 'test');
+  k.innocent = true;
+  const convictions = p.sec.record.convictions;
+  assert.equal(appealCheck(w, p, k), null);
+  appeal(w, p, k);
+  assert.match(appealCheck(w, p, k) ?? '', /already|no conviction/);
+  if (/quashed/.test(k.outcome ?? '')) { assert.ok(!jailed(w, p)); assert.equal(p.sec.record.convictions, convictions - 1); }
+  // An innocent NPC convicted long ago is eventually cleared.
+  const npc = Object.values(w.citizens).find((c) => !c.player && !c.gone)!;
+  const f = openCase(w, npc, 'fraud', npc.loc, 90, 0);
+  Object.assign(f, { status: 'closed', outcome: 'convicted: test', innocent: true, appealed: true, closedAt: w.time });
+  npc.sec.record.convictions = 1;
+  w.time += ((7 - (Math.floor(w.time / DAY) % 7)) % 7) * DAY; // courts sit weekly
+  for (let i = 0; i < 400 && f.outcome !== 'exonerated'; i++) { w.time += 7 * DAY; courtsDaily(w); }
+  assert.equal(f.outcome, 'exonerated');
+  assert.ok(courtStats(w.nations[f.nation]).exonerations >= 1);
+  assert.ok(audit(w).ok, audit(w).problems.join('; '));
 });

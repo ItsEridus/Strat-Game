@@ -12,6 +12,7 @@ import {
   CRIMES, CRIME_NAME, PRANKS, SRANKS, SYND_JOBS, commitCrime, crimeCheck, crimeLabel, investigate, investigateCheck, jobCheck, joinPolice, joinPoliceCheck,
   joinSyndicate, joinSyndicateCheck, leavePolice, leaveSyndicate, orderRaid, patrol, patrolCheck, policeName, raidCheck, setPoliceFunding, syndicateJob,
 } from '../../sim/crime';
+import { appeal, appealChance, appealCheck, appealFee, courtStats, hireForTrial, hireForTrialCheck, pleaRate } from '../../sim/courts';
 import { escapeChance, escapeCheck, funding, hasLiveRecord, incarcerationRate, insideOf, justiceOf, occupancy, paroleChance, paroleCheck, paroleHearing, prisonClass, prisonClassCheck, prisonOf, prisonWork, prisonWorkCheck, spentAt, tryEscape } from '../../sim/prisons';
 
 export function Crime({ w }: { w: World }) {
@@ -35,6 +36,14 @@ export function Crime({ w }: { w: World }) {
           <div class="track"><span>🚨 {CRIME_NAME[k.kind]} investigation in {w.regions[k.region].name} ({w.nations[k.nation].name})</span><Bar v={k.evidence} max={100} color="#e39b3a" label={`evidence ${Math.round(k.evidence)}% (arrest at ${B.police.arrestAt}%)`} /></div>
         ))}
         {!mine.some((k) => k.status === 'open') && <p class="small muted">No open investigations against you.</p>}
+        {mine.filter((k) => k.status === 'open' && p.flags.bail === k.id).map((k) => (
+          <div class="track"><span>⚖️ Out on bail: trial for {CRIME_NAME[k.kind]} on {fmtDay(p.flags.trialAt ?? 0)}{p.flags.trialLawyer === k.id ? ' · your lawyer is preparing the defence' : ''}. Stay in {w.nations[k.nation].name}.</span>
+            <ActBtn small why={hireForTrialCheck(w, p, k)} run={(w) => hireForTrial(w, p, k)}>Hire a lawyer</ActBtn></div>
+        ))}
+        {mine.filter((k) => k.status === 'closed' && k.outcome?.startsWith('convicted') && !appealCheck(w, p, k)).map((k) => (
+          <div class="track"><span>📜 Convicted of {CRIME_NAME[k.kind]} ({k.outcome}). Appeal: <Amt asset={w.nations[k.nation].cur} v={appealFee()} />, about {Math.round(appealChance(w, k) * 100)}% chance.</span>
+            <ActBtn small why={appealCheck(w, p, k)} run={(w) => appeal(w, p, k)}>Appeal</ActBtn></div>
+        ))}
         <Help>Crimes raise heat and notoriety. If someone sees you, police open a case; evidence grows with local policing and your heat. At {B.police.arrestAt}% you are arrested wherever that nation's police reach you, and tried: a lawyer helps; a bribe might work where police are weak. Heat falls {B.justice.heatDecay}/day. Convictions cost fines, prison time (no work, travel, training or fighting), office, and votes.</Help>
       </Panel>
 
@@ -64,7 +73,7 @@ export function Crime({ w }: { w: World }) {
         const ps = prisonOf(w, n);
         const j = justiceOf(n);
         return (
-          <Panel title={`🏛️ Prisons in ${n.name}`}>
+          <Panel title={`🏛️ Courts and prisons in ${n.name}`}>
             <table class="table compact"><tbody>
               <tr><td>Prisoners</td><td>{ps.inmates.toLocaleString()} · {Math.round(incarcerationRate(w, n))} per 100,000 people</td></tr>
               <tr><td>Places</td><td>{ps.places.toLocaleString()} · <span class={occupancy(ps) > 1.15 ? 'bad' : ''}>{Math.round(occupancy(ps) * 100)}% full</span></td></tr>
@@ -73,6 +82,10 @@ export function Crime({ w }: { w: World }) {
               <tr><td>Sentences</td><td>{j.sentence >= 1.2 ? 'harsh' : j.sentence <= 0.85 ? 'lenient' : 'typical'} (×{j.sentence}) · parole after {Math.round(j.parole * 100)}%</td></tr>
               <tr><td>Reoffending</td><td>about {Math.round(j.reoffend * 100)}% within two years</td></tr>
               <tr><td>Riots · escapes</td><td>{ps.riots} · {ps.escapes}</td></tr>
+              {(() => { const cs = courtStats(n); return (<>
+                <tr><td>Trials</td><td>{cs.trials} · {cs.trials ? Math.round((cs.convictions / cs.trials) * 100) : 0}% convicted · {cs.convictions ? Math.round((cs.pleas / cs.convictions) * 100) : 0}% by guilty plea (usually about {Math.round(pleaRate(n) * 100)}%)</td></tr>
+                <tr><td>Appeals</td><td>{cs.appeals} lodged · {cs.quashed} quashed · {cs.exonerations} exonerated</td></tr>
+              </>); })()}
             </tbody></table>
             {hasLiveRecord(w, p) && <p class="small bad">Your conviction shows on background checks until {fmtDay(spentAt(w, p))}: state companies and the medicine, aerospace and electronics industries will not hire you.</p>}
             <Help>Incarceration follows each country's real rate (about 33 per 100,000 in Japan, over 500 in the United States) and moves with crime. The police budget builds places and keeps conditions decent; overcrowded, run-down prisons riot. Records are spent after {j.spentYears} years here.</Help>

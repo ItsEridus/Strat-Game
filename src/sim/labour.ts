@@ -45,7 +45,7 @@ export const industryPay = (ind: Industry) => OCCUPATIONS[occupationsIn(ind)[0]]
 export function occupationOf(w: World, c: Citizen): string | null {
   if (c.post) {
     const g = c.post.grade;
-    return ({ teacher: g === 0 ? 'assistant' : 'teacher', nurse: g === 0 ? 'careworker' : 'nurse', doctor: g >= 3 ? 'surgeon' : 'doctor', clerk: g >= 3 ? 'officemgr' : 'civilservant', engineer: g === 0 ? 'mechanic' : 'civileng' } as const)[c.post.kind];
+    return ({ teacher: g === 0 ? 'assistant' : 'teacher', nurse: g === 0 ? 'careworker' : 'nurse', doctor: g >= 3 ? 'surgeon' : 'doctor', clerk: g >= 3 ? 'officemgr' : 'civilservant', engineer: g === 0 ? 'mechanic' : 'civileng', prosecutor: 'prosecutor', defender: 'lawyer', judge: 'judge' } as const)[c.post.kind];
   }
   if (c.job != null && w.companies[c.job]) {
     const options = occupationsIn(w.companies[c.job].industry).filter((k) => fits(c, OCCUPATIONS[k]));

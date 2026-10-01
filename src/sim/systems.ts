@@ -1,6 +1,7 @@
 // Wires every subsystem's hooks into the simulation loop, once, in a fixed order.
 // The order is part of determinism: do not reorder casually.
 import { prisonsDaily } from './prisons';
+import { courtsDaily } from './courts';
 import { lod } from './tick';
 import { powerMonthly } from './worldHistory';
 import { budgetDaily } from './nationalBudget';
@@ -154,7 +155,7 @@ export function registerSystems() {
   // Stage 6: law & order, intelligence, a dynamic world and a responsive society
   HANDLERS.opResolve = (w, p) => resolveOp(w, p.id);
   hourlyHooks.push(crimeHourly);
-  dailyHooks.push((w: World) => { dynamicsDaily(w); crimeDaily(w); prisonsDaily(w); playerRackets(w); policeRecruitment(w); intelDaily(w); npcDaily(w); });
+  dailyHooks.push((w: World) => { dynamicsDaily(w); crimeDaily(w); courtsDaily(w); prisonsDaily(w); playerRackets(w); policeRecruitment(w); intelDaily(w); npcDaily(w); });
   REPLY_HANDLERS.arrest = (w, m, o) => replyArrest(w, m.payload!.case, o);
   REPLY_HANDLERS.extortion = (w, m, o) => replyExtortion(w, m.payload!, o);
   REPLY_HANDLERS.syndInvite = (w, m, o) => replySyndInvite(w, m.payload!, o);

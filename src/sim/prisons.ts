@@ -160,10 +160,10 @@ export function admit(w: World, c: Citizen) {
 }
 
 /** Called on release (end of sentence, parole or escape). */
-export function release(w: World, c: Citizen, how: 'served' | 'parole' | 'escape') {
+export function release(w: World, c: Citizen, how: 'served' | 'parole' | 'escape' | 'quashed') {
   c.sec.jailUntil = 0;
   c.sec.inside = undefined;
-  if (how !== 'escape') c.sec.releasedAt = w.time;
+  if (how === 'served' || how === 'parole') c.sec.releasedAt = w.time;
   const p = prisonOf(w, w.nations[c.nation]);
   p.inmates = Math.max(0, p.inmates - 1);
   if (c.player && how === 'served') notify(w, 'personal', '🔓 You have been released from prison. A record will follow you to job interviews for a while.', { link: 'crime' });

@@ -26,6 +26,7 @@ import { controller, coref, cref, hhref, jailed, natref, player, regref, syndref
 import { nationPerm } from './authority';
 import { isAdult, practise } from './growth';
 import { admit, release, reoffendPull, sentenceFactor } from './prisons';
+import { afterVerdict, bailAmount, convictionChance, maybeFrame, payDefence, pleaRate, postBail, settleBail } from './courts';
 
 // ---------- definitions ----------
 
@@ -434,8 +435,14 @@ function tryArrest(w: World, k: Case, by: Citizen | null): boolean {
   if (s.player) {
     sendMsg(w, {
       from: by?.id ?? null, subject: `🚔 Arrested for ${CRIME_NAME[k.kind]}`, kind: 'gov',
-      body: `Officers of the ${policeName(w, k.region)} have arrested you. Evidence against you: ${Math.round(k.evidence)}%. Trial tomorrow. A lawyer costs ${B.justice.lawyer} ${w.nations[k.nation].cur} and cuts the conviction risk; a bribe might make it go away — or make it much worse.`,
-      options: [{ id: 'comply', label: 'Stand trial' }, { id: 'lawyer', label: `Hire a lawyer (${B.justice.lawyer})` }, { id: 'bribe', label: `Bribe the officers (${B.justice.bribeBase})` }],
+      body: `Officers of the ${policeName(w, k.region)} have arrested you. Evidence against you: ${Math.round(k.evidence)}%. Trial tomorrow. A lawyer cuts the conviction risk; posting bail buys four days to prepare a defence; the prosecutor offers a lighter sentence for a guilty plea; a bribe might make it all go away — or make it much worse.`,
+      options: [
+        { id: 'comply', label: 'Stand trial' },
+        { id: 'lawyer', label: `Hire a lawyer (${fmtAmt(w.nations[k.nation].cur, cur(B.justice.lawyer))})` },
+        { id: 'bail', label: `Post bail (${fmtAmt(w.nations[k.nation].cur, bailAmount(w, k))})` },
+        { id: 'plea', label: 'Plead guilty (a lighter sentence)' },
+        { id: 'bribe', label: `Bribe the officers (${fmtAmt(w.nations[k.nation].cur, cur(B.justice.bribeBase) * (1 + SEVERITY[k.kind] / 2))})` },
+      ],
       payload: { handler: 'arrest', case: k.id },
     });
     notify(w, 'personal', `🚔 You have been arrested (${CRIME_NAME[k.kind]}). Decide in your inbox.`, { critical: true, link: 'inbox' });
@@ -448,7 +455,9 @@ function tryArrest(w: World, k: Case, by: Citizen | null): boolean {
   if (s.traits.greed > 0.6 && cash > cur(B.justice.bribeBase * 2) && chance(w, 0.5)) {
     if (bribeAttempt(w, s, k)) return true;
   }
-  trial(w, k, cash > cur(B.justice.lawyer * 3));
+  // Most defendants facing strong evidence take the prosecutor's deal, as often as pleas are used in that country.
+  if (chance(w, pleaRate(w.nations[k.nation]) * Math.min(1, k.evidence / 60))) trial(w, k, false, true);
+  else trial(w, k, cash > cur(B.justice.lawyer * 3));
   return true;
 }
 
@@ -474,34 +483,41 @@ function bribeAttempt(w: World, s: Citizen, k: Case): boolean {
   return false;
 }
 
-/** Trial: conviction chance follows the evidence; a lawyer lowers it. */
-export function trial(w: World, k: Case, lawyer: boolean) {
+/** Trial: conviction chance follows the evidence and the bench (sim/courts.ts); a lawyer lowers it; a guilty plea is a certain conviction with a lighter sentence. */
+export function trial(w: World, k: Case, lawyer: boolean, plea = false) {
   const s = w.citizens[k.suspect];
   const n = w.nations[k.nation];
   const code = n.cur;
-  if (lawyer) { const fee = cur(B.justice.lawyer); if (!pay(w, cref(s.id), hhref(n.id), code, fee, 'Lawyer')) lawyer = false; }
-  const p = (k.evidence / 100) * (lawyer ? 0.75 : 1);
+  if (!settleBail(w, s, k)) { s.flags.pendingTrial = 0; k.evidence = 100; s.sec.heat = Math.min(100, s.sec.heat + 40); return; } // skipped bail: the case waits for an arrest
+  if (s.flags.trialLawyer === k.id) { lawyer = true; s.flags.trialLawyer = 0; }
+  else if (lawyer && !plea && !payDefence(w, k, s, cur(B.justice.lawyer))) lawyer = false;
+  const p = plea ? 1 : convictionChance(w, k, lawyer);
   k.status = 'closed';
+  k.closedAt = w.time;
+  k.plea = plea;
   s.flags.pendingTrial = 0;
   if (!chance(w, p)) {
+    afterVerdict(w, k, false, false);
     k.outcome = 'acquitted';
     s.sec.heat = Math.max(0, s.sec.heat - 20);
     if (s.player) notify(w, 'personal', `⚖️ Acquitted of ${CRIME_NAME[k.kind]}. You walk free.`, { link: 'crime' });
     else if (w.regions[k.region].owner === player(w).nation && SEVERITY[k.kind] >= 3) record(w, 'justice', `⚖️ ${s.name} was acquitted of ${CRIME_NAME[k.kind]} in ${w.regions[k.region].name}.`, { region: k.region, nation: k.nation });
     return;
   }
+  afterVerdict(w, k, true, plea);
   const sev = SEVERITY[k.kind];
-  const fine = Math.max(cur(20), k.loot * B.justice.finePerLoot);
+  const fine = Math.round(Math.max(cur(20), k.loot * B.justice.finePerLoot) * (plea ? 0.75 : 1));
   const paid = Math.min(fine, s.wallet[code] ?? 0);
   const gov = w.govs[k.region];
   if (paid > 0) pay(w, cref(s.id), gov && !w.regions[k.region].occ && gov.cur === code ? regref(k.region) : natref(n.id), code, paid, 'Court fine');
-  const days = Math.ceil(sev * B.justice.jailDaysPerSeverity * sentenceFactor(n) * (1 + s.sec.record.convictions * 0.3) + (paid < fine ? 1 : 0));
+  k.fine = paid;
+  const days = Math.ceil(sev * B.justice.jailDaysPerSeverity * sentenceFactor(n) * (plea ? 0.6 : 1) * (1 + s.sec.record.convictions * 0.3) + (paid < fine ? 1 : 0));
   s.sec.jailUntil = w.time + days * DAY;
   admit(w, s);
   s.sec.record.convictions++;
   s.sec.record.fines += paid;
   s.sec.heat = 0;
-  k.outcome = `convicted: ${fmtAmt(code, paid)} fine, ${days} day${days > 1 ? 's' : ''} in prison`;
+  k.outcome = `convicted${plea ? ' on a guilty plea' : ''}: ${fmtAmt(code, paid)} fine, ${days} day${days > 1 ? 's' : ''} in prison`;
   if (s.sec.police != null) { s.sec.police = null; invalidateCensus(w); } // dismissed
   if (s.player) {
     notify(w, 'personal', `⚖️ Convicted of ${CRIME_NAME[k.kind]}: ${k.outcome}.`, { critical: true, link: 'crime' });
@@ -520,7 +536,13 @@ export function replyArrest(w: World, caseId: Id, option: string): Result {
     trial(w, k, false);
     return ok(`Bribe failed. Trial: ${k.outcome}.`);
   }
-  trial(w, k, option === 'lawyer');
+  if (option === 'bail') {
+    const r = postBail(w, p, k);
+    if (r.ok) return r;
+    trial(w, k, false);
+    return ok(`${r.msg} Trial: ${k.outcome}.`);
+  }
+  trial(w, k, option === 'lawyer', option === 'plea');
   return ok(`Verdict: ${k.outcome}.`);
 }
 
@@ -603,7 +625,7 @@ export function crimeDaily(w: World) {
       let officers = officersOf(w, k.region).filter((c) => !c.player && !jailed(w, c));
       if (!officers.length) officers = w.regions.filter((x) => x.owner === k.nation).flatMap((x) => officersOf(w, x.id)).filter((c) => !c.player && !jailed(w, c));
       tryArrest(w, k, officers.length ? pick(w, officers) : null);
-    } else if (w.time - k.opened > B.justice.coldAfterDays * DAY && k.evidence < 40) { k.status = 'closed'; k.outcome = 'went cold'; }
+    } else if (w.time - k.opened > B.justice.coldAfterDays * DAY && k.evidence < 40) { k.status = 'closed'; k.outcome = 'went cold'; if (!s.player && !k.innocent) maybeFrame(w, k); }
   }
   for (const c of census(w).all) {
     c.sec.heat = Math.max(0, c.sec.heat - B.justice.heatDecay);

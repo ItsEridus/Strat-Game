@@ -23,7 +23,7 @@ import { leaveCheck } from './health';
 import { contribute } from './pensions';
 import { recordPay } from './wages';
 
-export type Service = 'teacher' | 'nurse' | 'doctor' | 'clerk' | 'engineer';
+export type Service = 'teacher' | 'nurse' | 'doctor' | 'clerk' | 'engineer' | 'prosecutor' | 'defender' | 'judge';
 export interface Post { kind: Service; region: Id; grade: number; since: number; promoted: number; shifts: number; lastDay: number }
 
 interface ServiceDef { label: string; icon: string; place: string; ladder: string[]; pay: number[]; needs: { level: EduLevel; field?: Field[] }[]; per: number; skill: 'lead' | 'end' | 'eco' | 'cons' | 'acc' }
@@ -44,6 +44,16 @@ export const SERVICES: Record<Service, ServiceDef> = {
   engineer: { label: 'Public engineer', icon: '🏗️', place: 'public works', per: 60, skill: 'cons',
     ladder: ['Technician', 'Engineer', 'Senior engineer', 'Chief engineer', 'City engineer'], pay: [1.5, 2.2, 2.8, 3.4, 4.2],
     needs: [{ level: 'vocational', field: ['engineering', 'trades'] }, { level: 'bachelor', field: ['engineering'] }, { level: 'bachelor', field: ['engineering'] }, { level: 'master', field: ['engineering'] }, { level: 'master', field: ['engineering'] }] },
+  // The courts (1.7): prosecutors and public defenders argue cases, judges hear them.
+  prosecutor: { label: 'Prosecutor', icon: '📜', place: 'prosecution service', per: 150, skill: 'acc',
+    ladder: ['Trainee prosecutor', 'Prosecutor', 'Senior prosecutor', 'Deputy chief prosecutor', 'Chief prosecutor'], pay: [1.8, 2.4, 3.0, 3.8, 4.6],
+    needs: [{ level: 'bachelor', field: ['law'] }, { level: 'bachelor', field: ['law'] }, { level: 'master', field: ['law'] }, { level: 'master', field: ['law'] }, { level: 'master', field: ['law'] }] },
+  defender: { label: 'Public defender', icon: '🛡️', place: 'public defender service', per: 200, skill: 'lead',
+    ladder: ['Legal aid trainee', 'Public defender', 'Senior defender', 'Head of chambers', 'Leading counsel'], pay: [1.6, 2.1, 2.7, 3.4, 4.2],
+    needs: [{ level: 'bachelor', field: ['law'] }, { level: 'bachelor', field: ['law'] }, { level: 'master', field: ['law'] }, { level: 'master', field: ['law'] }, { level: 'master', field: ['law'] }] },
+  judge: { label: 'Judge', icon: '⚖️', place: 'courts', per: 300, skill: 'cons',
+    ladder: ['Magistrate', 'District judge', 'Circuit judge', 'Appeal judge', 'Chief justice'], pay: [3.0, 3.8, 4.6, 5.6, 7.0],
+    needs: [{ level: 'bachelor', field: ['law'] }, { level: 'master', field: ['law'] }, { level: 'master', field: ['law'] }, { level: 'master', field: ['law'] }, { level: 'doctorate', field: ['law'] }] },
 };
 export const SERVICE_KEYS = Object.keys(SERVICES) as Service[];
 
@@ -56,9 +66,13 @@ export function maxGrade(c: Citizen, kind: Service): number {
   return g;
 }
 /** Posts in a region: one per `per` residents (about 13% of people work in these services, as in OECD countries); small places share a teacher, a nurse and a clerk. */
+/** Courts sit in the larger places: the smallest number of residents for each court post. */
+const COURT_MIN: Partial<Record<Service, number>> = { prosecutor: 30, defender: 30, judge: 30 };
 export function postsIn(w: World, region: Id, kind: Service): number {
   const n = residents(w, region).length;
   const core = kind === 'teacher' || kind === 'nurse' || kind === 'clerk';
+  const court = COURT_MIN[kind];
+  if (court != null) return n >= court ? Math.max(1, Math.round(n / SERVICES[kind].per)) : 0;
   return Math.max(core && n >= 6 ? 1 : 0, Math.round(n / SERVICES[kind].per));
 }
 export const staffOf = (w: World, region: Id, kind: Service) => census(w).all.filter((c) => c.post?.kind === kind && c.post.region === region);
@@ -72,6 +86,7 @@ export function postCheck(w: World, c: Citizen, kind: Service): string | null {
   if (young) return young;
   if (jailed(w, c)) return 'You are in prison.';
   if (c.post?.kind === kind && c.post.region === c.home) return `You already work as a ${postTitle(c.post).toLowerCase()}.`;
+  if (kind === 'judge' && ageOf(w, c) < 30) return 'Judges are appointed from experienced lawyers (30 or older).';
   if (maxGrade(c, kind) < 0) { const n = SERVICES[kind].needs[0]; return `Needs a ${n.level === 'school' ? 'secondary school diploma' : `${n.level}${n.field ? ` in ${n.field.join(' or ')}` : ''}`}.`; }
   if (staffOf(w, c.home, kind).length >= postsIn(w, c.home, kind)) return `No vacancies for ${SERVICES[kind].label.toLowerCase()}s in ${w.regions[c.home].name} right now.`;
   return null;
@@ -172,7 +187,7 @@ export function servicesDaily(w: World, fill = false) {
   for (const c of census(w).all) if (c.post) staff.set(`${c.post.region}:${c.post.kind}`, (staff.get(`${c.post.region}:${c.post.kind}`) ?? 0) + 1);
   for (const r of w.regions) {
     const ratio = (kinds: Service[]) => { let have = 0, want = 0; for (const k of kinds) { have += staff.get(`${r.id}:${k}`) ?? 0; want += postsIn(w, r.id, k); } return want ? Math.min(1, have / want) : 0.6; }; // nothing to staff: neutral
-    r.staff = { school: ratio(['teacher']), clinic: ratio(['nurse', 'doctor']), offices: ratio(['clerk', 'engineer']) };
+    r.staff = { school: ratio(['teacher']), clinic: ratio(['nurse', 'doctor']), offices: ratio(['clerk', 'engineer']), courts: ratio(['prosecutor', 'defender', 'judge']) };
     for (const kind of SERVICE_KEYS) {
       const open = postsIn(w, r.id, kind) - (staff.get(`${r.id}:${kind}`) ?? 0);
       if (open < 0 && !fill) { // more staff than posts (people moved away, budgets): the newest NPC hire is let go
@@ -183,7 +198,7 @@ export function servicesDaily(w: World, fill = false) {
       if (open <= 0 || (!fill && hash01(r.id, d, kind.length) > 0.3)) continue;
       const nat = w.nations[controller(r)];
       if (!fill && (nat.wallet[nat.cur] ?? 0) < salary(w, r.id, kind, 1) * 90) continue; // no hiring without three months of pay in the treasury
-      const cand = residents(w, r.id).find((c) => !c.player && !c.gone && !c.post && !c.retired && c.job == null && !c.edu?.enrolled && ageOf(w, c) >= 18 && ageOf(w, c) < B.life.retireAge && !jailed(w, c) && maxGrade(c, kind) >= 0 && !c.unit);
+      const cand = residents(w, r.id).find((c) => !c.player && !c.gone && !c.post && !c.retired && (c.job == null || COURT_MIN[kind] != null) && !c.edu?.enrolled && ageOf(w, c) >= 18 && ageOf(w, c) < B.life.retireAge && !jailed(w, c) && maxGrade(c, kind) >= 0 && !c.unit && (kind !== 'judge' || ageOf(w, c) >= 30));
       if (cand) { takePost(w, kind, cand); if (fill) { cand.post!.grade = Math.min(maxGrade(cand, kind), Math.floor(hash01(cand.id, 11) * 4)); cand.post!.since = w.time - Math.floor(hash01(cand.id, 12) * 3000) * 1440; } }
     }
   }
