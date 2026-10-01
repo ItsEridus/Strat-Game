@@ -50,12 +50,15 @@ export function App() {
     const until = performance.now() + 5000;
     let timer = 0, stopped = false;
     const stop = () => { stopped = true; };
-    const go = () => { if (stopped) return; window.scrollTo(0, y); if (Math.abs(window.scrollY - y) > 1 && performance.now() < until) timer = window.setTimeout(go, 40); };
+    // Once the position is reached, stop: retrying after that would fight the player's own scrolling.
+    const go = () => { if (stopped) return; window.scrollTo(0, y); if (Math.abs(window.scrollY - y) <= 1) { stopped = true; return; } if (performance.now() < until) timer = window.setTimeout(go, 40); };
     window.addEventListener('wheel', stop, { passive: true });
     window.addEventListener('touchstart', stop, { passive: true });
+    window.addEventListener('keydown', stop);
+    window.addEventListener('mousedown', stop);
     go();
     timer = timer || window.setTimeout(go, 0); // and once more after this render has been laid out
-    return () => { clearTimeout(timer); window.removeEventListener('wheel', stop); window.removeEventListener('touchstart', stop); };
+    return () => { clearTimeout(timer); for (const e of ['wheel', 'touchstart', 'keydown', 'mousedown']) window.removeEventListener(e, stop); };
   }, [s.page, !!s.w]);
   if (!s.w) return <><StartScreen /><WhatsNew /></>;
   const w = s.w;

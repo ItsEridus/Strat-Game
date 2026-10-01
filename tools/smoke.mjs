@@ -94,6 +94,7 @@ async function backAndForward(page) {
   const nav = (label) => page.evaluate((label) => [...document.querySelectorAll('.nav button')].find((b) => b.textContent.includes(label)).click(), label);
   const [a, b] = await page.evaluate(() => Object.values(window.meridian.w.citizens).filter((c) => !c.player && !c.gone).slice(0, 2).map((c) => c.id));
   await nav('Armed Forces');
+  await page.waitForTimeout(300); // let the screen open (and its own scroll to the top happen) before scrolling it
   await page.evaluate(() => window.scrollTo(0, 500));
   const y = await page.evaluate(() => window.scrollY);
   await nav('Journal');

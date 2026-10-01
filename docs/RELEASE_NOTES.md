@@ -31,6 +31,8 @@ The first part of 1.8 Arsenal: militaries now have budgets, equipment generation
 
 - Going back to a long screen now keeps trying to restore your scroll position for up to 5 seconds while the page
   lays out (it was 2.5 seconds).
+- Once a screen has reached its scroll position, it no longer pulls the page back there. Scrolling with the keyboard
+  or the scrollbar in the first moments after opening a screen could jump back to the top.
 
 ### New in 1.7.0: Law & order
 
