@@ -265,6 +265,9 @@ real starting condition in the simulation, not a cosmetic flag, and the look can
     borrow, pay interest and repay public debt.
   - 1.4.9: world commodity prices, import parity, AI exports and trade statistics.
   - 1.4.10: monthly statistics (GDP, CPI, inflation, unemployment, pay, trade) and an Economy panel.
+  - 1.4.11: central banks (a Taylor rule), rates that follow them, interest on savings and business loans.
+  - Still to come in Part A: a five-year calibration of prices, wages and employment (with Part B's labour
+    market).
 
 ### Part B: work & enterprise (GEO 1: companies expand or disband)
 

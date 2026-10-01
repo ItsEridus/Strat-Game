@@ -22,7 +22,7 @@ import { lifeGate, lifeOf, milestone } from './lifecycle';
 import { SIZES, priceOf, type HomeSize } from './housing';
 import { MORTGAGE } from './mortgageHook';
 
-export type LoanKind = 'mortgage' | 'student' | 'personal';
+export type LoanKind = 'mortgage' | 'student' | 'personal' | 'business';
 export interface Loan { id: Id; kind: LoanKind; borrower: Id; nation: Id; cur: string; principal: number; balance: number; rate: number; payment: number; start: number; term: number; paid: number; missed: number; note: string }
 
 /** Central-bank policy rates at the start of 2025 (%), rounded. */
@@ -31,7 +31,10 @@ export const KIND: Record<LoanKind, { label: string; icon: string; spread: numbe
   mortgage: { label: 'Mortgage', icon: '🏠', spread: 1.5, years: 25 },
   student: { label: 'Student loan', icon: '🎓', spread: 1, years: 10 },
   personal: { label: 'Personal loan', icon: '💳', spread: 7, years: 2 },
+  business: { label: 'Business loan', icon: '🏭', spread: 3, years: 3 },
 };
+/** A country's policy rate now (%): set by its central bank each month (sim/banking.ts). */
+export const policyRateOf = (w: World, nation: Id) => w.nations[nation].policyRate ?? POLICY_RATE[w.nations[nation].iso] ?? 4;
 
 const index = new WeakMap<World, { n: number; t: number; by: Map<Id, Loan[]> }>();
 /** Someone's loans (indexed; rebuilt when loans are added or removed). */
@@ -54,7 +57,7 @@ const adjustCredit = (c: Citizen, d: number) => { c.credit = Math.max(300, Math.
 
 /** The rate a lender offers (annual %): the policy rate, the kind's spread, and a premium for weak credit. */
 export function rateFor(w: World, c: Citizen, kind: LoanKind): number {
-  const base = POLICY_RATE[w.nations[c.nation].iso] ?? 4;
+  const base = policyRateOf(w, c.nation);
   const risk = kind === 'student' ? 0 : Math.max(0, (700 - creditOf(c)) / 50);
   return +(base + KIND[kind].spread + risk).toFixed(2);
 }

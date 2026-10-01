@@ -3,6 +3,26 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.4.11: central banks, interest and business loans
+
+- **Central banks.** Each country's central bank starts at its real policy rate for January 2025: 4.5% in the
+  United States, 0.25% in Japan, 47.5% in Turkey. Once a year of statistics exists, it sets the rate on the 1st of
+  each month by a rule like the ones real central banks follow. The rate rises when inflation runs above the
+  bank's real target (2% in most countries, 4% in India, 5% in Turkey) or unemployment is unusually low, and
+  falls in the opposite case. It moves by at most half a point a month.
+- **Rates follow the bank.** Mortgages, student loans, personal loans and government bonds are priced from the
+  current policy rate.
+- **Interest on savings.** Money in the bank earns interest at the policy rate less the banks' margin, paid
+  monthly. It appears in your budget under Investments.
+- **Business loans.** When a profitable company runs short of cash and its owner cannot cover the gap, the bank
+  lends a few weeks of wages, up to a month of sales, repaid over three years.
+- The Economy panel shows the central bank's rate and the rate on savings.
+
+### Fixed in 1.4.11
+
+- Inflation is reported against the same month a year earlier. Until a year of data exists, the change in prices
+  since January is shown, rather than an unreliable annualised figure.
+
 ### New in 1.4.10: economic statistics
 
 - **An Economy panel for every country.** It shows the official statistics, computed from what actually happens in

@@ -1,6 +1,7 @@
 // AI business management and background household demand. AI owners use the
 // same market/company actions (and permission checks) as the player.
 import { hasQuirk } from '../sim/nature';
+import { BUSINESS_LOAN_DAYS, businessLoan } from '../sim/banking';
 import { importParity } from '../sim/trade';
 import { isRaw } from '../data/items';
 import { corpTaxRate, overheadPerUnit } from '../sim/companyCosts';
@@ -133,6 +134,8 @@ export function manageCompany(w: World, co: Company) {
   else if (owner && funds() < payroll * 2) {
     const top = Math.min(owner.wallet[currency] ?? 0, payroll * 3);
     if (top > 0) pay(w, cref(owner.id), ref, currency, top, `Funding ${co.name}`);
+    // Still short: a profitable company borrows a few weeks of wages from the bank.
+    if (funds() < payroll * 2 && !owner.player) businessLoan(w, owner, co, payroll * BUSINESS_LOAN_DAYS);
   }
   // 5. Upgrades when consistently profitable and the owner has gold to spare.
   if (owner && co.q < 5 && chance(w, 0.05)) {

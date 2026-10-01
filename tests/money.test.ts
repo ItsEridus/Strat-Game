@@ -160,3 +160,35 @@ test('statistics: monthly GDP, prices, inflation and unemployment from the simul
   assert.equal(m.cpi, 100, 'the index is based on January');
   assert.ok(m.unemployment >= 0 && m.unemployment <= 1);
 });
+
+test('banks: a policy rule, savings interest and business loans', async () => {
+  const { taylorRate, bankingDaily, businessLoan, depositRate } = await import('../src/sim/banking');
+  const { policyRateOf } = await import('../src/sim/loans');
+  const { player, cref } = await import('../src/sim/query');
+  const { mint, audit } = await import('../src/engine/ledger');
+  const { timeOfDate } = await import('../src/engine/calendar');
+  const w = generateWorld(1808, 'Banks', 0, { citizensPerRegion: 1 });
+  const usa = w.nations.find((n) => n.cur === 'USD')!;
+  assert.equal(policyRateOf(w, usa.id), 4.5, 'starts at the real rate');
+  assert.equal(taylorRate(w, usa.id), null, 'no rule without a year of data');
+  // A year of 6% inflation with low unemployment: the rule says raise.
+  usa.stats2 = { va: 0, gov: 0, days: 0, based: true, cpi: [106], months: Array.from({ length: 13 }, (_, i) => ({ key: `m${i}`, days: 30, gdp: 1, cpi: 100 * Math.pow(1.06, i / 12), unemployment: 0.03, wage: 0, exports: 0, imports: 0, debt: 0, rate: 4.5 })) };
+  usa.unemployment = 0.03;
+  assert.ok(taylorRate(w, usa.id)! > 6);
+  // On the first of the month the bank moves half a point towards it and pays interest on savings.
+  const p = player(w);
+  p.nation = usa.id;
+  mint(w, cref(p.id), 'USD', 1200000, 'test');
+  const before = p.wallet.USD!;
+  w.time = timeOfDate(2025, 1, 1);
+  bankingDaily(w);
+  assert.equal(usa.policyRate, 5);
+  assert.equal(p.wallet.USD! - before, Math.floor((before * depositRate(w, usa.id)) / 100 / 12));
+  // A profitable company short of cash can borrow; the money arrives in the company.
+  const co = Object.values(w.companies).find((c) => c.owner.k === 'cit' && w.citizens[c.owner.id] && !w.citizens[c.owner.id].player && w.citizens[c.owner.id].nation === usa.id && w.regions[c.region].owner === usa.id)!;
+  co.hist = Array.from({ length: 20 }, (_, i) => ({ day: i, produced: 5, consumed: 0, sold: 5, revenue: 20000, wages: 8000, inputCost: 4000, profit: 8000 }));
+  const cash = co.wallet.USD ?? 0;
+  assert.ok(businessLoan(w, w.citizens[co.owner.id], co, 50000));
+  assert.equal((co.wallet.USD ?? 0) - cash, 50000);
+  assert.ok(audit(w).ok);
+});

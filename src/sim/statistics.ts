@@ -46,17 +46,16 @@ export function cpiNow(w: World, nation: Id): number {
   return wt ? (idx / wt) * 100 : (s.cpi.at(-1) ?? 100);
 }
 
-/**
- * Annual inflation: over the last year once there is a year of data; before that, the trend since the index began
- * (January = 100), annualised, once there are three months of it. Unknown before then.
- */
+/** Annual inflation (%): prices against the same month a year before; unknown until there is a year of data. */
 export function inflation(w: World, nation: Id): number | undefined {
-  const s = statsOf(w, nation);
-  const ms = s.months;
+  const ms = statsOf(w, nation).months;
   if (ms.length >= 13) return (ms[ms.length - 1].cpi / ms[ms.length - 13].cpi - 1) * 100;
-  const c = s.cpi;
-  if (!s.based || c.length < 90) return undefined;
-  return (Math.pow(c[c.length - 1] / c[0], 365 / (c.length - 1)) - 1) * 100;
+  return undefined;
+}
+/** How much prices have changed since the index began (January = 100), in %. */
+export function priceChange(w: World, nation: Id): number | undefined {
+  const s = statsOf(w, nation);
+  return s.based && s.cpi.length ? s.cpi[s.cpi.length - 1] - 100 : undefined;
 }
 
 export function statisticsDaily(w: World) {

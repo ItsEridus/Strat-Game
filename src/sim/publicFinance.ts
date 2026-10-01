@@ -15,7 +15,7 @@ export const dailyRevenue = (n: Nation) => avg(n.stats.revHist);
 /** Interest on the debt (%): the policy rate plus a premium for heavy debt. */
 export function bondRate(n: Nation): number {
   const years = (n.debt ?? 0) / Math.max(1, dailyRevenue(n) * 365);
-  return (POLICY_RATE[n.iso] ?? 4) + 0.5 + Math.max(0, years - 1) * 1.5;
+  return (n.policyRate ?? POLICY_RATE[n.iso] ?? 4) + 0.5 + Math.max(0, years - 1) * 1.5;
 }
 export const debtLimit = (n: Nation) => Math.round(dailyRevenue(n) * 365 * 3);
 
