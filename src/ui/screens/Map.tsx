@@ -205,7 +205,10 @@ export function MapScreen({ w }: { w: World }) {
               <line x1={x1} y1={y1} x2={x2} y2={y2} class={`route ${rt.name === 'Strait' ? 'strait' : ''} ${warPairs.has(`${controller(w.regions[rt.a])}:${controller(w.regions[rt.b])}`) ? 'front' : ''}`}><title>{rt.name === 'Strait' ? 'Strait' : `${rt.name} route`}: {w.regions[rt.a].name} ↔ {w.regions[rt.b].name}</title></line>
             )))}
             {!showRegionNames && w.nations.filter((n) => !n.exile).map((n) => {
-              const e = EARTH.nations[n.id];
+              // States born in play (2.3) are labelled at the middle of their regions.
+              const own = n.id >= EARTH.nations.length ? EARTH.regions.filter((_r, i) => w.regions[i].owner === n.id) : [];
+              const e = EARTH.nations[n.id] ?? { span: own.reduce((s, r) => s + r.span, 0), code: n.iso, label: [own.reduce((s, r) => s + r.x, 0) / Math.max(1, own.length), own.reduce((s, r) => s + r.y, 0) / Math.max(1, own.length)] };
+              if (!e.span) return null;
               // Small countries get their three-letter code until zoomed in.
               const text = e.span / u > n.name.length * 9 ? n.name : e.code;
               return <text x={e.label[0]} y={e.label[1]} class="nlabel" style={{ fontSize: `${(text === n.name ? 12 : 10) * u}px`, strokeWidth: `${3 * u}px` }}>{text}</text>;

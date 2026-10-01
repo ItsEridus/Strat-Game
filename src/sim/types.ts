@@ -349,6 +349,10 @@ export interface Region {
   core: Id; // original / rightful nation
   owner: Id; // legal owner
   dmzUntil?: number; // demilitarised after changing hands (2.2)
+  identity?: number; // how distinct the region is, 0..100 (2.3)
+  indep?: number; // support for independence, % (2.3)
+  indepMovement?: number; // when an independence movement formed (2.3)
+  lastReferendum?: number;
   occ: { nation: Id; war: Id; since?: number } | null; // provisional occupier (since when: 2.2)
   terrain: Terrain;
   res: Partial<Record<RawRes, number>>; // richness 1..3
@@ -417,6 +421,9 @@ export interface Nation {
   dip?: import('./diplomacyActions').DipState; // diplomatic capital, recent actions, causes for war (2.0)
   summits?: Record<Id, number>;
   imfRelief?: boolean;
+  parent?: Id; // the country it left (2.3)
+  founded?: number; // when it became independent (2.3)
+  recognisedBy?: Id[]; // the countries that recognise it (2.3)
   regime?: import('./regimes').Regime;
   coupProof?: number; // purges and loyal guards against a coup, 0..1 (2.3)
   protest?: number; // the strength of the protest movement, 0..100 (2.3) // the rules of its politics, and their legitimacy (2.3)
@@ -815,6 +822,7 @@ export interface World {
   player: PlayerState;
   treaties?: Record<Id, import('./treaties').Treaty>;
   intl?: import('./intlOrgs').IntlState;
+  newStates?: import('./secession').NewState[]; // states born in play (2.3)
   standoffs?: import('./crises').Crisis[]; // international crises short of war (2.0)
   armsRaces?: import('./balanceOfPower').ArmsRace[]; // rival pairs building up against each other (2.0)
   bop?: import('./balanceOfPower').BopPoint[]; // shares of world power, monthly (2.0) // the UN, G20, WTO and IMF (2.0)

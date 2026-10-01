@@ -10,7 +10,6 @@ import type { World } from '../../sim/types';
 import { ActBtn, Empty, Help, NationChip, Num, Panel, RegionLink, Sparkline } from '../common';
 import { player } from '../../sim/query';
 import { fmtAmt } from '../../engine/money';
-import { EARTH } from '../../data/earth';
 import { HAZARDS } from '../../data/hazards';
 import { KIND_ICON, activeCrises, donate, joinProtest, joinProtestCheck, lockdownCheck, monthOf, reliefCheck, toggleLockdown, volunteer } from '../../sim/dynamics';
 
@@ -21,7 +20,7 @@ export function WorldState({ w }: { w: World }) {
   const e = w.econ;
   const crises = activeCrises(w).sort((a, b) => b.severity - a.severity || b.id - a.id);
   const month = monthOf(w);
-  const iso = EARTH.nations[p.nation].iso;
+  const iso = w.nations[p.nation].iso;
   const season = [...new Set(HAZARDS.filter((h) => (!h.months.length || h.months.includes(month)) && h.regions.some((r) => r.startsWith(`${iso}/`))).map((h) => h.label))];
   const [gift, setGift] = useState(() => Math.round(toL(w.nations[p.nation].cur, 2500)));
   const past = Object.values(w.crises).filter((c) => c.status === 'over').sort((a, b) => b.end - a.end).slice(0, 10);

@@ -4,6 +4,7 @@
 // 2023, rounded). Reserves are years of current production (reserves-to-production
 // ratios). World production shares for minerals are USGS 2024 estimates. Grid
 // reliability is a rough share of demand met without interruption.
+import { dataIso } from './isoAlias';
 export type Source = 'coal' | 'gas' | 'oil' | 'nuclear' | 'hydro' | 'wind' | 'solar' | 'bio';
 export const SOURCES: Source[] = ['coal', 'gas', 'oil', 'nuclear', 'hydro', 'wind', 'solar', 'bio'];
 export const SOURCE_INFO: Record<Source, { label: string; color: string; fossil: boolean }> = {
@@ -42,6 +43,6 @@ export const ENERGY: Record<string, EnergyBaseline> = {
   KOR: { mix: M(0.34, 0.27, 0.01, 0.3, 0.01, 0.01, 0.05, 0.01), self: { oil: 0.0, gas: 0.0, coal: 0 }, reserves: {}, share: {}, grid: 0.999 },
   AUS: { mix: M(0.46, 0.17, 0.02, 0.0, 0.06, 0.12, 0.16, 0.01), self: { oil: 0.3, gas: 3.0, coal: 12 }, reserves: { coal: 300, gas: 30, iron: 60, lithium: 30, uranium: 120, rareearths: 70 }, share: { coal: 0.06, gas: 0.04, iron: 0.37, lithium: 0.47, rareearths: 0.05, uranium: 0.09, copper: 0.04 }, grid: 0.995 },
 };
-export const energyBaseline = (iso: string): EnergyBaseline => ENERGY[iso] ?? ENERGY.ARG;
+export const energyBaseline = (iso: string): EnergyBaseline => ENERGY[dataIso(iso)] ?? ENERGY.ARG;
 /** The OPEC+ members on the map. */
 export const OPEC_PLUS = ['SAU', 'RUS', 'MEX'];

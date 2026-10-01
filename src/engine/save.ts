@@ -21,6 +21,7 @@ import { initEducation } from '../sim/education';
 import { initServices } from '../sim/services';
 import { initHousing } from '../sim/housing';
 import { newNarrative } from '../sim/story';
+import { registerDynamic } from '../sim/secession';
 
 const PREFIX = 'meridian-save:';
 export const SLOTS = ['autosave', 'slot1', 'slot2', 'slot3'] as const;
@@ -34,6 +35,7 @@ export function deserialize(text: string): World {
   if (!data || data.format !== 'meridian-reach' || !data.world) throw new Error('Not a Meridian Reach save file.');
   const w = migrate(data.world, data.version ?? 0);
   applyBalance(w.settings.balance ?? {});
+  registerDynamic(w); // new states' currencies and data (sim/secession.ts)
   return w;
 }
 

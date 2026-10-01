@@ -5,6 +5,7 @@
 // law, control of corruption, government effectiveness; percentile / 100), RSF (press
 // freedom, / 100), WIPO Global Innovation Index and SIPRI for the technology domains
 // (0–100, the leader near 100).
+import { dataIso } from './isoAlias';
 export type TechDomain = 'industrial' | 'military' | 'information' | 'medical' | 'energy' | 'space';
 export const TECH_DOMAINS: TechDomain[] = ['industrial', 'military', 'information', 'medical', 'energy', 'space'];
 export const TECH_LABEL: Record<TechDomain, string> = { industrial: 'Industrial', military: 'Military', information: 'Information', medical: 'Medical', energy: 'Energy', space: 'Space' };
@@ -38,4 +39,4 @@ export const BASELINES: Record<string, Baseline> = {
   KOR: { gdpShare: 1.7, growth: 2.0, debt: 54, rd: 4.9, law: 0.85, corruption: 0.78, effectiveness: 0.88, press: 0.64, tech: T(88, 75, 90, 82, 78, 50) },
   AUS: { gdpShare: 1.6, growth: 2.2, debt: 50, rd: 1.7, law: 0.94, corruption: 0.93, effectiveness: 0.9, press: 0.77, tech: T(72, 68, 78, 85, 75, 45) },
 };
-export const baselineOf = (iso: string): Baseline => BASELINES[iso] ?? BASELINES.ARG;
+export const baselineOf = (iso: string): Baseline => BASELINES[dataIso(iso)] ?? BASELINES.ARG;

@@ -280,7 +280,7 @@ export function entrepreneurship(w: World) {
 }
 
 /** A state enterprise, founded and funded by the treasury when no one else will make an essential good. */
-function stateFound(w: World, nation: Id, kind: string): boolean {
+export function stateFound(w: World, nation: Id, kind: string): boolean {
   const n = w.nations[nation];
   const president = n.president != null ? w.citizens[n.president] : null;
   if (!president) return false;

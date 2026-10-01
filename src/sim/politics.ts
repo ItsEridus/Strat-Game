@@ -98,7 +98,7 @@ export function seedPolitics(w: World) {
   scheduleElections(w);
 }
 
-function createParty(w: World, nation: Id, ideo: Party['ideo'], leader: Id, name?: string): Party {
+export function createParty(w: World, nation: Id, ideo: Party['ideo'], leader: Id, name?: string): Party {
   const used = new Set(partiesOf(w, nation).map((p) => p.name));
   const nm = name || PARTY_NAMES[ideo].find((x) => !used.has(x)) || `${w.nations[nation].adj} ${IDEOLOGIES[ideo].name} Party`;
   const party: Party = { id: nid(w), nation, name: nm, ideo, color: IDEOLOGIES[ideo].color, leader, members: [], list: [], nominee: leader, founded: w.time, support: 5, coalition: null };

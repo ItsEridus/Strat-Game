@@ -43,6 +43,7 @@ import { warHomeDaily } from './warHome';
 import { warCourseDaily } from './warCourse';
 import { regimesDaily } from './regimes';
 import { uprisingsDaily } from './uprisings';
+import { secessionDaily } from './secession';
 import { treatiesDaily } from './treaties';
 import { relationsDaily } from './relations';
 import { diplomacyActionsDaily } from './diplomacyActions';
@@ -142,7 +143,7 @@ export function skipMonth(w: World, target: number) {
     runQueue(w); // elections, war deadlines and anything else scheduled in the month, in order
     peopleMonth(w, days);
     // The monthly national turn (these run on the first of the month).
-    regimesDaily(w); uprisingsDaily(w); warCourseDaily(w); warHomeDaily(w, days);
+    regimesDaily(w); uprisingsDaily(w); secessionDaily(w); warCourseDaily(w); warHomeDaily(w, days);
     withScope(() => { warDecisionDaily(w, days); beliefsDaily(w, days); treatiesDaily(w); relationsDaily(w, days); diplomacyActionsDaily(w, days); intlDaily(w, days); balanceOfPowerDaily(w); crisesDaily(w, days); });
     intelOrgDaily(w); collectionDaily(w); counterIntelDaily(w);
     strategicDaily(w); arsenalDaily(w); energyDaily(w); foodDaily(w); powerMonthly(w); budgetDaily(w);

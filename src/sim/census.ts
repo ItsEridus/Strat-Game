@@ -81,6 +81,6 @@ export const companiesOf = (w: World, nid: Id): readonly Company[] => census(w).
  * (combat turnout, headline news, inbox traffic) scale by reference / actual.
  */
 export const citizenScale = (pop: number) => Math.min(1.35, Math.max(0.75, (pop / 1e8) ** 0.15));
-export const referenceSociety = (nation: Id) => 24 * citizenScale(NATION_DEFS[nation].pop);
+export const referenceSociety = (nation: Id) => 24 * citizenScale(NATION_DEFS[nation]?.pop ?? 5e6); // new states (2.3): a small country
 /** How much one citizen of this nation weighs in nation-wide rates (1 in a society of the reference size). */
 export const representation = (w: World, nation: Id) => Math.min(1, referenceSociety(nation) / Math.max(1, nationals(w, nation).length));

@@ -30,6 +30,7 @@ import type { Battle, Branch, Citizen, Formation, FormationKind, Id, Ministry, W
 import { census, nationals, referenceSociety } from './census';
 import { B } from '../data/balance';
 import { EARTH } from '../data/earth';
+import { dataIso } from '../data/isoAlias';
 import { ALERT_NAMES, BRANCH_NAME, KINDS, POSTURE, RANKS, ordinal } from '../data/military';
 import { fail, ok, type Result } from '../engine/result';
 import { consume, pay } from '../engine/ledger';
@@ -126,7 +127,7 @@ function makeFormation(w: World, nation: Id, kind: FormationKind, loc: Id, name:
 
 export function initForces(w: World) {
   for (const n of w.nations) {
-    const post = POSTURE[EARTH.nations[n.id].iso] ?? { land: 0.6, sea: 0.5, air: 0.5 };
+    const post = POSTURE[dataIso(n.iso)] ?? { land: 0.6, sea: 0.5, air: 0.5 };
     const own = w.regions.filter((r) => r.owner === n.id).sort((a, b) => b.pop - a.pop);
     const count = { army: Math.round(3 + 4 * post.land), air: Math.round(1 + 3 * post.air), navy: Math.round(1 + 2.5 * post.sea) };
     // Army: spread over the capital, big cities and border regions; terrain decides the type.
@@ -821,7 +822,7 @@ function defenseMinistryAI(w: World) {
       if (f.branch === 'navy' && f.zone !== seasOf(f.loc)[0] && !f.path.length) { f.order = { kind: 'move', target: seasOf(f.loc)[0] }; f.path = seaPath(f.zone, seasOf(f.loc)[0]); }
     }
     // Rebuild: replace destroyed formations when the treasury allows.
-    const post = POSTURE[EARTH.nations[n.id].iso] ?? { land: 0.6, sea: 0.5, air: 0.5 };
+    const post = POSTURE[dataIso(n.iso)] ?? { land: 0.6, sea: 0.5, air: 0.5 };
     const armyCount = formationsOf(w, n.id).filter((f) => f.branch === 'army').length;
     if (armyCount < Math.round(3 + 4 * post.land) && chance(w, 0.3)) {
       const rid = w.regions.filter((r) => controller(r) === n.id && r.owner === n.id).sort((a, b) => b.pop - a.pop)[0]?.id;

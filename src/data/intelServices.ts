@@ -3,6 +3,7 @@
 // Rough judgements from public sources (budgets, reported capabilities, the size of
 // signals and satellite programmes, known operations), rounded; they are a starting
 // point that budgets, technology, staff and experience then move.
+import { dataIso } from './isoAlias';
 export type Directorate = 'humint' | 'sigint' | 'imagery' | 'osint' | 'cyber' | 'analysis' | 'covert' | 'counter';
 export const DIRECTORATES: Directorate[] = ['humint', 'sigint', 'imagery', 'osint', 'cyber', 'analysis', 'covert', 'counter'];
 export const DIR_INFO: Record<Directorate, { label: string; icon: string; desc: string; tech: 'information' | 'space' | null }> = {
@@ -35,6 +36,6 @@ const BASE: Record<string, Row> = {
   ZAF: [30, 30, 20, 40, 25, 35, 15, 30],
 };
 export function dirBaseline(iso: string): Record<Directorate, number> {
-  const r = BASE[iso] ?? [35, 35, 25, 45, 30, 40, 20, 35];
+  const r = BASE[dataIso(iso)] ?? [35, 35, 25, 45, 30, 40, 20, 35];
   return Object.fromEntries(DIRECTORATES.map((d, i) => [d, r[i]])) as Record<Directorate, number>;
 }

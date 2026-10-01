@@ -29,7 +29,7 @@ version before it (2.0's parts were 1.9.3 to 1.9.7, and 2.0.0 marked it complete
 | 2.0.0 | **The great game** (GEO 4: diplomacy and the international order) | Treaties, alliances, sanctions, a Security Council, blocs and summits; leaders whose character shapes policy | ✅ done |
 | 2.1.0 | **Shadows** (GEO 5: intelligence gets better) | Services that grow and learn; governments act on estimates, so surprise and miscalculation happen | ✅ done |
 | 2.2.0 | **War & peace** (GEO 6: realistic wars) | Wars with causes, escalation, fronts, mobilisation, exhaustion, negotiated endings and long aftermaths | ✅ done |
-| 2.3.0 | **Rise & fall** (GEO 7: regimes, secession, new nations) | Coups, revolutions, democratisation and backsliding, secession, civil wars, new and vanished states | ▶ next |
+| 2.3.0 | **Rise & fall** (GEO 7: regimes, secession, new nations) | Coups, revolutions, democratisation and backsliding, secession, civil wars, new and vanished states | ▶ in progress: regimes (2.2.1), coups and revolutions (2.2.2), secession and new states (2.2.3) |
 | 2.4.0 | **Frontiers** (GEO 8: technology, cyber and space) | A near-future technology race that changes economies, armies and spying | planned |
 | 2.5.0 | **A world of consequences** (GEO 9: world economy, climate, soft power) | Debt crises, central banks, climate over decades, soft power; the decades-long campaign and the World Almanac | planned |
 | 2.6.0 | **Life 2.0: the mind** | Personality that grows from experience, values, mental health in depth, habits and addictions, therapy | planned |

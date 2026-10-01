@@ -18,6 +18,7 @@ import { Diplomacy } from './Diplomacy';
 import { REGIMES, regimeOf } from '../../sim/regimes';
 import { coupRisk } from '../../sim/uprisings';
 import { Bar } from '../common';
+import { identityOf } from '../../sim/secession';
 
 export function CountryExtras({ w, id }: { w: World; id: Id }) {
   const p = player(w);
@@ -130,8 +131,19 @@ function RegimePanel({ w, id }: { w: World; id: Id }) {
         <tr><td>Protest movement</td><td><Bar v={n.protest ?? 0} max={100} color="#e39b3a" label={`${Math.round(n.protest ?? 0)}`} /></td></tr>
         <tr><td>Risk of a coup</td><td>{(coupRisk(w, n) * 100).toFixed(1)}% a year{(n.coupProof ?? 0) > 0.2 ? ' (the army has been purged and watched)' : ''}</td></tr>
       </tbody></table>
+      {n.parent != null && (
+        <p class="small">🏳️ Independent from {w.nations[n.parent]?.name ?? 'its old country'} since {fmtWhen(w, n.founded ?? 0)}. Recognised by {(n.recognisedBy ?? []).length} of {w.nations.filter((o) => o.id !== n.id && !o.exile).length} countries{(n.recognisedBy ?? []).length ? `: ${(n.recognisedBy ?? []).map((o) => w.nations[o]?.name).filter(Boolean).join(', ')}` : ''}.</p>
+      )}
+      {(() => {
+        const movements = w.regions.filter((x) => x.owner === n.id && (x.indep ?? 0) >= 10).sort((a, b) => (b.indep ?? 0) - (a.indep ?? 0)).slice(0, 5);
+        return movements.length > 0 && (
+          <table class="table compact small"><thead><tr><th>Region</th><th>Identity</th><th>Support for independence</th></tr></thead><tbody>
+            {movements.map((x) => <tr><td>{x.name}{x.indepMovement ? ' 🏳️' : ''}</td><td>{identityOf(x)}</td><td><Bar v={x.indep ?? 0} max={100} color={(x.indep ?? 0) > 45 ? '#e0574f' : '#e39b3a'} label={`${Math.round(x.indep ?? 0)}%`} /></td></tr>)}
+          </tbody></table>
+        );
+      })()}
       {r.history.length > 0 && <ul class="small">{r.history.slice(-5).reverse().map((h) => <li>{fmtWhen(w, h.t)}: {REGIMES[h.from].label} → {REGIMES[h.to].label} ({h.why})</li>)}</ul>}
-      <Help>Every country starts from its real regime in 2025. Legitimacy follows the economy, the government's popularity, whether elections are free, and the cost of repression. Democracies can slide when leaders are nationalist and legitimacy is low, though strong courts resist it; autocracies can open up when legitimacy collapses. Disloyal officers plot coups, more often in weak states and in turmoil. Protest movements grow when legitimacy is low; governments concede or repress, and a movement that grows large enough brings down an autocracy if the security forces refuse to fire, or forces an early election in a democracy.</Help>
+      <Help>Every country starts from its real regime in 2025. Legitimacy follows the economy, the government's popularity, whether elections are free, and the cost of repression. Democracies can slide when leaders are nationalist and legitimacy is low, though strong courts resist it; autocracies can open up when legitimacy collapses. Disloyal officers plot coups, more often in weak states and in turmoil. Protest movements grow when legitimacy is low; governments concede or repress, and a movement that grows large enough brings down an autocracy if the security forces refuse to fire, or forces an early election in a democracy. Regions with an identity of their own (language, history, nationhood) grow support for independence when they are alienated: unrest, an unpopular or illegitimate government, repression, a war going badly. A democracy may hold a referendum; elsewhere a region may declare independence, and its old country may fight to keep it. A new state gets its own currency, government and congress.</Help>
     </Panel>
   );
 }

@@ -5,6 +5,7 @@
 // maintenance, procurement, R&D). Equipment generations are a 1–6 scale for each class
 // (for fighters: 3 = MiG-21/F-5, 4 = F-16/Su-27, 4.5 = Rafale/Su-35, 5 = F-35/J-20,
 // 6 = the next generation); 0 means the country does not field that class.
+import { dataIso } from './isoAlias';
 export type EquipClass =
   | 'smallarms' | 'armour' | 'artillery' | 'airdefence' | 'fighters' | 'bombers' | 'drones' | 'helicopters'
   | 'surface' | 'submarines' | 'carriers' | 'missiles' | 'c4isr' | 'ew';
@@ -54,6 +55,6 @@ export const DEFENCE: Record<string, DefenceBaseline> = {
   KOR: { milex: 2.6, revenue: 35, split: S(0.38, 0.22, 0.32, 0.08), age: 18, gen: { fighters: 4.5, bombers: 0, carriers: 0, armour: 4.5, artillery: 4.5, submarines: 4 } },
   AUS: { milex: 2.0, revenue: 36, split: S(0.35, 0.3, 0.3, 0.05), age: 20, gen: { fighters: 5, bombers: 0, carriers: 0, submarines: 3.5 } },
 };
-export const defenceBaseline = (iso: string): DefenceBaseline => DEFENCE[iso] ?? DEFENCE.ARG;
+export const defenceBaseline = (iso: string): DefenceBaseline => DEFENCE[dataIso(iso)] ?? DEFENCE.ARG;
 /** The defence line as a share of government revenue. */
 export const defenceShare = (iso: string) => { const d = defenceBaseline(iso); return Math.round((d.milex / d.revenue) * 1000) / 1000; };

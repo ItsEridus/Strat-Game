@@ -3,6 +3,29 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.2.3: secession and new states
+
+The third part of 2.3 Rise & fall.
+
+- **Regional identity.** Every region has an identity of its own: how distinct its language, history or
+  nationhood is (for example Quebec, Scotland, Tibet, Chechnya and Kurdish south-east Turkey). This measures
+  distinctness only; whether a region ever seeks independence comes from play.
+- **Support for independence** starts from recent polls where they exist (Scotland about 47%, Quebec about 35%)
+  and otherwise from identity. It rises when the region is alienated (unrest, an unpopular or illegitimate
+  government, an autocracy, a war going badly) and fades when things go well. Above 30% a movement forms.
+- **Referendums.** A democracy may agree to a referendum when support passes 45%. The region can win or lose it,
+  and a lost vote takes the steam out of the movement for years.
+- **Unilateral declarations.** Where no referendum is allowed and support passes 60%, a region may declare
+  independence. Its old country calls it rebellion and may go to war to take it back.
+- **New states are full countries.** Each has its own name, colours, currency (issued at independence and
+  traded on the currency market), treasury, share of the gold reserves, parties, president, cabinet and
+  congress. Residents become its citizens, local firms switch to the new money, and the new government sets up
+  state enterprises for food and grain if nobody makes them yet. Saves keep new states.
+- **Recognition.** After an agreed referendum nearly every country recognises the new state; after a unilateral
+  declaration, mostly its old country's rivals do. Those who refuse cool towards it.
+- **The regime panel** shows the regions where support for independence is significant and, for a new state,
+  when it became independent and who recognises it.
+
 ### New in 2.2.2: coups and revolutions
 
 The second part of 2.3 Rise & fall.
