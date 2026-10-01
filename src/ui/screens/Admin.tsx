@@ -4,7 +4,7 @@ import { useState } from 'preact/hooks';
 import type { Attr, World } from '../../sim/types';
 import { ActBtn, Amt, Num, Panel, Select } from '../common';
 import { player } from '../../sim/query';
-import { GOLD, toMinor, toWhole } from '../../engine/money';
+import { GOLD, fromLocal as toMinor, toLocal as toWhole } from '../../engine/money';
 import { MARKET_KEYS, SPECIALS, itemName } from '../../data/items';
 import { RANKS } from '../../data/military';
 import { store } from '../store';

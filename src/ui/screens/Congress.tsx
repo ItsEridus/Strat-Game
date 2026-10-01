@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { fromLocal as fromL, localStep as stepL, toLocal as toL } from '../../engine/money';
 import type { Proposal, ProposalType, World } from '../../sim/types';
 import { ActBtn, CitLink, Empty, NationChip, Num, Panel, Select, Help } from '../common';
 import { store } from '../store';
@@ -90,8 +91,8 @@ function Draft({ w }: { w: World }) {
       <div class="form">
         <label>Type <Select value={type} options={types.map((t) => [t, proposalName(t)])} onChange={change} /></label>
         {['workTax', 'vat', 'importTax'].includes(type) && <label>Rate % <Num value={params.value ?? 0} onInput={(v) => setParams({ value: Math.round(v) })} /> <small class="muted">ceiling {Math.floor(ceil[type === 'workTax' ? 'work' : type === 'vat' ? 'vat' : 'import'])}%</small></label>}
-        {type === 'minWage' && <label>Wage ({n.cur}) <Num value={(params.value ?? 0) / 100} step={0.5} onInput={(v) => setParams({ value: cur(v) })} /></label>}
-        {type === 'print' && <label>Amount ({n.cur}) <Num value={(params.amount ?? 0) / 100} step={100} onInput={(v) => setParams({ amount: cur(v) })} /></label>}
+        {type === 'minWage' && <label>Wage ({n.cur}) <Num value={Math.round(toL(n.cur, params.value ?? 0) * 100) / 100} step={stepL(n.cur) / 10} onInput={(v) => setParams({ value: fromL(n.cur, v) })} /></label>}
+        {type === 'print' && <label>Amount ({n.cur}) <Num value={Math.round(toL(n.cur, params.amount ?? 0))} step={stepL(n.cur) * 100} onInput={(v) => setParams({ amount: fromL(n.cur, v) })} /></label>}
         {['embargo', 'liftEmbargo', 'alliance', 'breakAlliance'].includes(type) && <label>Nation <Select value={params.target ?? 0} options={w.nations.filter((x) => x.id !== n.id).map((x) => [x.id, x.name])} onChange={(v) => setParams({ target: v })} /></label>}
         {EXTRA_PROPOSALS[type] && <ProposalParams w={w} type={type} params={params} setParams={setParams} />}
       </div>

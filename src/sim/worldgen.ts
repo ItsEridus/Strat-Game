@@ -10,6 +10,7 @@ import { initServices } from './services';
 import { initHousing } from './housing';
 import type { Citizen, Company, Id, Ideology, Industry, Nation, Persona, RawRes, Region, Settings, World } from './types';
 import { B, applyBalance } from '../data/balance';
+import { priceLevel } from '../data/economy';
 import { NAME_POOLS, NATION_DEFS } from '../data/names';
 import { EARTH } from '../data/earth';
 import { IDEOLOGY_LIST } from '../data/ideologies';
@@ -34,7 +35,7 @@ import { newNarrative } from './story';
 import { ageOf, bornYearsAgo, seniority } from './growth';
 import { AGENCY_NAMES } from '../data/names';
 
-export const SAVE_VERSION = 12; // 5: armed forces; 6: per-region population, home regions; 7: stories, journal, memories, places; 8: no levels (skills, age, reputation); 9: timber, cotton, copper; 10: education; 11: public services; 12: housing
+export const SAVE_VERSION = 13; // 5: armed forces; 6: per-region population, home regions; 7: stories, journal, memories, places; 8: no levels (skills, age, reputation); 9: timber, cotton, copper; 10: education; 11: public services; 12: housing; 13: real money
 
 export function defaultSettings(): Settings {
   const pauseOn: Record<string, boolean> = {};
@@ -403,7 +404,8 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
 
   // Currency order books: each treasury quotes a ladder around the starting rate.
   for (const n of w.nations) {
-    const base = cur(B.fx.startRate * rand(w, 0.8, 1.25));
+    // Real exchange rates: gold buys more where prices are lower (data/economy.ts).
+    const base = cur((B.fx.startRate / priceLevel(n.cur)) * rand(w, 0.95, 1.05));
     n.fxAnchor = base;
     const orig = { k: 'nat' as const, id: n.id };
     for (let k = 1; k <= 4; k++) {

@@ -122,8 +122,8 @@ export function giveGift(w: World, npcId: Id, key: string): Result {
 // ---------- pets ----------
 
 export const PET_KINDS: Record<string, { icon: string; label: string; cost: number; upkeep: number; lifespan: number; names: string[] }> = {
-  dog: { icon: '🐕', label: 'Dog', cost: 60, upkeep: 2, lifespan: 13, names: ['Max', 'Bella', 'Rocky', 'Luna', 'Buddy', 'Daisy', 'Charlie', 'Milo', 'Ruby', 'Scout'] },
-  cat: { icon: '🐈', label: 'Cat', cost: 40, upkeep: 1, lifespan: 15, names: ['Oliver', 'Chloe', 'Leo', 'Nala', 'Simba', 'Misty', 'Tiger', 'Pepper', 'Mochi', 'Smokey'] },
+  dog: { icon: '🐕', label: 'Dog', cost: 60, upkeep: 0.6, lifespan: 13, names: ['Max', 'Bella', 'Rocky', 'Luna', 'Buddy', 'Daisy', 'Charlie', 'Milo', 'Ruby', 'Scout'] },
+  cat: { icon: '🐈', label: 'Cat', cost: 40, upkeep: 0.4, lifespan: 15, names: ['Oliver', 'Chloe', 'Leo', 'Nala', 'Simba', 'Misty', 'Tiger', 'Pepper', 'Mochi', 'Smokey'] },
 };
 const petIndex = new WeakMap<World, { n: number; t: number; by: Map<Id, Pet[]> }>();
 /** Someone's living pets (indexed by owner; rebuilt when pets come or go). */

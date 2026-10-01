@@ -5,6 +5,7 @@ import { player, citizensOf } from '../../sim/query';
 import { STANCES, articleCheck, foundPaper, foundPaperCheck, papersOwnedBy, publish, relevance, subscribe, type Topic } from '../../sim/press';
 import { B } from '../../data/balance';
 import { fmtWhen } from '../../engine/clock';
+import { fmtAmt } from '../../engine/money';
 
 export function Press({ w }: { w: World }) {
   const p = player(w);
@@ -24,7 +25,7 @@ export function Press({ w }: { w: World }) {
       <Panel title="Your newspaper">
         {mine ? (
           <>
-            <p><b>{mine.name}</b> · {mine.subs.length} citizen subscribers · {mine.bgSubs} background readers · {mine.articles} articles · revenue {(mine.revenue / 100).toFixed(2)} {w.nations[mine.nation].cur}</p>
+            <p><b>{mine.name}</b> · {mine.subs.length} citizen subscribers · {mine.bgSubs} background readers · {mine.articles} articles · revenue {fmtAmt(w.nations[mine.nation].cur, mine.revenue)}</p>
             <Help>Choose a topic and stance: readership depends on subscribers and how relevant the topic is right now (currently ×{relevance(w, mine.nation, topic).toFixed(1)} for {topic}); readers who share the stance warm to you, others cool. Your text is flavour — effects come from topic, stance and context.</Help>
             <div class="form">
               <label>Topic <Select value={topic} options={(Object.keys(STANCES) as Topic[]).map((t) => [t, t])} onChange={(t) => { setTopic(t); setStance(STANCES[t][0].id); }} /></label>

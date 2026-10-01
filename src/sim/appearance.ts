@@ -12,11 +12,11 @@ import { partnerOf, familyOf } from './family';
 import { isMinor } from './childhood';
 
 export type LookChange = 'hair' | 'colour' | 'glasses' | 'mark' | 'beard';
-/** What each change costs, in days of essentials (about 4 a day). */
+/** What each change costs, in days of essentials (1 = about $10 of US prices). */
 export const LOOK_PRICES: Record<LookChange, { label: string; icon: string; price: number }> = {
-  hair: { label: 'Haircut', icon: '💇', price: 6 },
-  colour: { label: 'Hair colour', icon: '🎨', price: 12 },
-  glasses: { label: 'Glasses or contacts', icon: '👓', price: 20 },
+  hair: { label: 'Haircut', icon: '💇', price: 3 },
+  colour: { label: 'Hair colour', icon: '🎨', price: 9 },
+  glasses: { label: 'Glasses or contacts', icon: '👓', price: 25 },
   mark: { label: 'Tattoo or piercing', icon: '🖋️', price: 30 },
   beard: { label: 'Beard', icon: '🧔', price: 0 },
 };

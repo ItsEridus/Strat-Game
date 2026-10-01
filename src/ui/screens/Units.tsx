@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { fromLocal as fromL, localStep as stepL, toLocal as toL } from '../../engine/money';
 import { census } from '../../sim/census';
 import type { Unit, World } from '../../sim/types';
 import { ActBtn, CitLink, Empty, NationChip, Num, Panel, Select, Help } from '../common';
@@ -7,7 +8,6 @@ import { SQUAD_SPECS, distribute, donate, foundUnit, foundUnitCheck, invite, joi
 import { activeBattles } from '../../sim/battle';
 import { B } from '../../data/balance';
 import { rankOf } from '../../sim/combatMath';
-import { c as cur } from '../../engine/money';
 import { itemName } from '../../data/items';
 
 export function Units({ w }: { w: World }) {
@@ -39,18 +39,18 @@ function MyUnit({ w, u }: { w: World; u: Unit }) {
   const battles = activeBattles(w).filter((b) => b.kind === 'war' && (b.att === u.nation || b.def === u.nation));
   const [bsel, setB] = useState(u.order?.battle ?? battles[0]?.id ?? -1);
   const recruits = census(w).all.filter((c) => c.nation === u.nation && c.unit == null && !c.player).sort((a, b) => (b.persona === 'soldier' ? 1 : 0) - (a.persona === 'soldier' ? 1 : 0) || b.power - a.power).slice(0, 12);
-  const [amt, setAmt] = useState(50);
+  const [amt, setAmt] = useState(() => Math.round(toL(w.nations[u.nation].cur, 5000)));
   const [item, setItem] = useState(Object.keys(p.inv).find((k) => k.startsWith('wg') || k.startsWith('food')) ?? 'wg:1');
   const n = w.nations[u.nation];
   return (
     <>
       <Panel title={`🎖️ ${u.name}`} class="wide" right={<ActBtn small kind="danger" run={(w) => leaveUnit(w, p)} confirm="Leave the unit?">Leave</ActBtn>}>
-        <p><NationChip w={w} id={u.nation} /> · commander <CitLink w={w} id={u.commander} /> · {members(u).length} members · doctrine <b>{u.doctrine}</b> · funds {Object.entries(u.wallet).map(([k, v]) => `${(v / (k === 'GOLD' ? 1000 : 100)).toFixed(0)} ${k}`).join(', ') || '0'}</p>
+        <p><NationChip w={w} id={u.nation} /> · commander <CitLink w={w} id={u.commander} /> · {members(u).length} members · doctrine <b>{u.doctrine}</b> · funds {Object.entries(u.wallet).map(([k, v]) => `${(toL(k, v)).toFixed(0)} ${k}`).join(', ') || '0'}</p>
         <p>Orders: {u.order ? <>fight for {u.order.side === 'a' ? 'attackers' : 'defenders'} in {w.regions[w.battles[u.order.battle]?.region]?.name}</> : 'none'}</p>
         <p class="small">Supplies: {Object.entries(u.inv).map(([k, v]) => `${v} ${itemName(k)}`).join(', ') || 'none'}</p>
         <div class="form row">
-          <label>Donate {n.cur} <Num value={amt} onInput={setAmt} /></label>
-          <ActBtn small run={(w) => donate(w, p, u.id, n.cur, null, cur(amt))}>Give money</ActBtn>
+          <label>Donate {n.cur} <Num value={amt} step={stepL(n.cur)} onInput={setAmt} /></label>
+          <ActBtn small run={(w) => donate(w, p, u.id, n.cur, null, fromL(n.cur, amt))}>Give money</ActBtn>
           <Select value={item} options={Object.keys(p.inv).filter((k) => /^(wg|wa|food):/.test(k)).map((k) => [k, `${itemName(k)} (${p.inv[k]})`])} onChange={setItem} />
           <ActBtn small run={(w) => donate(w, p, u.id, null, item, Math.min(amt, p.inv[item] ?? 0))}>Give items</ActBtn>
         </div>

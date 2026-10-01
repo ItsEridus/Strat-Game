@@ -5,7 +5,7 @@ import { store } from '../store';
 import { controller, cref, player } from '../../sim/query';
 import { bestAsk, buyCheck, buyListing, cancelListing, list, listCheck, listingsFor, refPrice, saleTaxes, supplyOf } from '../../sim/market';
 import { GOOD_USE, MARKET_KEYS, itemName, kindOf } from '../../data/items';
-import { c as cur, fmtAmt } from '../../engine/money';
+import { fmtAmt, fromLocal, localStep, toLocal } from '../../engine/money';
 import { B } from '../../data/balance';
 import { useSort } from '../sort';
 
@@ -36,9 +36,9 @@ export function Market({ w }: { w: World }) {
   const hist = w.trades[`${market}|${item}`] ?? [];
   const [qty, setQty] = useState(10);
   const [sq, setSq] = useState(10);
-  const [sp, setSp] = useState(Math.round((refPrice(w, market, item) ?? 200)) / 100);
+  const [sp, setSp] = useState(Math.round(toLocal(n.cur, refPrice(w, market, item) ?? 200) * 100) / 100);
   const taxes = saleTaxes(w, market, cref(p.id));
-  const gross = cur(sp) * sq;
+  const gross = fromLocal(n.cur, sp) * sq;
   const tax = Math.round((gross * (taxes.vat + taxes.imp)) / 100);
   const myListings = Object.values(w.listings).filter((l) => l.seller.k === 'cit' && l.seller.id === p.id);
   const offers = useSort('market-offers', book.slice(0, 40), { seller: (l) => sellerName(w, l.seller), qty: (l) => l.qty, price: { get: (l) => l.price, first: 'asc' } }, { key: 'price', dir: 'asc' });
@@ -89,10 +89,10 @@ export function Market({ w }: { w: World }) {
         <p>You have {p.inv[item] ?? 0} {itemName(item)}.</p>
         <div class="form row">
           <label>Qty <Num value={sq} min={1} onInput={setSq} /></label>
-          <label>Unit price ({n.cur}) <Num value={sp} step={0.05} onInput={setSp} /></label>
+          <label>Unit price ({n.cur}) <Num value={sp} step={localStep(n.cur) / 10} onInput={setSp} /></label>
         </div>
         <p class="small">Gross <Amt asset={n.cur} v={gross} /> − VAT {taxes.vat.toFixed(1)}%{taxes.imp ? ` − import ${taxes.imp.toFixed(1)}%` : ''} (<Amt asset={n.cur} v={tax} />) = <b>net <Amt asset={n.cur} v={gross - tax} /></b></p>
-        <ActBtn kind="primary" why={listCheck(w, p.id, cref(p.id), market, item, sq, cur(sp))} run={(w) => list(w, p.id, cref(p.id), market, item, sq, cur(sp))}>List for sale</ActBtn>
+        <ActBtn kind="primary" why={listCheck(w, p.id, cref(p.id), market, item, sq, fromLocal(n.cur, sp))} run={(w) => list(w, p.id, cref(p.id), market, item, sq, fromLocal(n.cur, sp))}>List for sale</ActBtn>
         <p class="small muted">Listed goods are reserved in escrow until sold or withdrawn. Max {B.market.maxListings} listings per market.</p>
       </Panel>
       <Panel title="Your listings">

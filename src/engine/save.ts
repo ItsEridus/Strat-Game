@@ -4,6 +4,7 @@
 // a small description of each slot is kept in localStorage so menus can list
 // saves instantly. Saves made by older versions in localStorage still load.
 // Saves can also be exported and imported as files.
+import { priceLevel } from '../data/economy';
 import { civilianControl } from '../sim/forces';
 import { newLifeState, normalizeLife } from '../sim/lifecycle';
 import { initFamilies, initPlayerFamily } from '../sim/family';
@@ -93,6 +94,18 @@ function migrate(w: World, from: number): World {
   if (from < 12) {
     // 12: housing (1.3.13): tenants, owners and grown children at home, by country ownership rates (stable hash).
     initHousing(w);
+  }
+  if (from < 13) {
+    // 13: real money (1.4.4). Amounts keep their real value; each treasury's reference rate for gold
+    // moves to its country's real price level (so gold buys more where prices are lower), with resting
+    // orders repriced to match. Escrowed money and gold are untouched.
+    for (const n of w.nations) {
+      const k = 1 / priceLevel(n.cur);
+      if (k === 1 || !n.fxAnchor) continue;
+      n.fxAnchor = Math.round(n.fxAnchor * k);
+      for (const o of Object.values(w.fx ?? {})) if (o.cur === n.cur) o.rate = Math.round(o.rate * k);
+      for (const t of w.fxTrades[n.cur] ?? []) t.rate = Math.round(t.rate * k);
+    }
   }
   normalizeLife(w);
   w.version = SAVE_VERSION;

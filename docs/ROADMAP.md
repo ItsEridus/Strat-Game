@@ -252,6 +252,8 @@ real starting condition in the simulation, not a cosmetic flag, and the look can
   5. taxes and public finance;
   6. banks and interest;
   7. statistics and dashboards.
+- **Progress:** money and price levels shipped in 1.4.4. Amounts are kept in one real unit of value (about US$10 at
+  US prices) and shown in each currency at its real exchange rate and price level.
 
 ### Part B: work & enterprise (GEO 1: companies expand or disband)
 

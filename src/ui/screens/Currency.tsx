@@ -4,7 +4,9 @@ import { ActBtn, Amt, Empty, Num, Panel, Select, Sparkline, Help } from '../comm
 import { store } from '../store';
 import { cref, player } from '../../sim/query';
 import { asks, bids, buyGold, cancelOrder, midRate, ordersOf, placeOrder, sellGold } from '../../sim/fx';
-import { GOLD, c as cur, fmtAmt, g, goldForCur } from '../../engine/money';
+import { GOLD, c as cur, fmtAmt, fromLocal, g, goldForCur, localStep, toLocal } from '../../engine/money';
+import { MONEY, priceLevel } from '../../data/economy';
+import { B } from '../../data/balance';
 import type { Result } from '../../engine/result';
 
 function makerName(w: World, o: { maker: { k: string; id: number } }) {
@@ -17,17 +19,18 @@ export function Currency({ w }: { w: World }) {
   const p = player(w);
   const code = store.sel.cur ?? w.nations[p.nation].cur;
   const [goldAmt, setGoldAmt] = useState(1);
-  const [rate, setRate] = useState(Math.round(midRate(w, code)) / 100);
+  const [rate, setRate] = useState(Math.round(toLocal(code, midRate(w, code))));
   const [side, setSide] = useState<'sellGold' | 'sellCur'>('sellCur');
   const [from, setFrom] = useState(w.nations[p.nation].cur);
   const [to, setTo] = useState(w.nations.find((n) => n.cur !== from)?.cur ?? from);
-  const [amt, setAmt] = useState(50);
+  const [amt, setAmt] = useState(() => Math.round(toLocal(w.nations[p.nation].cur, 5000)));
   const a = asks(w, code), b = bids(w, code);
   const trades = w.fxTrades[code] ?? [];
   const mine = ordersOf(w, cref(p.id));
   return (
     <div class="grid">
       <Panel title="Currency market" class="wide" right={<Select value={code} options={w.nations.map((n) => [n.cur, `${n.cur} — ${n.name}`])} onChange={(v) => store.go('fx', { cur: v })} />}>
+        <p class="small">{MONEY[code]?.name ?? code}: {fmtAmt(code, 100)} buys what about $10 buys in the United States.{code !== 'USD' && w.nations.some((n) => n.cur === 'USD') ? ` At today's gold rates, 1 US dollar is ${(toLocal(code, midRate(w, code)) / Math.max(0.01, toLocal('USD', midRate(w, 'USD')))).toFixed(2)} ${code}.` : ''}</p>
         <Help>All rates read <b>{code} per 1 gold</b>. <b>Asks</b> are offers to sell gold (you pay {code}); <b>bids</b> are offers to buy gold (you receive {code}). Orders fill partially at the resting order’s rate. Treasuries quote a managed ladder around their reference rate.</Help>
         <div class="stats">
           <div class="stat"><small>Best ask (buy gold)</small><b>{a[0] ? fmtAmt(code, a[0].rate) : '—'}</b></div>
@@ -46,10 +49,10 @@ export function Currency({ w }: { w: World }) {
         <div class="form">
           <label>I want to <Select value={side} options={[['sellCur', `buy gold with ${code} (bid)`], ['sellGold', `sell gold for ${code} (ask)`]]} onChange={setSide} /></label>
           <label>Gold amount <Num value={goldAmt} step={0.1} onInput={setGoldAmt} /></label>
-          <label>Rate ({code} per gold) <Num value={rate} step={0.5} onInput={setRate} /></label>
+          <label>Rate ({code} per gold) <Num value={rate} step={localStep(code)} onInput={setRate} /></label>
         </div>
-        <p class="small">{side === 'sellCur' ? `Escrows ${fmtAmt(code, Math.floor(g(goldAmt) * cur(rate) / 1000))}` : `Escrows ${goldAmt} gold`}. Crossing orders fill immediately.</p>
-        <ActBtn run={(w) => placeOrder(w, p.id, cref(p.id), code, side, g(goldAmt), cur(rate))}>Post order</ActBtn>
+        <p class="small">{side === 'sellCur' ? `Escrows ${fmtAmt(code, Math.floor(g(goldAmt) * fromLocal(code, rate) / 1000))}` : `Escrows ${goldAmt} gold`}. Crossing orders fill immediately.</p>
+        <ActBtn run={(w) => placeOrder(w, p.id, cref(p.id), code, side, g(goldAmt), fromLocal(code, rate))}>Post order</ActBtn>
       </Panel>
       <Panel title="Order book">
         <div class="book">
@@ -63,14 +66,21 @@ export function Currency({ w }: { w: World }) {
             <ActBtn small kind="ghost" run={(w) => cancelOrder(w, p.id, o.id)}>Cancel</ActBtn></div>
         )) : <Empty>No open orders.</Empty>}
       </Panel>
+      <Panel title="Money around the world" class="wide">
+        <Help>Every country's prices in its own currency. Exchange rates come from the gold market; price levels follow real 2025 data, so a coffee costs far less in Mumbai than in Sydney.</Help>
+        <table class="table small"><thead><tr><th>Country</th><th>Currency</th><th class="num">1 US dollar</th><th class="num">A coffee</th><th class="num">A day's essentials</th><th class="num">Price level (US = 100)</th></tr></thead>
+          <tbody>{w.nations.map((n) => <tr><td>{n.name}</td><td>{MONEY[n.cur]?.name ?? n.cur}</td>
+            <td class="num">{n.cur === 'USD' ? '—' : (toLocal(n.cur, midRate(w, n.cur)) / Math.max(0.01, toLocal('USD', midRate(w, 'USD')))).toFixed(2)}</td>
+            <td class="num">{fmtAmt(n.cur, cur(B.social.treatCost))}</td><td class="num">{fmtAmt(n.cur, cur(B.living.essentials))}</td><td class="num">{Math.round(priceLevel(n.cur) * 100)}</td></tr>)}</tbody></table>
+      </Panel>
       <Panel title="Convert currency (routed through gold)">
         <div class="form row">
-          <label>Sell <Num value={amt} onInput={setAmt} /></label>
+          <label>Sell <Num value={amt} step={localStep(from)} onInput={setAmt} /></label>
           <Select value={from} options={w.nations.map((n) => [n.cur, n.cur])} onChange={setFrom} />
           <label>for</label>
           <Select value={to} options={w.nations.map((n) => [n.cur, n.cur])} onChange={setTo} />
         </div>
-        <ActBtn why={from === to ? 'Pick two different currencies.' : null} run={(w) => convert(w, p.id, from, to, cur(amt))}>Convert</ActBtn>
+        <ActBtn why={from === to ? 'Pick two different currencies.' : null} run={(w) => convert(w, p.id, from, to, fromLocal(from, amt))}>Convert</ActBtn>
         <p class="small muted">Two trades: {from}→gold at the best bid, then gold→{to} at the best ask. Both spreads apply.</p>
       </Panel>
     </div>

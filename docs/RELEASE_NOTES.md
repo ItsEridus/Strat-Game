@@ -3,6 +3,28 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.4.4: real money
+
+The first step of the economic overhaul (1.5.0).
+
+- **Real currencies at real prices.** Every amount now shows in its country's own currency, as people there would
+  write it: $5.00 for a coffee in Ohio, about ₹99 in Mumbai, ¥470 in Tokyo.
+  - Exchange rates start at their real early-2025 levels (1 US dollar ≈ 86 rupees, 157 yen, 1,470 won).
+  - Each country's price level follows real World Bank data, so the same basket costs much less in India,
+    Russia or Turkey than in the United States or Australia, and gold buys more where prices are lower.
+  - Yen, won, rupees, roubles and Argentine pesos show without small change, as in real life.
+- **Money around the world.** A new table on the Currency screen compares every country:
+  - its currency;
+  - the exchange rate against the dollar;
+  - what a coffee and a day's essentials cost;
+  - its price level.
+- **Type real amounts.** Wages, prices, donations, deposits, exchange rates and laws (minimum wage, printing money)
+  are all entered in real local currency.
+- **Everyday prices fixed.** A coffee, an evening out, flowers, pet food and a haircut now cost what they do in real
+  life.
+- **Existing games** keep everyone's money at its real value. Each treasury's gold rate moves once to its country's
+  real price level.
+
 ### New in 1.4.3: quick starts, and a new look
 
 - **Ready-made lives.** Start in one click as one of eight people:

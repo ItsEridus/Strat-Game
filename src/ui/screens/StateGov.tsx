@@ -1,6 +1,7 @@
 // State / provincial government: the region panel on the map, and the table of
 // a nation's states on the Country screen.
 import { fmtDay } from '../../engine/calendar';
+import { fromLocal as fromL, localStep as stepL, toLocal as toL } from '../../engine/money';
 import { census } from '../../sim/census';
 import { useState } from 'preact/hooks';
 import type { Id, Region, World } from '../../sim/types';
@@ -11,7 +12,7 @@ import { B } from '../../data/balance';
 import { EARTH } from '../../data/earth';
 import { IDEOLOGIES, IDEOLOGY_LIST } from '../../data/ideologies';
 import { DAY } from '../../engine/clock';
-import { c as cur } from '../../engine/money';
+import { fmtAmt } from '../../engine/money';
 import {
   appointCheck, appointHead, campaign, govTemplate, headOf, legislatureSupport, resignHead, runCheck, runForHead,
   setStateBudget, setStateTax, taxCap, voteCheck, voteState,
@@ -62,7 +63,7 @@ export function StateGovPanel({ w, r }: { w: World; r: Region }) {
 function ElectionBox({ w, r, regOpen }: { w: World; r: Region; regOpen: boolean }) {
   const s = w.govs[r.id]!;
   const p = player(w);
-  const [amt, setAmt] = useState(50);
+  const [amt, setAmt] = useState(() => Math.round(toL(s.cur, 5000)));
   const mine = s.candidates.find((c) => c.cit === p.id);
   return (
     <div class="card">
@@ -77,8 +78,8 @@ function ElectionBox({ w, r, regOpen }: { w: World; r: Region; regOpen: boolean 
       ) : <p class="small muted">{regOpen ? 'Registration is open.' : `Registration opens on ${fmtDay(s.nextElection - B.state.regDays * DAY)}.`}</p>}
       {!mine && <ActBtn small why={runCheck(w, p.id, r.id)} run={(w) => runForHead(w, p.id, r.id)}>Run for {govTemplate(w, r.id)!.title}</ActBtn>}
       {mine && (
-        <div class="row small">Campaign spending <Num value={amt} onInput={setAmt} min={1} width={80} /> {s.cur}
-          <ActBtn small run={(w) => campaign(w, p.id, r.id, cur(amt))}>Spend</ActBtn> <span class="muted">spent so far {(mine.campaign / 100).toFixed(0)} {s.cur}</span></div>
+        <div class="row small">Campaign spending <Num value={amt} onInput={setAmt} min={1} step={stepL(s.cur)} width={90} /> {s.cur}
+          <ActBtn small run={(w) => campaign(w, p.id, r.id, fromL(s.cur, amt))}>Spend</ActBtn> <span class="muted">spent so far {fmtAmt(s.cur, mine.campaign)}</span></div>
       )}
       <Help>Residents who are citizens vote; the background electorate follows its ideological leaning, the incumbent's approval, candidates' influence and campaign spending (paid to local households). Citizens living here with standing {B.state.candRep}+ can run.</Help>
     </div>

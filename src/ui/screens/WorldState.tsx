@@ -1,12 +1,13 @@
 // World Situation: the business cycle, commodity markets, disasters, epidemics,
 // strikes and unrest — and what you can do about them.
 import { MONTHS, dateAt } from '../../engine/calendar';
+import { fromLocal as fromL, localStep as stepL, toLocal as toL } from '../../engine/money';
 import { fmtDay } from '../../engine/calendar';
 import { useState } from 'preact/hooks';
 import type { World } from '../../sim/types';
 import { ActBtn, Empty, Help, Num, Panel, RegionLink, Sparkline } from '../common';
 import { player } from '../../sim/query';
-import { c as cur, fmtAmt } from '../../engine/money';
+import { fmtAmt } from '../../engine/money';
 import { EARTH } from '../../data/earth';
 import { HAZARDS } from '../../data/hazards';
 import { KIND_ICON, activeCrises, donate, joinProtest, joinProtestCheck, lockdownCheck, monthOf, reliefCheck, toggleLockdown, volunteer } from '../../sim/dynamics';
@@ -20,7 +21,7 @@ export function WorldState({ w }: { w: World }) {
   const month = monthOf(w);
   const iso = EARTH.nations[p.nation].iso;
   const season = [...new Set(HAZARDS.filter((h) => (!h.months.length || h.months.includes(month)) && h.regions.some((r) => r.startsWith(`${iso}/`))).map((h) => h.label))];
-  const [gift, setGift] = useState(25);
+  const [gift, setGift] = useState(() => Math.round(toL(w.nations[p.nation].cur, 2500)));
   const past = Object.values(w.crises).filter((c) => c.status === 'over').sort((a, b) => b.end - a.end).slice(0, 10);
   return (
     <div class="grid">
@@ -49,7 +50,7 @@ export function WorldState({ w }: { w: World }) {
               {c.regions.length > 0 && <p class="small">Affected: {c.regions.slice(0, 12).map((r, i) => <>{i ? ', ' : ''}<RegionLink w={w} id={r} />{c.lockdown?.includes(r) ? ' 🔒' : ''}</>)}{c.regions.length > 12 ? ` +${c.regions.length - 12} more` : ''}</p>}
               <div class="row small">
                 {natural && <ActBtn small why={reliefCheck(w, p, c.id)} showWhy={here} run={(w) => volunteer(w, p, c.id)}>Volunteer (−20⚡)</ActBtn>}
-                {natural && c.nation != null && <><Num value={gift} onInput={setGift} min={1} width={70} /><ActBtn small run={(w) => donate(w, p, c.id, cur(gift))}>Donate</ActBtn></>}
+                {natural && c.nation != null && <><Num value={gift} onInput={setGift} min={1} step={stepL(w.nations[p.nation].cur)} width={90} /><ActBtn small run={(w) => donate(w, p, c.id, fromL(w.nations[p.nation].cur, gift))}>Donate</ActBtn></>}
                 {(c.kind === 'protest' || c.kind === 'riot') && <ActBtn small kind={c.kind === 'riot' ? 'danger' : undefined} why={joinProtestCheck(w, p)} showWhy={here} run={(w) => joinProtest(w, p)}>Join</ActBtn>}
                 {c.kind === 'epidemic' && c.regions.filter((r) => !lockdownCheck(w, p, r)).map((r) => <ActBtn small run={(w) => toggleLockdown(w, p, r)}>{c.lockdown?.includes(r) ? 'Lift' : 'Order'} lockdown in {w.regions[r].name}</ActBtn>)}
               </div>

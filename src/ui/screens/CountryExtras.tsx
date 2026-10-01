@@ -1,6 +1,7 @@
 // Government action panels on the Country screen. Each panel appears only for
 // officials holding the matching authority; actions run through permission checks.
 import { useState } from 'preact/hooks';
+import { fromLocal as fromL, localStep as stepL, toLocal as toL } from '../../engine/money';
 import type { Id, Ministry, World } from '../../sim/types';
 import { ActBtn, CitLink, Empty, Item, Num, Panel, Select, Help } from '../common';
 import { store } from '../store';
@@ -10,7 +11,7 @@ import { appoint, resignOffice } from '../../sim/politics';
 import { decideCitizenship } from '../../sim/travel';
 import { list } from '../../sim/market';
 import { placeOrder, ordersOf, cancelOrder } from '../../sim/fx';
-import { GOLD, c as cur, fmtAmt, g } from '../../engine/money';
+import { GOLD, fmtAmt, g } from '../../engine/money';
 import { itemName } from '../../data/items';
 import { fmtWhen } from '../../engine/clock';
 import { Diplomacy } from './Diplomacy';
@@ -58,16 +59,16 @@ function TreasuryFx({ w }: { w: World }) {
   const p = player(w);
   const n = w.nations[p.nation];
   const [amt, setAmt] = useState(10);
-  const [rate, setRate] = useState(n.fxAnchor / 100);
+  const [rate, setRate] = useState(Math.round(toL(n.cur, n.fxAnchor)));
   const orders = ordersOf(w, natref(n.id));
   return (
     <Panel title="💱 Treasury exchange (economy)">
       <p class="small">Treasury: {fmtAmt(n.cur, n.wallet[n.cur] ?? 0)} · {fmtAmt(GOLD, n.wallet[GOLD] ?? 0)} · reference rate {fmtAmt(n.cur, n.fxAnchor)}/g</p>
       <div class="form row">
         <label>Gold <Num value={amt} onInput={setAmt} /></label>
-        <label>Rate <Num value={rate} step={0.5} onInput={setRate} /></label>
-        <ActBtn run={(w) => placeOrder(w, p.id, natref(n.id), n.cur, 'sellGold', g(amt), cur(rate))}>Sell treasury gold</ActBtn>
-        <ActBtn run={(w) => placeOrder(w, p.id, natref(n.id), n.cur, 'sellCur', g(amt), cur(rate))}>Buy gold for treasury</ActBtn>
+        <label>Rate ({n.cur} per gold) <Num value={rate} step={stepL(n.cur)} onInput={setRate} /></label>
+        <ActBtn run={(w) => placeOrder(w, p.id, natref(n.id), n.cur, 'sellGold', g(amt), fromL(n.cur, rate))}>Sell treasury gold</ActBtn>
+        <ActBtn run={(w) => placeOrder(w, p.id, natref(n.id), n.cur, 'sellCur', g(amt), fromL(n.cur, rate))}>Buy gold for treasury</ActBtn>
       </div>
       {orders.map((o) => <div class="small">{o.side === 'sellGold' ? 'Ask' : 'Bid'} @ {fmtAmt(n.cur, o.rate)} · {fmtAmt(o.side === 'sellGold' ? GOLD : n.cur, o.amount)} <ActBtn small kind="ghost" run={(w) => cancelOrder(w, p.id, o.id)}>Cancel</ActBtn></div>)}
       <p class="small muted">While you hold this post the AI central bank stops re-quoting; you manage liquidity.</p>
@@ -81,15 +82,15 @@ function PublicTrade({ w }: { w: World }) {
   const keys = Object.keys(n.inv).filter((k) => (n.inv[k] ?? 0) > 0);
   const [key, setKey] = useState(keys[0] ?? 'food:1');
   const [qty, setQty] = useState(10);
-  const [price, setPrice] = useState(5);
+  const [price, setPrice] = useState(() => Math.round(toL(n.cur, 500) * 100) / 100);
   return (
     <Panel title="📦 National storage (labour)">
       <ul class="inv-list">{keys.map((k) => <li><Item k={k} n={n.inv[k]} /></li>)}</ul>
       {!keys.length && <Empty>Empty.</Empty>}
       <div class="form row">
         <Select value={key} options={keys.map((k) => [k, itemName(k)])} onChange={setKey} />
-        <Num value={qty} onInput={setQty} /> <label>@ <Num value={price} step={0.1} onInput={setPrice} /> {n.cur}</label>
-        <ActBtn why={!keys.length ? 'Nothing to sell.' : null} run={(w) => list(w, p.id, natref(n.id), n.id, key, qty, cur(price))}>List on market</ActBtn>
+        <Num value={qty} onInput={setQty} /> <label>@ <Num value={price} step={stepL(n.cur) / 10} onInput={setPrice} /> {n.cur}</label>
+        <ActBtn why={!keys.length ? 'Nothing to sell.' : null} run={(w) => list(w, p.id, natref(n.id), n.id, key, qty, fromL(n.cur, price))}>List on market</ActBtn>
       </div>
     </Panel>
   );

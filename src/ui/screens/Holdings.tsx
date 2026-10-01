@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { fromLocal as fromL, localStep as stepL, toLocal as toL } from '../../engine/money';
 import type { Holding, World } from '../../sim/types';
 import { ActBtn, CitLink, Empty, Num, Panel, Select, Sparkline, Help } from '../common';
 import { store } from '../store';
@@ -7,7 +8,7 @@ import {
   buyShares, buySharesCheck, cancelShareOrder, contributeCompany, foundHolding, foundHoldingCheck, holdingCompanies, issueShares, lastSharePrice,
   listShares, listSharesCheck, ownership, payDividend, proposeCeo, setRole, sharesOf, splitShares, valuation, voteCeo,
 } from '../../sim/holdings';
-import { GOLD, c as cur, fmtAmt, g } from '../../engine/money';
+import { GOLD, fmtAmt, g } from '../../engine/money';
 import { B } from '../../data/balance';
 import { INDUSTRY_INFO, grade } from '../../data/items';
 import { useSort } from '../sort';
@@ -56,7 +57,7 @@ function HoldingDetail({ w, h }: { w: World; h: Holding }) {
   const holders = Object.entries(h.shares).map(([id, s]) => ({ id: Number(id), s })).sort((a, b) => b.s - a.s);
   const [qty, setQty] = useState(1);
   const [price, setPrice] = useState((lastSharePrice(w, h.id) ?? h.issuePrice) / 1000);
-  const [div, setDiv] = useState(100);
+  const [div, setDiv] = useState(() => Math.round(toL(w.nations[h.nation]?.cur ?? 'USD', 10000)));
   const [issue, setIssue] = useState(20);
   const [coId, setCo] = useState(Object.values(w.companies).find((c) => c.owner.k === 'cit' && c.owner.id === p.id)?.id ?? -1);
   const vote = h.votes.find((v) => !v.done);
@@ -97,7 +98,7 @@ function HoldingDetail({ w, h }: { w: World; h: Holding }) {
       </Panel>
       {isCeo && (
         <Panel title="CEO tools">
-          <div class="form row"><label>Dividend ({n.cur}) <Num value={div} onInput={setDiv} /></label><ActBtn small run={(w) => payDividend(w, p.id, h.id, n.cur, cur(div))}>Pay pro rata</ActBtn></div>
+          <div class="form row"><label>Dividend ({n.cur}) <Num value={div} step={stepL(n.cur)} onInput={setDiv} /></label><ActBtn small run={(w) => payDividend(w, p.id, h.id, n.cur, fromL(n.cur, div))}>Pay pro rata</ActBtn></div>
           <div class="form row"><label>Issue shares <Num value={issue} onInput={setIssue} /></label><label>at <Num value={price} step={0.05} onInput={setPrice} /> g</label><ActBtn small run={(w) => issueShares(w, p.id, h.id, issue, g(price))}>Issue (dilutes)</ActBtn></div>
           <div class="row">{[2, 5].map((k) => <ActBtn small kind="ghost" run={(w) => splitShares(w, p.id, h.id, k)}>Split {k}:1</ActBtn>)}</div>
           <div class="row small">{(['vice', 'accountant', 'manager', 'salesman'] as const).map((r) => <ActBtn small kind="ghost" run={(w) => setRole(w, p, h.id, r, holders.find((x) => x.id !== p.id)?.id ?? null)}>Assign {r} to top holder</ActBtn>)}</div>

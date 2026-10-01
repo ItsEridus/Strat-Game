@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { fromLocal as fromL, localStep as stepL, toLocal as toL } from '../../engine/money';
 import type { Company, Industry, World } from '../../sim/types';
 import { ActBtn, Amt, Btn, CitLink, Empty, Grade, Item, Num, Panel, RegionLink, Select, Help, Sparkline } from '../common';
 import { store } from '../store';
@@ -10,7 +11,7 @@ import {
 import { INDUSTRIES, INDUSTRY_INFO, grade, gradeLc, itemName, outputKey } from '../../data/items';
 import { B } from '../../data/balance';
 import { useSort } from '../sort';
-import { GOLD, c as cur, fmtAmt } from '../../engine/money';
+import { GOLD, fmtAmt } from '../../engine/money';
 import { list, listingsFor, cancelListing, refPrice } from '../../sim/market';
 import { usedCap } from '../../engine/ledger';
 import { authorize } from '../../sim/authority';
@@ -99,12 +100,12 @@ function CompanyDetail({ w, co }: { w: World; co: Company }) {
   const mv = shiftPreview(w, co, p);
   const market = controller(w.regions[co.region]);
   const n = w.nations[market];
-  const [wage, setWage] = useState(co.offer ? co.offer.wage / 100 : Math.max(n.minWage / 100, B.wages.start));
+  const [wage, setWage] = useState(() => Math.round(toL(c, co.offer ? co.offer.wage : Math.max(n.minWage, B.wages.start * 100)) * 100) / 100);
   const [slots, setSlots] = useState(co.offer?.slots ?? 1);
   const [minEco, setMinEco] = useState(co.offer?.minEco ?? 0);
-  const [amt, setAmt] = useState(100);
+  const [amt, setAmt] = useState(() => Math.round(toL(c, 10000)));
   const [sellQty, setSellQty] = useState(co.inv[key] ?? 0);
-  const [price, setPrice] = useState(Math.round((co.prices[key] ?? refPrice(w, market, key) ?? 300)) / 100);
+  const [price, setPrice] = useState(Math.round(toL(n.cur, co.prices[key] ?? refPrice(w, market, key) ?? 300) * 100) / 100);
   const [moveKey, setMoveKey] = useState(pv.inputKey ?? key);
   const [moveQty, setMoveQty] = useState(10);
   const [dest, setDest] = useState(co.region);
@@ -133,10 +134,10 @@ function CompanyDetail({ w, co }: { w: World; co: Company }) {
       </Panel>
       <Panel title="Workforce & job offer">
         <div class="form">
-          <label>Gross wage ({c}) <Num value={wage} step={0.5} onInput={setWage} /></label>
+          <label>Gross wage ({c}) <Num value={wage} step={stepL(c) / 2} onInput={setWage} /></label>
           <label>Positions <Num value={slots} min={0} max={B.company.maxWorkers[co.q - 1]} onInput={setSlots} /></label>
           <label>Min. skill <Num value={minEco} min={0} step={0.5} onInput={setMinEco} /></label>
-          <ActBtn run={(w) => setOffer(w, p.id, co.id, cur(wage), slots, minEco)}>Post offer</ActBtn>
+          <ActBtn run={(w) => setOffer(w, p.id, co.id, fromL(c, wage), slots, minEco)}>Post offer</ActBtn>
         </div>
         <p class="small muted">Minimum wage {fmtAmt(n.cur, n.minWage)}. Max {B.company.maxWorkers[co.q - 1]} employees at {gradeLc(co.q)} grade. Workers switch employers for ≥15% better net pay; unfilled vacancies mean your wage is uncompetitive.</p>
         {co.workers.length > 0 && <StaffTable w={w} co={co} />}
@@ -144,9 +145,9 @@ function CompanyDetail({ w, co }: { w: World; co: Company }) {
       </Panel>
       <Panel title="Funds">
         <div class="form row">
-          <label>Amount ({c}) <Num value={amt} onInput={setAmt} /></label>
-          <ActBtn run={(w) => deposit(w, p, co.id, c, cur(amt))}>Deposit</ActBtn>
-          <ActBtn run={(w) => withdraw(w, p, co.id, c, cur(amt))}>Withdraw</ActBtn>
+          <label>Amount ({c}) <Num value={amt} step={stepL(c)} onInput={setAmt} /></label>
+          <ActBtn run={(w) => deposit(w, p, co.id, c, fromL(c, amt))}>Deposit</ActBtn>
+          <ActBtn run={(w) => withdraw(w, p, co.id, c, fromL(c, amt))}>Withdraw</ActBtn>
         </div>
         <p class="small muted">Company and personal money are separate ledgers. Wages are paid from company funds in {c}.</p>
       </Panel>
@@ -155,8 +156,8 @@ function CompanyDetail({ w, co }: { w: World; co: Company }) {
         {!Object.keys(co.inv).length && <Empty>Empty warehouse.</Empty>}
         <div class="form row">
           <label>Sell <Num value={sellQty} min={1} onInput={setSellQty} /></label>
-          <label>at ({n.cur}) <Num value={price} step={0.05} onInput={setPrice} /></label>
-          <ActBtn run={(w) => list(w, p.id, coref(co.id), market, key, sellQty, cur(price))}>List on {n.name} market</ActBtn>
+          <label>at ({n.cur}) <Num value={price} step={stepL(n.cur) / 10} onInput={setPrice} /></label>
+          <ActBtn run={(w) => list(w, p.id, coref(co.id), market, key, sellQty, fromL(n.cur, price))}>List on {n.name} market</ActBtn>
         </div>
         {mine.map((l) => <div class="small">Listed {l.qty} @ {fmtAmt(n.cur, l.price)} <ActBtn small kind="ghost" run={(w) => cancelListing(w, p.id, l.id)}>Withdraw</ActBtn></div>)}
         <div class="form row">
