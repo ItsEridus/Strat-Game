@@ -21,6 +21,7 @@ import { dailyRevenue } from './publicFinance';
 import { EXTRA_PROPOSALS } from './congressExtra';
 import { nationScores } from './forces';
 import { defenceNorm } from './arsenal';
+import { defenceLobby } from './forceStructure';
 
 export type BudgetLine = 'defence' | 'intelligence' | 'police' | 'education' | 'health' | 'research' | 'infrastructure' | 'welfare';
 export const BUDGET_LINES: BudgetLine[] = ['defence', 'intelligence', 'police', 'education', 'health', 'research', 'infrastructure', 'welfare'];
@@ -150,7 +151,9 @@ EXTRA_PROPOSALS.budget = {
     const want = strategyBudget(n, chooseStrategy(w, n).kind);
     const b = { ...budgetOf(n), ...params } as Budget;
     const dist = BUDGET_LINES.reduce((t, k) => t + Math.abs(b[k] - want[k]), 0);
-    return 0.3 - dist * 3;
+    // Defence contractors lobby for bigger defence budgets; their workers are voters.
+    const lobby = b.defence > budgetOf(n).defence + 0.0005 ? defenceLobby(w, n) : 0;
+    return 0.3 - dist * 3 + lobby;
   },
   enact: (_w, n, p) => { setBudget(n, { ...budgetOf(n), ...p.params } as Budget); return 'The new budget is in force.'; },
   aiOptions: (w, n) => [{ params: strategyBudget(n, chooseStrategy(w, n).kind), weight: 1 }],

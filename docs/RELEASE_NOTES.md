@@ -3,6 +3,35 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.7.3: force structure, doctrine and strategic forces
+
+- **Recruitment.** Countries with a draft (Russia, Turkey, Korea, Brazil, Mexico and China) keep twice the share of
+  their people under arms. Conscripts cost less, but their armies fight a little less well. Volunteer forces are
+  smaller and better trained, and volunteers leave when they go unpaid. Leaders can introduce or end conscription;
+  introducing it costs popularity.
+- **Doctrine** now changes the combat maths. Each country starts with its own:
+  - manoeuvre warfare (Germany, Turkey) favours armour;
+  - defence in depth (Russia, India, Korea) favours infantry;
+  - air power (the United States, Saudi Arabia) favours air wings;
+  - sea control (Britain, Japan, Australia) favours fleets and carriers;
+  - sea denial (China) favours submarines;
+  - asymmetric warfare (Mexico, South Africa) favours light forces at lower cost.
+
+  Changing doctrine costs readiness while units retrain.
+- **After-action reviews.** After every war, the losing side reviews its doctrine and often adopts the winner's,
+  and both sides gain experience.
+- **Exercises** raise readiness and experience for money and fuel. AI defence ministries exercise each branch
+  about once a quarter.
+- **Strategic forces.** The United States, Russia, China, the United Kingdom and India start as nuclear powers, with
+  their real warhead counts and legs of the triad (Britain's deterrent is sea-based only).
+  - Nuclear doctrine governs AI use: China and India have a no-first-use policy, Russia escalates to de-escalate,
+    and the US and Britain use nuclear weapons only as a last resort.
+  - Missile defence can intercept an incoming missile, most often over the United States.
+  - All of this matters only when nuclear weapons are enabled in the advanced settings.
+- **The politics of defence.** Lawmakers are more willing to raise the defence budget where defence contractors
+  employ many people.
+- **Force structure panel** on the Forces screen. Ministers can change doctrine and recruitment and order exercises.
+
 ### New in 1.7.2: R&D programmes and the arms trade
 
 - **R&D programmes.**

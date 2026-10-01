@@ -427,7 +427,8 @@ export interface Nation {
   policeFunding: number;
   eduFunding?: number; // share of daily revenue for schools and universities (sim/education.ts)
   eduQ?: number; // quality of public education, 0..100, follows funding slowly
-  defense: { budget: number; chief: Id | null; unpaid: number; appointed?: boolean; split?: import('./arsenal').DefenceSplit; upkeepK?: number; month?: { procurement: number; rd: number; days: number } };
+  defense: { budget: number; chief: Id | null; unpaid: number; appointed?: boolean; split?: import('./arsenal').DefenceSplit; upkeepK?: number; month?: { procurement: number; rd: number; days: number }; doctrine?: import('./forceStructure').Doctrine; conscription?: boolean; exercised?: Partial<Record<Branch, number>> };
+  strategic?: import('./forceStructure').Strategic; // nuclear forces, doctrine and missile defence (1.8)
   programmes?: import('./defenceIndustry').Programme[]; // defence R&D programmes (1.8)
   armsOrders?: import('./defenceIndustry').ArmsOrder[]; // equipment bought abroad (1.8)
   arsenal?: import('./arsenal').Arsenal; // equipment by class: generation and age (1.8) // appointed: chosen by the Commander-in-Chief // military budget (share of revenue), chief of staff, days unpaid
@@ -674,7 +675,7 @@ export interface Tournament {
 
 export interface GameEvent { id: Id; kind: 'pirates'; start: number; end: number; ships: { id: Id; name: string; holder: Id | null; battle: Id | null; defenders: number; depot: number }[]; status: 'active' | 'ended' }
 
-export interface Nuke { id: Id; from: Id; target: Id; launched: number; arrives: number; status: 'flying' | 'hit' }
+export interface Nuke { id: Id; from: Id; target: Id; launched: number; arrives: number; status: 'flying' | 'hit' | 'intercepted' }
 
 export interface ScheduledEvent { at: number; seq: number; type: string; p: Record<string, any> }
 

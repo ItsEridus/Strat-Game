@@ -1,4 +1,5 @@
 // Deterministic world generation from a seed.
+import { initStrategic } from './forceStructure';
 import { defenceShare } from '../data/arsenal';
 import { industryPay } from './labour';
 import { priceOf } from './housing';
@@ -422,6 +423,7 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
   initGovs(w);
   initCrime(w);
   initForces(w);
+  initStrategic(w);
   seedOfficers(w);
   seedLate(w);
   civilianControl(w);

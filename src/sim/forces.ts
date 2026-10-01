@@ -13,6 +13,7 @@
 // through real rank ladders to command formations; the most senior officer
 // becomes chief of staff. AI defence ministries raise, supply, deploy and order
 // forces by the same rules the player's government uses.
+import { conscriptionOf, doctrineFactor, serviceShareFactor, upkeepFactor } from './forceStructure';
 import { capsOf, techAvg } from './strategic';
 import { defenceContracts, formationGen, kindGen, qualityFactor, upkeepScale, wearFactor } from './arsenal';
 import { baselineOf } from '../data/nationBaselines';
@@ -61,7 +62,7 @@ export function power(w: World, f: Formation): number {
   const cmd = f.commander != null ? w.citizens[f.commander] : null;
   if (cmd) p *= 1 + cmd.mil.rank * 0.02;
   if (w.nations[f.nation].defense.chief != null) p *= 1 + B.forces.chiefBonus;
-  return p * qualityFactor(formationGen(w, f));
+  return p * qualityFactor(formationGen(w, f)) * doctrineFactor(w, f);
 }
 
 /** Naval power a nation (and its allies) has in a sea zone. */
@@ -598,7 +599,7 @@ export function forcesDaily(w: World) {
     // Upkeep from the military budget (capped at a share of yesterday's revenue plus a reserve draw).
     const alertMult = 1 + (n.alert - 1) * B.forces.alertUpkeep;
     const needRaw = fs.reduce((s, f) => s + cur(KINDS[f.kind].upkeep * B.forces.upkeepScale) * (f.strength / 100), 0);
-    const need = Math.round(needRaw * upkeepScale(w, n, needRaw) * alertMult);
+    const need = Math.round(needRaw * upkeepScale(w, n, needRaw) * upkeepFactor(n) * alertMult);
     const cap = Math.floor((n.stats.revHist[n.stats.revHist.length - 1] ?? 0) * n.defense.budget) + Math.floor((n.wallet[n.cur] ?? 0) * 0.01);
     const amt = Math.min(need, cap, n.wallet[n.cur] ?? 0);
     if (amt > 0 && pay(w, natref(n.id), hhref(n.id), n.cur, amt, 'Military upkeep')) n.stats.spendToday += amt;
@@ -828,7 +829,7 @@ function defenseMinistryAI(w: World) {
 /** AI citizens enlist (soldiers first), report for duty and rise through the ranks. */
 function militaryCareersAI(w: World) {
   const serving = w.nations.map((n) => nationals(w, n.id).filter((x) => x.mil.branch).length);
-  const cap = w.nations.map((n) => Math.max(8, Math.round(nationals(w, n.id).length * B.forces.serviceShare)));
+  const cap = w.nations.map((n) => Math.max(8, Math.round(nationals(w, n.id).length * B.forces.serviceShare * serviceShareFactor(n))));
   for (const c of census(w).all) {
     if (c.player || jailed(w, c)) continue;
     if (!c.mil.branch) {
@@ -839,6 +840,8 @@ function militaryCareersAI(w: World) {
       continue;
     }
     if (c.mil.reserve) { if ((c.id + dayOf(w.time)) % 10 === 0 && !returnToDutyCheck(w, c)) returnToDuty(w, c); continue; }
+    // Retention: unpaid volunteers leave (conscripts cannot).
+    if (w.nations[c.nation].defense.unpaid > 3 && !conscriptionOf(w.nations[c.nation]) && (c.id + dayOf(w.time)) % 10 === 0 && chance(w, 0.2)) { discharge(w, c); continue; }
     if (c.energy >= B.forces.dutyEnergy + 20 && !dutyCheck(w, c)) reportForDuty(w, c);
   }
 }

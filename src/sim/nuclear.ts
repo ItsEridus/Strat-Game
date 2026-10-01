@@ -2,8 +2,9 @@
 // odds). Production needs congressional authorisation and a level-5 base; a
 // strike flies 8 hours with a warning, then destroys all building levels and
 // stored warheads in the target and damages connected regions. Stockpile
-// sabotage (defusal) targets stored warheads only — interception of missiles in
-// flight is not modelled, since sources don't establish it.
+// sabotage (defusal) targets stored warheads only. Missile defence (1.8) can intercept a
+// missile in flight, and AI use follows each power's nuclear doctrine (sim/forceStructure.ts).
+import { doctrinePermits, interceptChance } from './forceStructure';
 import { lifeGate } from './lifecycle';
 import type { Citizen, Id, World } from './types';
 import { B } from '../data/balance';
@@ -109,8 +110,15 @@ export function launch(w: World, actor: Id, from: Id, target: Id): Result {
 export function onNukeArrive(w: World, id: Id) {
   const nk = w.nukes[id];
   if (!nk || nk.status !== 'flying') return;
-  nk.status = 'hit';
   const r = w.regions[nk.target];
+  const defender = w.nations[controller(r)];
+  if (defender && chance(w, interceptChance(defender))) {
+    nk.status = 'intercepted';
+    record(w, 'nuclear', `🛡️ ${defender.adj} missile defence intercepted the missile aimed at ${r.name}.`, { region: r.id, important: true });
+    if (defender.id === player(w).nation) notify(w, 'warHome', `🛡️ The missile aimed at ${r.name} was intercepted.`, { critical: true });
+    return;
+  }
+  nk.status = 'hit';
   const lost = r.bld.hospital + r.bld.fields + r.bld.industrial + r.bld.base;
   r.bld = { hospital: 0, fields: 0, industrial: 0, base: 0 };
   let heads = 0;
@@ -192,8 +200,10 @@ export function nuclearAI(w: World) {
     const actor = n.cabinet.defense ?? n.president;
     if (actor == null || actor === pl.id) continue;
     const war = activeWars(w).find((x) => x.att === n.id || x.def === n.id);
-    if (!war || n.warScore > -30 || !chance(w, 0.1)) continue;
+    if (!war || !chance(w, 0.1)) continue;
     const enemy = enemyOf(war, n.id);
+    const struck = Object.values(w.nukes).some((x) => x.from === enemy && x.status === 'hit' && w.regions[x.target].owner === n.id);
+    if (!doctrinePermits(w, n, struck)) continue;
     const target = w.regions.filter((r) => controller(r) === enemy).sort((a, b) => (b.bld.base + b.bld.industrial + b.bld.hospital) - (a.bld.base + a.bld.industrial + a.bld.hospital))[0];
     if (target) launch(w, actor, n.warheads[0].region, target.id);
   }

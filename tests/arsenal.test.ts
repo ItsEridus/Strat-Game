@@ -126,3 +126,45 @@ test('the arms trade: licences, deliveries over years, and spare-parts dependenc
   if (f) assert.ok(wearFactor(w, f) >= 2);
   assert.ok(audit(w).ok, audit(w).problems.join('; '));
 });
+
+import { afterActionReview, conscriptionOf, doctrineFactor, doctrineOf, doctrinePermits, exerciseCheck, holdExercise, setDoctrine, strategicOf } from '../src/sim/forceStructure';
+import { mint as mint2, produce } from '../src/engine/ledger';
+
+test('five nuclear powers at the start, with their doctrines', () => {
+  const w = fresh(308);
+  const powers = w.nations.filter((n) => strategicOf(n)).map((n) => n.iso).sort();
+  assert.deepEqual(powers, ['CHN', 'GBR', 'IND', 'RUS', 'USA']);
+  const chn = w.nations.find((n) => n.iso === 'CHN')!, rus = w.nations.find((n) => n.iso === 'RUS')!;
+  assert.ok(chn.warheads.length > 0);
+  chn.warScore = -90; rus.warScore = -40;
+  assert.equal(doctrinePermits(w, chn, false), false, 'no first use');
+  assert.equal(doctrinePermits(w, chn, true), true);
+  assert.equal(doctrinePermits(w, rus, false), true, 'escalate to de-escalate');
+  assert.ok(conscriptionOf(rus) && !conscriptionOf(w.nations.find((n) => n.iso === 'GBR')!));
+});
+
+test('doctrine shapes combat; exercises cost fuel and raise readiness; losers review doctrine', () => {
+  const w = fresh(309);
+  const n = w.nations.find((x) => x.iso === 'DEU')!;
+  const arm = formationsOf(w, n.id).find((f) => f.kind === 'armored');
+  if (arm) assert.ok(doctrineFactor(w, arm) > 1, 'manoeuvre favours armour');
+  const leader = n.president!;
+  assert.ok(setDoctrine(w, leader, n, 'depth').ok);
+  assert.equal(doctrineOf(n), 'depth');
+  produce(w, natref(n.id), 'oil', 500, 'test');
+  mint2(w, natref(n.id), n.cur, cur(5000), 'test');
+  const fs = formationsOf(w, n.id).filter((f) => f.branch === 'army');
+  const before = fs.reduce((t, f) => t + f.readiness, 0);
+  assert.equal(exerciseCheck(w, leader, n, 'army'), null);
+  assert.ok(holdExercise(w, leader, n, 'army').ok);
+  assert.ok(fs.reduce((t, f) => t + f.readiness, 0) > before);
+  assert.match(exerciseCheck(w, leader, n, 'army') ?? '', /month/);
+  // After-action review: a loser adopts the winner's doctrine (usually).
+  const winner = w.nations.find((x) => x.iso === 'USA')!;
+  const loser = w.nations.find((x) => x.iso === 'MEX')!;
+  loser.president = null;
+  let adopted = false;
+  for (let i = 0; i < 20 && !adopted; i++) { loser.defense.doctrine = 'asymmetric'; afterActionReview(w, { att: winner.id, def: loser.id } as any, winner.id); adopted = doctrineOf(loser) === doctrineOf(winner); }
+  assert.ok(adopted);
+  assert.ok(audit(w).ok, audit(w).problems.join('; '));
+});

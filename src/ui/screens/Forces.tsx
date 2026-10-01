@@ -12,6 +12,7 @@ import { nationPerm } from '../../sim/authority';
 import { B } from '../../data/balance';
 import { EARTH } from '../../data/earth';
 import { CLASS_INFO, EQUIP_CLASSES } from '../../data/arsenal';
+import { DOCTRINES, STRATEGIC_DOCTRINE, conscriptionOf, doctrineOf, exerciseCheck, exerciseCost, holdExercise, setConscription, setDoctrine, strategicOf, type Doctrine } from '../../sim/forceStructure';
 import { bestSeller, cancelProgramme, orderCheck as armsOrderCheck, placeOrder, programmeCheck, runningOrders, runningProgrammes, startProgramme } from '../../sim/defenceIndustry';
 import type { EquipClass } from '../../data/arsenal';
 import { arsenalOf, defenceNorm, effectiveGen, formationGen, milexOfGdp, splitOf } from '../../sim/arsenal';
@@ -47,6 +48,7 @@ export function Forces({ w }: { w: World }) {
       </Panel>
 
       <ArsenalPanel w={w} />
+      <StructurePanel w={w} />
       <CommandPanel w={w} />
       <ServicePanel w={w} />
       {ministry && <MinistryPanel w={w} />}
@@ -287,6 +289,36 @@ function ArsenalPanel({ w }: { w: World }) {
       </div>}
       <Help>R&D programmes are paid from the R&D budget each month. They take years (a new combat aircraft 10–20), slip, overrun and are sometimes cancelled. A finished programme raises the best generation the country can build, and renewal then brings the forces up to it, with spin-offs to civilian technology. Countries that cannot build a class well buy it abroad, if the seller grants an export licence; deliveries take two to four years, and a hostile supplier means no spare parts (equipment wears twice as fast).</Help>
       <Help>Equipment generations run from 1 to 6 (for fighters: 4 = F-16 or Su-27, 5 = F-35 or J-20). Each generation is worth about 15% in combat. Procurement contracts renew equipment over its service life; without them it ages, wears faster and, past about 70% of its life, loses its edge. Procurement and R&D money goes to the country's defence contractor.</Help>
+    </Panel>
+  );
+}
+
+/** Force structure: recruitment, doctrine, exercises and strategic forces. */
+function StructurePanel({ w }: { w: World }) {
+  const p = player(w);
+  const n = w.nations[p.nation];
+  const minister = nationPerm(w, p.id, n.id, 'war');
+  const [doc, setDoc] = useState<Doctrine>(doctrineOf(n));
+  const st = strategicOf(n);
+  const fs = (b: Branch) => formationsOf(w, n.id).filter((f) => f.branch === b);
+  return (
+    <Panel title="🧭 Force structure">
+      <table class="table compact small"><tbody>
+        <tr><td>Recruitment</td><td>{conscriptionOf(n) ? 'Conscription: larger, cheaper forces, a little less effective' : 'All-volunteer: smaller, better-trained forces'}</td></tr>
+        <tr><td>Doctrine</td><td><b>{DOCTRINES[doctrineOf(n)].label}</b>: {DOCTRINES[doctrineOf(n)].desc}</td></tr>
+        <tr><td>Strategic forces</td><td>{st ? <>about {st.warheads.toLocaleString()} warheads · triad: {[st.legs.land && 'land', st.legs.sea && 'sea', st.legs.air && 'air'].filter(Boolean).join(', ')} · doctrine: {STRATEGIC_DOCTRINE[st.doctrine]} · missile defence {Math.round(st.missileDefence * 100)}%</> : <span class="muted">none</span>}</td></tr>
+      </tbody></table>
+      {minister && <>
+        <div class="row small">
+          <Select value={doc} options={(Object.keys(DOCTRINES) as Doctrine[]).map((d) => [d, DOCTRINES[d].label] as [Doctrine, string])} onChange={setDoc} />
+          <ActBtn small why={doc === doctrineOf(n) ? 'That is the current doctrine.' : null} run={(w) => setDoctrine(w, p.id, n, doc)}>Adopt</ActBtn>
+          <ActBtn small kind="ghost" run={(w) => setConscription(w, p.id, n, !conscriptionOf(n))}>{conscriptionOf(n) ? 'End conscription' : 'Introduce conscription'}</ActBtn>
+        </div>
+        <div class="row small">{(['army', 'navy', 'air'] as Branch[]).map((b) => (
+          <ActBtn small why={exerciseCheck(w, p.id, n, b)} run={(w) => holdExercise(w, p.id, n, b)}>Exercise the {BRANCH_NAME[b].toLowerCase()} ({fs(b).length ? `${exerciseCost(n, fs(b)).oil} oil` : '—'})</ActBtn>
+        ))}</div>
+      </>}
+      <Help>Doctrine changes the combat maths: manoeuvre favours armour, defence in depth favours infantry, air power favours air wings, sea control favours fleets and carriers, sea denial favours submarines, and asymmetric warfare favours light forces at lower cost. Changing doctrine costs readiness while units retrain. After a war, the losing side reviews its doctrine. Exercises raise readiness and experience for money and fuel. Unpaid volunteers leave the service. Nuclear use follows each power's doctrine, and missile defence may intercept an incoming missile.</Help>
     </Panel>
   );
 }
