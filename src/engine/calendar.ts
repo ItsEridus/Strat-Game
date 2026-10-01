@@ -102,7 +102,20 @@ export function seasonAt(t: number, lat: number): Season {
 // ---------- ages and anniversaries ----------
 
 /** Whole years between a birth time and now, by the calendar (birthdays on the date of birth; 29 Feb → 28 Feb). */
+// Ages only change from one date to the next, so they are remembered for the current day (a large world asks for
+// every person's age every hour).
+let ageDay = NaN;
+const ageMemo = new Map<number, number>();
 export function calendarAge(born: number, now: number): number {
+  const day = Math.floor(now / 1440), bday = Math.floor(born / 1440);
+  if (day !== ageDay) { ageDay = day; ageMemo.clear(); }
+  const hit = ageMemo.get(bday);
+  if (hit !== undefined) return hit;
+  const age = calendarAgeOf(born, now);
+  ageMemo.set(bday, age);
+  return age;
+}
+function calendarAgeOf(born: number, now: number): number {
   const b = dateAt(born), n = dateAt(now);
   let age = n.year - b.year;
   const bm = b.month, bd = Math.min(b.day, daysIn(n.year, b.month));

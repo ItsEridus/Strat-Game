@@ -6,7 +6,7 @@ import { DAY } from '../engine/clock';
 import { useEffect, useState } from 'preact/hooks';
 import type { World } from '../sim/types';
 import type { Result } from '../engine/result';
-import { advance } from '../sim/tick';
+import { advance, lod } from '../sim/tick';
 import { generateWorld } from '../sim/worldgen';
 import { registerSystems } from '../sim/systems';
 import { deserialize, latestSlot, loadFromSlot, saveToSlot, savesSettled, serialize } from '../engine/save';
@@ -269,11 +269,15 @@ class Store {
       let stopped = false;
       // Long advances run in the background in bigger slices (the screen redraws a few times a second).
       const budget = a.target - a.from >= 30 * DAY ? 220 : 60;
-      while (w.time < a.target && Date.now() - t0 < budget) {
-        stir(w);
-        const r = advance(w, Math.min(60, a.target - w.time), true);
-        if (r.stopped) { stopped = true; break; }
-      }
+      // A week or more at once runs other countries at a coarser level of detail (sim/tick.ts).
+      lod.coarse = a.target - a.from >= 7 * DAY;
+      try {
+        while (w.time < a.target && Date.now() - t0 < budget) {
+          stir(w);
+          const r = advance(w, Math.min(60, a.target - w.time), true);
+          if (r.stopped) { stopped = true; break; }
+        }
+      } finally { lod.coarse = false; }
       if (w.time >= a.target) {
         if (a.start) w.life.period = periodSummary(w, a.start, a.label);
         w.life.advance = null;

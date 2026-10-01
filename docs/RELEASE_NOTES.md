@@ -3,6 +3,48 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.6.0: the strategic engine
+
+1.6.0 completes the strategic engine: nations visibly change over months and years. Releases 1.5.1 to 1.5.4 built
+it:
+- capabilities that start from real 2025 data;
+- a monthly strategic turn with productivity growth;
+- national budgets and grand strategy;
+- a power ranking with history;
+- the yearly State of the World.
+
+This release adds:
+
+- **Growth that stays realistic for decades.** Each country grows at its real potential rate, moved only by what
+  changes after 2025: better or worse skills, infrastructure and institutions, how fast it is catching up,
+  unrest, war and the world economy. In a 30-year test, average growth per year is:
+
+  | Country | Growth |
+  |---|---|
+  | India | 5.8% |
+  | China | 3.5% |
+  | United States | 2.2% |
+  | Britain | 1.2% |
+  | Germany | 0.6% |
+  | Japan | 0.2% |
+
+  Technology gaps narrow as the leaders' know-how spreads.
+- **Faster long advances.** Advancing a week or more at once runs other countries at a coarser level of detail:
+  - their people recover energy in one daily step;
+  - they are only visited in the hours when they act;
+  - routine AI checks (auction bids, mining, studies, military planning) run every few hours.
+
+  Your own country is always simulated in full. Together with faster age lookups, a default-size world (about
+  12,500 people) runs about 40% faster: a simulated year now takes roughly 13 minutes.
+
+### Fixed in 1.6.0
+
+- **Welfare.** Transfers to households are now a share of revenue (35% by default, set by the budget). They used
+  to be a share of the treasury, so money a government borrowed flowed straight back out as transfers and debt
+  piled up.
+- **Borrowing and repayment.** Governments no longer borrow in their first week, before they have a record of
+  spending. They repay debt sooner when money is plentiful.
+
 ### New in 1.5.4: the record of the world
 
 - **Power over time.** The power index is taken on the first of every month and kept for ten years. The Rankings

@@ -219,6 +219,7 @@ export function workShift(w: World, c: Citizen): Result {
   c.eco = +(c.eco + B.eco.gainBase / (1 + c.eco / 5)).toFixed(3);
   practise(w, c, 'eco', B.practice.work * (hasQuirk(c, 'workaholic') ? 1.2 : 1));
   if (c.player) bump(w, 'work');
+  if (!c.player) return ok('');
   return ok(`Worked at ${co.name}: produced ${made} ${itemName(outputKey(co.industry, co.q))}, earned ${fmtAmt(cur, gross - t.tax)} net (${fmtAmt(cur, t.tax)} tax${t.stateRate ? `, incl. ${t.stateRate}% ${w.regions[co.region].name} state tax` : ''}).`);
 }
 

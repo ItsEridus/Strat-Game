@@ -402,6 +402,15 @@ improve or decay, and the power ranking moves for reasons the player can read.
   - coarse and full detail give statistically similar national results;
   - a year of a full world passes in at most 3 minutes.
 
+- **Progress:**
+  - 1.5.1: capabilities and the monthly strategic turn.
+  - 1.5.2: budgets and grand strategy.
+  - 1.5.3: a scroll fix.
+  - 1.5.4: power history, tiers and the State of the World.
+  - 1.6.0: level-of-detail time, growth calibrated for 30 years, and fiscal fixes.
+  - Not yet met: the target of a full default world simulating a year in at most 3 minutes. It takes about 13
+    minutes today, and smaller worlds are proportionally faster.
+
 ## 1.7.0 — Law & order
 
 *Includes the prison system and the policing and crime careers overhaul requested earlier.*

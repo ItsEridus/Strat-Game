@@ -33,10 +33,23 @@ function tick10(w: World) {
   for (const f of tickHooks) f(w);
 }
 
+/**
+ * Level of detail: during long advances (a week or more at once), people in other countries recover energy in one
+ * daily step, and are only visited in the hours when they act (work, training, project work, shopping, savings).
+ * What they do is the same; only the bookkeeping is coarser. The player's own country is always simulated in full.
+ */
+export const lod = { coarse: false };
+const acts = (c: { workHour: number; trainHour: number }, h: number) => h === c.workHour || h === c.trainHour || h === (c.trainHour + 2) % 24 || h === 18 || h === 20;
+
 function hourly(w: World) {
   const h = hourOf(w.time);
-  for (const c of census(w).all) if (!c.player) regenTick(w, c, 6);
-  for (const c of census(w).all) if (w.citizens[c.id] && !c.player) citizenHourly(w, c);
+  const home = lod.coarse ? player(w)?.nation : -1;
+  for (const c of census(w).all) {
+    if (c.player) continue;
+    if (lod.coarse && c.nation !== home) { if (h === 0) regenTick(w, c, 144); }
+    else regenTick(w, c, 6);
+  }
+  for (const c of census(w).all) if (w.citizens[c.id] && !c.player && (!lod.coarse || c.nation === home || acts(c, h))) citizenHourly(w, c);
   if (h === 5) for (const co of Object.values(w.companies).sort((a, b) => a.id - b.id)) manageCompany(w, co);
   if (h === 12 || h === 19) householdsDaily(w, h === 12 ? 0 : 1);
   if (h === 7) entrepreneurship(w);
@@ -92,6 +105,10 @@ export function step(w: World) {
  */
 export function advance(w: World, minutes: number, respectPause = true): { advanced: number; stopped: boolean } {
   const target = w.time + minutes;
+  if (minutes >= 7 * DAY) lod.coarse = true;
+  try { return advanceSteps(w, target, respectPause); } finally { if (minutes >= 7 * DAY) lod.coarse = false; }
+}
+function advanceSteps(w: World, target: number, respectPause: boolean): { advanced: number; stopped: boolean } {
   pauseRequest.flag = false;
   let advanced = 0;
   while (w.time + TICK <= target) {

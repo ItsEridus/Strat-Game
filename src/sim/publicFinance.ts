@@ -25,7 +25,7 @@ export function publicFinanceDaily(w: World) {
     if (n.exile) continue;
     const cash = n.wallet[n.cur] ?? 0;
     const month = Math.max(dailySpending(n), dailyRevenue(n) * 0.5) * 30;
-    if (month <= 0) continue;
+    if (month <= 0 || n.stats.spendHist.length < 7) continue; // a week of history before judging the finances
     // Interest, paid daily; unpaid interest is added to the debt.
     if (n.debt) {
       const due = Math.round((n.debt * bondRate(n)) / 36500);
@@ -38,9 +38,9 @@ export function publicFinanceDaily(w: World) {
       // Borrow up to a month of spending, within the debt limit.
       const amt = Math.min(Math.round(month - now), Math.max(0, debtLimit(n) - (n.debt ?? 0)));
       if (amt > 0) { mint(w, natref(n.id), n.cur, amt, 'Government bonds issued'); n.debt = (n.debt ?? 0) + amt; n.debtIssued = (n.debtIssued ?? 0) + amt; }
-    } else if (n.debt && now > month * 4) {
-      // Plenty of money: repay some debt.
-      const amt = Math.min(n.debt, Math.round(now - month * 3));
+    } else if (n.debt && now > month * 2) {
+      // Plenty of money: repay some debt, keeping a month and a half in hand.
+      const amt = Math.min(n.debt, Math.round(now - month * 1.5));
       if (amt > 0 && burn(w, natref(n.id), n.cur, amt, 'Government bonds repaid')) n.debt -= amt;
     }
   }

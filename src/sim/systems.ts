@@ -1,5 +1,6 @@
 // Wires every subsystem's hooks into the simulation loop, once, in a fixed order.
 // The order is part of determinism: do not reorder casually.
+import { lod } from './tick';
 import { powerMonthly } from './worldHistory';
 import { budgetDaily } from './nationalBudget';
 import { strategicDaily } from './strategic';
@@ -102,7 +103,7 @@ export function registerSystems() {
   battleWonHandlers.war = onWarBattleWon;
   HANDLERS.warDeadline = (w, p) => onWarDeadline(w, p.war);
   tickHooks.push(soldiersTick);
-  hourlyHooks.push((w: World) => { militaryHourly(w); peaceHousekeeping(w); });
+  hourlyHooks.push((w: World) => { if (!lod.coarse || hourOf(w.time) % 2 === 0) militaryHourly(w); peaceHousekeeping(w); });
   dailyHooks.push((w: World) => { diplomacyDaily(w); defenseBudget(w); aiClaimReserves(w); updateExile(w); computeSupply(w); });
 
   // Stage 4: finance & progression
@@ -110,10 +111,11 @@ export function registerSystems() {
   HANDLERS.mineEnd = (w, p) => onMineEnd(w, p.cit, p.end);
   hourlyHooks.push((w: World) => {
     const h = hourOf(w.time);
-    aiBidding(w);
+    // At a coarse level of detail (long advances), routine AI checks run every third hour.
+    const routine = !lod.coarse || h % 3 === 0;
+    if (routine) aiBidding(w);
     contractsHourly(w);
-    academyHourly(w);
-    aiMining(w);
+    if (routine) { academyHourly(w); aiMining(w); }
     if (h === 7) aiStudies(w);
     if (h === 16) { aiListings(w); holdingsDaily(w); }
     if (h === 11) npcOffers(w);

@@ -43,7 +43,7 @@ export function budgetOf(n: Nation): Budget {
   const extra = n.budgetExtra ?? defaults(n);
   return {
     defence: n.defense.budget, intelligence: n.agency.budget, police: n.policeFunding, education: n.eduFunding ?? 0.05,
-    health: extra.health, research: extra.research, infrastructure: extra.infrastructure, welfare: n.welfare ?? 0.15,
+    health: extra.health, research: extra.research, infrastructure: extra.infrastructure, welfare: n.welfare ?? WELFARE,
   };
 }
 export const budgetTotal = (b: Budget) => BUDGET_LINES.reduce((t, k) => t + b[k], 0);
@@ -62,7 +62,13 @@ export const researchFactor = (n: Nation) => budgetOf(n).research / defaults(n).
 export const infraFactor = (n: Nation) => budgetOf(n).infrastructure / defaults(n).infrastructure;
 export const healthFactor = (n: Nation) => budgetOf(n).health / defaults(n).health;
 /** Welfare scales the daily transfers to households (15% = the usual 2% of the treasury a day). */
-export const transferRate = (n: Nation) => B.treasury.householdTransfer * ((n.welfare ?? 0.15) / 0.15);
+/** Default welfare share of revenue (pensions, benefits and other transfers are about a third of government spending). */
+export const WELFARE = 0.35;
+/**
+ * Today's transfers to households: the welfare share of revenue, never more than 2% of the treasury in a day.
+ * (Transfers used to be 2% of the treasury, so borrowed money flowed straight out as transfers.)
+ */
+export const welfareTransfer = (n: Nation) => Math.min(Math.round(dailyRevenue(n) * (n.welfare ?? WELFARE)), Math.floor((n.wallet[n.cur] ?? 0) * B.treasury.householdTransfer));
 
 /** Daily spending on health, research and infrastructure: wages and contracts in the background economy. */
 export function budgetDaily(w: World) {

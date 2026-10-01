@@ -26,6 +26,7 @@ export interface Capabilities {
   growth: number; // the latest growth rate of productivity (% a year)
   why: string[]; // what moved growth this month (plain language)
   hist: { key: string; productivity: number; tech: number; growth: number }[]; // one a month (last five years)
+  base?: { human: number; infra: number; eff: number; gap: number }; // the 2025 starting point (potential growth is measured from it)
 }
 
 /** The pace of history: how many strategic months pass each calendar month (Settings). */
@@ -68,12 +69,17 @@ export function strategicMonth(w: World, n: Nation, leaders: Record<TechDomain, 
   }
   // Growth: potential, adjusted for what the country has and what it is going through.
   const why: [string, number][] = [['potential', b.growth]];
-  why.push(['skills', (c.human - 55) * 0.02]);
-  why.push(['infrastructure', (c.infra - 55) * 0.015]);
-  why.push(['institutions', (c.inst.effectiveness - 0.65) * 2]);
+  // The potential rate already reflects where the country stood in 2025, so only changes since then move it.
+  const base = (c.base ??= { human: c.human, infra: c.infra, eff: c.inst.effectiveness, gap: 0 });
+  why.push(['skills', (c.human - base.human) * 0.03]);
+  why.push(['infrastructure', (c.infra - base.infra) * 0.03]);
+  why.push(['institutions', (c.inst.effectiveness - base.eff) * 3]);
   const lead = TECH_DOMAINS.reduce((t, d) => t + leaders[d], 0) / TECH_DOMAINS.length;
   // Potential growth already includes normal catching up; good institutions speed it, bad ones hold it back.
-  why.push(['catching up', Math.max(0, 1 - techAvg(c) / lead) * (c.inst.law - 0.5) * 4]);
+  // Catching up: a country closing its technology gap faster than in 2025 has less left to catch up on.
+  const gap = Math.max(0, 1 - techAvg(c) / lead);
+  if (!base.gap) base.gap = gap || 1e-6;
+  why.push(['catching up', (gap - base.gap) * 6]);
   if (c.cohesion < 45) why.push(['unrest', (c.cohesion - 45) * 0.06]);
   const atWar = Object.values(w.wars).some((x) => x.status === 'active' && (x.att === n.id || x.def === n.id));
   if (atWar) why.push(['war', -1.5]);

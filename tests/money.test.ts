@@ -344,3 +344,23 @@ test('world history: monthly power record and the State of the World', async () 
   assert.equal(r.rows.length, 16);
   assert.ok(r.headlines[0].includes('leading power'));
 });
+
+test('thirty years of history: growth stays in realistic bands and poorer countries catch up', async () => {
+  const { capsOf, strategicMonth } = await import('../src/sim/strategic');
+  const { TECH_DOMAINS } = await import('../src/data/nationBaselines');
+  const w = generateWorld(1817, 'Decades', 0, { citizensPerRegion: 1 });
+  const p0 = new Map(w.nations.map((n) => [n.id, capsOf(w, n).productivity]));
+  for (let m = 0; m < 360; m++) {
+    const leaders = Object.fromEntries(TECH_DOMAINS.map((d) => [d, Math.max(...w.nations.map((n) => capsOf(w, n).tech[d]))])) as any;
+    for (const n of w.nations) strategicMonth(w, n, leaders);
+  }
+  const annual = (n: (typeof w.nations)[number]) => (Math.pow(capsOf(w, n).productivity / p0.get(n.id)!, 1 / 30) - 1) * 100;
+  for (const n of w.nations) {
+    const g = annual(n);
+    assert.ok(g > -1 && g < 7, `${n.iso}: ${g.toFixed(2)}% a year over 30 years`);
+  }
+  const ind = w.nations.find((n) => n.iso === 'IND')!, usa = w.nations.find((n) => n.iso === 'USA')!;
+  assert.ok(annual(ind) > annual(usa) + 1.5, 'India catches up');
+  const techGap0 = 1, gap = Math.max(...TECH_DOMAINS.map((d) => capsOf(w, usa).tech[d] - capsOf(w, ind).tech[d]));
+  assert.ok(gap < 40 * techGap0, 'technology gaps narrow');
+});
