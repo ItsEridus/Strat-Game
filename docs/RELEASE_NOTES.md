@@ -3,6 +3,30 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.4.12: occupations and the labour market
+
+- **Sixty-seven occupations.** They span fourteen families: agriculture, mining and energy, manufacturing, skilled
+  trades, retail and hospitality, transport, office work, finance, IT, health, education, public administration,
+  security and defence, arts and media, and science and engineering.
+  - Each occupation needs a level of education (some a field of study) and has a pay level based on real ratios. A
+    cleaner earns about 0.65 of a typical wage, an electrician 1.3, a software developer 2.6 and a surgeon 6.
+  - Everyone in work has a job title from their workplace and qualifications, such as a farm labourer or an
+    agronomist on a farm, or an assembler or an aerospace engineer at an aircraft maker. Profiles and the Life
+    screen show it.
+- **Industries pay differently.** New companies start wages from their industry's pay level: an oil rig pays more
+  than a clothing workshop.
+- **Redundancy pay.** When a company cuts jobs, the people let go get a week's wages for each year of service (at
+  least one week, at most twenty). Their work history records that they were made redundant.
+- **Unemployment benefit.** People who lose their job through no fault of their own claim benefit at their
+  country's real rate and for its real duration: 60% of the last wage for a year in Germany, 45% for 26 weeks in
+  the United States, nothing in India or Mexico. The state pays it while the treasury can. Your payslip panel
+  shows your claim.
+- **Collective agreements.** In each country, a real share of firms is covered by collective bargaining: half in
+  Germany, Brazil and Australia, about one in eight in the United States. Covered firms never cut pay, and each
+  January they raise it by the central bank's inflation target.
+- **Labour market at a glance.** Each country's Living standards panel shows unemployment, the minimum wage,
+  benefit rules and bargaining coverage.
+
 ### New in 1.4.11: central banks, interest and business loans
 
 - **Central banks.** Each country's central bank starts at its real policy rate for January 2025: 4.5% in the

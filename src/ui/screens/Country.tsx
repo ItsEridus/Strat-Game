@@ -10,6 +10,7 @@ import { itemName } from '../../data/items';
 import { CountryExtras } from './CountryExtras';
 import { StatesTable } from './StateGov';
 import { livingStandards } from '../../sim/livingStandards';
+import { BARGAINING, benefitRules } from '../../sim/labour';
 import { inflation, priceChange } from '../../sim/statistics';
 import { policyRateOf } from '../../sim/loans';
 import { depositRate } from '../../sim/banking';
@@ -58,6 +59,7 @@ function LivingPanel({ w, id }: { w: World; id: Id }) {
       <tr><td>Well off (twice the median or more)</td><td class="num">{pct(s.comfortable)}</td></tr>
       <tr><td>Median wealth</td><td class="num">{fmtAmt(n.cur, s.medianWealth)}</td></tr>
     </tbody></table>
+    <p class="small"><b>Labour market:</b> unemployment {pct(n.unemployment)} · minimum wage {fmtAmt(n.cur, n.minWage)} a shift · {benefitRules(w, id).rate ? `unemployment benefit ${pct(benefitRules(w, id).rate)} of the last wage for ${benefitRules(w, id).weeks} weeks` : 'no unemployment insurance'} · {pct(BARGAINING[n.iso] ?? 0.2)} of firms under collective agreements.</p>
     <p class="small"><b>Cost of living:</b> a single adult's everyday costs come to about {fmtAmt(n.cur, day)} a day, plus rent (a flat in {w.regions[n.capital].name}: {fmtAmt(n.cur, rentOf(w, n.capital, 'flat'))} a day).</p>
     <p class="small muted">{basketOf(n.cur).map((sh, i) => `${BASKET_LABELS[i].toLowerCase()} ${Math.round(sh * 100)}%`).join(' · ')}</p>
     <Help>Measured from the {s.adults} adult citizens: income is pay and benefits per day, smoothed over about a month; wealth is cash plus the value of a home owned, less debts. Relative poverty is an income under 60% of the median (the OECD and EU line).</Help>

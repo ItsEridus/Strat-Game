@@ -2,6 +2,7 @@
 // milestones that make up a biography, birthdays, and the annual review the
 // player gets on each one. There is one clock: people age as the world's time
 // passes (Settings.lifeYearDays sets how many world days make a year of age).
+import { occupationLabel } from './labour';
 import { SERVICES } from './services';
 import type { AnnualReview, Citizen, LifeProfile, LifeState, Routine, World } from './types';
 import { B } from '../data/balance';
@@ -104,14 +105,15 @@ const cash = (w: World, c: Citizen) => c.wallet[w.nations[c.nation].cur] ?? 0;
 
 export function occupation(w: World, c: Citizen): string {
   if (c.gone) return c.gone.why === 'died' ? 'Deceased' : 'Emigrated';
-  if (c.job != null && w.companies[c.job]) return `${w.companies[c.job].name}`;
+  if (c.job != null && w.companies[c.job]) { const t = occupationLabel(w, c); return t ? `${t} at ${w.companies[c.job].name}` : w.companies[c.job].name; }
   if (c.post) return `${SERVICES[c.post.kind].ladder[c.post.grade]} (${w.regions[c.post.region].name})`;
   if (c.retired) return 'Retired';
   if (c.edu?.enrolled) return c.edu.enrolled.course === 'vocational' ? 'Student (college)' : 'Student (university)';
   const a = ageOf(w, c);
   if (a < B.life.stages.child) return 'At home';
   if (a < B.life.adultAge) return 'At school';
-  return 'Not working';
+  if (c.mil?.branch && !c.mil.reserve) return occupationLabel(w, c) ?? 'In the forces';
+  return c.benefit ? 'Unemployed (claiming benefit)' : 'Not working';
 }
 
 function snapshot(w: World, c: Citizen): LifeState['snap'] {

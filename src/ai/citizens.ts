@@ -7,6 +7,7 @@ import { hourOf } from '../engine/clock';
 import { chance } from '../engine/rng';
 import { GOLD, c as cur, g } from '../engine/money';
 import { applyJob, netWage, publicWorksShift, quitJob, workShift } from '../sim/company';
+import { jobLost } from '../sim/labour';
 import { serviceShift } from '../sim/services';
 import { companiesIn, companiesOf } from '../sim/census';
 import { eat, train } from '../sim/citizen';
@@ -96,7 +97,7 @@ export function citizenHourly(w: World, c: Citizen) {
   else if (h === c.workHour && c.lastWorkDay !== d) {
     if (c.job != null) {
       const r = workShift(w, c);
-      if (!r.ok && /cannot pay|no longer exists|Out of|storage/.test(r.msg) && chance(w, 0.5)) quitJob(w, c, true);
+      if (!r.ok && /cannot pay|no longer exists|Out of|storage/.test(r.msg) && chance(w, 0.5)) { const wage = w.companies[c.job]?.offer?.wage ?? 0; quitJob(w, c, true); if (/cannot pay/.test(r.msg)) jobLost(w, c, null, wage); }
     }
     // Job search / switching (weekly-ish, or when unemployed)
     if (c.job == null || (d + c.id) % 7 === 0) {

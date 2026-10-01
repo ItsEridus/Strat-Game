@@ -1,6 +1,7 @@
 // AI business management and background household demand. AI owners use the
 // same market/company actions (and permission checks) as the player.
 import { hasQuirk } from '../sim/nature';
+import { covered, industryPay } from '../sim/labour';
 import { BUSINESS_LOAN_DAYS, businessLoan } from '../sim/banking';
 import { importParity } from '../sim/trade';
 import { isRaw } from '../data/items';
@@ -110,7 +111,7 @@ export function manageCompany(w: World, co: Company) {
     // Pay rises faster in a tight labour market; cuts are rare and small (wages are sticky): only on the
     // first of the month, after a fortnight of losses.
     if (vacancies > 0) wage = Math.round(wage * (n.unemployment < 0.05 ? 1.05 : n.unemployment > 0.15 ? 1.01 : 1.03));
-    else if (wage > n.minWage && dateAt(w.time).day === 1 && co.hist.slice(-14).reduce((s, h) => s + h.profit, 0) < 0) wage = Math.round(wage * 0.97);
+    else if (wage > n.minWage && dateAt(w.time).day === 1 && !covered(w, co) && co.hist.slice(-14).reduce((s, h) => s + h.profit, 0) < 0) wage = Math.round(wage * 0.97);
     const ikShort = ik && (co.inv[ik] ?? 0) < inputPerUnit(co) * 2;
     if (glut || ikShort) slots = Math.max(workers > 0 ? workers - (glut ? 1 : 0) : 0, 0);
     else if (vacancies <= 0 && funds() > payroll * 6 && (profit3 >= 0 || procured > listedStock)) slots = Math.min(B.company.maxWorkers[co.q - 1], slots + 1);
@@ -269,7 +270,7 @@ function foundForDemand(w: World, founderId: Id, kind: string, nation: Id) {
   const n = w.nations[nation];
   const seed = Math.min(f.wallet[n.cur] ?? 0, cur(rand(w, 120, 250)));
   pay(w, cref(f.id), coref(co.id), n.cur, seed, `Funding ${co.name}`);
-  setOffer(w, f.id, co.id, Math.max(n.minWage, cur(B.wages.start)), 2, 0);
+  setOffer(w, f.id, co.id, Math.max(n.minWage, Math.round(cur(B.wages.start) * (0.5 + industryPay(co.industry) * 0.5))), 2, 0);
 }
 
 /**

@@ -1,4 +1,5 @@
 // Deterministic world generation from a seed.
+import { industryPay } from './labour';
 import { priceOf } from './housing';
 import { backgroundOf, BACKGROUNDS } from './nature';
 import { civilianControl } from './forces';
@@ -318,7 +319,7 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
         co.auto = { sell: true, buyInputs: true, hire: true };
         // The industries added in 1.3.3 start small and grow into their markets, so they don't strip farms and food plants of workers.
         const young = (NEW_INDUSTRIES as string[]).includes(ind);
-        co.offer = { wage: cur(B.wages.start + q - 1 + rand(w, -1, 1)), slots: young ? randInt(w, 1, 2) : randInt(w, 2, B.company.maxWorkers[q - 1] - 1), minEco: 0 };
+        co.offer = { wage: cur((B.wages.start + q - 1 + rand(w, -1, 1)) * (0.5 + industryPay(ind) * 0.5)), slots: young ? randInt(w, 1, 2) : randInt(w, 2, B.company.maxWorkers[q - 1] - 1), minEco: 0 };
         mint(w, coref(co.id), n.cur, cur(randInt(w, 250, 500) + q * 80), 'Genesis endowment');
         if (!raw) {
           const input = (B.company.recipes as any)[ind].input as string;

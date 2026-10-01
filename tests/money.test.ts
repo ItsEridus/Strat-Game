@@ -192,3 +192,27 @@ test('banks: a policy rule, savings interest and business loans', async () => {
   assert.equal((co.wallet.USD ?? 0) - cash, 50000);
   assert.ok(audit(w).ok);
 });
+
+test('labour market: occupations, redundancy pay and unemployment benefit', async () => {
+  const { occupationOf, labourDaily, benefitRules } = await import('../src/sim/labour');
+  const { OCCUPATIONS } = await import('../src/data/occupations');
+  const { setOffer } = await import('../src/sim/company');
+  const { operatorOf } = await import('../src/ai/economy');
+  const { audit } = await import('../src/engine/ledger');
+  assert.ok(Object.keys(OCCUPATIONS).length >= 60, 'about sixty occupations');
+  const w = generateWorld(1809, 'Jobs', 0, { citizensPerRegion: 2 });
+  const deu = w.nations.find((n) => n.iso === 'DEU')!;
+  const co = Object.values(w.companies).find((c) => c.workers.length >= 2 && w.regions[c.region].owner === deu.id && operatorOf(w, c) != null)!;
+  const worker = w.citizens[co.workers[co.workers.length - 1]];
+  const occ = occupationOf(w, worker)!;
+  assert.ok(OCCUPATIONS[occ].industries?.includes(co.industry), `${OCCUPATIONS[occ].label} works in ${co.industry}`);
+  const cash = worker.wallet.EUR ?? 0;
+  assert.ok(setOffer(w, operatorOf(w, co)!, co.id, co.offer!.wage, co.workers.length - 1, 0).ok);
+  assert.equal(worker.job, null);
+  assert.ok((worker.wallet.EUR ?? 0) > cash, 'redundancy pay');
+  assert.equal(worker.benefit?.daily, Math.round(co.offer!.wage * benefitRules(w, deu.id).rate));
+  const before = worker.wallet.EUR ?? 0;
+  labourDaily(w);
+  assert.equal((worker.wallet.EUR ?? 0) - before, worker.benefit!.daily, 'a day of benefit');
+  assert.ok(audit(w).ok);
+});

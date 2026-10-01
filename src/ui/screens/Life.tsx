@@ -128,7 +128,8 @@ export function Life({ w }: { w: World }) {
 function PayslipPanel({ w, p }: { w: World; p: Citizen }) {
   const list = lifeOf(p).payslips ?? [];
   const s = list[list.length - 1];
-  if (!s) return <Empty>No pay yet. Work a shift and your payslip shows here: gross pay, income tax, pension contributions and what reaches your account.</Empty>;
+  const benefit = p.benefit ? <p class="small">💶 Unemployment benefit: <b>{fmtAmt(w.nations[p.nation].cur, p.benefit.daily)}</b> a day until {fmtDate(p.benefit.until, 'long')}, while you look for work.</p> : null;
+  if (!s) return benefit ?? <Empty>No pay yet. Work a shift and your payslip shows here: gross pay, income tax, pension contributions and what reaches your account.</Empty>;
   return <>
     <p class="small muted">{MONTHS[s.month]} {s.year} · {s.employer} · {s.shifts} {s.shifts === 1 ? 'shift' : 'shifts'}</p>
     <table class="table small"><tbody>
@@ -138,6 +139,7 @@ function PayslipPanel({ w, p }: { w: World; p: Citizen }) {
       <tr><td><b>Net pay</b></td><td class="num"><b>{fmtAmt(s.code, s.net)}</b></td></tr>
       <tr><td class="muted">Per shift</td><td class="num muted">{fmtAmt(s.code, Math.round(s.gross / Math.max(1, s.shifts)))} gross · {fmtAmt(s.code, Math.round(s.net / Math.max(1, s.shifts)))} net</td></tr>
     </tbody></table>
+    {benefit}
     {list.length > 1 && <p class="small muted">Earlier: {list.slice(0, -1).reverse().map((x) => `${MONTHS[x.month]} ${fmtAmt(x.code, x.net)} net`).join(' · ')}</p>}
   </>;
 }

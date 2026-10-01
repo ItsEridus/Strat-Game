@@ -6,6 +6,7 @@ import { endWork, leavePost, logWork } from './services';
 import { leaveCheck, tooIll } from './health';
 import { contribute } from './pensions';
 import { goldScale, recordPay } from './wages';
+import { jobLost } from './labour';
 import { payOverheads } from './companyCosts';
 import { lifeGate } from './lifecycle';
 import type { AccountRef, Citizen, Company, DayRecord, Id, Industry, World } from './types';
@@ -266,6 +267,7 @@ export function fire(w: World, actor: Id, coId: Id, workerId: Id): Result {
   co.workers = co.workers.filter((x) => x !== workerId);
   c.job = null;
   endWork(w, c, 'dismissed');
+  jobLost(w, c, co, co.offer?.wage ?? 0);
   if (c.player) notify(w, 'economy', `You were dismissed by ${co.name}.`, { link: 'jobs' });
   return ok(`${c.name} dismissed.`);
 }
@@ -284,8 +286,11 @@ export function setOffer(w: World, actor: Id, coId: Id, wage: number, slots: num
   // Workers beyond the new slot count are let go (most recent first).
   while (co.offer && co.workers.length > co.offer.slots) {
     const id = co.workers.pop()!;
-    w.citizens[id].job = null;
-    if (w.citizens[id].player) notify(w, 'economy', `${co.name} cut positions; you lost your job.`, { link: 'jobs' });
+    const c = w.citizens[id];
+    c.job = null;
+    endWork(w, c, 'made redundant');
+    jobLost(w, c, co, co.offer.wage);
+    if (c.player) notify(w, 'economy', `${co.name} cut positions; you were made redundant.${c.benefit ? ` You can claim ${fmtAmt(n.cur, c.benefit.daily)} a day in unemployment benefit.` : ''}`, { link: 'jobs' });
   }
   return ok('Job offer updated.');
 }
