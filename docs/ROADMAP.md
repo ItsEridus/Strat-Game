@@ -261,6 +261,8 @@ real starting condition in the simulation, not a cosmetic flag, and the look can
     measured, and household spending responds to confidence.
   - 1.4.7: company costs and pricing. Companies pay rent for premises, energy and corporate tax at real
     rates, keep accounts, and price in their overheads.
+  - 1.4.8: taxes and public finance. Taxes start at real 2025 rates, income tax is progressive, and governments
+    borrow, pay interest and repay public debt.
 
 ### Part B: work & enterprise (GEO 1: companies expand or disband)
 

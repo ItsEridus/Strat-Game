@@ -365,7 +365,11 @@ export interface Nation {
   capital: Id; // rightful capital region
   wallet: Wallet; // treasury
   inv: Inventory; // national storage
-  taxes: { work: number; vat: number; import: number }; // percent
+  taxes: { work: number; vat: number; import: number }; // percent (work: income tax on a typical wage; progressive)
+  taxNorm?: number; // income tax + VAT people are used to (opinion reacts to changes from it)
+  debt?: number; // public debt (minor units of the national currency)
+  debtIssued?: number; // bonds issued in total (statistics)
+  interestPaid?: number; // interest paid on the debt in total
   minWage: number; // minor units
   president: Id | null;
   cabinet: Partial<Record<Ministry, Id>>;

@@ -10,7 +10,7 @@ import { initServices } from './services';
 import { initHousing } from './housing';
 import type { Citizen, Company, Id, Ideology, Industry, Nation, Persona, RawRes, Region, Settings, World } from './types';
 import { B, applyBalance } from '../data/balance';
-import { goldRate, minWageShift } from '../data/economy';
+import { TAXES, goldRate, minWageShift } from '../data/economy';
 import { NAME_POOLS, NATION_DEFS } from '../data/names';
 import { EARTH } from '../data/earth';
 import { IDEOLOGY_LIST } from '../data/ideologies';
@@ -253,7 +253,7 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
 
   w.nations = NATION_DEFS.map((d, i): Nation => ({
     id: i, name: d.name, adj: d.adj, color: d.color, cur: d.cur, iso: d.iso, leader: d.leader, legislature: d.legislature, capital: seeds[i], wallet: {}, inv: {},
-    taxes: { ...B.taxes.defaults }, minWage: Math.min(minWageShift(d.cur), Math.round(cur(B.wages.start) * 0.9)), president: null, cabinet: {}, deputies: [], seats: {}, congressSize: 5,
+    taxes: TAXES[d.iso] ? { work: TAXES[d.iso].income, vat: TAXES[d.iso].vat, import: TAXES[d.iso].tariff } : { ...B.taxes.defaults }, taxNorm: TAXES[d.iso] ? TAXES[d.iso].income + TAXES[d.iso].vat : undefined, minWage: Math.min(minWageShift(d.cur), Math.round(cur(B.wages.start) * 0.9)), president: null, cabinet: {}, deputies: [], seats: {}, congressSize: 5,
     relations: {}, alliances: [], embargoes: [], pacts: {}, exile: false, approval: 55, printed: 0, warheads: [], nukeProd: null, intel: 0,
     priorities: { battle: null, side: null, project: null }, termStart: w.time,
     stats: { revenue: 0, spending: 0, revToday: 0, spendToday: 0, revHist: [], spendHist: [] }, aiPlan: { lastWarCheck: 0, lastBuild: 0 }, recruitGoal: 0, fxAnchor: 0, requests: [], propCount: {}, warScore: 0, unemployment: 0, procure: {}, warMood: 0,

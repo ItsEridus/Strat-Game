@@ -66,3 +66,22 @@ export const BASKET: Record<string, [number, number, number, number]> = {
 };
 export const BASKET_LABELS = ['Groceries', 'Utilities and energy', 'Transport', 'Phone, clothes and everyday items'] as const;
 export const basketOf = (code: string) => BASKET[code] ?? BASKET.USD;
+
+/**
+ * Taxes at the start of 2025 (%), simplified: income tax is the effective rate on a typical wage (OECD Taxing Wages
+ * 2024, income tax only; social contributions are the pension contributions); VAT/GST or the typical combined sales
+ * tax; tariffs are the average applied rate (WTO, 2024–2025, rounded; the US after its 2025 increases).
+ */
+export const TAXES: Record<string, { income: number; vat: number; tariff: number }> = {
+  USA: { income: 15, vat: 7, tariff: 10 }, CAN: { income: 15, vat: 13, tariff: 4 }, MEX: { income: 9, vat: 16, tariff: 7 },
+  BRA: { income: 7, vat: 17, tariff: 11 }, ARG: { income: 8, vat: 21, tariff: 13 }, GBR: { income: 13, vat: 20, tariff: 4 },
+  DEU: { income: 19, vat: 19, tariff: 4 }, RUS: { income: 13, vat: 20, tariff: 7 }, TUR: { income: 13, vat: 20, tariff: 10 },
+  SAU: { income: 0, vat: 15, tariff: 5 }, ZAF: { income: 15, vat: 15, tariff: 8 }, IND: { income: 5, vat: 18, tariff: 15 },
+  CHN: { income: 4, vat: 13, tariff: 7 }, JPN: { income: 7, vat: 10, tariff: 4 }, KOR: { income: 6, vat: 10, tariff: 8 },
+  AUS: { income: 18, vat: 10, tariff: 2 },
+};
+/**
+ * Progressive income tax: the headline rate applies to a typical wage; nothing is due below a quarter of it (the
+ * personal allowance), and the rate rises with pay, to about 1.6 times the headline rate for very high earners.
+ */
+export const progressive = (multipleOfTypical: number) => Math.min(1.6, Math.pow(Math.max(0, (multipleOfTypical - 0.25) / 0.75), 0.6));

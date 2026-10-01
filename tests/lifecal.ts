@@ -34,6 +34,8 @@ for (let d = 1; d <= days; d++) {
     `posts ${all.filter((c) => c.post).length}`, `pets ${w.life.pets.filter((p) => !p.gone).length}`, `orphans ${w.life.orphans.length}`,
     `happy ${Math.round(all.reduce((t, c) => t + (c.life?.happiness ?? 50), 0) / all.length)}`, `treasury min ${treas.reduce((m, x) => Math.min(m, x), 9).toFixed(2)}x`,
     `firms ${Object.keys(w.companies).length} (hiring ${Object.values(w.companies).filter((c) => c.offer && c.offer.slots > c.workers.length).length}, losing ${Object.values(w.companies).filter((c) => c.hist.slice(-7).reduce((t, h) => t + h.profit, 0) < 0).length})`,
+    `debt max ${Math.max(...w.nations.map((n) => (n.debt ?? 0) / Math.max(1, n.stats.revHist.reduce((x, y) => x + y, 0) / Math.max(1, n.stats.revHist.length) * 365))).toFixed(2)}y (${w.nations.filter((n) => n.debt).length} borrowing)`,
+    `approval ${Math.round(w.nations.reduce((t, n) => t + n.approval, 0) / w.nations.length)}`,
     a.ok ? 'audit ok' : `AUDIT ${a.problems.slice(0, 3).join('; ')}`, `${Math.round((Date.now() - t0) / d)} ms/day`,
   ].join(' | '));
 }

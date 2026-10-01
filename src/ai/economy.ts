@@ -39,7 +39,9 @@ export function unitCost(w: World, co: Company): number {
     const market = controller(w.regions[co.region]);
     cost += (refPrice(w, market, ik) ?? refValue(ik)) * inputPerUnit(co);
   }
-  return Math.round(cost);
+  // Sales tax comes out of the price, so the price has to cover it too.
+  const vat = w.nations[controller(w.regions[co.region])].taxes.vat;
+  return Math.round(cost / Math.max(0.5, 1 - vat / 100));
 }
 
 export function manageCompany(w: World, co: Company) {

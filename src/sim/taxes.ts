@@ -1,5 +1,7 @@
 // Tax rules: ceilings from congress ideology shares (DOC formula interpretation)
 // and work-tax routing (occupied regions split 80/20 occupier/owner, DOC).
+import { c as cur } from '../engine/money';
+import { progressive } from '../data/economy';
 import type { AccountRef, Citizen, Id, Nation, World } from './types';
 import { B } from '../data/balance';
 import { pay } from '../engine/ledger';
@@ -30,7 +32,8 @@ export function enforceCeilings(w: World, n: Nation) {
 export function workTaxFor(w: World, rid: Id, worker: Citizen, gross: number) {
   const r = w.regions[rid];
   const taxNation = r.occ ? w.nations[r.occ.nation] : w.nations[r.owner];
-  let rate = taxNation.taxes.work;
+  // Progressive: the national rate is what a typical wage pays (an allowance below, higher rates above).
+  let rate = taxNation.taxes.work * progressive(gross / cur(B.wages.start));
   // Exile relief: a host holding an exiled nation's rightful regions grants its citizens relief (DOC; size SOLO).
   const home = w.nations[worker.nation];
   if (home.exile && home.id !== taxNation.id && w.regions.some((x) => x.core === home.id && x.owner === taxNation.id)) rate *= 1 - B.taxes.exileRelief;

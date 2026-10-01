@@ -3,6 +3,29 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.4.8: taxes and public finance
+
+- **Real taxes.** New games start with each country's real 2025 taxes:
+  - income tax on a typical wage: 15% in the United States, 19% in Germany, 5% in India, none in Saudi Arabia;
+  - VAT or sales tax: 20% in Britain, 18% GST in India, 10% in Japan;
+  - average tariffs: 10% in the United States after its 2025 increases, 4% in the EU, 15% in India.
+- **Progressive income tax.** The rate on a typical wage is the headline rate. Low pay is tax-free up to an
+  allowance, and the rate rises with pay. Your payslip shows the tax on your wage.
+- **Prices include sales tax.** AI companies price to cover VAT, which comes out of every sale.
+- **Public debt.** When a treasury runs short, the government sells bonds instead of letting salaries go unpaid:
+  - it borrows up to three years of revenue;
+  - it pays interest to bondholders at the central bank's rate plus a premium that grows with the debt;
+  - it repays when money is plentiful.
+
+  Each country's page has a **Public finances** panel: revenue, spending, the deficit or surplus, the debt, the
+  interest rate on bonds and the interest paid so far.
+- **People get used to their taxes.** Opinion reacts to changes from the taxes a country started with, not to how
+  high they are, so high-tax countries are not permanently unhappy.
+
+### Fixed in 1.4.8
+
+- Treasuries no longer run down over time. They now hold steady or grow in long test runs.
+
 ### New in 1.4.7: what it costs to run a company
 
 - **Overheads.** Besides wages and materials, companies now pay:

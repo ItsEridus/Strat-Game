@@ -10,6 +10,7 @@ import { itemName } from '../../data/items';
 import { CountryExtras } from './CountryExtras';
 import { StatesTable } from './StateGov';
 import { livingStandards } from '../../sim/livingStandards';
+import { bondRate, dailyRevenue, dailySpending } from '../../sim/publicFinance';
 import { BASKET_LABELS, basketOf } from '../../data/economy';
 import { B } from '../../data/balance';
 import { c as cur } from '../../engine/money';
@@ -58,12 +59,23 @@ export function Country({ w }: { w: World }) {
       </Panel>
       <Panel title="Taxes & labour law">
         <table class="table compact"><tbody>
-          <tr><td>Work tax</td><td>{n.taxes.work}%</td><td class="small muted">ceiling {ceil.work.toFixed(1)}%</td></tr>
+          <tr><td>Income tax (on a typical wage; progressive)</td><td>{n.taxes.work}%</td><td class="small muted">ceiling {ceil.work.toFixed(1)}%</td></tr>
           <tr><td>VAT</td><td>{n.taxes.vat}%</td><td class="small muted">ceiling {ceil.vat.toFixed(1)}%</td></tr>
           <tr><td>Import tax</td><td>{n.taxes.import}%</td><td class="small muted">ceiling {ceil.import.toFixed(1)}%</td></tr>
           <tr><td>Minimum wage</td><td>{fmtAmt(n.cur, n.minWage)}</td><td /></tr>
         </tbody></table>
         <Help>Ceilings = 25 + 0.5 × communist seat % − 0.4 (import) / 0.3 (VAT, work) × capitalist seat % (documented formula; mixed-congress combination is an interpretation).</Help>
+      </Panel>
+      <Panel title="Public finances">
+        <table class="table compact small"><tbody>
+          <tr><td>Revenue (a day, last month)</td><td class="num">{fmtAmt(n.cur, Math.round(dailyRevenue(n)))}</td></tr>
+          <tr><td>Spending (a day, last month)</td><td class="num">{fmtAmt(n.cur, Math.round(dailySpending(n)))}</td></tr>
+          <tr><td>{dailyRevenue(n) >= dailySpending(n) ? 'Surplus' : 'Deficit'}</td><td class="num">{fmtAmt(n.cur, Math.round(Math.abs(dailyRevenue(n) - dailySpending(n))))} a day</td></tr>
+          <tr><td>Public debt</td><td class="num">{fmtAmt(n.cur, n.debt ?? 0)}{dailyRevenue(n) > 0 && n.debt ? ` (${((n.debt ?? 0) / (dailyRevenue(n) * 365)).toFixed(2)} years of revenue)` : ''}</td></tr>
+          <tr><td>Interest rate on bonds</td><td class="num">{bondRate(n).toFixed(2)}%</td></tr>
+          <tr><td>Interest paid so far</td><td class="num">{fmtAmt(n.cur, n.interestPaid ?? 0)}</td></tr>
+        </tbody></table>
+        <Help>When the treasury runs short, the government sells bonds (up to three years of revenue) and pays interest to bondholders; when money is plentiful it repays them. Heavier debt costs more.</Help>
       </Panel>
       <Panel title="Living standards">
         <LivingPanel w={w} id={id} />

@@ -91,3 +91,28 @@ test('companies pay rent, energy and corporate tax, and keep accounts', async ()
   assert.ok(corpTaxRate(w, co) >= 0.2 && corpTaxRate(w, co) <= 0.35, 'a real corporate tax rate');
   assert.ok(audit(w).ok);
 });
+
+test('taxes at real rates, progressive income tax, and public debt', async () => {
+  const { workTaxFor } = await import('../src/sim/taxes');
+  const { publicFinanceDaily } = await import('../src/sim/publicFinance');
+  const { player } = await import('../src/sim/query');
+  const { audit, burn } = await import('../src/engine/ledger');
+  const { natref } = await import('../src/sim/query');
+  const w = generateWorld(1805, 'Taxes', 0, { citizensPerRegion: 1 });
+  const deu = w.nations.find((n) => n.iso === 'DEU')!;
+  assert.deepEqual(deu.taxes, { work: 19, vat: 19, import: 4 });
+  const r = w.regions.find((x) => x.owner === deu.id)!.id;
+  const p = player(w);
+  const rate = (gross: number) => workTaxFor(w, r, p, gross).natRate;
+  assert.equal(rate(cur(1)), 0, 'below the allowance');
+  assert.ok(Math.abs(rate(cur(B.wages.start)) - 19) < 0.01, 'the headline rate on a typical wage');
+  assert.ok(rate(cur(B.wages.start * 4)) > 25, 'higher for high earners');
+  // An empty treasury borrows; the debt is recorded and the books still balance.
+  deu.stats.spendHist = Array(30).fill(cur(100)); deu.stats.revHist = Array(30).fill(cur(90));
+  burn(w, natref(deu.id), deu.cur, deu.wallet[deu.cur] ?? 0, 'test');
+  publicFinanceDaily(w);
+  assert.ok((deu.debt ?? 0) > 0 && (deu.wallet[deu.cur] ?? 0) === deu.debt);
+  publicFinanceDaily(w);
+  assert.ok((deu.interestPaid ?? 0) > 0, 'interest paid');
+  assert.ok(audit(w).ok);
+});

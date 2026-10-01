@@ -1,4 +1,6 @@
 import { test } from 'node:test';
+import { B } from '../src/data/balance';
+import { progressive } from '../src/data/economy';
 import assert from 'node:assert/strict';
 import { generateWorld } from '../src/sim/worldgen';
 import { registerSystems } from '../src/sim/systems';
@@ -67,7 +69,7 @@ test('state wage tax reduces net wages, funds the state treasury, and is 0 in no
   co.offer = { wage: cur(10), slots: 3, minEco: 0 };
   const nw = netWage(w, co, p);
   assert.equal(nw.stateRate, 5);
-  assert.equal(nw.tax, Math.round((nw.gross * w.nations[0].taxes.work) / 100) + Math.round(nw.gross * 0.05));
+  assert.equal(nw.tax, Math.round((nw.gross * w.nations[0].taxes.work * progressive(nw.gross / cur(B.wages.start))) / 100) + Math.round(nw.gross * 0.05));
   const tx = w.govs[region(w, 'Texas').id]!;
   assert.equal(tx.tax, 0);
   const r = setStateTax(w, 'npc', tx.region, 2);
