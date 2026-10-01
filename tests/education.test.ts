@@ -28,7 +28,7 @@ test('everyone has an education, in plausible shares by country', () => {
 
 test('enrol, pay fees to the state, study day by day, graduate', () => {
   const w = fresh(502);
-  w.settings.lifeYearDays = 24; // a fast pace of life: short courses
+  w.settings.lifeYearDays = 24; w.settings.playerMortality = false; // a fast pace of life (set directly, so ages rescale: no player deaths): short courses
   const p = player(w);
   const r = w.regions.find((x) => hasUniversity(w, x) && x.owner === p.nation)!;
   p.home = r.id; p.loc = r.id;
@@ -51,7 +51,7 @@ test('enrol, pay fees to the state, study day by day, graduate', () => {
 
 test('officer ranks need a commission: officer training for graduates, the academy for cadets', () => {
   const w = fresh(503);
-  w.settings.lifeYearDays = 24;
+  w.settings.lifeYearDays = 24; w.settings.playerMortality = false; // ages rescale with the pace
   const p = player(w);
   p.edu = { level: 'school' };
   p.mil = { branch: 'army', rank: 4, sp: 1e6, since: w.time - 5000 * DAY, lastDuty: -1, commands: 0 };

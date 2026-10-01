@@ -25,7 +25,7 @@ test('a pregnancy ends in a birth about nine months later', () => {
   const w = fresh();
   const p = player(w);
   const npc = census(w).all.find((c) => !c.player && !c.gone && ageOf(w, c) >= 20 && ageOf(w, c) < 40)!;
-  w.settings.lifeYearDays = 24; // a fast pace of life: due in about 18 days
+  w.settings.lifeYearDays = 24; w.settings.playerMortality = false; // a fast pace of life (set directly, so ages rescale: no player deaths): due in about 18 days
   conceive(w, p, npc);
   assert.ok(expecting(w, p));
   const before = fam(p).kids.length + fam(p).children.length;

@@ -3,6 +3,22 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.3.18: wills, heirlooms and succession
+
+- **Your character can die.** In new campaigns, illness and old age can end your life. When that happens, you carry
+  on as your heir: your spouse, else your eldest grown child, a brother or sister, or a parent. Your will can choose
+  among them. You can switch this off in Settings, and it starts off for campaigns saved before this version.
+- **Wills.** The new Will and legacy panel on the Life screen lets you leave shares of your money to family and
+  close friends, and a share in trust for children still at home. The rest, with your home, companies, shares and
+  heirlooms, goes to your next of kin.
+- **Inheritance tax.** Countries that have it take their share of large estates first: the United States and Britain
+  at 40% above a tax-free amount, Japan and Korea 30%, Germany 15%.
+- **Trusts.** Money left to a child is held until they turn 18, then paid to them.
+- **Heirlooms.** A wedding ring, a degree certificate, an officer's sword, the keys to a first home and a retirement
+  gold watch are kept, and passed down the generations.
+- **Family history.** Each life you've lived is remembered: dates, cause of death, milestones, what it left and who
+  carried on. If a line ends with nobody grown-up to continue, you can begin a new life in the same place.
+
 ### New in 1.3.17: growing up, and raising children
 
 - **Choose when your life starts.** New campaigns can begin at 24 (as before), at 18 just out of school, at 16 still

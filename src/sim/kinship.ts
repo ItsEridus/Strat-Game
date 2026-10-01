@@ -1,6 +1,7 @@
 // Family life beyond romance: pregnancies that end in a birth months later,
 // brothers and sisters, gifts that warm a relationship, and pets that need
 // looking after. Money and goods move through the ledger like everything else.
+import { releaseTrusts } from './legacy';
 import type { Citizen, Id, Kid, Pet, World } from './types';
 import { B } from '../data/balance';
 import { gradeLc, itemName, kindOf, qualityOf } from '../data/items';
@@ -282,6 +283,7 @@ export function adoptionsDaily(w: World) {
     const c = newResident(w, nation, o.region, { name: o.name, age: B.life.adultAge, funded: true });
     c.born = o.born;
     fam(c).parents = o.parents.filter((id) => w.citizens[id]);
+    releaseTrusts(w, o, c);
     pay(w, natref(nation.id), cref(c.id), nation.cur, cur(B.family.careLeaver), 'Leaving-care grant');
   }
 }

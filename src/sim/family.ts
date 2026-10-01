@@ -3,6 +3,7 @@
 // citizens; the bereaved grieve and inherit. The player lives by the same rules:
 // ask someone out, take them on dates, propose, marry, start a family — and a
 // partner who is neglected may leave.
+import { addHeirloom, releaseTrusts } from './legacy';
 import type { Citizen, Family, Id, Kid, World } from './types';
 import { B } from '../data/balance';
 import { NAME_POOLS } from '../data/names';
@@ -129,6 +130,7 @@ export function kidComesOfAge(w: World, parent: Citizen, kid: Kid) {
     c.rel[player(w).id] = 70;
   }
   comeOfAgeFrom(w, kid, c, parent);
+  releaseTrusts(w, kid, c);
   localNews(w, parent.home, `🎓 ${c.name}, ${parent.name}'s child, came of age.`);
   return c;
 }
@@ -380,6 +382,7 @@ export function marry(w: World): Result {
   wed(w, p, npc!);
   fam(p).lastDate = w.time;
   remember(w, npc!, 15, 'married me', 'public');
+  addHeirloom(w, p, 'Wedding ring', `married ${npc!.name}, ${fmtDate(w.time, 'long')}`);
   p.influence += 1;
   record(w, 'people', `💒 ${p.name} married ${npc!.name} in ${w.regions[p.loc].name}.`, { cit: p.id, player: true });
   return ok(`You married ${npc!.name}. They move in with you in ${w.regions[p.home].name}.`);

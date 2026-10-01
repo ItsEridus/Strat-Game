@@ -143,6 +143,7 @@ export interface LifeProfile {
   treated?: number; // day of the last dose of medicine (better recovery for a few days)
   work?: import('./services').WorkEntry[];
   parentalTaken?: number; // when parental leave was last taken
+  will?: import('./legacy').Will; heirlooms?: import('./legacy').Heirloom[]; // what is passed on (sim/legacy.ts)
   grades?: number; lastSchool?: number; lastPlay?: number; schoolDone?: boolean; scholarship?: boolean; // childhood (sim/childhood.ts) // work history, newest last
   giftDay?: number; giftFrom?: Id; // the last gift received (one a day from the same person)
   goods?: { clothes?: { t: number; q: number }; gadget?: { t: number; q: number } }; // latest new clothes and gadget (time, grade)
@@ -171,6 +172,7 @@ export interface LifeState {
   adoptions: { id: Id; parents: Id[]; ready: number; fee: number; cur: string }[]; // applications in progress
   orphans: { name: string; born: number; parents: Id[]; region: Id }[]; // children in the care system, waiting for a family
   pets: Pet[];
+  ended?: { t: number; name: string }; // the player's line ended with no heir (sim/legacy.ts)
   snap: { who: Id; t: number; age: number; cash: number; cur: string; job: string; status: string; kids: number; health: number; happiness: number } | null; // start of the current life year
 }
 
@@ -648,6 +650,7 @@ export interface Settings {
   adminUsed?: boolean; // the admin panel changed this campaign
   clock24?: boolean; // show times on a 24-hour clock
   advanceStops?: 'personal' | 'all'; // what interrupts a long advance (default: personal matters only)
+  playerMortality?: boolean; // the player can die (and play continues as their heir); off for saves from before 1.3.18
   startAge?: number; // the player's age at the start (0 = born into the world; default 24)
   lifeYearDays?: number; // pace of life: world days per year of age (undefined = 365, for older saves)
   fixedFate?: boolean; // reproducible: never mix outside randomness into the world's dice (see ui/store.ts)
@@ -775,7 +778,9 @@ export interface World {
   stats: Stats;
   ledger: { t: number; text: string; amount: number; asset: AssetId; ref: string }[]; // player's transaction history
   budget?: import('../engine/budget').BudgetMonth[];
-  loans?: Record<Id, import('./loans').Loan>; // mortgages, student and personal loans (sim/loans.ts) // the player's money by category and month (engine/budget.ts)
+  loans?: Record<Id, import('./loans').Loan>;
+  trusts?: import('./legacy').Trust[]; // money held for children until they come of age
+  legacy?: import('./legacy').LegacyEntry[]; // the player's past lives // mortgages, student and personal loans (sim/loans.ts) // the player's money by category and month (engine/budget.ts)
   calendar: { nextDaily: number; terrainDone?: Id[]; baseCitizens?: number; basePop?: number };
 }
 

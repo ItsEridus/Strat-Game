@@ -3,6 +3,7 @@
 // sought-after places cost more; prices move slowly. Rent and upkeep are part
 // of daily living costs (paid to the background economy, where landlords,
 // builders and repairers are); buying and selling trade with it too.
+import { addHeirloom } from './legacy';
 import type { Citizen, Id, Region, World } from './types';
 import { B } from '../data/balance';
 import { pay } from '../engine/ledger';
@@ -128,6 +129,7 @@ export function buyHome(w: World, size: HomeSize, c: Citizen = player(w)): Resul
   if (c.home !== c.loc) moveTo(w, c, c.loc);
   c.dwelling = { kind: 'own', region: c.loc, size, since: w.time, paid: price };
   milestone(w, c, 'home', `bought a ${SIZES[size].label.toLowerCase()} in ${w.regions[c.loc].name}`);
+  addHeirloom(w, c, 'Keys to the first family home', w.regions[c.loc].name);
   return ok(`🔑 You bought a ${SIZES[size].label.toLowerCase()} in ${w.regions[c.loc].name} for ${fmtAmt(code, price)}.`);
 }
 

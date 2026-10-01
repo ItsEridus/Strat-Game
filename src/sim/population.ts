@@ -8,6 +8,7 @@
 // Leaving the world is done properly: a death hands the estate to the family
 // (or the state), offices fall vacant and are refilled, commands pass on, and
 // the person stays on record so history can still name them.
+import { playerDies, settleWill } from './legacy';
 import type { Citizen, Id, Ideology, Nation, Persona, Region, World } from './types';
 import { B } from '../data/balance';
 import { EARTH } from '../data/earth';
@@ -146,7 +147,7 @@ export function heirOf(w: World, c: Citizen): Citizen | null {
 }
 
 /** Step down from every role, vacating offices so they are refilled. */
-function releaseRoles(w: World, c: Citizen, why: string) {
+export function releaseRoles(w: World, c: Citizen, why: string) {
   const n = w.nations[c.nation];
   if (c.job != null) quitJob(w, c, true);
   if (c.party != null) leaveParty(w, c);
@@ -185,7 +186,8 @@ function releaseRoles(w: World, c: Citizen, why: string) {
 }
 
 /** Pass everything someone owns to their heir, or to the state. */
-function settleEstate(w: World, c: Citizen, heir: Citizen | null) {
+export function settleEstate(w: World, c: Citizen, heir: Citizen | null) {
+  settleWill(w, c, heir); // inheritance tax, bequests, trusts for children, heirlooms
   const to = heir ? cref(heir.id) : natref(controller(w.regions[c.home]));
   const from = cref(c.id);
   for (const [asset, amt] of Object.entries(c.wallet)) if (amt > 0) pay(w, from, to, asset, amt, heir ? `Inheritance from ${c.name}` : `Estate of ${c.name}`);
@@ -334,6 +336,8 @@ export function populationDaily(w: World) {
   }
   // Deaths (old age, illness). People in the middle of a deal are spared until it closes.
   const busy = busyIds(w);
+  const pl = player(w);
+  if (w.settings.playerMortality && !pl.gone && chance(w, mortality(w, pl))) playerDies(w, healthOf(pl) < 40 ? 'after an illness' : ageOf(w, pl) >= 75 ? 'of old age' : 'suddenly', { releaseRoles, settleEstate, bereave });
   for (const c of all) {
     if (c.player || c.gone || busy.has(c.id)) continue;
     if (chance(w, mortality(w, c))) die(w, c, healthOf(c) < 40 ? 'after an illness' : ageOf(w, c) >= 75 ? 'of old age' : 'suddenly');

@@ -2,6 +2,9 @@
 // funded from national revenue through the ledger (teachers' pay goes to the
 // households); an education ladder from secondary school to a doctorate; and
 // courses taken by studying, day by day, like any other skill.
+import { addHeirloom } from './legacy';
+import { fmtDate } from '../engine/calendar';
+const fmtDateL = (t: number) => fmtDate(t, 'long');
 import type { Citizen, Id, Region, World } from './types';
 import { B } from '../data/balance';
 import { COURSES, FIELDS, LEVEL_LABEL, eduOf, rank, type Course, type EduLevel, type Field } from '../data/education';
@@ -135,6 +138,8 @@ function graduate(w: World, c: Citizen): string {
   c.influence += e.course === 'doctorate' ? 5 : e.course === 'master' ? 3 : 2;
   const text = military ? `passed ${e.course === 'academy' ? `the military academy (a degree in ${FIELDS[e.field].label.toLowerCase()})` : 'officer training'} and earned a commission` : `graduated with a ${COURSES[e.course].label.toLowerCase()} in ${FIELDS[e.field].label.toLowerCase()}`;
   milestone(w, c, 'education', text);
+  if (military) addHeirloom(w, c, "Officer's sword", `commissioned ${fmtDateL(w.time)}`);
+  else if (rank(ed.level) >= rank('bachelor') && ed.level === e.course) addHeirloom(w, c, `${COURSES[e.course].label} certificate`, `${FIELDS[e.field].label}, ${fmtDateL(w.time)}`);
   if (c.player) { notify(w, 'personal', `🎓 You ${text}!`, { critical: true, link: 'life' }); routineOfPlayer(w).school = false; }
   return `🎓 You ${text}!`;
 }

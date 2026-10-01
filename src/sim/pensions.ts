@@ -4,6 +4,7 @@
 // years earlier, with a reduced state pension) people retire: the state pays
 // its pension from the treasury, the pot is paid out as an annuity, and long
 // service in the armed forces earns a military pension.
+import { addHeirloom } from './legacy';
 import type { Citizen, World } from './types';
 import { DAY } from '../engine/clock';
 import { pay } from '../engine/ledger';
@@ -77,6 +78,7 @@ export function retire(w: World, c: Citizen = player(w)): Result {
   c.retired = true;
   const p = pensionOf(c);
   p.state = q.state; p.private = q.private; p.military = q.military; p.since = w.time;
+  addHeirloom(w, c, 'Gold watch', `a retirement gift at ${ageOf(w, c)}`);
   milestone(w, c, 'retirement', `retired${q.early ? ` ${q.early} year${q.early > 1 ? 's' : ''} early` : ''}`);
   const code = w.nations[c.nation].cur;
   return ok(`🌅 Retired. Pensions: ${fmtAmt(code, q.state)} a day from the state${q.private ? `, ${fmtAmt(code, q.private)} from your pension pot` : ''}${q.military ? `, ${fmtAmt(code, q.military)} military pension` : ''}.`);

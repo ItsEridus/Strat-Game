@@ -320,6 +320,7 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
   const p = newCitizen(w, playerName.trim().slice(0, 28) || 'Citizen', pn.id, birthplace, 'worker', 'capitalism');
   p.player = true;
   const startAge = settings.startAge ?? B.life.playerAge;
+  settings.playerMortality ??= true;
   p.born = bornYearsAgo(w, startAge, startAge === 0 ? randInt(w, 0, 3) : randInt(w, 20, 340)); // a birthday later in the year (or just born)
   autoAllocate(p, 3);
   p.workHour = 9; p.trainHour = 8; p.traits = { ambition: 1, risk: 0.5, loyalty: 0.5, greed: 0.5, activity: 1 };

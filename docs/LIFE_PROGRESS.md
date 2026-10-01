@@ -38,8 +38,8 @@ stages go out in slices.
 | L2 | Family graph with real children, pregnancy, adoption, guardians, siblings; hobbies, pets, gifts; story protagonists and memory subjects; budgets | Done: groundwork 1.3.2; pregnancy, siblings, gifts, pets 1.3.6; hobbies 1.3.7; adoption, care, guardians, child costs 1.3.8; memory subjects, protagonists, budgets 1.3.9 |
 | L3 | Schools, universities, clinics and offices as funded institutions; education ladder; qualifications; service careers (teaching, clinical care, administration, technical); work history; promotions; military academy | Done: schools, universities, education ladder 1.3.10; public-service careers, promotions, work history 1.3.11; military academy and commissions 1.3.12 |
 | L4 | Housing (rent/buy/sell); obligations (loans, mortgages, student loans); conditions and treatment; leave; retirement and funded pensions (incl. veterans); living-cost split | Done: housing and the living-cost split 1.3.13; loans, mortgages, student loans, credit 1.3.14; conditions, treatment, sick and parental leave 1.3.15; retirement and pensions 1.3.16 |
-| L5 | Birth start; childhood and parenting; player mortality; wills, trusts, estates, heirlooms | In progress: birth start, childhood and parenting 1.3.17 |
-| L6 | Succession to heirs; legacy archive; 8 life chains + 16 standalone encounters; narrative stage 4's five chains; NPC AI parity | Planned |
+| L5 | Birth start; childhood and parenting; player mortality; wills, trusts, estates, heirlooms | Done: birth start, childhood and parenting 1.3.17; player mortality, wills, trusts, estates, heirlooms 1.3.18 |
+| L6 | Succession to heirs; legacy archive; 8 life chains + 16 standalone encounters; narrative stage 4's five chains; NPC AI parity | In progress: succession and legacy archive 1.3.18 |
 | UI2 | Every screen restyled; cinematic story, review and succession; map polish; optional UI sound; screenshots | Planned |
 | L7 | Calibration, performance, docs, tests, e2e, release 1.4.0 (with narrative stage 5) | Planned |
 
@@ -220,7 +220,6 @@ and employment (1.5), policing, crime careers and prisons (1.7), and weather and
 
 ## Known limitations (to address in later stages)
 - NPC children are compact records until 18; only the player's own family will get full child citizens (L2/L5).
-- Player mortality is not enabled until succession exists (L5/L6).
 - Institutions (schools, clinics), housing, obligations, wills and heirs are not built yet (L3–L6).
 - A daily-hook chunk can take one to two seconds on a full-size world, so a long advance is responsive between
   chunks rather than continuously; measured: a 36-day year in about 30 s at 8 people per region in the browser.

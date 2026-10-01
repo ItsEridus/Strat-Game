@@ -23,6 +23,7 @@ import { KIND, buyWithMortgage, creditOf, incomeOf, loanCheck, loansOf, mortgage
 import { CONDITIONS, clinicCheck, conditionsOf, endLeave, parentalCheck, takeParentalLeave, treated, visitClinic, visitCost } from '../../sim/health';
 import { pensionOf, pensionQuote, pensionRules, retire, retireCheck } from '../../sim/pensions';
 import { isMinor, parentTime, parentTimeCheck, play, playCheck, schoolDay, schoolDayCheck } from '../../sim/childhood';
+import { continueAsNewcomer, successor, writeWill } from '../../sim/legacy';
 import { HOBBIES, HOBBY_ENERGY, hobbyCheck, hobbyLevel, pursueHobby } from '../../sim/hobbies';
 import { STATUS_LABEL, breakUp, familyOf, goOnDate, marry, partnerOf, propose, romanceCheck, tryForChild } from '../../sim/family';
 
@@ -37,6 +38,12 @@ export function Life({ w }: { w: World }) {
   const rep = reputation(p);
   return (
     <div class="grid life">
+      {w.life.ended && (
+        <Panel title="🕯️ Your line has ended" class="wide">
+          <p>{w.life.ended.name} died with no grown-up family to carry on.</p>
+          <ActBtn kind="primary" run={(w) => continueAsNewcomer(w)}>Begin a new life in {w.regions[p.home].name}</ActBtn>
+        </Panel>
+      )}
       <Panel title={`${stage.icon} ${p.name}`} class="wide hero" right={<Btn kind="primary" onClick={() => store.startAdvance(bday, `your ${age + 1}th birthday`)}>🎂 Advance to next birthday</Btn>}>
         <div class="stats">
           <Stat label="Age">{age}</Stat>
@@ -100,6 +107,8 @@ export function Life({ w }: { w: World }) {
 
       <Panel title="Daily routine"><RoutinePanel w={w} p={p} /></Panel>
 
+      <Panel title="Will and legacy" class="wide"><LegacyPanel w={w} p={p} /></Panel>
+
       <Panel title="Recent milestones" right={<Btn small kind="ghost" onClick={() => store.go('journal')}>Journal</Btn>}>
         {L.milestones.length ? <ul class="small milestones">{[...L.milestones].reverse().slice(0, 10).map((m) => <li><span class="muted">age {m.age}</span> {m.text}</li>)}</ul> : <Empty>Your story is just beginning.</Empty>}
       </Panel>
@@ -109,6 +118,40 @@ export function Life({ w }: { w: World }) {
           {([['character', '🧍 Character'], ['jobs', '💼 Work'], ['local', '🏘️ Neighbourhood'], ['market', '🛒 Market'], ['companies', '🏭 Companies'], ['politics', '🗳️ Politics'], ['forces', '🎖️ Military'], ['journal', '📓 Journal']] as const).map(([id, label]) => <Btn small kind="ghost" onClick={() => store.go(id)}>{label}</Btn>)}
         </div>
       </Panel>
+    </div>
+  );
+}
+
+function LegacyPanel({ w, p }: { w: World; p: Citizen }) {
+  const L = lifeOf(p);
+  const f = p.family;
+  const people = [
+    ...(f?.partner != null ? [f.partner] : []), ...(f?.children ?? []), ...(f?.parents ?? []),
+    ...Object.values(w.citizens).filter((c) => !c.gone && !c.player && (c.rel[p.id] ?? 0) >= 50).map((c) => c.id),
+  ].filter((id, i, a) => a.indexOf(id) === i && w.citizens[id] && !w.citizens[id].gone).slice(0, 8);
+  const [shares, setShares] = useState<Record<number, number>>(() => Object.fromEntries((L.will?.shares ?? []).map((s) => [s.id, Math.round(s.share * 100)])));
+  const [kids, setKids] = useState(Math.round((L.will?.kids ?? 0) * 100));
+  const heir = successor(w, p);
+  return (
+    <div class="grid two">
+      <div>
+        <h4>📜 Your will</h4>
+        <p class="small muted">{L.will ? `Written ${fmtDate(L.will.written, 'medium')}.` : 'No will: everything goes to your next of kin.'} Next of kin now: {heir ? <CitLink w={w} id={heir.id} /> : 'nobody grown-up'}.</p>
+        <table class="table compact small"><tbody>
+          {people.map((id) => (
+            <tr><td><CitLink w={w} id={id} /></td><td><select value={shares[id] ?? 0} onChange={(e) => setShares({ ...shares, [id]: +(e.target as HTMLSelectElement).value })}>{[0, 10, 20, 25, 33, 50, 75, 100].map((x) => <option value={x}>{x}%</option>)}</select></td></tr>
+          ))}
+          {(f?.kids.length ?? 0) > 0 && <tr><td>Children still at home (in trust until 18)</td><td><select value={kids} onChange={(e) => setKids(+(e.target as HTMLSelectElement).value)}>{[0, 10, 20, 25, 33, 50, 75, 100].map((x) => <option value={x}>{x}%</option>)}</select></td></tr>}
+        </tbody></table>
+        <ActBtn small run={(w) => writeWill(w, Object.entries(shares).map(([id, v]) => ({ id: +id, share: v / 100 })), kids / 100)}>Write the will</ActBtn>
+        <Help>Your money is shared as the will says, after any inheritance tax; whatever is left, and your home, companies, shares and heirlooms, go to your next of kin. {w.settings.playerMortality ? 'If you die, you carry on as your heir: your spouse, else your eldest grown child, a sibling or a parent (or whoever your will favours among them).' : 'Your character cannot die in this campaign (Settings).'}</Help>
+      </div>
+      <div>
+        <h4>💍 Heirlooms</h4>
+        {L.heirlooms?.length ? <ul class="small">{L.heirlooms.map((h) => <li><b>{h.name}</b> <span class="muted">· {h.origin}</span></li>)}</ul> : <p class="small muted">Nothing passed down yet. Weddings, degrees, commissions, a first home and retirement leave something to keep.</p>}
+        <h4>🕯️ Family history</h4>
+        {w.legacy?.length ? <ul class="small">{w.legacy.map((e) => <li><b>{e.name}</b> ({fmtDate(e.born, 'short')} – {fmtDate(e.died, 'short')}, aged {e.age}, {e.cause}){e.heir ? `; succeeded by ${e.heir}` : ''}. <span class="muted">{e.milestones.slice(-4).join(' · ')}</span> Left {fmtAmt(e.cur, e.wealth)}.</li>)}</ul> : <p class="small muted">Lives you have lived appear here.</p>}
+      </div>
     </div>
   );
 }
