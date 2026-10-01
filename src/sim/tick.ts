@@ -50,7 +50,7 @@ function hourly(w: World) {
 function daily(w: World) {
   closeCompanyDay(w);
   circulation(w);
-  for (const c of census(w).all) { c.lastIncome = c.incomeToday; c.incomeToday = 0; }
+  for (const c of census(w).all) { c.lastIncome = c.incomeToday; c.incomeAvg = Math.round((c.incomeAvg ?? c.incomeToday) * 0.967 + c.incomeToday * 0.033); c.incomeToday = 0; }
   // A region absorbs pollution in proportion to its population and to the size of the national
   // economy (more citizens run more companies than the 24-citizen economy the capacity was set for).
   // Sparsely populated regions absorb at least as much as the nation's average region.

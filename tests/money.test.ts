@@ -59,3 +59,17 @@ test('wages: real minimum wages, scaled gold costs and payslips', async () => {
   const s = lifeOf(p).payslips!.at(-1)!;
   assert.deepEqual([s.shifts, s.gross, s.tax, s.pension, s.net], [2, 1600, 160, 80, 1360]);
 });
+
+test('households: a real budget split, inequality and poverty measured', async () => {
+  const { gini, livingStandards } = await import('../src/sim/livingStandards');
+  const { circulation } = await import('../src/ai/economy');
+  const { player } = await import('../src/sim/query');
+  assert.equal(gini([5, 5, 5, 5]), 0);
+  assert.ok(Math.abs(gini([0, 0, 0, 10]) - 0.75) < 1e-9);
+  const w = generateWorld(1803, 'Budget', 0, { citizensPerRegion: 2 });
+  circulation(w);
+  const cats = w.budget!.at(-1)!.asset[w.nations[player(w).nation].cur];
+  assert.ok(cats.Groceries < 0 && cats['Utilities and energy'] < 0 && cats.Transport < 0, `essentials split: ${JSON.stringify(cats)}`);
+  const s = livingStandards(w, player(w).nation);
+  assert.ok(s.adults > 5 && s.wealthGini > 0 && s.wealthGini < 1);
+});

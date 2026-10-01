@@ -257,6 +257,8 @@ real starting condition in the simulation, not a cosmetic flag, and the look can
   - 1.4.5: wages and payslips. Amounts are kept in units of local pay. One unit is the same share of a typical
     day's pay everywhere: about US$25 in the US, ₹98 in India. Each currency shows real money at real 2025 pay,
     and gold is worth $2,500 at market exchange rates in every currency.
+  - 1.4.6: households and the cost of living. Budgets are split by national surveys, inequality and poverty are
+    measured, and household spending responds to confidence.
 
 ### Part B: work & enterprise (GEO 1: companies expand or disband)
 

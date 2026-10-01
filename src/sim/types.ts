@@ -92,6 +92,7 @@ export interface Citizen {
   mood: number; // -1..1 satisfaction with government
   lastIncome: number; // yesterday's income in home currency minor units
   incomeToday: number;
+  incomeAvg?: number; // income per day, smoothed over about a month (living-standards statistics)
   flags: Record<string, number>;
   sec: CitizenSec;
   mil: MilService;

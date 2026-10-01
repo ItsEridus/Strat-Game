@@ -8,6 +8,10 @@ export interface BudgetMonth { key: string; asset: Record<AssetId, Record<string
 
 /** Category of a transaction, from its description. */
 const RULES: [RegExp, string][] = [
+  [/^groceries/i, 'Groceries'],
+  [/^utilities and energy/i, 'Utilities and energy'],
+  [/^transport/i, 'Transport'],
+  [/^phone, clothes/i, 'Everyday items'],
   [/wage|salary|shift pay|public works/i, 'Wages'],
   [/dividend|profit|share sale|sold .*shares|interest/i, 'Investments'],
   [/living costs/i, 'Living costs'],

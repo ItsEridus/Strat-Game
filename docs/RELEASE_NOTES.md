@@ -3,6 +3,26 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.4.6: households and the cost of living
+
+- **Where your money goes.** Your everyday costs now appear in your monthly budget as real household spending:
+  - groceries;
+  - utilities and energy;
+  - transport;
+  - phone, clothes and everyday items.
+
+  Each is split the way households in your country spend, from national surveys. In India, groceries take about
+  60%; in the United States, transport takes the largest share.
+- **Living standards.** Each country's page has a new panel, measured from its people:
+  - median income;
+  - income and wealth inequality (Gini);
+  - the share in relative poverty;
+  - the share who are well off;
+  - median wealth;
+  - the cost of living, including what a flat in the capital rents for.
+- **Confidence.** Background households spend less when jobs are scarce, so a rise in unemployment slows the
+  whole economy.
+
 ### New in 1.4.5: real pay, and payslips
 
 - **Pay as it really is.** Pay in every country follows its real 2025 median wage. A typical day's starting pay is

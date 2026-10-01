@@ -1,6 +1,7 @@
 // AI business management and background household demand. AI owners use the
 // same market/company actions (and permission checks) as the player.
 import { hasQuirk } from '../sim/nature';
+import { BASKET_LABELS, basketOf } from '../data/economy';
 import { dateAt } from '../engine/calendar';
 import { goldScale } from '../sim/wages';
 import { housingCost } from '../sim/housing';
@@ -139,7 +140,9 @@ export function householdsDaily(w: World, half: number) {
     const market = n.id;
     const cash = h.wallet[n.cur] ?? 0;
     // Spending swings with the world business cycle.
-    let budget = Math.floor((cash * B.households.spendRate * (1 + B.dynamics.hhSpendSwing * w.econ.cycle)) / 2);
+    // Spending swings with the business cycle and with confidence: people spend less when jobs are scarce.
+    const confidence = 1 - Math.min(0.3, Math.max(0, n.unemployment - 0.06) * 1.5);
+    let budget = Math.floor((cash * B.households.spendRate * (1 + B.dynamics.hhSpendSwing * w.econ.cycle) * confidence) / 2);
     const ref = hhref(h.nation);
     let unmet = 0;
     const by: Record<string, number> = {};
@@ -190,7 +193,12 @@ export function circulation(w: World) {
     if (cash < due) c.mood = Math.max(-1, c.mood - 0.05);
     // Lifestyle spending: AI citizens spend part of comfortable savings; the player only pays the fixed cost.
     const extra = c.player ? 0 : Math.floor(Math.max(0, cash - due - cur(B.living.comfort)) * B.living.discretionary);
-    pay(w, cref(c.id), hhref(c.nation), n.cur, Math.min(c.wallet[n.cur] ?? 0, due + extra), 'Living costs');
+    if (c.player) {
+      // The player's everyday costs, split as a household there spends them (data/economy.ts).
+      let left = Math.min(c.wallet[n.cur] ?? 0, due);
+      const shares = basketOf(n.cur);
+      shares.forEach((sh, i) => { const amt = i === shares.length - 1 ? left : Math.min(left, Math.round(due * sh)); if (amt > 0) { pay(w, cref(c.id), hhref(c.nation), n.cur, amt, BASKET_LABELS[i]); left -= amt; } });
+    } else pay(w, cref(c.id), hhref(c.nation), n.cur, Math.min(c.wallet[n.cur] ?? 0, due + extra), 'Living costs');
   }
   for (const n of w.nations) {
     if (n.exile) continue;

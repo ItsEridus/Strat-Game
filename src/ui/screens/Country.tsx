@@ -9,6 +9,32 @@ import { GOLD, fmtAmt } from '../../engine/money';
 import { itemName } from '../../data/items';
 import { CountryExtras } from './CountryExtras';
 import { StatesTable } from './StateGov';
+import { livingStandards } from '../../sim/livingStandards';
+import { BASKET_LABELS, basketOf } from '../../data/economy';
+import { B } from '../../data/balance';
+import { c as cur } from '../../engine/money';
+import { rentOf } from '../../sim/housing';
+import type { Id } from '../../sim/types';
+
+function LivingPanel({ w, id }: { w: World; id: Id }) {
+  const n = w.nations[id];
+  const s = livingStandards(w, id);
+  const day = cur(B.living.essentials);
+  const pct = (x: number) => `${Math.round(x * 100)}%`;
+  return <>
+    <table class="table compact small"><tbody>
+      <tr><td>Median income</td><td class="num">{fmtAmt(n.cur, s.medianIncome)} a day</td></tr>
+      <tr><td>Income inequality (Gini)</td><td class="num">{s.incomeGini.toFixed(2)}</td></tr>
+      <tr><td>Wealth inequality (Gini)</td><td class="num">{s.wealthGini.toFixed(2)}</td></tr>
+      <tr><td>In relative poverty</td><td class="num">{pct(s.poverty)}</td></tr>
+      <tr><td>Well off (twice the median or more)</td><td class="num">{pct(s.comfortable)}</td></tr>
+      <tr><td>Median wealth</td><td class="num">{fmtAmt(n.cur, s.medianWealth)}</td></tr>
+    </tbody></table>
+    <p class="small"><b>Cost of living:</b> a single adult's everyday costs come to about {fmtAmt(n.cur, day)} a day, plus rent (a flat in {w.regions[n.capital].name}: {fmtAmt(n.cur, rentOf(w, n.capital, 'flat'))} a day).</p>
+    <p class="small muted">{basketOf(n.cur).map((sh, i) => `${BASKET_LABELS[i].toLowerCase()} ${Math.round(sh * 100)}%`).join(' · ')}</p>
+    <Help>Measured from the {s.adults} adult citizens: income is pay and benefits per day, smoothed over about a month; wealth is cash plus the value of a home owned, less debts. Relative poverty is an income under 60% of the median (the OECD and EU line).</Help>
+  </>;
+}
 
 export function Country({ w }: { w: World }) {
   const p = player(w);
@@ -38,6 +64,9 @@ export function Country({ w }: { w: World }) {
           <tr><td>Minimum wage</td><td>{fmtAmt(n.cur, n.minWage)}</td><td /></tr>
         </tbody></table>
         <Help>Ceilings = 25 + 0.5 × communist seat % − 0.4 (import) / 0.3 (VAT, work) × capitalist seat % (documented formula; mixed-congress combination is an interpretation).</Help>
+      </Panel>
+      <Panel title="Living standards">
+        <LivingPanel w={w} id={id} />
       </Panel>
       <Panel title="Revenue (daily)">
         <Sparkline values={n.stats.revHist} width={260} height={50} />

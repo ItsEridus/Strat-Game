@@ -179,7 +179,7 @@ test('memories have a subject; stories a protagonist; the budget keeps whole mon
   advance(w, 2 * DAY, false);
   const m = w.budget!.at(-1)!;
   assert.ok(m.asset[code].Wages >= cur(100));
-  assert.ok(m.asset[code]['Living costs'] < 0);
+  assert.ok(m.asset[code].Groceries < 0 && m.asset[code].Transport < 0, 'everyday costs by category');
   assert.equal(budgetCategory('Food and care for Rex'), 'Pets');
   assert.equal(deserialize(serialize(w)).budget!.length, w.budget!.length);
 });

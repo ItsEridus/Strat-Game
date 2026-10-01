@@ -52,3 +52,17 @@ export const goldRate = (code: string) => { const m = MONEY[code]; return m ? (U
 export const goldScale = (code: string) => 100 / goldRate(code);
 /** The minimum wage for a day's shift (8 hours), in internal minor units. */
 export const minWageShift = (code: string) => { const m = MONEY[code]; return m ? Math.round(((m.minWage * 8) / unitPrice(code)) * 100) : 500; };
+
+/**
+ * How a household's everyday spending (everything but housing) divides, from national household-budget surveys
+ * (US BLS CES, UK ONS LCF, Eurostat HBS, India NSS/HCES, China NBS and others; 2022–2024, rounded):
+ * food and groceries, utilities and energy, transport, and phone, clothes and everyday items.
+ */
+export const BASKET: Record<string, [number, number, number, number]> = {
+  USD: [0.31, 0.17, 0.4, 0.12], CAD: [0.33, 0.15, 0.38, 0.14], MXN: [0.5, 0.1, 0.27, 0.13], BRL: [0.42, 0.13, 0.3, 0.15],
+  ARS: [0.47, 0.11, 0.26, 0.16], GBP: [0.3, 0.2, 0.34, 0.16], EUR: [0.3, 0.22, 0.32, 0.16], RUB: [0.5, 0.14, 0.22, 0.14],
+  TRY: [0.45, 0.14, 0.27, 0.14], SAR: [0.4, 0.08, 0.37, 0.15], ZAR: [0.45, 0.13, 0.28, 0.14], INR: [0.6, 0.12, 0.14, 0.14],
+  CNY: [0.48, 0.12, 0.24, 0.16], JPY: [0.38, 0.17, 0.27, 0.18], KRW: [0.36, 0.14, 0.32, 0.18], AUD: [0.32, 0.15, 0.37, 0.16],
+};
+export const BASKET_LABELS = ['Groceries', 'Utilities and energy', 'Transport', 'Phone, clothes and everyday items'] as const;
+export const basketOf = (code: string) => BASKET[code] ?? BASKET.USD;
