@@ -3,6 +3,21 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### Fixed in 1.4.17
+
+- **Going back keeps your place.** On a slow computer, going back to a long screen sometimes jumped to the top.
+  The game now waits for the screen to finish laying out (up to 2.5 seconds) before restoring where you were.
+- **Runaway wages.** Companies with a vacancy were raising pay every day without limit, which pushed prices up
+  year after year. Now they raise it at most once a week, and only while the wage is near the national going rate
+  and the job earns what it pays.
+- **Runaway minimum wages.** AI legislators kept raising the minimum wage until it was several times typical pay,
+  and businesses could not afford staff. The minimum wage now moves in 5% steps: up only while it is under half the
+  average wage on offer, and down when it climbs above 70% of it.
+- **Empty economies.** In small countries every company could close, with no one left to found new ones. When no
+  private founder steps in, the state now opens a state enterprise to make food or raw materials.
+- **Steadier company closures.** An idle company is wound up only once it is at least three months old, and
+  owners decide in their own time, so closures no longer come in waves.
+
 ### New in 1.4.16: power index 2.0
 
 - **A truer world ranking.** The power index now combines:

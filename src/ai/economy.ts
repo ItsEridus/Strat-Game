@@ -1,6 +1,8 @@
 // AI business management and background household demand. AI owners use the
 // same market/company actions (and permission checks) as the player.
 import { hasQuirk } from '../sim/nature';
+import { createCompany } from '../sim/company';
+import { noteBirth } from '../sim/companyLife';
 import { covered, industryPay } from '../sim/labour';
 import { BUSINESS_LOAN_DAYS, businessLoan } from '../sim/banking';
 import { importParity } from '../sim/trade';
@@ -46,6 +48,21 @@ export function unitCost(w: World, co: Company): number {
   // Sales tax comes out of the price, so the price has to cover it too.
   const vat = w.nations[controller(w.regions[co.region])].taxes.vat;
   return Math.round(cost / Math.max(0.5, 1 - vat / 100));
+}
+
+/** The median wage on offer in a country (cached per day). */
+const medianCache = new WeakMap<World, { day: number; by: Map<Id, number> }>();
+export function medianOffer(w: World, nation: Id): number {
+  const day = Math.floor(w.time / 1440);
+  let c = medianCache.get(w);
+  if (!c || c.day !== day) { c = { day, by: new Map() }; medianCache.set(w, c); }
+  let m = c.by.get(nation);
+  if (m == null) {
+    const xs = companiesOf(w, nation).filter((co) => co.offer && co.workers.length).map((co) => co.offer!.wage).sort((a, b) => a - b);
+    m = xs.length ? xs[Math.floor(xs.length / 2)] : cur(B.wages.start);
+    c.by.set(nation, m);
+  }
+  return m;
 }
 
 export function manageCompany(w: World, co: Company) {
@@ -110,7 +127,10 @@ export function manageCompany(w: World, co: Company) {
     const profit3 = co.hist.slice(-3).reduce((s, h) => s + h.profit, 0);
     // Pay rises faster in a tight labour market; cuts are rare and small (wages are sticky): only on the
     // first of the month, after a fortnight of losses.
-    if (vacancies > 0) wage = Math.round(wage * (n.unemployment < 0.05 ? 1.05 : n.unemployment > 0.15 ? 1.01 : 1.03));
+    // Raising pay to fill a vacancy: weekly, and only while the wage is near the going rate and the work pays for it.
+    const median = medianOffer(w, market);
+    const perWorker = co.hist.length >= 7 ? co.hist.slice(-7).reduce((s, h) => s + h.revenue - h.inputCost - (h.overheads ?? 0), 0) / 7 / Math.max(1, workers) : Infinity;
+    if (vacancies > 0 && (w.time / 1440 + co.id) % 7 < 1 && wage < median * 1.3 && wage < perWorker * 0.8) wage = Math.round(wage * (n.unemployment < 0.05 ? 1.04 : n.unemployment > 0.15 ? 1.01 : 1.02));
     else if (wage > n.minWage && dateAt(w.time).day === 1 && !covered(w, co) && co.hist.slice(-14).reduce((s, h) => s + h.profit, 0) < 0) wage = Math.round(wage * 0.97);
     const ikShort = ik && (co.inv[ik] ?? 0) < inputPerUnit(co) * 2;
     if (glut || ikShort) slots = Math.max(workers > 0 ? workers - (glut ? 1 : 0) : 0, 0);
@@ -235,6 +255,8 @@ export function entrepreneurship(w: World) {
       if (![...byKey.keys()].some((k) => kindOf(k) === kind) && chance(w, 0.1)) {
         const f = founder();
         if (f) { foundForDemand(w, f.id, kind, n.id); continue nations; }
+        // No private founder: for food and raw materials, the state steps in (a state enterprise).
+        if ((kind === 'food' || (RAWS as string[]).includes(kind)) && stateFound(w, n.id, kind)) continue nations;
       }
       const keys = (RAWS as string[]).includes(kind) ? [kind] : [1, 2, 3].map((q) => `${kind}:${q}`);
       for (const key of keys) {
@@ -252,6 +274,26 @@ export function entrepreneurship(w: World) {
       }
     }
   }
+}
+
+/** A state enterprise, founded and funded by the treasury when no one else will make an essential good. */
+function stateFound(w: World, nation: Id, kind: string): boolean {
+  const n = w.nations[nation];
+  const president = n.president != null ? w.citizens[n.president] : null;
+  if (!president) return false;
+  const regions = w.regions.filter((r) => controller(r) === nation);
+  const raw = (RAWS as string[]).includes(kind);
+  const region = raw ? regions.slice().sort((a, b) => ((b.res as any)[kind] ?? 0) - ((a.res as any)[kind] ?? 0))[0] : regions.slice().sort((a, b) => b.pop - a.pop)[0];
+  if (!region || (raw && !((region.res as any)[kind] > 0))) return false;
+  const seed = cur(250);
+  if ((n.wallet[n.cur] ?? 0) < seed * 20) return false;
+  const co = createCompany(w, natref(nation), kind as any, 1, region.id);
+  noteBirth(w, co);
+  co.state = true;
+  co.auto = { sell: true, buyInputs: true, hire: true };
+  pay(w, natref(nation), coref(co.id), n.cur, seed, `Founding ${co.name} (state enterprise)`);
+  co.offer = { wage: Math.max(n.minWage, cur(B.wages.start)), slots: 2, minEco: 0 };
+  return true;
 }
 
 function foundForDemand(w: World, founderId: Id, kind: string, nation: Id) {

@@ -9,6 +9,7 @@ import type { Company, Id, World } from './types';
 import { burn, consume, moveItems, pay } from '../engine/ledger';
 import { notify, record } from '../engine/events';
 import { census, invalidateCensus } from './census';
+import { hash01 } from '../engine/rng';
 import { companyCurrency, controller, coref } from './query';
 import { forceCancelListing } from './market';
 import { forceCancelOrder } from './fx';
@@ -63,8 +64,9 @@ export function companyLifeDaily(w: World) {
     const wage = co.offer?.wage ?? 0;
     // Insolvent: staff on the books but no money to pay them for two weeks.
     const unpaid = co.workers.length > 0 && h.length >= 14 && h.slice(-14).every((d) => d.wages === 0) && cash < wage;
-    // Wound up: no staff, nothing made and losing money for a month (the history kept).
-    const idle = co.workers.length === 0 && h.length >= 30 && h.reduce((t, d) => t + d.profit, 0) < 0 && h.every((d) => d.produced === 0);
+    // Wound up: a firm at least three months old with no staff, nothing made and losses for a month; owners
+    // decide in their own time (about one chance in thirty a day), so closures spread out as in real life.
+    const idle = co.workers.length === 0 && w.time - co.founded > 90 * 1440 && hash01(co.id, Math.floor(w.time / 1440), 1511) < 1 / 30 && h.length >= 30 && h.reduce((t, d) => t + d.profit, 0) < 0 && h.every((d) => d.produced === 0);
     const nat = controller(w.regions[co.region]);
     if ((closedToday.get(nat) ?? 0) >= 2 || !(unpaid || idle)) continue;
     if (closeCompany(w, co, unpaid ? 'insolvent' : 'wound up')) closedToday.set(nat, (closedToday.get(nat) ?? 0) + 1);

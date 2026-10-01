@@ -325,10 +325,13 @@ export function aiProposals(w: World) {
     if (days > 40 && n.approval < 55 && n.taxes.work > 5) opts.push(['workTax', { value: n.taxes.work - 2 }, 2 - ideo.taxPref]);
     if (days < 12 && n.taxes.vat + 2 <= ceil.vat) opts.push(['vat', { value: n.taxes.vat + 2 }, 2 + ideo.taxPref]);
     if (n.taxes.work > ceil.work) opts.push(['workTax', { value: Math.floor(ceil.work) }, 5]);
-    if (n.unemployment > 0.3 && n.minWage > cur(3)) opts.push(['minWage', { value: n.minWage - cur(1) }, 2]);
+    if (n.unemployment > 0.3 && n.minWage > cur(3)) opts.push(['minWage', { value: Math.round(n.minWage * 0.95) }, 2]);
     const offers = Object.values(w.companies).filter((co) => co.offer && w.regions[co.region].owner === n.id).map((co) => co.offer!.wage);
     const avgOffer = offers.length ? offers.reduce((a, b) => a + b, 0) / offers.length : n.minWage;
-    if (n.unemployment < 0.1 && ideo.taxPref > 0 && n.minWage + cur(1) < avgOffer * 0.75) opts.push(['minWage', { value: n.minWage + cur(1) }, 1.5]);
+    // The minimum wage moves in 5% steps: up while it is under half the average offer and jobs are plentiful, down when it
+    // is over 70% of it (real minimum wages sit at 30–60% of typical pay).
+    if (n.unemployment < 0.1 && ideo.taxPref > 0 && n.minWage * 1.05 < avgOffer * 0.5) opts.push(['minWage', { value: Math.round(n.minWage * 1.05) }, 1.5]);
+    if (n.minWage > avgOffer * 0.7) opts.push(['minWage', { value: Math.round(Math.max(avgOffer * 0.55, n.minWage * 0.9)) }, 2.5]);
     if (days < 2 && ideo.taxPref > 0.3) opts.push(['print', { amount: cur(2000) }, 1]);
     if (n.approval < B.politics.impeachApproval && n.president != null && a.party !== w.citizens[n.president]?.party) opts.push(['impeach', {}, 2]);
     for (const [other, rel] of Object.entries(n.relations)) {

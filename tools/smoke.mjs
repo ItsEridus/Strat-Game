@@ -103,8 +103,8 @@ async function backAndForward(page) {
   const trail = [];
   for (let i = 0; i < 3; i++) { await page.click('.history button[aria-label="Back"]'); await page.waitForTimeout(80); trail.push(await where()); }
   check(trail.join(' ') === `citizen:${a} journal forces`, `history: back went ${trail.join(' → ')}`);
-  // The view restores the position once the page has laid out (it retries for a few frames): wait for it to settle.
-  await page.waitForFunction((y) => Math.abs(window.scrollY - y) < 2, y, { timeout: 2000 }).catch(() => {});
+  // The view restores the position once the page has laid out (it retries for up to 2.5 s): wait for it to settle.
+  await page.waitForFunction((y) => Math.abs(window.scrollY - y) < 2, y, { timeout: 3000 }).catch(() => {});
   check(Math.abs((await page.evaluate(() => window.scrollY)) - y) < 2, `history: back did not restore the scroll position (${y}; at ${await page.evaluate(() => window.scrollY)})`);
   await page.click('.history button[aria-label="Forward"]');
   await page.waitForTimeout(80);

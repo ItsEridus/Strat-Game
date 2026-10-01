@@ -44,11 +44,16 @@ export function App() {
   // Each new screen opens at its top; going back returns to where you were on it.
   useEffect(() => {
     // Restore the scroll position; retry for a few frames while the page is still laying out (fonts, late panels).
+    // Slow machines can take a while to lay out a long screen, so keep trying for up to 2.5 s, unless the user scrolls.
     const y = store.scrollTo;
-    let tries = 0, raf = 0;
-    const go = () => { window.scrollTo(0, y); if (Math.abs(window.scrollY - y) > 1 && ++tries < 30) raf = requestAnimationFrame(go); };
+    const until = performance.now() + 2500;
+    let raf = 0, stopped = false;
+    const stop = () => { stopped = true; };
+    const go = () => { if (stopped) return; window.scrollTo(0, y); if (Math.abs(window.scrollY - y) > 1 && performance.now() < until) raf = requestAnimationFrame(go); };
+    window.addEventListener('wheel', stop, { passive: true });
+    window.addEventListener('touchstart', stop, { passive: true });
     go();
-    return () => cancelAnimationFrame(raf);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('wheel', stop); window.removeEventListener('touchstart', stop); };
   }, [s.page, !!s.w]);
   if (!s.w) return <><StartScreen /><WhatsNew /></>;
   const w = s.w;
