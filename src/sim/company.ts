@@ -1,6 +1,7 @@
 // Companies, employment and production chains. A shift consumes energy, inputs
 // and wage funds, and creates goods; it refuses to run (with a reason) when
 // labour, funds, inputs or storage capacity are missing.
+import { energyFactors, opecOutput } from './energy';
 import { weatherFactor } from './weather';
 import { recordBars } from './prisons';
 import { hasQuirk } from './nature';
@@ -89,6 +90,8 @@ export function productionFactors(w: World, co: Company, worker: Citizen | null)
   if (crisis) f.push(crisis);
   const wx = w.weather ? weatherFactor(w, co.region, co.industry) : null;
   if (wx) f.push(wx);
+  f.push(...energyFactors(w, co));
+  if (co.industry === 'oil') { const q = opecOutput(w, w.nations[controller(r)]); if (q !== 1) f.push({ label: `OPEC+ quota (${Math.round(q * 100)}%)`, mult: q }); }
   const infra = infraBonus(w, co.region);
   if (infra > 1 && !r.occ) f.push({ label: `State infrastructure L${w.govs[co.region]!.dev}`, mult: infra });
   const prod = productivityOf(w, controller(r));

@@ -3,6 +3,7 @@
 // pays for energy as it produces, wears out its equipment (depreciation, shown in
 // the accounts) and pays corporate tax on each month's profit at its country's
 // real 2025 rate. Rent and energy go to the local economy; tax to the treasury.
+import { energyPrice } from './energy';
 import { energyDemand } from './weather';
 import { evadeTax } from './whitecollar';
 import type { Company, World } from './types';
@@ -44,7 +45,7 @@ export function payOverheads(w: World, co: Company) {
   const code = companyCurrency(w, co);
   const nat = controller(w.regions[co.region]);
   // A mothballed plant (no staff) keeps only its lease on a fifth of the space.
-  const due = Math.round(premisesRent(w, co) * (co.workers.length ? 1 : 0.2)) + Math.round(energyCost(co.today.produced) * (w.weather ? energyDemand(w, co.region) : 1));
+  const due = Math.round(premisesRent(w, co) * (co.workers.length ? 1 : 0.2)) + Math.round(energyCost(co.today.produced) * (w.weather ? energyDemand(w, co.region) : 1) * energyPrice(w, w.nations[nat]));
   const amt = Math.min(due, co.wallet[code] ?? 0);
   if (amt > 0 && pay(w, coref(co.id), hhref(nat), code, amt, 'Premises and energy')) co.today.overheads = (co.today.overheads ?? 0) + amt;
   if (dateAt(w.time).day === 1) {

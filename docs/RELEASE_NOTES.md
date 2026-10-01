@@ -3,6 +3,27 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.8.3: energy and resources
+
+- **Energy mixes.** Each country generates electricity from its real 2023 mix (IEA): coal, gas, oil, nuclear,
+  hydro, wind, solar and bioenergy. For example, South Africa is over 80% coal, Canada over 60% hydro, Korea 30%
+  nuclear and Germany over a quarter wind.
+- **Energy prices.** World fuel prices pass through to each country's energy price, more so the more fuel it
+  imports. Low-carbon power does not move with them. When oil doubles, Japan, which imports everything and burns
+  much of it, is hit far harder than Canada. Companies' energy bills follow the energy price and the weather.
+- **Grids and blackouts.** Weak grids fail more often under heat and cold stress: South Africa's load shedding,
+  India's outages. A blackout cuts a region's output for the day.
+- **Deposits.**
+  - Reserves of oil, gas, coal, uranium, lithium, rare earths, copper and iron are kept in years of production,
+    with each country's share of world output (China mines most rare earths and Australia most lithium).
+  - Extraction depletes them and exploration finds more.
+  - As reserves run low, output falls and imports rise.
+- **OPEC+.** Saudi Arabia, Russia and Mexico meet monthly. They cut output when oil is cheap and raise it when oil
+  is dear, which moves the world oil price and their own oil companies' output.
+- **Critical minerals.** A country with little rare earth or lithium of its own loses some electronics and
+  aerospace output if the main producer embargoes it.
+- **Energy & resources panel** on the Country screen.
+
 ### New in 1.8.2: natural hazards
 
 - **Heavy-tailed disasters.** Most events are minor, about one in ten is major, and a few in a hundred are

@@ -4,6 +4,7 @@
 // pays at most the world price plus freight and tariff). Companies with surplus stock
 // export it where it sells for more after the exchange rate, freight and tariffs, and
 // bring the money home through the currency market. Exports and imports are counted.
+import { opecPriceFactor } from './energy';
 import type { Company, Id, World } from './types';
 import { RAWS } from '../data/items';
 import { refValue } from '../data/items';
@@ -28,6 +29,8 @@ export function worldPrices(w: World) {
   for (const k of RAWS) ws[k] ??= { p: basePrice(k), hist: [] };
   return ws;
 }
+/** A world price against its long-run level (1 = normal). */
+export const worldPriceRatio = (w: World, k: string) => worldPrices(w)[k].p / basePrice(k);
 /** World price in a country's money (minor units per unit). */
 export const worldPriceIn = (w: World, nation: Id, k: string) => Math.round(worldPrices(w)[k].p * w.nations[nation].fxAnchor);
 
@@ -37,7 +40,7 @@ export function worldPricesDaily(w: World) {
   const ws = worldPrices(w);
   for (const k of RAWS) {
     const x = ws[k];
-    const target = basePrice(k) / Math.max(0.3, w.econ.commodity[k] ?? 1); // a supply shock raises the price
+    const target = (basePrice(k) / Math.max(0.3, w.econ.commodity[k] ?? 1)) * (k === 'oil' ? opecPriceFactor(w) : 1); // a supply shock (or an OPEC+ cut) raises the price
     const drift = -Math.log(x.p / target) / 120;
     x.p = Math.max(target * 0.25, Math.min(target * 4, x.p * Math.exp(drift + gauss(w) * ((VOL[k] ?? 0.25) / Math.sqrt(365)))));
     x.hist.push(x.p);

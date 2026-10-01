@@ -356,6 +356,7 @@ export interface Region {
   unrest: number; // 0..100 public unrest
   news?: { t: number; text: string }[]; // local happenings, newest last (kept short)
   disrupted: number; // production disrupted until this time (disasters, riots, sabotage)
+  blackout?: number; // the day of the last power cut (1.9)
   pop0?: number; // background population at genesis
   draw?: number; // how attractive the region is to live in, -1..1, smoothed (sim/population.ts)
   blockade: Id | null; // nation whose navy blockades this coast
@@ -431,7 +432,8 @@ export interface Nation {
   strategic?: import('./forceStructure').Strategic; // nuclear forces, doctrine and missile defence (1.8)
   programmes?: import('./defenceIndustry').Programme[]; // defence R&D programmes (1.8)
   armsOrders?: import('./defenceIndustry').ArmsOrder[]; // equipment bought abroad (1.8)
-  arsenal?: import('./arsenal').Arsenal; // equipment by class: generation and age (1.8) // appointed: chosen by the Commander-in-Chief // military budget (share of revenue), chief of staff, days unpaid
+  arsenal?: import('./arsenal').Arsenal;
+  energy?: import('./energy').EnergyState; // energy mix, fuel self-sufficiency, reserves (1.9) // equipment by class: generation and age (1.8) // appointed: chosen by the Commander-in-Chief // military budget (share of revenue), chief of staff, days unpaid
   alert: number; // national security alert 1 (normal) .. 5 (maximum) // share of daily revenue for national police (regions without their own government, federal crimes)
 }
 
@@ -778,6 +780,7 @@ export interface World {
   settings: Settings;
   playerId: Id;
   player: PlayerState;
+  opec?: { quota: number; hist: number[] }; // OPEC+ output against normal (1.9)
   warnings?: import('./naturalHazards').Warning[]; // hazards forecast to strike within a day (1.9)
   weather?: import('./weather').WeatherState; // today's and tomorrow's weather by region (1.9)
   story: NarrativeState; // stories, journal, relationship memories, places (see sim/story.ts)

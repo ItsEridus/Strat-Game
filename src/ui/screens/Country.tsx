@@ -25,6 +25,8 @@ import { B } from '../../data/balance';
 import { c as cur } from '../../engine/money';
 import { rentOf } from '../../sim/housing';
 import type { Id } from '../../sim/types';
+import { MINERAL_LABEL, OPEC_PLUS, SOURCES, SOURCE_INFO, type Mineral } from '../../data/energy';
+import { energyOf, energyPrice, importShare, mineralCutOff } from '../../sim/energy';
 
 function BudgetPanel({ w, id }: { w: World; id: Id }) {
   const n = w.nations[id];
@@ -126,6 +128,7 @@ export function Country({ w }: { w: World }) {
           <Stat label="Status">{n.exile ? 'Nation in exile' : 'Sovereign'}</Stat>
         </div>
       </Panel>
+      <EnergyPanel w={w} id={id} />
       <Panel title="Taxes & labour law">
         <table class="table compact"><tbody>
           <tr><td>Income tax (on a typical wage; progressive)</td><td>{n.taxes.work}%</td><td class="small muted">ceiling {ceil.work.toFixed(1)}%</td></tr>
@@ -185,5 +188,30 @@ export function Country({ w }: { w: World }) {
       <CountryExtras w={w} id={id} />
       <StatesTable w={w} nation={id} />
     </div>
+  );
+}
+
+/** Energy and resources: the electricity mix, prices, imports, grid and deposits. */
+function EnergyPanel({ w, id }: { w: World; id: Id }) {
+  const n = w.nations[id];
+  const e = energyOf(n);
+  const price = energyPrice(w, n);
+  return (
+    <Panel title="⚡ Energy & resources">
+      <div class="mixbar" style={{ display: 'flex', height: '14px', borderRadius: '4px', overflow: 'hidden', margin: '4px 0 8px' }}>
+        {SOURCES.filter((s) => e.mix[s] > 0.005).map((s) => <span title={`${SOURCE_INFO[s].label} ${Math.round(e.mix[s] * 100)}%`} style={{ width: `${e.mix[s] * 100}%`, background: SOURCE_INFO[s].color }} />)}
+      </div>
+      <p class="small">{SOURCES.filter((s) => e.mix[s] >= 0.03).map((s) => `${SOURCE_INFO[s].label} ${Math.round(e.mix[s] * 100)}%`).join(' · ')}</p>
+      <table class="table compact small"><tbody>
+        <tr><td>Energy price</td><td class={price > 1.15 ? 'bad' : price < 0.9 ? 'good' : ''}>{Math.round(price * 100)} (2025 = 100)</td></tr>
+        <tr><td>Fuel imports</td><td>oil {Math.round(importShare(n, 'oil') * 100)}% · gas {Math.round(importShare(n, 'gas') * 100)}% · coal {Math.round(importShare(n, 'coal') * 100)}%</td></tr>
+        <tr><td>Grid</td><td>{(e.grid * 100).toFixed(1)}% reliable · {e.blackouts} region-days of blackouts this year</td></tr>
+        <tr><td>Reserves</td><td>{(Object.keys(e.reserves) as Mineral[]).length ? (Object.keys(e.reserves) as Mineral[]).map((m) => `${MINERAL_LABEL[m]} ${Math.round(e.reserves[m]!)} yrs`).join(' · ') : <span class="muted">none of note</span>}</td></tr>
+        <tr><td>World production</td><td>{(Object.keys(e.share) as Mineral[]).filter((m) => (e.share[m] ?? 0) >= 0.02).map((m) => `${MINERAL_LABEL[m]} ${Math.round(e.share[m]! * 100)}%`).join(' · ') || <span class="muted">small</span>}</td></tr>
+        {OPEC_PLUS.includes(n.iso) && <tr><td>OPEC+</td><td>member · output at {Math.round((w.opec?.quota ?? 1) * 100)}% of normal</td></tr>}
+        {(['rareearths', 'lithium'] as Mineral[]).map((m) => mineralCutOff(w, n, m) && <tr><td class="bad">Supply cut</td><td class="bad">{MINERAL_LABEL[m]}: the main producer has embargoed {n.name}</td></tr>)}
+      </tbody></table>
+      <Help>Electricity mixes start from IEA data. World fuel prices pass through to the energy price, more so the more a country imports. Low-carbon power does not move with them. Weak grids fail more often in heat and cold, and a blackout cuts a region's output for the day. Extraction depletes deposits, exploration finds more, and output falls as reserves run low. OPEC+ cuts output when oil is cheap and raises it when oil is dear.</Help>
+    </Panel>
   );
 }
