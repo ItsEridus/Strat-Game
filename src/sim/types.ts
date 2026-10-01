@@ -361,7 +361,7 @@ export interface Region {
   pop0?: number; // background population at genesis
   draw?: number; // how attractive the region is to live in, -1..1, smoothed (sim/population.ts)
   blockade: Id | null; // nation whose navy blockades this coast
-  staff?: { school: number; clinic: number; offices: number; courts?: number; prison?: number; emergency?: number; meteorology?: number };
+  staff?: { school: number; clinic: number; offices: number; courts?: number; prison?: number; emergency?: number; meteorology?: number; diplomacy?: number; trade?: number; intl?: number };
   housePx?: number; // housing price index, 0.5..2.5, drifts slowly (sim/housing.ts) // public-service staffing 0..1 (sim/services.ts)
 }
 

@@ -28,6 +28,7 @@ import { activeWars, settle } from './war';
 import { nationScores } from './forces';
 import { debtLimit, dailySpending } from './publicFinance';
 import { B } from '../data/balance';
+import { nationalStaffing } from './services';
 
 export const PERMANENT = ['USA', 'CHN', 'RUS', 'GBR'];
 export type ResKind = 'condemn' | 'ceasefire' | 'sanctions';
@@ -97,6 +98,7 @@ export function lean(w: World, v: Nation, r: Pick<Resolution, 'kind' | 'target' 
   if (r.kind === 'sanctions') y -= 0.3 + Math.min(0.2, (v.ties?.[t.id]?.interdep ?? 0) / 300); // sanctions cost the sanctioner too
   if (r.kind === 'ceasefire') y += 0.15;
   if (activeWars(w).some((x) => x.att === v.id)) y -= 0.15; // those waging wars dislike precedents
+  y += (nationalStaffing(w, r.sponsor, 'intl') - 0.6) * 0.15; // a sponsor well represented in the UN system lobbies better
   return y;
 }
 const voteOf = (y: number): Vote => (y > 0.5 ? 'y' : y < 0.2 ? 'n' : 'a');
@@ -277,7 +279,7 @@ function wtoDaily(w: World) {
       if (!r.embargoes.includes(c.id)) { d.status = 'complied'; continue; }
       const threat = r.ties?.[c.id]?.threat ?? 0;
       if ((threat > 25 || (r.relations[c.id]?.score ?? 0) < -30) && chance(w, 0.8)) { d.status = 'security'; record(w, 'diplomacy', `⚖️ The WTO accepted ${r.name}'s national-security defence in its dispute with ${c.name}.`, { nation: r.id }); continue; }
-      if (chance(w, 0.75)) {
+      if (chance(w, 0.75 + (nationalStaffing(w, c.id, 'trade') - nationalStaffing(w, r.id, 'trade')) * 0.2)) { // the better trade lawyers
         d.status = 'won'; d.deadline = w.time + 90 * DAY;
         record(w, 'diplomacy', `⚖️ The WTO ruled for ${c.name}: ${r.name}'s sanctions break trade rules and must go within 90 days.`, { nation: c.id, important: true });
       } else { d.status = 'lost'; record(w, 'diplomacy', `⚖️ The WTO rejected ${c.name}'s complaint against ${r.name}.`, { nation: c.id }); }

@@ -23,6 +23,7 @@ import { relation } from './congress';
 import { leaderProfile, noteTrust, tiesOfPair } from './relations';
 import { militaryPower } from './war';
 import { strategicOf } from './forceStructure';
+import { nationalStaffing } from './services';
 
 export type TreatyKind = 'defence' | 'guarantee' | 'nonaggression' | 'trade' | 'basing' | 'intel' | 'armscontrol' | 'border';
 export interface Treaty {
@@ -219,12 +220,12 @@ export function offerTreaty(w: World, n: Nation, other: Nation, kind: TreatyKind
   const why = proposeTreatyCheck(w, n, other, kind);
   if (why) return { ok: false, msg: why };
   const v = willingness(w, other, n, kind);
-  const mine = willingness(w, n, other, kind);
+  // Skilled negotiators make offers the other side finds easier to accept.
+  if (kind === 'trade') v.p += (nationalStaffing(w, n.id, 'trade') - 0.6) * 0.2;
   if (v.p < 0.5) {
     relation(w, n.id, other.id, -1, `${TREATY_INFO[kind].name.toLowerCase()} declined`);
     return { ok: false, msg: `${other.name} declined (${v.why}).` };
   }
-  void mine;
   const t = signTreaty(w, kind, [n.id, other.id], kind === 'guarantee' ? { ...opts, guarantor: n.id } : kind === 'basing' ? { ...opts, host: other.id } : opts);
   return { ok: true, msg: `${other.name} agreed (${v.why}).`, treaty: t };
 }

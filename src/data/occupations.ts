@@ -74,6 +74,7 @@ export const OCCUPATIONS: Record<string, Occupation> = {
   // Office and administration
   receptionist: { label: 'Receptionist', family: 'office', pay: 0.75, edu: 'school' },
   admin: { label: 'Administrative assistant', family: 'office', pay: 0.95, edu: 'school', industries: ['oil', 'electronics', 'medicine', 'wa'] },
+  lobbyist: { label: 'Lobbyist (government affairs)', family: 'office', pay: 2.3, edu: 'bachelor', field: ['law', 'business'], industries: ['oil', 'electronics', 'medicine', 'wa'] },
   officemgr: { label: 'Office manager', family: 'office', pay: 1.4, edu: 'bachelor', field: ['business', 'law'] },
   // Finance
   bankclerk: { label: 'Bank clerk', family: 'finance', pay: 0.85, edu: 'school' },
@@ -97,6 +98,10 @@ export const OCCUPATIONS: Record<string, Occupation> = {
   lawyer: { label: 'Lawyer', family: 'public', pay: 3.0, edu: 'master', field: ['law'] },
   prosecutor: { label: 'Prosecutor', family: 'public', pay: 2.4, edu: 'bachelor', field: ['law'] },
   judge: { label: 'Judge', family: 'public', pay: 3.1, edu: 'master', field: ['law'] },
+  diplomat: { label: 'Diplomat', family: 'public', pay: 2.0, edu: 'bachelor' },
+  ambassador: { label: 'Ambassador', family: 'public', pay: 3.6, edu: 'master' },
+  tradenegotiator: { label: 'Trade negotiator', family: 'public', pay: 2.2, edu: 'bachelor', field: ['business', 'law'] },
+  intlofficer: { label: 'International civil servant', family: 'public', pay: 2.6, edu: 'master' },
   // Security and defence
   guard: { label: 'Security guard', family: 'security', pay: 0.75, edu: 'school', industries: ['wg', 'wa', 'oil'] },
   police: { label: 'Police officer', family: 'security', pay: 1.5, edu: 'school' },

@@ -3,6 +3,27 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.9.7: careers and stories in diplomacy
+
+The fifth part of 2.0 The great game.
+
+- **Three new public careers** (on the Jobs screen, in the larger places):
+  - **The foreign service:** attaché, third secretary, first secretary, counsellor, ambassador. A country with a
+    well-staffed foreign ministry builds up diplomatic capital faster.
+  - **Trade negotiators:** from trade officer to chief trade negotiator, for graduates in business or law. Good
+    negotiators make trade agreements easier to win and WTO cases likelier to go your way.
+  - **The international civil service:** from junior professional officer to under-secretary-general. A country well
+    represented in the UN system lobbies better for its resolutions.
+- **Lobbyist (government affairs)** is a new occupation in oil, electronics, medicine and arms firms.
+- **Three new stories:**
+  - **The summit:** as head of government, or as a diplomat on the delegation, you push for a breakthrough, stick to
+    the agreed text, or brief the press that you stood firm.
+  - **A note from the embassy:** in a crisis, a diplomat can open a quiet back channel (which may calm things),
+    advise a firm reply, or wait for instructions.
+  - **The vote in the Council:** as head of government you decide your country's vote. As a senior diplomat or
+    international civil servant you recommend it, and the capital usually follows your advice. The sponsor and
+    the target remember.
+
 ### New in 1.9.6: crises, arms races and the balance of power
 
 The fourth part of 2.0 The great game.

@@ -17,6 +17,7 @@ import { nid, notify, record } from '../engine/events';
 import { fail, ok, type Result } from '../engine/result';
 import { chance, pick, weighted } from '../engine/rng';
 import { natref, player } from './query';
+import { nationalStaffing } from './services';
 import { relation } from './congress';
 import { addGrievance, leaderProfile, noteTrust, prestigeOf, tiesOfPair } from './relations';
 import { TREATY_INFO, activeTreaties, alliedPower, allTreaties, offerTreaty, proposeTreatyCheck, willingness, renounce, treatyBetween, type TreatyKind } from './treaties';
@@ -235,7 +236,7 @@ export function diplomacyActionsDaily(w: World, days = 1) {
   for (const n of w.nations) {
     if (n.exile) continue;
     const d = dipOf(n);
-    d.capital = Math.min(100, d.capital + (0.5 + prestigeOf(w, n) / 100) * days);
+    d.capital = Math.min(100, d.capital + (0.5 + prestigeOf(w, n) / 100 + nationalStaffing(w, n.id, 'diplomacy') * 0.5) * days); // diplomats build it up
   }
   if (dateAt(w.time).day === 1) loansMonth(w);
   const pl = player(w);
