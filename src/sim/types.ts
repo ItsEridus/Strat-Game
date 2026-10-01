@@ -381,6 +381,7 @@ export interface Nation {
   welfare?: number; // welfare share of revenue (scales transfers to households)
   infraBonus?: number; healthBonus?: number; // built up by public investment (strategic engine)
   strategy?: { kind: import('./nationalBudget').Strategy; since: number; why: string };
+  powerHist?: import('./worldHistory').PowerPoint[]; // power index each month
   chronicle?: { t: number; text: string }[]; // the nation's history (strategy changes and other turning points)
   minWage: number; // minor units
   president: Id | null;
@@ -774,6 +775,7 @@ export interface World {
   nations: Nation[];
   households: Households[];
   citizens: Record<Id, Citizen>;
+  yearReports?: import('./worldHistory').YearReport[]; // the State of the World, one a year
   companies: Record<Id, Company>;
   listings: Record<Id, Listing>;
   fx: Record<Id, FxOrder>;

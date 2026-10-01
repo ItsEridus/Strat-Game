@@ -4,8 +4,10 @@ import { MONTHS, dateAt } from '../../engine/calendar';
 import { fromLocal as fromL, localStep as stepL, toLocal as toL } from '../../engine/money';
 import { fmtDay } from '../../engine/calendar';
 import { useState } from 'preact/hooks';
+import { TIER_LABEL } from '../../sim/forces';
+import { STRATEGY_INFO } from '../../sim/nationalBudget';
 import type { World } from '../../sim/types';
-import { ActBtn, Empty, Help, Num, Panel, RegionLink, Sparkline } from '../common';
+import { ActBtn, Empty, Help, NationChip, Num, Panel, RegionLink, Sparkline } from '../common';
 import { player } from '../../sim/query';
 import { fmtAmt } from '../../engine/money';
 import { EARTH } from '../../data/earth';
@@ -25,6 +27,7 @@ export function WorldState({ w }: { w: World }) {
   const past = Object.values(w.crises).filter((c) => c.status === 'over').sort((a, b) => b.end - a.end).slice(0, 10);
   return (
     <div class="grid">
+      <Panel title="📰 The State of the World" class="wide"><YearReports w={w} /></Panel>
       <Panel title="🌐 World economy">
         <p><b>{PHASE[e.phase]}</b> <small class="muted">(cycle {e.cycle >= 0 ? '+' : ''}{e.cycle.toFixed(2)})</small></p>
         <Sparkline values={e.hist.length ? e.hist : [0]} width={300} height={50} />
@@ -64,4 +67,17 @@ export function WorldState({ w }: { w: World }) {
       </Panel>
     </div>
   );
+}
+
+function YearReports({ w }: { w: World }) {
+  const reports = w.yearReports ?? [];
+  const [i, setI] = useState(-1);
+  const r = reports.at(i) ?? reports.at(-1);
+  if (!r) return <p class="small muted">The first report comes out on 1 January, summing up the year for every country: growth, power, jobs, prices and debt.</p>;
+  return <>
+    <div class="row between"><b>{r.year}</b><span>{reports.map((x, j) => <button type="button" class={`btn small ghost${x === r ? ' on' : ''}`} onClick={() => setI(j - reports.length)}>{x.year}</button>)}</span></div>
+    <ul class="small">{r.headlines.map((h) => <li>{h}</li>)}</ul>
+    <div class="scroll-x"><table class="table compact small"><thead><tr><th>#</th><th>Country</th><th>Tier</th><th class="num">Power</th><th class="num">Growth</th><th class="num">Unemployment</th><th class="num">Inflation</th><th class="num">Debt (years of revenue)</th><th>Strategy</th></tr></thead>
+      <tbody>{r.rows.map((x) => <tr><td>{x.rank}</td><td><NationChip w={w} id={x.nation} /></td><td>{TIER_LABEL[x.tier]}</td><td class="num">{x.power}</td><td class="num">{x.growth.toFixed(1)}%</td><td class="num">{Math.round(x.unemployment * 100)}%</td><td class="num">{x.inflation == null ? '—' : `${x.inflation.toFixed(1)}%`}</td><td class="num">{x.debtYears.toFixed(2)}</td><td>{x.strategy ? STRATEGY_INFO[x.strategy as keyof typeof STRATEGY_INFO].label : '—'}</td></tr>)}</tbody></table></div>
+  </>;
 }

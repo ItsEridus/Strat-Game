@@ -4,7 +4,7 @@ import { census } from '../../sim/census';
 import { useState } from 'preact/hooks';
 import { useSort } from '../sort';
 import type { Citizen, World } from '../../sim/types';
-import { Bar, CitLink, Help, NationChip, Panel } from '../common';
+import { Bar, CitLink, Help, NationChip, Panel, Sparkline } from '../common';
 import { player } from '../../sim/query';
 import { TIER_LABEL, nationScores } from '../../sim/forces';
 import { BRANCH_ICON } from '../../data/military';
@@ -44,7 +44,7 @@ export function Rankings({ w }: { w: World }) {
         <div class="scroll-x"><table class="table compact small">
           <thead><tr>{sort.th('rank', '#')}{sort.th('nation', 'Nation')}{sort.th('total', 'Power index')}<th>Tier</th>{sort.th('army', '🪖 Army')}{sort.th('navy', '⚓ Navy')}{sort.th('air', '✈️ Air')}{sort.th('economy', 'Economy')}{sort.th('stability', 'Stability')}{sort.th('intel', 'Intelligence')}</tr></thead>
           <tbody>{sort.rows.map((s) => (
-            <tr class={s.id === p.nation ? 'me' : ''}><td>{s.rank}</td><td><NationChip w={w} id={s.id} /></td><td><Bar v={s.total} max={100} color="#e0a526" label={`${s.total}`} /></td><td class="small">{TIER_LABEL[s.tier]}</td>
+            <tr class={s.id === p.nation ? 'me' : ''}><td>{s.rank}</td><td><NationChip w={w} id={s.id} /></td><td><Bar v={s.total} max={100} color="#e0a526" label={`${s.total}`} /></td><td class="small">{TIER_LABEL[s.tier]} <Sparkline values={(w.nations[s.id].powerHist ?? []).slice(-24).map((h) => h.total)} width={60} height={16} /></td>
               <td><Bar v={s.army} max={maxOf('army')} color="#46b873" label={`${Math.round(s.army)}`} /></td>
               <td><Bar v={s.navy} max={maxOf('navy')} color="#5b8def" label={`${Math.round(s.navy)}`} /></td>
               <td><Bar v={s.air} max={maxOf('air')} color="#8a63d2" label={`${Math.round(s.air)}`} /></td>

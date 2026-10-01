@@ -330,3 +330,17 @@ test('budgets and grand strategy: a strategy per country, spending, and a budget
   assert.ok(chooseStrategy(w, usa).kind);
   assert.ok(audit(w).ok);
 });
+
+test('world history: monthly power record and the State of the World', async () => {
+  const { powerMonthly, yearReport } = await import('../src/sim/worldHistory');
+  const { timeOfDate } = await import('../src/engine/calendar');
+  const w = generateWorld(1816, 'Annals', 0, { citizensPerRegion: 1 });
+  w.time = timeOfDate(2025, 1, 1);
+  powerMonthly(w);
+  assert.ok(w.nations.every((n) => n.powerHist?.length === 1));
+  yearReport(w, 2025);
+  const r = w.yearReports!.at(-1)!;
+  assert.equal(r.year, 2025);
+  assert.equal(r.rows.length, 16);
+  assert.ok(r.headlines[0].includes('leading power'));
+});

@@ -3,6 +3,25 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.5.4: the record of the world
+
+- **Power over time.** The power index is taken on the first of every month and kept for ten years. The Rankings
+  screen shows each country's trend over the last two years.
+- **Rise and fall.** When a country moves up or down a tier (minor, regional, middle, great, superpower), or the
+  world's three leading powers change, it makes the news and goes into the country's chronicle.
+- **The State of the World.** Every New Year, a report sums up the year for every country:
+  - its rank and power;
+  - growth, unemployment, inflation and debt;
+  - its strategy;
+  - the headlines: the leading power, the fastest and slowest growers, the highest unemployment, and any country
+    reduced to governing in exile.
+
+  The reports are kept on the World Situation screen, year by year.
+- **Two new stories:**
+  - **Budget night.** If you hold national office when the government sets a new course, back its budget, fight
+    for more on schools and hospitals, or vote against it.
+  - **A year in review.** Each New Year, look back on how your country did and make a resolution.
+
 ### Fixed in 1.5.3
 
 - **Going back keeps your place, everywhere.** Some browsers skip drawing frames for pages they are not showing
