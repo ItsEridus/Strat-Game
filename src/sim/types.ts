@@ -417,6 +417,7 @@ export interface Nation {
   dip?: import('./diplomacyActions').DipState; // diplomatic capital, recent actions, causes for war (2.0)
   summits?: Record<Id, number>;
   imfRelief?: boolean;
+  regime?: import('./regimes').Regime; // the rules of its politics, and their legitimacy (2.3)
   mobilised?: number; // when it mobilised for its current war (2.2)
   warBonds?: number; // war bonds sold to its people (2.2)
   interference?: { by: Id; party: Id; until: number }; // a foreign campaign backing a party in the coming election (2.1)

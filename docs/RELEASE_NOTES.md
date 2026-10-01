@@ -3,6 +3,33 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.2.1: regimes
+
+The first part of 2.3 Rise & fall.
+
+- **Every country has a regime,** starting from its real one in 2025 (rounded from the EIU Democracy Index and
+  V-Dem):
+  - full democracies: Canada, Germany, Britain, Japan, South Korea and Australia;
+  - flawed democracies: the US, Brazil, Argentina, South Africa and India;
+  - hybrid regimes: Mexico and Turkey;
+  - Russia is a personalist autocracy, China a one-party state, and Saudi Arabia an absolute monarchy.
+- **The regime sets the rules:**
+  - Elections are free and fair in democracies. Elsewhere they are managed: a hybrid regime tilts them, a
+    personalist one stages them for its leader, a one-party state confirms the party's choice, and a monarch faces
+    no contest.
+  - Democracies limit a head of government to two terms; the party then nominates someone else.
+  - The press drifts towards what the regime allows.
+  - Power passes by election, by the ruling party, to a royal heir, or to a council of officers.
+- **Legitimacy (0–100)** follows the economy, the government's popularity, unemployment, social cohesion, whether
+  elections are free, and the cost of repression.
+- **Regimes change.**
+  - A democracy can backslide when a nationalist leader governs, legitimacy is low and the public is unhappy. Strong
+    courts make that much less likely.
+  - An autocracy can open up when its legitimacy collapses and society is freer than the regime would like.
+  - In 30-year test runs, one or two of the sixteen countries change regime, as in the real world.
+- **On the Country screen,** a regime panel shows the type, legitimacy, the rules and the history of regime
+  changes.
+
 ### New in 2.2.0: War & peace
 
 2.2 is complete. Over 2.1.1 to 2.1.3, war was rebuilt:

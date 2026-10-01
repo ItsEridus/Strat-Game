@@ -2,6 +2,7 @@
 //  - Elections run on the in-game calendar without player intervention.
 //  - Voters are individual AI citizens plus aggregated background blocs.
 //  - Every result stores turnout, tallies, seats and a readable explanation.
+import { managedBonus, termLimited } from './regimes';
 import { interferenceBonus } from './counterIntel';
 import { fmtDay } from '../engine/calendar';
 import { lifeGate } from './lifecycle';
@@ -310,6 +311,11 @@ export function onRegClose(w: World, eid: Id) {
         if (p.support < 12 && ally && chance(w, 0.6)) { p.nominee = null; p.coalition = ally.id; }
         else if (p.nominee == null || !p.members.includes(p.nominee)) { p.nominee = p.leader; p.coalition = null; }
       }
+      // Term limits (regimes.ts): a leader who has served the limit stands down for another member.
+      if (p.nominee != null && termLimited(w, n, w.citizens[p.nominee])) {
+        const next = p.members.map((id) => w.citizens[id]).filter((c) => c && !c.player && !termLimited(w, n, c)).sort((a, b) => b.influence - a.influence || a.id - b.id)[0];
+        p.nominee = next?.id ?? null;
+      }
       if (p.nominee != null && standing(w.citizens[p.nominee]) >= B.politics.presidentRep && !e.candidates.includes(p.nominee)) e.candidates.push(p.nominee);
     }
     if (!e.candidates.length && n.president != null) e.candidates.push(n.president);
@@ -329,6 +335,8 @@ function candidateUtility(w: World, voter: Citizen | null, voterIdeo: Citizen['i
   if (voter && voter.flags.pledge === cand.id && dayOf(w.time) - (voter.flags.pledgeDay ?? -99) <= 30) parts.pledge = 25; // promised in person
   const foreign = interferenceBonus(w, n, cp?.id);
   if (foreign) parts.foreign = foreign; // a foreign service's campaign
+  const managed = managedBonus(w, n, cand, cp?.id);
+  if (managed) parts.regime = managed; // elections that are not free (regimes.ts)
   const presParty = n.president != null ? w.citizens[n.president]?.party : null;
   const incumbentSide = cand.id === n.president || (cp != null && cp.id === presParty);
   if (incumbentSide) {
@@ -348,6 +356,8 @@ function partyUtility(w: World, voter: Citizen | null, voterIdeo: Citizen['ideo'
   if (voter) parts.relationship = top.reduce((s, c) => s + (voter.rel[c.id] ?? 0), 0) / 8;
   const foreign = interferenceBonus(w, n, p.id);
   if (foreign) parts.foreign = foreign;
+  const managed = managedBonus(w, n, null, p.id);
+  if (managed) parts.regime = managed;
   const presParty = n.president != null ? w.citizens[n.president]?.party : null;
   if (p.id === presParty) {
     parts.record = (n.approval - 50) / 3 + n.warScore / 10;
@@ -432,6 +442,7 @@ export function runElection(w: World, eid: Id) {
   const prev = n.president;
   n.president = winner;
   n.termStart = w.time;
+  w.citizens[winner].flags.termsServed = (w.citizens[winner].flags.termsServed ?? 0) + 1;
   if (winner === pl.id && cands.length > 1) { bump(w, 'wonPresidency'); w.player.counters.regionsAtOffice = w.regions.filter((r) => r.owner === n.id).length; }
   if (prev !== winner) {
     n.cabinet = {};

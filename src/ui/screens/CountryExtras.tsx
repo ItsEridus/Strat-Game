@@ -15,6 +15,8 @@ import { GOLD, fmtAmt, g } from '../../engine/money';
 import { itemName } from '../../data/items';
 import { fmtWhen } from '../../engine/clock';
 import { Diplomacy } from './Diplomacy';
+import { REGIMES, regimeOf } from '../../sim/regimes';
+import { Bar } from '../common';
 
 export function CountryExtras({ w, id }: { w: World; id: Id }) {
   const p = player(w);
@@ -23,6 +25,7 @@ export function CountryExtras({ w, id }: { w: World; id: Id }) {
   const offices = Object.entries(n.cabinet).filter(([, v]) => v === p.id).map(([k]) => k as Ministry);
   return (
     <>
+      <RegimePanel w={w} id={id} />
       {mine && n.president === p.id && <Cabinet w={w} />}
       {mine && offices.length > 0 && (
         <Panel title="Your office">
@@ -106,6 +109,26 @@ function Applications({ w }: { w: World }) {
           <ActBtn small run={(w) => decideCitizenship(w, p.id, n.id, r.cit, true)}>Approve</ActBtn>
           <ActBtn small kind="danger" run={(w) => decideCitizenship(w, p.id, n.id, r.cit, false)}>Deny</ActBtn></div>
       )) : <Empty>No pending applications.</Empty>}
+    </Panel>
+  );
+}
+
+function RegimePanel({ w, id }: { w: World; id: Id }) {
+  const n = w.nations[id];
+  const r = regimeOf(n);
+  const rules = REGIMES[r.type];
+  return (
+    <Panel title={`🏛️ ${rules.label}`}>
+      <p class="small">{rules.desc}</p>
+      <table class="table compact small"><tbody>
+        <tr><td>Legitimacy</td><td><Bar v={r.legitimacy} max={100} color={r.legitimacy < 35 ? '#e0574f' : '#4caf7a'} label={`${Math.round(r.legitimacy)}`} /></td></tr>
+        <tr><td>Elections</td><td>{rules.free ? 'free and fair' : rules.managed >= 100 ? 'no contest for the head of state' : `managed in favour of those in power (+${rules.managed})`}</td></tr>
+        <tr><td>Term limits</td><td>{rules.termLimit ? `${rules.termLimit} terms for the head of government` : 'none'}</td></tr>
+        <tr><td>Succession</td><td>{({ election: 'by election', party: 'chosen by the ruling party', heir: 'to a royal heir', council: 'by a council of officers' } as const)[rules.succession]}</td></tr>
+        <tr><td>Press</td><td>{rules.press >= 0.6 ? 'free' : rules.press >= 0.35 ? 'under pressure' : 'controlled'}</td></tr>
+      </tbody></table>
+      {r.history.length > 0 && <ul class="small">{r.history.slice(-5).reverse().map((h) => <li>{fmtWhen(w, h.t)}: {REGIMES[h.from].label} → {REGIMES[h.to].label} ({h.why})</li>)}</ul>}
+      <Help>Every country starts from its real regime in 2025. Legitimacy follows the economy, the government's popularity, whether elections are free, and the cost of repression. Democracies can slide when leaders are nationalist and legitimacy is low, though strong courts resist it; autocracies can open up when legitimacy collapses.</Help>
     </Panel>
   );
 }
