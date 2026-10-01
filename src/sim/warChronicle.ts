@@ -22,7 +22,9 @@ const list = (xs: string[]) => (xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1
 
 export function note(w: World, war: War, icon: string, text: string, extra: Partial<WarEvent> = {}) {
   const c = chronicleOf(war);
-  c.events.push({ t: w.time, icon, text, ...extra });
+  const e: WarEvent = { t: w.time, icon, text, ...extra };
+  for (const k of Object.keys(e) as (keyof WarEvent)[]) if (e[k] === undefined) delete e[k]; // saves cannot hold undefined
+  c.events.push(e);
   if (c.events.length > 400) c.events.splice(1, c.events.length - 400); // the declaration stays first
 }
 

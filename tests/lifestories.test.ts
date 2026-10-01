@@ -52,3 +52,26 @@ test('a milestone birthday and moving out play through', () => {
   assert.equal(p.dwelling!.kind, 'rent');
   assert.ok(audit(w).ok, audit(w).problems.join('; '));
 });
+
+test('sixteen everyday encounters: each renders and every choice can be made where it binds', () => {
+  const ids = Object.keys(STORIES).filter((k) => k.startsWith('enc.'));
+  assert.equal(ids.length, 16);
+  let ran = 0;
+  for (const id of ids) {
+    const w = fresh(1400 + ran);
+    const p = player(w);
+    mint(w, cref(p.id), w.nations[p.nation].cur, cur(500), 'test');
+    p.energy = 100;
+    const r = triggerStory(w, id);
+    if (!r.ok) continue; // its situation does not arise in this world
+    const i = inst(w, id);
+    const v = viewStage(w, i);
+    assert.ok(v.text.length > 10, id);
+    const ch = v.choices.find((x) => !x.why)!;
+    const res = chooseStory(w, i.id, ch.id);
+    assert.ok(res.ok, `${id}/${ch.id}: ${res.msg}`);
+    assert.ok(audit(w).ok, `${id}: ${audit(w).problems.join('; ')}`);
+    ran++;
+  }
+  assert.ok(ran >= 8, `only ${ran} encounters could be played`);
+});

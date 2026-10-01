@@ -3,6 +3,31 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.3.20: sixteen everyday moments
+
+New situations from ordinary days, each with real people and real consequences:
+
+- a friend's **wedding** invitation;
+- **jury duty**;
+- a **stray** cat or dog on the doorstep, which you can adopt;
+- a **blood drive** at the clinic;
+- a neighbour's loud **party**;
+- a **phone scam** from "your bank";
+- a **lottery ticket**;
+- a friend's **surprise birthday**;
+- a broken **boiler**, which owners fix themselves and tenants chase the landlord about;
+- a **lost child** in the square;
+- an **old friend** across the street;
+- a **charity run**;
+- a neighbour who needs a **babysitter**;
+- a **school reunion**;
+- a **parking fine**, to pay, appeal or ignore;
+- a job **offer from abroad**.
+
+### Fixed in 1.3.20
+
+- A war event with no side (a battle called off by peace) now saves and loads exactly as it was.
+
 ### New in 1.3.19: the stories of a life
 
 Eight new story chains follow the big moments of a life. Each starts from your real situation, plays out over days
