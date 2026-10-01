@@ -237,3 +237,22 @@ test('small businesses: set up, trade daily, pay tax, and close', async () => {
   assert.equal(p.business, undefined);
   assert.ok(audit(w).ok);
 });
+
+test('companies close in the legal order: staff, then the owner', async () => {
+  const { closeCompany, demographyOf } = await import('../src/sim/companyLife');
+  const { audit } = await import('../src/engine/ledger');
+  const { companyCurrency } = await import('../src/sim/query');
+  const w = generateWorld(1811, 'Closing', 0, { citizensPerRegion: 2 });
+  const co = Object.values(w.companies).find((c) => c.workers.length >= 1 && c.owner.k === 'cit' && !w.citizens[c.owner.id].player)!;
+  const code = companyCurrency(w, co);
+  const owner = w.citizens[co.owner.id];
+  const staff = co.workers.map((id) => w.citizens[id]);
+  const ownerCash = owner.wallet[code] ?? 0;
+  assert.ok(closeCompany(w, co, 'insolvent'));
+  assert.equal(w.companies[co.id], undefined);
+  assert.ok(staff.every((c) => c.job == null), 'staff let go');
+  assert.ok((owner.wallet[code] ?? 0) >= ownerCash, 'the owner gets what remains');
+  assert.ok(!Object.values(w.listings).some((l) => l.seller.k === 'co' && l.seller.id === co.id));
+  assert.equal(demographyOf(w, w.regions[co.region].owner).died, 1);
+  assert.ok(audit(w).ok, audit(w).problems.join('; '));
+});

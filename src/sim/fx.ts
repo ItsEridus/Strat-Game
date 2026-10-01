@@ -141,6 +141,14 @@ export function cancelOrder(w: World, actor: Id, id: Id): Result {
   return ok('Order cancelled; escrow returned.');
 }
 
+/** Withdraw an order without an actor (a company being wound up): the escrow returns to its maker. */
+export function forceCancelOrder(w: World, id: Id) {
+  const o = w.fx[id];
+  if (!o) return;
+  escrowOut(w, o.maker, o.side === 'sellGold' ? GOLD : o.cur, o.amount, 'FX order withdrawn');
+  delete w.fx[id];
+}
+
 export const ordersOf = (w: World, who: AccountRef) => Object.values(w.fx).filter((o) => o.maker.k === who.k && o.maker.id === who.id);
 
 /** Volume-weighted rate of the last `days` of trades (null if none). */

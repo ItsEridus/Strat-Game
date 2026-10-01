@@ -1,5 +1,7 @@
 import { useState } from 'preact/hooks';
 import { accounts, corpTaxRate, premisesRent } from '../../sim/companyCosts';
+import { demographyOf } from '../../sim/companyLife';
+import { companiesOf } from '../../sim/census';
 import { fromLocal as fromL, localStep as stepL, toLocal as toL } from '../../engine/money';
 import type { Company, Industry, World } from '../../sim/types';
 import { ActBtn, Amt, Btn, CitLink, Empty, Grade, Item, Num, Panel, RegionLink, Select, Help, Sparkline } from '../common';
@@ -60,8 +62,36 @@ export function Companies({ w }: { w: World }) {
           </table>
         ) : <Empty>You don’t own a company yet. Founding a basic-grade company here costs {fmtAmt(GOLD, foundCost(w, p.loc))}; the tutorial reward covers it.</Empty>}
       </Panel>
+      <Panel title="Industries" class="wide"><IndustriesPanel w={w} /></Panel>
     </div>
   );
+}
+
+/** Herfindahl–Hirschman index of a market (shares in %, squared and summed: 10,000 = a monopoly). */
+export function hhi(sales: number[]): number {
+  const total = sales.reduce((a, b) => a + b, 0);
+  return total > 0 ? Math.round(sales.reduce((t, x) => t + ((x / total) * 100) ** 2, 0)) : 0;
+}
+
+function IndustriesPanel({ w }: { w: World }) {
+  const p = player(w);
+  const nat = p.nation;
+  const n = w.nations[nat];
+  const cos = companiesOf(w, nat).filter((co) => w.companies[co.id]);
+  const d = demographyOf(w, nat);
+  const born = d.hist.reduce((t, x) => t + x.born, 0) + d.born, died = d.hist.reduce((t, x) => t + x.died, 0) + d.died;
+  const rows = (Object.keys(INDUSTRY_INFO) as (keyof typeof INDUSTRY_INFO)[]).map((ind) => {
+    const xs = cos.filter((co) => co.industry === ind);
+    const sales = xs.map((co) => co.hist.slice(-30).reduce((t, h) => t + h.revenue, 0));
+    const profit = xs.reduce((t, co) => t + co.hist.slice(-30).reduce((a, h) => a + h.profit, 0), 0);
+    return { ind, firms: xs.length, staff: xs.reduce((t, co) => t + co.workers.length, 0), sales: sales.reduce((a, b) => a + b, 0), profit, hhi: hhi(sales) };
+  }).filter((r) => r.firms > 0);
+  return <>
+    <p class="small">{n.name}: {cos.length} companies · {born} opened and {died} closed in the last {d.hist.length + 1} months.</p>
+    <table class="table compact small"><thead><tr><th>Industry</th><th class="num">Firms</th><th class="num">Staff</th><th class="num">Sales (30 days)</th><th class="num">Profit</th><th class="num">Concentration (HHI)</th></tr></thead>
+      <tbody>{rows.map((r) => <tr><td>{INDUSTRY_INFO[r.ind].icon} {INDUSTRY_INFO[r.ind].name}</td><td class="num">{r.firms}</td><td class="num">{r.staff}</td><td class="num">{fmtAmt(n.cur, r.sales)}</td><td class={`num ${r.profit < 0 ? 'bad' : 'good'}`}>{fmtAmt(n.cur, r.profit)}</td><td class="num">{r.hhi.toLocaleString()}{r.hhi > 2500 ? ' · concentrated' : r.hhi > 1500 ? ' · moderate' : ''}</td></tr>)}</tbody></table>
+    <Help>Concentration uses the Herfindahl–Hirschman index of sales shares, as competition authorities do: under 1,500 is competitive, over 2,500 highly concentrated. Companies close when they are insolvent (unable to pay their staff for a fortnight) or have stood idle and lost money for a month; their staff get redundancy pay first, and their owner what remains.</Help>
+  </>;
 }
 
 function FoundPanel({ w }: { w: World }) {

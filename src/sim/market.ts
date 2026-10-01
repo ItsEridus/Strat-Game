@@ -154,6 +154,14 @@ export function list(w: World, actor: Id, seller: AccountRef, market: Id, item: 
   return ok(`Listed ${qty} ${itemName(item)} at ${fmtAmt(w.nations[market].cur, price)} each.`);
 }
 
+/** Withdraw a listing without an actor (a company being wound up): the goods return from escrow. */
+export function forceCancelListing(w: World, id: Id) {
+  const l = w.listings[id];
+  if (!l) return;
+  itemsFromEscrow(w, l.seller, l.item, l.qty);
+  removeListing(w, l);
+}
+
 export function cancelListing(w: World, actor: Id, id: Id, qty?: number): Result {
   const l = w.listings[id];
   if (!l) return fail('Listing no longer exists.');

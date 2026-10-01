@@ -7,6 +7,7 @@ import { leaveCheck, tooIll } from './health';
 import { contribute } from './pensions';
 import { goldScale, recordPay } from './wages';
 import { jobLost } from './labour';
+import { noteBirth } from './companyLife';
 import { payOverheads } from './companyCosts';
 import { lifeGate } from './lifecycle';
 import type { AccountRef, Citizen, Company, DayRecord, Id, Industry, World } from './types';
@@ -353,6 +354,7 @@ export function foundCompany(w: World, actor: Citizen, owner: AccountRef, ind: I
   if (why) return fail(why);
   burn(w, owner, GOLD, foundCost(w, region), 'Company founding');
   const co = createCompany(w, owner, ind, 1, region, name?.trim() || undefined);
+  noteBirth(w, co);
   record(w, 'company', `${actor.name} founded ${co.name} (${INDUSTRY_INFO[ind].name}) in ${w.regions[region].name}.`, { cit: actor.id, region, player: actor.player });
   localNews(w, region, `🏗️ ${co.name} (${INDUSTRY_INFO[ind].name.toLowerCase()}) opened, founded by ${actor.name}.`);
   if (actor.player) bump(w, 'found');

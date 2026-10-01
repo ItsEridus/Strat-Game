@@ -1,5 +1,6 @@
 // Wires every subsystem's hooks into the simulation loop, once, in a fixed order.
 // The order is part of determinism: do not reorder casually.
+import { companyLifeDaily } from './companyLife';
 import { smallBusinessDaily } from './smallBusiness';
 import { labourDaily } from './labour';
 import { bankingDaily } from './banking';
@@ -168,7 +169,7 @@ export function registerSystems() {
   dailyHooks.push(petsDaily, adoptionsDaily, educationDaily, servicesDaily, housingDaily, lendingDaily, healthDaily, pensionsDaily, childhoodDaily, lifeAIDaily);
   hourlyHooks.push(pregnanciesHourly);
   dailyHooks.push(populationDaily);
-  dailyHooks.push(publicFinanceDaily, tradeDaily, statisticsDaily, bankingDaily, labourDaily, smallBusinessDaily);
+  dailyHooks.push(publicFinanceDaily, tradeDaily, statisticsDaily, bankingDaily, labourDaily, smallBusinessDaily, companyLifeDaily);
   dailyHooks.push(familyDaily);
   dailyHooks.push(wellbeingDaily);
   tickHooks.push(lifecycleTick);

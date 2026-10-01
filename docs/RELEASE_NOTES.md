@@ -3,6 +3,22 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.4.14: companies close, and an industry overview
+
+- **Companies can fail.** A company closes when:
+  - it is insolvent: it has staff it cannot pay for a fortnight and an owner who cannot help;
+  - or it is wound up: it has stood idle with no staff, made nothing and lost money for a month.
+
+  At most two companies close a day in each country, so a shake-out is gradual.
+- **The books are settled in the legal order.** Staff come first, with redundancy pay as far as the money goes and
+  then unemployment benefit. The owner gets what remains, including any stock. Listings and currency orders are
+  withdrawn. The closure appears in the news.
+- **Your own companies are never closed without you.** Neither are state-owned firms, which the treasury keeps
+  going.
+- **Industry overview.** The Companies screen shows every industry in your country: firms, staff, a month's sales
+  and profit, and market concentration (the Herfindahl–Hirschman index competition authorities use). It also
+  shows how many companies opened and closed in recent months.
+
 ### New in 1.4.13: working for yourself
 
 - **Self-employment.** You can now start your own business from the Life screen's money tab. There are eight kinds:
