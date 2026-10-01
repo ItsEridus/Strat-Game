@@ -284,7 +284,9 @@ export function aiChoice(w: World, n: Nation): [DipAction, DipParams] | null {
   }
   // Renounce treaties with those it has come to hate.
   for (const tr of activeTreaties(w, n.id)) {
-    const worst = Math.min(...tr.parties.filter((x) => x !== n.id).map((x) => n.relations[x]?.score ?? 0));
+    // A pact with one partner goes when that partner is hated; a multilateral one only when most members are.
+    const rels = tr.parties.filter((x) => x !== n.id).map((x) => n.relations[x]?.score ?? 0);
+    const worst = rels.length > 1 ? rels.reduce((a, b) => a + b, 0) / rels.length : rels[0] ?? 0;
     if (worst < (tr.historic ? -75 : -45)) opts.push(['renounce', { target: tr.parties.find((x) => x !== n.id)!, treaty: tr.id }, 0.6]);
   }
   // A respected neutral offers to mediate.

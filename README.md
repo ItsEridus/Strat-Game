@@ -165,6 +165,21 @@ incite unrest, spread propaganda, plant scandals, recruit assets or sweep for sp
 diplomatic incidents and arrests. Join as an analyst and climb to deputy director, direct the service as
 Director of Intelligence — or accept a foreign service's offer and become a double agent. (Intelligence screen.)
 
+**Diplomacy.** Countries see each other through trust, shared values and language, fear, trade ties and old
+grievances. The game starts from the real world of 2025:
+- NATO and the US alliances in Asia;
+- USMCA, Mercosur, CPTPP, RCEP and about twenty other trade agreements;
+- New START, and the US bases abroad.
+
+Treaties have terms and end dates; allies deter attackers and decide whether to stand by a partner that is
+attacked. Rivals fall into arms races and crises (border clashes, naval standoffs, detained citizens) that climb
+towards the brink and usually stop short of it. The UN Security Council (with vetoes) votes on aggression, the
+G20 meets each November, the WTO hears trade disputes and the IMF lends to countries in trouble.
+
+As head of government you spend diplomatic capital on summits, aid, loans, sanctions, treaties, ultimatums and
+mediation; you cast your country's UN votes and choose its moves in a crisis. Diplomat, trade negotiator and
+international civil servant are careers. (Country screen → Diplomacy.)
+
 **The economy.** Money is real:
 - Every country uses its own currency at real early-2025 exchange rates. Pay follows each country's real median
   wage and minimum wage, so a typical day's pay is about $200 in the United States and ₹780 in India, and prices

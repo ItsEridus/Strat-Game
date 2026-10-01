@@ -16,7 +16,7 @@ import { nationScores } from './forces';
 import { activeWars, enemyOf } from './war';
 import { activeTreaties, hasTreaty, securityPartners } from './treaties';
 
-export interface Ties { trust: number; affinity: number; threat: number; interdep: number; grievance: number }
+export interface Ties { trust: number; affinity: number; threat: number; interdep: number; grievance: number; base?: number } // base: the historical level trust returns to
 export const blocsOf = (n: Nation): Bloc[] => BLOCS.filter((b) => b.members.includes(n.iso));
 export const sharedBlocs = (a: Nation, b: Nation) => BLOCS.filter((x) => x.members.includes(a.iso) && x.members.includes(b.iso));
 
@@ -75,7 +75,9 @@ function assess(w: World, a: Nation, b: Nation, mil: Map<Id, number>, t: Ties) {
   const allied = securityPartners(w, a.id, b.id);
   const la = leaderProfile(w, a);
   const limits = hasTreaty(w, a.id, b.id, 'armscontrol') ? 0.75 : 1;
-  t.threat = Math.round(Math.min(100, Math.min(3, ratio) * 25 * near * (0.3 + hostile + lb.hawk * 0.4 + warsOnFriends) * (allied ? 0.2 : 1) * limits * (0.8 + la.hawk * 0.4)));
+  // Structural suspicion: long-standing rivals watch each other's power whatever today's mood.
+  const suspicion = Math.max(0, -(t.base ?? startTrust(a.iso, b.iso))) / 2 * Math.min(1.5, ratio + 0.3);
+  t.threat = Math.round(Math.min(100, (Math.min(3, ratio) * 25 * near * (0.3 + hostile + lb.hawk * 0.4 + warsOnFriends) + suspicion) * (allied ? 0.2 : 1) * limits * (0.8 + la.hawk * 0.4)));
 }
 
 /** The blended view (−100..100) that the relation score moves towards. */
@@ -115,9 +117,14 @@ export function relationsDaily(w: World, days = 1) {
       const t = tiesOfPair(w, a, b);
       assess(w, a, b, mil, t);
       // Trust fades towards a baseline (allies keep a store of it); grievances fade over decades.
-      const base = a.alliances.includes(b.id) || hasTreaty(w, a.id, b.id, 'intel') ? 30 : 0;
-      t.trust += (base - t.trust) * k(0.002);
-      t.grievance = Math.max(grievanceOf(a.iso, b.iso) * (hasTreaty(w, a.id, b.id, 'border') ? 0.25 : 0.5), t.grievance - 0.01 * days);
+      // Trust returns to the pair's historical level (allies keep a store of it). That level itself
+      // changes only over decades: rivalries are structural and do not simply fade.
+      t.base ??= startTrust(a.iso, b.iso);
+      t.base += (0 - t.base) * k(0.00005);
+      const anchor = a.alliances.includes(b.id) || hasTreaty(w, a.id, b.id, 'intel') ? Math.max(30, t.base) : t.base;
+      t.trust += (anchor - t.trust) * k(0.002);
+      // Standing disputes do not fade (a border agreement halves them); new wrongs fade over decades.
+      t.grievance = Math.max(grievanceOf(a.iso, b.iso) * (hasTreaty(w, a.id, b.id, 'border') ? 0.5 : 1), t.grievance - 0.01 * days);
       // Trade ties grow under a trade agreement and wither under an embargo.
       const tieBase = tiesOf(a.iso, b.iso);
       const tieTarget = a.embargoes.includes(b.id) || b.embargoes.includes(a.id) ? tieBase * 0.3 : hasTreaty(w, a.id, b.id, 'trade') ? Math.min(100, tieBase + 15) : tieBase;

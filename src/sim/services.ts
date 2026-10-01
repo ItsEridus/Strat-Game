@@ -3,6 +3,7 @@
 // salary from the national treasury (with work tax, like any wage). Each post
 // has a ladder of grades; promotions come with service, good work and the
 // qualifications for the grade. Staffing feeds back into the service itself.
+import { scoped } from './scope';
 import { hasQuirk } from './nature';
 import type { Citizen, Id, World } from './types';
 import { B } from '../data/balance';
@@ -234,7 +235,9 @@ export const initServices = (w: World) => { for (let i = 0; i < 3; i++) services
 
 /** A nation's staffing of a service (0..1, averaged over the regions that have posts; 0.6 where none do). */
 export function nationalStaffing(w: World, nation: Id, key: 'diplomacy' | 'trade' | 'intl' | 'emergency' | 'meteorology' | 'courts'): number {
+  return scoped(`staff:${nation}:${key}`, () => {
   let t = 0, k = 0;
   for (const r of w.regions) if (r.owner === nation && r.staff?.[key] != null) { t += r.staff[key]!; k++; }
   return k ? t / k : 0.6;
+  });
 }

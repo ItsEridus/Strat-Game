@@ -13,6 +13,7 @@
 // through real rank ladders to command formations; the most senior officer
 // becomes chief of staff. AI defence ministries raise, supply, deploy and order
 // forces by the same rules the player's government uses.
+import { scoped } from './scope';
 import { combatWeather } from './weather';
 import { conscriptionOf, doctrineFactor, serviceShareFactor, upkeepFactor } from './forceStructure';
 import { capsOf, techAvg } from './strategic';
@@ -856,6 +857,9 @@ export const TIER_LABEL: Record<Tier, string> = { superpower: 'Superpower', grea
 export const tierOf = (total: number): Tier => (total >= 80 ? 'superpower' : total >= 58 ? 'great' : total >= 45 ? 'middle' : total >= 35 ? 'regional' : 'minor');
 
 export function nationScores(w: World): NationScore[] {
+  return scoped('scores', () => nationScoresNow(w));
+}
+function nationScoresNow(w: World): NationScore[] {
   const rows = w.nations.map((n) => {
     const fs = formationsOf(w, n.id);
     const sum = (b: Branch) => fs.filter((f) => f.branch === b).reduce((s, f) => s + power(w, f), 0) * 10;

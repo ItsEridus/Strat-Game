@@ -4,6 +4,7 @@
 //  - Holding the quota of occupations settles the war: held goals transfer, other
 //    occupations return, retained regions lose one building level, a 7-day pact follows.
 //  - Deadlines and peace terms (armistice, surrender, demand, trade) also settle wars.
+import { scoped } from './scope';
 import { alliedPower, onWarDeclared } from './treaties';
 import { casusBelli } from './diplomacyActions';
 import { addGrievance } from './relations';
@@ -192,6 +193,9 @@ export function neighborNations(w: World, n: Id): Id[] {
 
 /** Rough military strength used by AI decisions: citizens' power, levels and weapon stocks, plus treasury. */
 export function militaryPower(w: World, n: Id): number {
+  return scoped(`mil:${n}`, () => militaryPowerNow(w, n));
+}
+function militaryPowerNow(w: World, n: Id): number {
   let s = 0;
   for (const c of census(w).all) {
     if (c.nation !== n) continue;

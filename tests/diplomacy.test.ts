@@ -38,3 +38,15 @@ test('nations remember: hostile acts cut trust, conquest leaves a grievance, and
   assert.ok(b.relations[a.id].score < 20, `the relation sours (${b.relations[a.id].score})`);
   assert.ok(audit(w).ok);
 });
+
+test('rivalries and friendships persist over years: trust returns to its historical level', async () => {
+  const { statisticalSkip } = await import('../src/sim/statYear');
+  const w = fresh(803);
+  advance(w, 2 * DAY, false);
+  statisticalSkip(w, w.time + 3 * 365 * DAY);
+  const us = by(w, 'USA'), gb = by(w, 'GBR'), ru = by(w, 'RUS');
+  assert.ok(us.relations[ru.id].score < -15, `the US and Russia stay rivals (${Math.round(us.relations[ru.id].score)})`);
+  assert.ok(us.relations[gb.id].score > 40, `the US and Britain stay close (${Math.round(us.relations[gb.id].score)})`);
+  assert.ok(tiesOfPair(w, us, ru).threat > 15, 'and keep watching each other');
+  assert.ok(audit(w).ok);
+});

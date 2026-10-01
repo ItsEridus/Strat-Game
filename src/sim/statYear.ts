@@ -13,6 +13,7 @@
 //   (elections, war deadlines, the end of pacts) fire in order as their dates pass.
 // The player's own life is summarised in the review at the end. Day-to-day detail
 // (individual shifts, markets, conversations) resumes when the skip is over.
+import { withScope } from './scope';
 import type { Citizen, World } from './types';
 import { DAY } from '../engine/clock';
 import { dateAt } from '../engine/calendar';
@@ -132,7 +133,7 @@ export function skipMonth(w: World, target: number) {
     runQueue(w); // elections, war deadlines and anything else scheduled in the month, in order
     peopleMonth(w, days);
     // The monthly national turn (these run on the first of the month).
-    treatiesDaily(w); relationsDaily(w, days); diplomacyActionsDaily(w, days); intlDaily(w, days); balanceOfPowerDaily(w); crisesDaily(w, days);
+    withScope(() => { treatiesDaily(w); relationsDaily(w, days); diplomacyActionsDaily(w, days); intlDaily(w, days); balanceOfPowerDaily(w); crisesDaily(w, days); });
     strategicDaily(w); arsenalDaily(w); energyDaily(w); foodDaily(w); powerMonthly(w); budgetDaily(w);
     for (const c of census(w).all) { c.energy = Math.max(c.energy, 50); c.lastWorkDay = Math.floor(w.time / DAY) - 1; }
   }

@@ -66,7 +66,11 @@ const mutualDeterrence = (a: Nation, b: Nation) => !!strategicOf(a)?.warheads &&
 /** Past the brink, does the escalating side actually choose war? */
 function choosesWar(w: World, c: Crisis, id: Id): boolean {
   const n = w.nations[id], o = w.nations[other(c, id)];
-  const p = (resolve(w, c, id) - 0.3) * 1.5 * (mutualDeterrence(n, o) || alliedNuclear(w, o) ? 0.1 : 1);
+  // Deterrence: attacking a nuclear power (or a nuclear power's ally) is a different calculation; and a
+  // country that fought the same enemy recently is in no hurry to do it again.
+  const deterred = mutualDeterrence(n, o) ? 0.1 : strategicOf(o)?.warheads ? 0.15 : alliedNuclear(w, o) ? 0.3 : 1;
+  const weary = Object.values(w.wars).some((x) => ((x.att === n.id && x.def === o.id) || (x.att === o.id && x.def === n.id)) && x.declared > w.time - 2 * 365 * DAY) ? 0.3 : 1;
+  const p = (resolve(w, c, id) - 0.3) * 1.5 * deterred * weary;
   return chance(w, Math.max(0, Math.min(0.7, p)));
 }
 /** An ally with nuclear weapons stands behind the other side (extended deterrence). */

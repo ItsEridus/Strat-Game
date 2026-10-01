@@ -3,6 +3,40 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.0.0: The great game
+
+2.0 is complete. Over 1.9.3 to 1.9.7 the world's countries gained real foreign policies:
+- relations built from trust, affinity, threat, trade and grievances;
+- treaties with terms, end dates and records of whether they were kept;
+- diplomatic actions with costs;
+- the UN, the G20, the WTO and the IMF;
+- crises, arms races and the balance of power;
+- diplomatic careers and stories.
+
+This release calibrates the whole over decades. In ten-year test runs from 2025:
+- two or three international crises break out a year; most end in talks or fade, and about one in a decade
+  becomes a war;
+- arms races appear between the real rivals: the US and Russia, China and Japan, China and India;
+- New START lapses in February 2026 as it really did, and new alliances form among countries that fear the same
+  power;
+- sanctions cost the target up to about a point of growth a year.
+
+### Changed in 2.0.0
+
+- **Rivalries no longer melt away.** Trust between two countries now returns to its historical level, which itself
+  changes only over decades; before, it faded to neutral within about a year. Standing disputes (the Falklands, the
+  Kurils, the China–India border) no longer fade by themselves, though a border agreement halves them. The US and
+  Russia remain rivals, and the US and Britain remain close.
+- **Structural suspicion.** Long-standing rivals watch each other's power whatever the mood of the moment, so the
+  threat between the US and China or Russia and Germany stays real.
+- **Deterrence in crises.** A country thinks hard before taking a crisis over the brink against a nuclear power or
+  its ally. A pair that fought each other in the last two years is in no hurry to fight again.
+- A government renounces a multilateral treaty (such as RCEP) only when most of its members have become hostile,
+  not because of one of them.
+- **Speed.** Skipping a year is faster: the diplomatic AI now works out each country's military power and standing
+  once a day instead of thousands of times.
+- The README describes diplomacy.
+
 ### New in 1.9.7: careers and stories in diplomacy
 
 The fifth part of 2.0 The great game.
