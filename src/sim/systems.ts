@@ -1,5 +1,6 @@
 // Wires every subsystem's hooks into the simulation loop, once, in a fixed order.
 // The order is part of determinism: do not reorder casually.
+import { intlDaily } from './intlOrgs';
 import { treatiesDaily } from './treaties';
 import { diplomacyActionsDaily } from './diplomacyActions';
 import { foodDaily } from './food';
@@ -116,7 +117,7 @@ export function registerSystems() {
   HANDLERS.warDeadline = (w, p) => onWarDeadline(w, p.war);
   tickHooks.push(soldiersTick);
   hourlyHooks.push((w: World) => { if (!lod.coarse || hourOf(w.time) % 2 === 0) militaryHourly(w); peaceHousekeeping(w); });
-  dailyHooks.push((w: World) => { treatiesDaily(w); diplomacyDaily(w); diplomacyActionsDaily(w); defenseBudget(w); aiClaimReserves(w); updateExile(w); computeSupply(w); });
+  dailyHooks.push((w: World) => { treatiesDaily(w); diplomacyDaily(w); diplomacyActionsDaily(w); intlDaily(w); defenseBudget(w); aiClaimReserves(w); updateExile(w); computeSupply(w); });
 
   // Stage 4: finance & progression
   HANDLERS.auctionEnd = (w, p) => onAuctionEnd(w, p.id);

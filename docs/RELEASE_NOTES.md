@@ -3,6 +3,37 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.9.5: the United Nations, the G20, the WTO and the IMF
+
+The third part of 2.0 The great game.
+
+- **The UN Security Council.**
+  - The US, China, Russia and Britain sit permanently, each with a veto.
+  - Four seats are elected for two years: South Korea holds one at the start. Each January the General Assembly
+    fills the seats that fall vacant, choosing by standing and goodwill; no country is re-elected at once.
+- **Resolutions on wars of aggression.** Within days of an attack, a Council member tables a resolution. There are
+  three kinds:
+  - a condemnation, which costs the aggressor trust with every country that voted for it;
+  - a demand for a ceasefire, which may bring an armistice (or the aggressor is seen to defy it);
+  - binding sanctions, which oblige every member to cut trade for a year. The aggressor's friends may defy them.
+- **How countries vote.** Each votes on its interests: its relations with the aggressor and the sponsor, its
+  alliances, and whether it wages wars itself. Most countries oppose aggression on principle; the aggressor's
+  friends and allies stand with it.
+- **Vetoes and the General Assembly.** A permanent member vetoes resolutions against itself or its friends. Blocked
+  in the Council, the matter goes to the General Assembly ("Uniting for Peace"), where everyone votes.
+- **Your vote.** As head of government you cast your country's vote on the Diplomacy screen, and you can table
+  resolutions of your own.
+- **The G20** meets every November, hosted in turn (South Africa in 2025). Leaders on speaking terms come away
+  trusting each other a little more, and an aggressor at war is shunned.
+- **The WTO.** A country hit by sanctions the UN never authorised may complain. Panels rule after a year, and
+  national security is a defence when the threat is real. A country that ignores a ruling against it faces
+  authorised retaliation.
+- **The IMF.** A country whose gold reserves run out, or whose borrowing hits its limit, gets an emergency loan
+  in gold from the largest economies, repaid over two years. Austerity costs the government approval, but its
+  bonds pay a smaller risk premium while the programme lasts.
+- A new "International organisations" panel on the Diplomacy screen shows the Council, the votes before the UN,
+  recent results, the latest G20, your trade disputes and any IMF programme.
+
 ### New in 1.9.4: treaties and diplomacy
 
 The second part of 2.0 The great game.

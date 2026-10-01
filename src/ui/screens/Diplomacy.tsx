@@ -8,7 +8,9 @@ import { activeWars } from '../../sim/war';
 import { TREATY_INFO, activeTreaties, allTreaties, willingness, type Treaty, type TreatyKind } from '../../sim/treaties';
 import { DIP_INFO, DEMAND_NAME, dipCheck, dipOf, doDiplomacy, loansOf, type DipAction, type Demand } from '../../sim/diplomacyActions';
 import { GOLD, fmtAmt } from '../../engine/money';
-import { fmtWhen } from '../../engine/clock';
+import { RES_INFO, castCheck, castVote, councilMembers, intlOf, permanentIds, tableCheck, tableResolution, voters, type ResKind } from '../../sim/intlOrgs';
+import { fail, ok } from '../../engine/result';
+import { DAY, fmtWhen } from '../../engine/clock';
 import { BLOCS } from '../../data/diplomacy';
 import { blocsOf, leaderProfile, prestigeOf, tiesOfPair } from '../../sim/relations';
 
@@ -44,6 +46,7 @@ export function Diplomacy({ w, id }: { w: World; id: Id }) {
       </Panel>
       {player(w).nation === id && n.president === player(w).id && <Actions w={w} id={id} />}
       <Treaties w={w} id={id} />
+      <Organisations w={w} id={id} />
       <Panel title="Blocs and alliances">
         <table class="table compact small"><tbody>{blocsOf(n).map((b) => (
           <tr><td><b>{b.name}</b><br /><small class="muted">{b.desc}</small></td><td>{b.members.map((iso) => w.nations.find((x) => x.iso === iso)).filter(Boolean).map((x) => <NationChip w={w} id={x!.id} />)}</td></tr>
@@ -119,6 +122,58 @@ function Actions({ w, id }: { w: World; id: Id }) {
           <td><ActBtn small why={dipCheck(w, n, a, params(a))} run={(w) => doDiplomacy(w, w.nations[id], a, params(a))}>Do it</ActBtn></td></tr>
       ))}</tbody></table>
       <Help>As head of government you conduct the country's foreign policy. Other governments decide on the merits: their trust in you, their fears, their leader's outlook and how they see your power and your allies.</Help>
+    </Panel>
+  );
+}
+
+const VOTE_NAME = { y: 'for', n: 'against', a: 'abstained' } as const;
+
+function Organisations({ w, id }: { w: World; id: Id }) {
+  const st = intlOf(w);
+  const n = w.nations[id];
+  const pl = player(w);
+  const head = pl.nation === id && n.president === pl.id;
+  const perm = permanentIds(w);
+  const council = councilMembers(w);
+  const open = st.resolutions.filter((r) => r.status === 'open');
+  const recent = st.resolutions.filter((r) => r.status !== 'open').slice(-8).reverse();
+  const [kind, setKind] = useState<ResKind>('condemn');
+  const aggressors = Object.values(w.wars).filter((x) => x.status === 'active' || x.declared > w.time - 30 * DAY).map((x) => x.att).filter((x, i, a) => a.indexOf(x) === i && x !== id);
+  const [target, setTarget] = useState<Id>(aggressors[0] ?? -1);
+  const disputes = st.disputes.filter((d) => d.complainant === id || d.respondent === id).slice(-6).reverse();
+  const imf = st.imf.filter((p) => p.nation === id);
+  return (
+    <Panel title="🇺🇳 International organisations" class="wide">
+      <p class="small"><b>UN Security Council:</b> permanent members (with a veto) {perm.map((p) => <NationChip w={w} id={p} />)}; elected {st.seats.map((s) => <span><NationChip w={w} id={s.nation} /> <small class="muted">until {fmtWhen(w, s.until)}</small> </span>)}.
+        {council.includes(id) ? ` ${n.name} sits on the Council.` : ''}</p>
+      {open.length > 0 && <>
+        <h4>Before the UN now</h4>
+        <table class="table compact small"><tbody>{open.map((r) => (
+          <tr><td>{r.body === 'sc' ? 'Security Council' : 'General Assembly'}: <b>{RES_INFO[r.kind].name}</b> — <NationChip w={w} id={r.target} /> <small class="muted">(tabled by {w.nations[r.sponsor].name}; vote {fmtWhen(w, r.closes)})</small></td>
+            <td>{head && voters(w, r).includes(id) && (r.votes[id] && r.sponsor !== id ? `you voted ${VOTE_NAME[r.votes[id]]}` : (['y', 'n', 'a'] as const).map((v) => (
+              <ActBtn small why={castCheck(w, n, r)} run={(w) => { castVote(w, w.nations[id], w.intl!.resolutions.find((x) => x.id === r.id)!, v); return ok(`${n.name} will vote ${VOTE_NAME[v]}.`); }}>{v === 'y' ? 'For' : v === 'n' ? (r.body === 'sc' && perm.includes(id) ? 'Against (veto)' : 'Against') : 'Abstain'}</ActBtn>)))}</td></tr>
+        ))}</tbody></table>
+      </>}
+      {head && aggressors.length > 0 && (
+        <div class="row">
+          <span>Table a resolution:</span>
+          <Select value={kind} options={(Object.keys(RES_INFO) as ResKind[]).map((k) => [k, RES_INFO[k].name] as [ResKind, string])} onChange={setKind} />
+          <Select value={target} options={aggressors.map((x) => [x, w.nations[x].name] as [Id, string])} onChange={setTarget} />
+          <ActBtn small why={tableCheck(w, n, 'sc', kind, target)} run={(w) => (tableResolution(w, w.nations[id], 'sc', kind, target) ? ok('Tabled at the Security Council.') : fail('Could not table it.'))}>at the Security Council</ActBtn>
+          <ActBtn small why={tableCheck(w, n, 'ga', kind, target)} run={(w) => (tableResolution(w, w.nations[id], 'ga', kind, target) ? ok('Tabled at the General Assembly.') : fail('Could not table it.'))}>at the General Assembly</ActBtn>
+        </div>
+      )}
+      {recent.length > 0 && <>
+        <h4>Recent votes</h4>
+        <ul class="small">{recent.map((r) => <li>{fmtWhen(w, r.closes)}: {r.result} {r.votes[id] ? <span class="muted">({n.name} voted {VOTE_NAME[r.votes[id]]}.)</span> : null}</li>)}</ul>
+      </>}
+      {st.g20.length > 0 && <p class="small"><b>G20:</b> {st.g20[st.g20.length - 1].text}</p>}
+      {disputes.length > 0 && <>
+        <h4>Trade disputes at the WTO</h4>
+        <ul class="small">{disputes.map((d) => <li>{w.nations[d.complainant].name} against {w.nations[d.respondent].name} (filed {fmtWhen(w, d.filed)}): {({ open: `ruling due ${fmtWhen(w, d.ruling)}`, won: 'ruled for the complainant; the sanctions must go', lost: 'complaint rejected', security: 'national-security defence accepted', complied: 'resolved', retaliation: 'ruling ignored; retaliation authorised' } as const)[d.status]}</li>)}</ul>
+      </>}
+      {imf.length > 0 && <p class="small"><b>IMF:</b> {imf.map((p) => `a programme of ${fmtAmt(GOLD, p.amount)} from ${fmtWhen(w, p.start)} until ${fmtWhen(w, p.until)}`).join('; ')}. Austerity is unpopular, but the markets lend more cheaply.</p>}
+      <Help>The United Nations votes on wars of aggression: the Security Council (where the US, China, Russia and Britain hold vetoes) can condemn, demand a ceasefire or impose binding sanctions for a year; when it is blocked, the General Assembly can still condemn. Countries vote on their interests and their friendships. The G20 meets every November. The WTO hears complaints against sanctions the UN never authorised, and the IMF lends to countries whose reserves or credit run out.</Help>
     </Panel>
   );
 }
