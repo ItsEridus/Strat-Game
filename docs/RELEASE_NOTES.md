@@ -3,6 +3,36 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.2.0: War & peace
+
+2.2 is complete. Over 2.1.1 to 2.1.3, war was rebuilt:
+- governments go to war only when their own calculation (made with what their intelligence believes) favours it;
+- a country at war mobilises, loses real citizens killed, wounded and captured, makes refugees, and pays with
+  war bonds and borrowing;
+- wars escalate, wear both sides down, and end by negotiation, by freezing along the front line, or by petering
+  out, with treaties, reparations and demilitarised borders.
+
+This release adds the aftermath, the record and four stories.
+
+- **The aftermath.** Each side raises a memorial to its fallen. After a war that reached the bombing of cities, the
+  victor puts the losers' commanders on trial, and the losers remember it as victors' justice. Those called up come
+  home as veterans.
+- **The war chronicle** now records surprise attacks, mobilisation, every escalation and step back down, each
+  deadline passed with both sides still fighting, a front freezing, reparations, memorials and tribunals.
+- **Four stories:**
+  - **The call-up:** recalled from the reserve, you report for duty, ask for a deferment (granted if your work or
+    family needs you), or do not report and live with the consequences.
+  - **Letters from the front:** a partner, child or parent at war writes home. You write back about ordinary
+    things, send a parcel, or beg them to come home.
+  - **Ceasefire:** as head of government, or a senior diplomat, when the war has dragged on: offer an armistice,
+    ask a neutral country to mediate, or hold out for better terms.
+  - **Coming home:** back from the war, you pick up your old life, join a veterans' association, or tell your
+    story to the press.
+- **Calibration.** In ten-year test runs, wars between the sixteen countries are rare (none to a few a decade),
+  each records why it started, and none drags on for ever. That matches the real base rate for major powers.
+- The roadmap and README now cover 2.2, including what it left for later (insurgency, proxy wars and
+  peacekeeping, which move to 2.3 alongside civil wars) and where each item is now planned.
+
 ### New in 2.1.3: how wars run and end
 
 The third part of 2.2 War & peace. The old rule (a war simply ended at its deadline, with every occupation

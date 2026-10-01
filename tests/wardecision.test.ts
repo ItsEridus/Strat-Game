@@ -38,3 +38,15 @@ test('a grievance, a weak neighbour, trouble at home and a closed press make war
   assert.ok(c.costs.some(([k, v]) => k === 'nuclear deterrence' && v >= 2));
   assert.ok(c.value < 0);
 });
+
+test('a decade produces few interstate wars, each with a recorded cause (2.2.0 calibration)', async () => {
+  const { statisticalSkip } = await import('../src/sim/statYear');
+  const w = fresh(1610);
+  advance(w, 2 * DAY, false);
+  const before = new Set(Object.keys(w.wars));
+  statisticalSkip(w, w.time + 10 * 365 * DAY);
+  const wars = Object.values(w.wars).filter((x: any) => !before.has(String(x.id)));
+  assert.ok(wars.length <= 5, `${wars.length} wars in ten years`);
+  for (const x of wars) assert.ok(x.chronicle?.cause?.summary, 'every war says why it started');
+  assert.ok(wars.every((x: any) => x.status !== 'active' || w.time - x.declared < 120 * DAY), 'and none drags on for ever');
+});

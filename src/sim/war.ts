@@ -4,7 +4,7 @@
 //  - Holding the quota of occupations settles the war: held goals transfer, other
 //    occupations return, retained regions lose one building level, a 7-day pact follows.
 //  - Deadlines and peace terms (armistice, surrender, demand, trade) also settle wars.
-import { exhaustionOf, peaceTerms, reviewAtDeadline } from './warCourse';
+import { aftermath, exhaustionOf, peaceTerms, reviewAtDeadline } from './warCourse';
 import { releasePrisoners, takePrisoners } from './warHome';
 import { bestWarCase, warCase } from './warDecision';
 import { believed, believedPower } from './beliefs';
@@ -139,6 +139,7 @@ export function declareWar(w: World, n: Nation, params: Record<string, any>, p?:
   if (believed(w, t, n, 'hostile') < 40) {
     war.surprise = true;
     for (const f of Object.values(w.forces)) if (f.nation === t.id) f.readiness = Math.max(0, f.readiness - 15);
+    note(w, war, '😱', `The attack took ${t.name} by surprise: its intelligence had not judged ${n.name} that hostile.`);
     record(w, 'war', `😱 ${n.name}'s attack took ${t.name} by surprise: its intelligence had not judged ${n.name} that hostile. Its forces were caught unready.`, { nation: t.id, important: true });
   }
   warDeclared(w, war, cause);
@@ -334,6 +335,7 @@ export function settle(w: World, war: War, kind: Terms['kind'], offer?: PeaceOff
   war.status = 'ended';
   releasePrisoners(w, war);
   peaceTerms(w, war, kind, movedIds); // treaty, demilitarised zone, reparations (warCourse.ts)
+  aftermath(w, war, kind);
   const label = { conquest: 'conquest', deadline: 'deadline', armistice: 'armistice', surrender: 'surrender', demand: 'demand', trade: 'territorial trade' }[kind];
   war.outcome = `${label}${transferred.length ? `: ${transferred.join(', ')}` : ': no territory changed hands'}`;
   const until = w.time + B.war.pactDays * DAY;

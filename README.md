@@ -183,7 +183,14 @@ towards the brink and usually stop short of it. The UN Security Council (with ve
 G20 meets each November, the WTO hears trade disputes and the IMF lends to countries in trouble.
 
 As head of government you spend diplomatic capital on summits, aid, loans, sanctions, treaties, ultimatums and
-mediation; you cast your country's UN votes and choose its moves in a crisis. Diplomat, trade negotiator and
+mediation; you cast your country's UN votes and choose its moves in a crisis.
+
+**War.** Governments go to war only when their own calculation favours it, made with what their intelligence
+believes: claims, resources, nationalism and troubles at home against the fighting, lost trade, the world's
+reaction and deterrence. So wars are rare and each has a traceable cause. A country at war mobilises its
+reservists (perhaps you), its soldiers die and are taken prisoner, refugees flee the front, war bonds pay the bills
+and partisans resist occupation. Wars escalate and wear both sides down until they negotiate, freeze along the
+front line or peter out; peace brings treaties, reparations, memorials and, after the worst wars, tribunals. Diplomat, trade negotiator and
 international civil servant are careers. (Country screen → Diplomacy.)
 
 **The economy.** Money is real:

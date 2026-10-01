@@ -25,7 +25,8 @@ import { chance } from '../engine/rng';
 import { GOLD, fmtAmt } from '../engine/money';
 import { controller, player } from './query';
 import { relation } from './congress';
-import { leaderProfile } from './relations';
+import { addGrievance, leaderProfile } from './relations';
+import { note } from './warChronicle';
 import { activeBattles, finishBattle } from './battle';
 import { activeWars, enemyOf } from './war';
 import { tollOf } from './warHome';
@@ -76,10 +77,12 @@ function course(w: World) {
       const text = `🔺 The war between ${w.nations[war.att].name} and ${w.nations[war.def].name} escalated to ${LEVEL_LABEL[war.level]} (${w.nations[who].name} raised the stakes).`;
       record(w, 'war', text, { nation: who, important: war.level >= 3 });
       (war.log ??= []).push({ t: w.time, text });
+      note(w, war, '🔺', text);
       if (war.att === player(w).nation || war.def === player(w).nation) notify(w, 'warHome', text, { link: 'wars', critical: war.level >= 3 });
       if (war.level === 4) for (const o of w.nations) if (o.id !== who && !o.exile) relation(w, o.id, who, -5, 'made nuclear threats');
     } else if (lv > 1 && Math.min(ex[war.att], ex[war.def]) > 60 && chance(w, 0.05)) {
       war.level = lv - 1;
+      note(w, war, '🔻', `Exhausted, both sides stepped the war back to ${LEVEL_LABEL[lv - 1]}.`);
       record(w, 'war', `🔻 Exhausted, ${w.nations[war.att].name} and ${w.nations[war.def].name} stepped the war back to ${LEVEL_LABEL[war.level]}.`, { nation: war.att });
     }
     // A general war strikes cities and industry.
@@ -107,6 +110,7 @@ export function reviewAtDeadline(w: World, war: War): 'extended' | 'frozen' | 'd
     const text = `⏳ Neither side gave way: the war between ${w.nations[war.att].name} and ${w.nations[war.def].name} drags on.`;
     record(w, 'war', text, { nation: war.att });
     (war.log ??= []).push({ t: w.time, text });
+    note(w, war, '⏳', text);
     return 'extended';
   }
   if (holding && attEx < 70) { freeze(w, war); return 'frozen'; }
@@ -124,6 +128,7 @@ export function freeze(w: World, war: War) {
   w.nations[war.def].pacts[war.att] = until;
   const text = `🧊 The war between ${w.nations[war.att].name} and ${w.nations[war.def].name} froze along the front line. ${war.occupied.map((r) => w.regions[r].name).join(', ')} remain${war.occupied.length === 1 ? 's' : ''} occupied, with no peace treaty.`;
   record(w, 'war', text, { nation: war.att, important: true });
+  note(w, war, '🧊', text);
   for (const id of [war.att, war.def]) (w.nations[id].chronicle ??= []).push({ t: w.time, text });
   if (war.att === player(w).nation || war.def === player(w).nation) notify(w, 'warHome', text, { link: 'wars', critical: true });
 }
@@ -156,9 +161,34 @@ export function peaceTerms(w: World, war: War, kind: string, transferred: Id[]) 
     if (amt > 0) {
       (w.intlLoans ??= []).push({ id: nid(w), from: winner.id, to: loser.id, left: amt, monthly: Math.ceil(amt / 12), reparations: true });
       war.reparations = { from: loser.id, to: winner.id, amount: amt };
+      note(w, war, '💰', `${loser.name} must pay ${winner.name} ${fmtAmt(GOLD, amt)} in reparations over a year.`);
       record(w, 'war', `💰 ${loser.name} must pay ${winner.name} ${fmtAmt(GOLD, amt)} in reparations over a year.`, { nation: loser.id });
     }
   }
+}
+
+/** After the war: memorials to the fallen, tribunals after the worst wars, and veterans. */
+export function aftermath(w: World, war: War, kind: string) {
+  const toll = war.toll;
+  for (const side of [war.att, war.def]) {
+    const fallen = toll?.killed[side] ?? 0;
+    if (fallen > 0) {
+      const text = `🕯️ ${w.nations[side].name} raised a memorial to the ${fallen} who fell in the war with ${w.nations[side === war.att ? war.def : war.att].name}.`;
+      record(w, 'war', text, { nation: side });
+      note(w, war, '🕯️', text);
+    }
+  }
+  // A brutal war that ends in victory brings a tribunal for the losers' commanders, and a lasting grievance.
+  if (levelOf(war) >= 3 && (kind === 'conquest' || kind === 'surrender')) {
+    const loser = w.nations[war.att].warScore < w.nations[war.def].warScore ? war.att : war.def; // the side that fared worse
+    const winner = loser === war.att ? war.def : war.att;
+    addGrievance(w, loser, winner, 15);
+    const text = `⚖️ ${w.nations[winner].name} put ${w.nations[loser].adj} commanders on trial for war crimes. ${w.nations[loser].name} calls it victors' justice.`;
+    record(w, 'war', text, { nation: winner, important: true });
+    note(w, war, '⚖️', text);
+  }
+  // Those called up come home as veterans.
+  for (const c of Object.values(w.citizens)) if (!c.gone && c.mil?.calledUp === war.id) c.flags.veteranOf = war.id;
 }
 
 export function warCourseDaily(w: World) {

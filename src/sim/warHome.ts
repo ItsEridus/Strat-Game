@@ -27,6 +27,7 @@ import { wound } from './health';
 import { publicOffice, returnToDuty, returnToDutyCheck, toReserve } from './forces';
 import { dailyRevenue } from './publicFinance';
 import { levelOf } from './warCourse';
+import { note } from './warChronicle';
 
 export interface WarToll { killed: Record<Id, number>; wounded: Record<Id, number>; captured: Record<Id, number>; refugees: Record<Id, number>; spent: Record<Id, number> }
 export function tollOf(war: War): WarToll {
@@ -54,6 +55,7 @@ function mobilise(w: World) {
       }
       const text = `📯 ${n.name} mobilised for war: ${called} reservist${called === 1 ? '' : 's'} called up.`;
       record(w, 'war', text, { nation: n.id, important: true });
+      note(w, wars[0], '📯', text);
       if (n.id === p.nation && !p.mil?.calledUp) notify(w, 'warHome', text, { link: 'forces' });
     } else if (!wars.length && n.mobilised) {
       delete n.mobilised;
