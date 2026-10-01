@@ -12,6 +12,7 @@ import { B } from '../../data/balance';
 import { DIRECTORATES, DIR_INFO, type Directorate } from '../../data/intelServices';
 import { MEASURES, MEASURE_LABEL, believed, estimateOf, rangeOf } from '../../sim/beliefs';
 import { militaryPower } from '../../sim/war';
+import { MOTIVE_LABEL, agentsOf, coverFactor, placementOf } from '../../sim/collection';
 import { OP_DIR, dirOfAgent, joinDirectorate, orgOf, prioritise, staffByDir } from '../../sim/intelOrg';
 import { ARANKS, OPS, analyze, analyzeCheck, joinAgency, joinAgencyCheck, knownDossier, launchOp, leaveAgency, opCheck, quitAsset, setAgencyBudget } from '../../sim/intel';
 
@@ -42,6 +43,7 @@ export function Intel({ w }: { w: World }) {
 
       <Directorates w={w} official={official} />
       {(official || p.sec.agency === p.nation || n.president === p.id) && <Estimates w={w} />}
+      {(official || (p.sec.agency === p.nation && p.sec.arank >= 2)) && <Sources w={w} />}
       {official && <DirectorPanel w={w} />}
       <CareerPanel w={w} />
       {(official || (p.sec.agency === p.nation && p.sec.arank >= 1)) && <OpsPanel w={w} />}
@@ -192,6 +194,23 @@ function Estimates({ w }: { w: World }) {
         })}</tbody>
       </table></div>
       <Help>Governments act on what they believe, not on the truth. Each estimate comes with a range that depends on how well the service can see the country: its network there, its signals, imagery, open-source and analysis directorates, how open the country is, and how good its counter-intelligence is. Estimates carry misperceptions that correct themselves only slowly, and hawkish leaders read more menace into what they cannot see. Decisions about war, crises and alliances use these estimates, so surprise attacks and miscalculations happen. Each January the service's estimates are checked against the truth ({MEASURES.map((k) => MEASURE_LABEL[k].toLowerCase()).join(', ')}).</Help>
+    </Panel>
+  );
+}
+
+function Sources({ w }: { w: World }) {
+  const p = player(w);
+  const n = w.nations[p.nation];
+  const agents = agentsOf(w, n.id);
+  const defections = (w.defections ?? []).filter((d) => d.from === n.id || d.to === n.id).slice(-8).reverse();
+  return (
+    <Panel title="🗝️ Sources">
+      {agents.length ? <table class="table compact small"><tbody>{agents.map((c) => (
+        <tr><td><CitLink w={w} id={c.id} /></td><td><NationChip w={w} id={c.nation} /></td><td>{placementOf(w, c).label}</td><td class="muted">{MOTIVE_LABEL[c.sec.motive ?? 'money']}</td></tr>
+      ))}</tbody></table> : <Empty>No agents in place. Recruit them with "Recruit an asset"; officials see far more than ordinary citizens.</Empty>}
+      <p class="small">Diplomatic cover: {w.nations.filter((t) => t.id !== n.id && coverFactor(w, n, t) < 1).map((t) => t.name).join(', ') || 'our embassies are open everywhere'}{w.nations.some((t) => t.id !== n.id && coverFactor(w, n, t) < 1) ? ' (no embassy cover: networks grow slowly)' : ''}.</p>
+      {defections.length > 0 && <><h4>Defections</h4><ul class="small">{defections.map((d) => <li>{fmtDay(d.t)}: {w.citizens[d.cit]?.name ?? 'someone'}, {d.what} of {w.nations[d.from].name}, to {w.nations[d.to].name}</li>)}</ul></>}
+      <Help>Agents work for money, conviction, coercion or vanity. Convinced agents are steady; mercenaries leave when the money stops; coerced ones may confess; vain ones drift away. What an agent sees depends on where they sit: a minister or an intelligence officer is worth far more than a clerk, and agents in place see past the other side's counter-intelligence. Officials of failing governments sometimes defect to a rival, carrying what they know. Embassies give intelligence stations cover: networks grow slowly where diplomats were expelled or there is war.</Help>
     </Panel>
   );
 }

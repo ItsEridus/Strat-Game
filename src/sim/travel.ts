@@ -125,7 +125,7 @@ export function decideCitizenship(w: World, actor: Id, nation: Id, cit: Id, appr
   return ok(`${c.name} is now a citizen of ${n.name}.`);
 }
 
-function changeCitizenship(w: World, c: Citizen, nation: Id) {
+export function changeCitizenship(w: World, c: Citizen, nation: Id) {
   const old = w.nations[c.nation];
   if (c.party != null) leaveParty(w, c);
   old.deputies = old.deputies.filter((x) => x !== c.id);

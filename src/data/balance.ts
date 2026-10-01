@@ -259,9 +259,9 @@ export const BALANCE = {
     budget: 0.025, // SOLO default share of daily revenue for the intelligence service
     networkGain: 0.6, // SOLO network points per 100 currency invested per day
     networkDecay: 0.4, // SOLO daily network decay
-    opHours: { intel: 8, sabotage: 18, theft: 24, unrest: 20, propaganda: 16, scandal: 30, recruit: 20, counter: 12, milintel: 12, milsabotage: 20 }, // SOLO
-    opCost: { intel: 30, sabotage: 80, theft: 60, unrest: 60, propaganda: 50, scandal: 70, recruit: 40, counter: 30, milintel: 40, milsabotage: 90 }, // SOLO currency
-    minNetwork: { intel: 0, sabotage: 25, theft: 35, unrest: 20, propaganda: 10, scandal: 30, recruit: 15, counter: 0, milintel: 20, milsabotage: 35 }, // SOLO
+    opHours: { intel: 8, sabotage: 18, theft: 24, unrest: 20, propaganda: 16, scandal: 30, recruit: 20, counter: 12, milintel: 12, milsabotage: 20, cyber: 10 }, // SOLO
+    opCost: { intel: 30, sabotage: 80, theft: 60, unrest: 60, propaganda: 50, scandal: 70, recruit: 40, counter: 30, milintel: 40, milsabotage: 90, cyber: 50 }, // SOLO currency
+    minNetwork: { intel: 0, sabotage: 25, theft: 35, unrest: 20, propaganda: 10, scandal: 30, recruit: 15, counter: 0, milintel: 20, milsabotage: 35, cyber: 5 }, // SOLO
     rep: 5, age: 21, // SOLO standing and age to be vetted by an intelligence service
     energy: 25, // SOLO field agent energy per operation
     agentCd: 12, // SOLO hours between a citizen agent's operations

@@ -218,6 +218,7 @@ export interface CitizenSec {
   arank: number; // 0 analyst, 1 case officer, 2 field agent, 3 station chief, 4 deputy director
   tradecraft: number;
   asset: Id | null; // foreign service secretly paying them (double agent)
+  motive?: import('./collection').Motive; // why they work for it (2.1)
   fame: number; // public profile
   notoriety: number; // criminal reputation
   goal: { kind: string; target?: Id; since: number } | null; // the NPC's current ambition
@@ -253,7 +254,7 @@ export interface Agency {
   opsRun: number; caught: number; exposed: number;
   org?: import('./intelOrg').ServiceOrg; // directorates, budget split and lessons (2.1)
 }
-export type OpKind = 'intel' | 'sabotage' | 'theft' | 'unrest' | 'propaganda' | 'scandal' | 'recruit' | 'counter' | 'milintel' | 'milsabotage';
+export type OpKind = 'intel' | 'sabotage' | 'theft' | 'unrest' | 'propaganda' | 'scandal' | 'recruit' | 'counter' | 'milintel' | 'milsabotage' | 'cyber';
 export interface SpyOp {
   id: Id; nation: Id; target: Id; region: Id | null; kind: OpKind; agent: Id | null; subject?: Id | null;
   start: number; ends: number; status: 'active' | 'success' | 'failed' | 'exposed'; result?: string;
@@ -799,7 +800,8 @@ export interface World {
   standoffs?: import('./crises').Crisis[]; // international crises short of war (2.0)
   armsRaces?: import('./balanceOfPower').ArmsRace[]; // rival pairs building up against each other (2.0)
   bop?: import('./balanceOfPower').BopPoint[]; // shares of world power, monthly (2.0) // the UN, G20, WTO and IMF (2.0)
-  intlLoans?: import('./diplomacyActions').IntlLoan[]; // loans between governments (2.0) // alliances, pacts, trade and other agreements (2.0)
+  intlLoans?: import('./diplomacyActions').IntlLoan[];
+  defections?: { id: Id; t: number; cit: Id; from: Id; to: Id; what: string }[]; // officials who crossed over (2.1) // loans between governments (2.0) // alliances, pacts, trade and other agreements (2.0)
   opec?: { quota: number; hist: number[] }; // OPEC+ output against normal (1.9)
   warnings?: import('./naturalHazards').Warning[]; // hazards forecast to strike within a day (1.9)
   weather?: import('./weather').WeatherState; // today's and tomorrow's weather by region (1.9)

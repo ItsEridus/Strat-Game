@@ -3,6 +3,31 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.0.3: where intelligence comes from
+
+The third part of 2.1 Shadows.
+
+- **Agents have motives.** A recruited foreign citizen works for the service for one of four reasons, and each ends
+  its own way:
+  - money: mercenaries walk away when the payments stop;
+  - conviction: ideological agents are steady;
+  - coercion: coerced agents may walk into their own counter-intelligence and confess;
+  - vanity: vain ones drift off.
+- **Placement matters.** What an agent sees depends on where they sit. A head of government or a minister is worth
+  far more than an intelligence officer, a member of congress, a military officer or a diplomat, and any of those
+  far more than an ordinary citizen. Agents in place see past the other side's counter-intelligence and sharpen
+  the service's estimates directly. AI services now go after officials first.
+- **Defectors.** Intelligence officers, and more rarely ministers, of failing governments sometimes cross over to
+  a rival, carrying what they know. The rival's picture of their country sharpens at once and its network there
+  grows; their old service learns a hard lesson. Defections are rare from open societies.
+- **Diplomatic cover.** Embassies shelter intelligence stations: networks grow faster where the embassy is open,
+  and slowly where diplomats were expelled in the last year, or in wartime.
+- **Cyber intrusion,** a new operation: break into a country's ministries and companies from afar. The estimate
+  sharpens, and technology is copied if the target is ahead. It runs on the cyber directorate and needs only a
+  small network. AI services use it too.
+- A new **Sources** panel on the Intelligence screen (for the director and senior officers) lists the agents in
+  place, their placement and motive, where your stations have no cover, and recent defections.
+
 ### New in 2.0.2: governments act on what they believe
 
 The second part of 2.1 Shadows.

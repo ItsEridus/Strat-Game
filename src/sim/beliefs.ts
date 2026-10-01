@@ -19,6 +19,7 @@ import { nationScores } from './forces';
 import { militaryPower } from './war';
 import { dirStrength } from './intelOrg';
 import { leaderProfile } from './relations';
+import { agentQuality } from './collection';
 
 export type Measure = 'mil' | 'econ' | 'tech' | 'hostile';
 export const MEASURES: Measure[] = ['mil', 'econ', 'tech', 'hostile'];
@@ -52,7 +53,8 @@ export function collectionQuality(w: World, n: Nation, t: Nation): number {
   const raw = net * 0.25 + tech * 0.3 + open * 0.25 + judgement * 0.2;
   const shield = 1 - dirStrength(t, 'counter') / 400; // good counter-intelligence hides things
   const allies = sharedPicture(w, n, t);
-  return Math.max(0.05, Math.min(0.97, Math.max(raw * shield, allies)));
+  // Agents in place see past the counter-intelligence (collection.ts).
+  return Math.max(0.05, Math.min(0.97, Math.max(raw * shield + agentQuality(w, n, t), allies)));
 }
 /** Allies who share intelligence (Five Eyes and other intelligence-sharing treaties) pool what they see (2.1d). */
 let sharing: ((w: World, n: Nation, t: Nation) => number) | null = null;

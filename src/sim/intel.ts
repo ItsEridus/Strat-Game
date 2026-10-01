@@ -25,6 +25,8 @@ import { nationPerm } from './authority';
 import { relation } from './congress';
 import { visible } from './forces';
 import { refresh } from './beliefs';
+import { MOTIVE_LABEL, coverFactor, motiveFor, placementOf } from './collection';
+import { capsOf } from './strategic';
 import { OP_DIR, dirEdge, dirOfAgent, dirStrength, noteLesson } from './intelOrg';
 
 export const OPS: Record<OpKind, { name: string; desc: string; needs: 'region' | 'subject' | 'formation' | null; rank: number; relation: number }> = {
@@ -37,6 +39,7 @@ export const OPS: Record<OpKind, { name: string; desc: string; needs: 'region' |
   recruit: { name: 'Recruit an asset', desc: 'Turn a foreign citizen: a lasting boost to your network.', needs: 'subject', rank: 1, relation: -8 },
   counter: { name: 'Counter-intelligence sweep', desc: 'Hunt foreign agents and assets at home.', needs: null, rank: 1, relation: 0 },
   milintel: { name: 'Military reconnaissance', desc: 'Map their order of battle: every division, fleet and air wing, their strength and orders, for 10 days.', needs: null, rank: 1, relation: -6 },
+  cyber: { name: 'Cyber intrusion', desc: 'Break into ministries\' and companies\' networks from afar: a sharper estimate of the country, and technology to copy if it is ahead.', needs: null, rank: 1, relation: -8 },
   milsabotage: { name: 'Military sabotage', desc: 'Wreck a formation’s equipment and readiness (a fleet in port, an air base, a division’s depots).', needs: 'formation', rank: 2, relation: -15 },
 };
 export const ARANKS = ['Analyst', 'Case Officer', 'Field Agent', 'Station Chief', 'Deputy Director'];
@@ -230,8 +233,9 @@ function applyOp(w: World, op: SpyOp): string {
       }
       if (s.traits.loyalty > 0.7 && chance(w, 0.6)) { s.rel[op.agent ?? -1] = -20; return `${s.name} refused and may report us.`; }
       s.sec.asset = op.nation;
+      s.sec.motive = motiveFor(w, s, n);
       n.agency.network[t.id] = Math.min(100, (n.agency.network[t.id] ?? 0) + 8);
-      return `${s.name} now works for us.`;
+      return `${s.name} now works for us (${MOTIVE_LABEL[s.sec.motive]}; placed as ${placementOf(w, s).label}).`;
     }
     case 'milintel': {
       n.agency.milIntel[t.id] = w.time + 10 * DAY;
@@ -243,6 +247,17 @@ function applyOp(w: World, op: SpyOp): string {
         `Order of battle: ${by('army').length} divisions, ${by('navy').length} naval formations, ${by('air').length} air wings; alert level ${t.alert}.`,
       ] };
       return `Order of battle of ${t.name} mapped: ${fs.length} formations located (valid 10 days).`;
+    }
+    case 'cyber': {
+      refresh(w, n, t, 0.6);
+      // Copy what they know better: a share of the technology gap in information and military technology.
+      const mine = capsOf(w, n), theirs = capsOf(w, t);
+      const stolen: string[] = [];
+      for (const d of ['information', 'military'] as const) {
+        const gap = theirs.tech[d] - mine.tech[d];
+        if (gap > 0) { mine.tech[d] = Math.round((mine.tech[d] + gap * 0.03) * 100) / 100; stolen.push(d); }
+      }
+      return `Inside ${t.name}'s networks: the estimate is sharper${stolen.length ? `, and ${stolen.join(' and ')} technology was copied` : ''}.`;
     }
     case 'milsabotage': {
       const f = w.forces[op.subject!];
@@ -401,7 +416,7 @@ export function intelDaily(w: World) {
     for (const o of w.nations) {
       if (o.id === n.id) continue;
       let v = (a.network[o.id] ?? 0) * (1 - B.intel.networkDecay / 100);
-      if (a.focus.includes(o.id)) v += (per * B.intel.networkGain * (1 - o.agency.counter / 200) * (dirStrength(n, 'humint') / 60)) / (1 + v / 50); // case officers build networks
+      if (a.focus.includes(o.id)) v += (per * B.intel.networkGain * (1 - o.agency.counter / 200) * (dirStrength(n, 'humint') / 60) * coverFactor(w, n, o)) / (1 + v / 50); // case officers build networks, best under diplomatic cover
       // Assets inside the country keep feeding the network.
       v += assets.get(`${o.id}|${n.id}`) ?? 0;
       a.network[o.id] = Math.max(0, Math.min(100, v));
@@ -475,8 +490,11 @@ function intelAI(w: World) {
         if (pols.length && chance(w, 0.3)) plans.push(['scandal', t, null, pick(w, pols).id]);
       }
       plans.push(['intel', t, null, null]);
+      if (chance(w, 0.3)) plans.push(['cyber', t, null, null]);
+      // Services go after people who can see things: officials first, then anyone.
       const locals = nationals(w, t).filter((c) => c.sec.asset == null && (c.player ? chance(w, 0.3) : true));
-      if (locals.length && chance(w, 0.25)) plans.push(['recruit', t, null, pick(w, locals).id]);
+      const placed = locals.filter((c) => placementOf(w, c).weight >= 0.04);
+      if (locals.length && chance(w, 0.25)) plans.push(['recruit', t, null, pick(w, placed.length && chance(w, 0.7) ? placed : locals).id]);
     }
     const foreignExposed = Object.values(w.ops).some((o) => o.target === n.id && o.status === 'exposed' && w.time - o.ends < 5 * DAY);
     if (foreignExposed || n.agency.counter < 35) plans.unshift(['counter', n.id, null, null]);
