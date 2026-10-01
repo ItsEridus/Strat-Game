@@ -116,3 +116,30 @@ test('taxes at real rates, progressive income tax, and public debt', async () =>
   assert.ok((deu.interestPaid ?? 0) > 0, 'interest paid');
   assert.ok(audit(w).ok);
 });
+
+test('trade: world prices move, imports cap raw prices, exports are counted', async () => {
+  const { worldPrices, worldPricesDaily, importParity, worldPriceIn } = await import('../src/sim/trade');
+  const { list, buyListing } = await import('../src/sim/market');
+  const { createCompany } = await import('../src/sim/company');
+  const { mint, audit, produce } = await import('../src/engine/ledger');
+  const { cref, coref, player } = await import('../src/sim/query');
+  const w = generateWorld(1806, 'Trade', 0, { citizensPerRegion: 1 });
+  const p0 = worldPrices(w).oil.p;
+  for (let i = 0; i < 30; i++) worldPricesDaily(w);
+  assert.notEqual(worldPrices(w).oil.p, p0, 'prices move');
+  assert.equal(worldPrices(w).oil.hist.length, 30);
+  const usa = w.nations.find((n) => n.cur === 'USD')!, ind = w.nations.find((n) => n.cur === 'INR')!;
+  assert.ok(importParity(w, usa.id, 'grain') > worldPriceIn(w, usa.id, 'grain'));
+  // An Indian firm exports to the US; the sale counts as Indian exports and US imports.
+  const p = player(w);
+  const co = createCompany(w, cref(p.id), 'grain', 1, w.regions.find((r) => r.owner === ind.id)!.id);
+  produce(w, coref(co.id), 'grain', 10, 'test');
+  assert.ok(list(w, p.id, coref(co.id), usa.id, 'grain', 5, 200, true).ok, 'an export listing');
+  assert.ok(!list(w, p.id, coref(co.id), usa.id, 'grain', 5, 200).ok, 'an ordinary listing needs presence');
+  const buyer = Object.values(w.citizens).find((c) => !c.player && c.nation === usa.id)!;
+  mint(w, cref(buyer.id), 'USD', 10000, 'test');
+  const l = Object.values(w.listings).find((x) => x.seller.k === 'co' && x.seller.id === co.id)!;
+  assert.ok(buyListing(w, buyer.id, cref(buyer.id), l.id, 2).ok);
+  assert.ok((ind.trade?.exp ?? 0) > 0 && (usa.trade?.imp ?? 0) > 0);
+  assert.ok(audit(w).ok);
+});

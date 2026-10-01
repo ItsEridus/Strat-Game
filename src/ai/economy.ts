@@ -1,6 +1,8 @@
 // AI business management and background household demand. AI owners use the
 // same market/company actions (and permission checks) as the player.
 import { hasQuirk } from '../sim/nature';
+import { importParity } from '../sim/trade';
+import { isRaw } from '../data/items';
 import { corpTaxRate, overheadPerUnit } from '../sim/companyCosts';
 import { BASKET_LABELS, basketOf } from '../data/economy';
 import { dateAt } from '../engine/calendar';
@@ -85,6 +87,8 @@ export function manageCompany(w: World, co: Company) {
     if (listed > 0 && sold === 0) price = Math.round(price * (1 - B.ai.priceStep));
     else if (listed === 0 || sold > (listed + sold) * 0.6) price = Math.round(price * (1 + B.ai.priceStep));
     if (cheapestOther && cheapestOther.price < price && listed > baseUnits(co) * 3) price = Math.round((price + cheapestOther.price) / 2);
+    // Imports cap raw-material prices: no one pays more than the world price plus freight and tariff.
+    if (isRaw(key)) price = Math.min(price, importParity(w, market, key));
     price = Math.max(price, Math.round(cost * B.market.minPriceFrac), 1);
     co.prices[key] = price;
     for (const l of mine) if (l.price !== price) repriceListing(w, actor, l.id, price);

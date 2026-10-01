@@ -261,6 +261,7 @@ export interface EconState {
   phase: 'boom' | 'expansion' | 'slowdown' | 'recession';
   hist: number[];
   commodity: Record<string, number>; // world supply multipliers for raw goods
+  world?: Record<string, { p: number; hist: number[] }>; // world commodity prices (gold per unit) and their last 60 days
 }
 
 export interface DayRecord {
@@ -370,6 +371,7 @@ export interface Nation {
   debt?: number; // public debt (minor units of the national currency)
   debtIssued?: number; // bonds issued in total (statistics)
   interestPaid?: number; // interest paid on the debt in total
+  trade?: { exp: number; imp: number; hist: { exp: number; imp: number }[] }; // exports and imports today and the last 30 days (gold minor)
   minWage: number; // minor units
   president: Id | null;
   cabinet: Partial<Record<Ministry, Id>>;

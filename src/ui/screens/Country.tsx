@@ -74,6 +74,8 @@ export function Country({ w }: { w: World }) {
           <tr><td>Public debt</td><td class="num">{fmtAmt(n.cur, n.debt ?? 0)}{dailyRevenue(n) > 0 && n.debt ? ` (${((n.debt ?? 0) / (dailyRevenue(n) * 365)).toFixed(2)} years of revenue)` : ''}</td></tr>
           <tr><td>Interest rate on bonds</td><td class="num">{bondRate(n).toFixed(2)}%</td></tr>
           <tr><td>Interest paid so far</td><td class="num">{fmtAmt(n.cur, n.interestPaid ?? 0)}</td></tr>
+          <tr><td>Exports (last 30 days)</td><td class="num">{fmtAmt(GOLD, (n.trade?.hist ?? []).reduce((t, d) => t + d.exp, 0))}</td></tr>
+          <tr><td>Imports (last 30 days)</td><td class="num">{fmtAmt(GOLD, (n.trade?.hist ?? []).reduce((t, d) => t + d.imp, 0))}</td></tr>
         </tbody></table>
         <Help>When the treasury runs short, the government sells bonds (up to three years of revenue) and pays interest to bondholders; when money is plentiful it repays them. Heavier debt costs more.</Help>
       </Panel>

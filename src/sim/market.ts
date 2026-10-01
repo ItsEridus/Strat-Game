@@ -1,6 +1,7 @@
 // Goods market: per-nation order books of sell listings. Listing moves goods into
 // escrow (so they cannot be sold twice); buying transfers money and goods
 // atomically and routes VAT/import tax to the market nation's treasury.
+import { noteTrade } from './trade';
 import type { AccountRef, Id, ItemKey, Listing, World } from './types';
 import { B } from '../data/balance';
 import { itemName } from '../data/items';
@@ -120,7 +121,7 @@ export const supplyOf = (w: World, market: Id, item: ItemKey) => {
 /** Number of listings a seller has in a market. */
 export const listingCount = (w: World, seller: AccountRef, market: Id) => books(w).sellers.get(sellerKey(seller, market)) ?? 0;
 
-export function listCheck(w: World, actor: Id, seller: AccountRef, market: Id, item: ItemKey, qty: number, price: number): string | null {
+export function listCheck(w: World, actor: Id, seller: AccountRef, market: Id, item: ItemKey, qty: number, price: number, exporting = false): string | null {
   const a = acct(w, seller);
   if (!a) return 'Seller not found.';
   const auth = authorize(w, actor, seller, seller.k === 'nat' ? 'publicTrade' : 'trade');
@@ -129,7 +130,7 @@ export function listCheck(w: World, actor: Id, seller: AccountRef, market: Id, i
   if (!Number.isInteger(price) || price < 1) return 'Enter a positive price.';
   if ((a.inv[item] ?? 0) < qty) return `Only ${a.inv[item] ?? 0} ${itemName(item)} available (listed goods are reserved).`;
   if (item.startsWith('sp:')) return 'Special items trade through auctions and contracts.';
-  if (accountLocNation(w, seller) !== market) return `You must be located in ${w.nations[market].name} to sell on its market.`;
+  if (!exporting && accountLocNation(w, seller) !== market) return `You must be located in ${w.nations[market].name} to sell on its market.`;
   if (seller.k === 'cit' && w.citizens[seller.id].mining) return 'Market trading is blocked while mining.';
   if (w.nations[market].exile) return 'This nation has no territory and no market.';
   if (embargoed(w, accountNation(w, seller), market)) return 'Trade is blocked by an embargo.';
@@ -137,8 +138,8 @@ export function listCheck(w: World, actor: Id, seller: AccountRef, market: Id, i
   return null;
 }
 
-export function list(w: World, actor: Id, seller: AccountRef, market: Id, item: ItemKey, qty: number, price: number): Result {
-  const why = listCheck(w, actor, seller, market, item, qty, price);
+export function list(w: World, actor: Id, seller: AccountRef, market: Id, item: ItemKey, qty: number, price: number, exporting = false): Result {
+  const why = listCheck(w, actor, seller, market, item, qty, price, exporting);
   if (why) return fail(why);
   // Merge with an identical listing to keep books tidy.
   const same = listingsFor(w, market, item).find((l) => l.price === price && sameRef(l.seller, seller));
@@ -232,9 +233,14 @@ export function buyListing(w: World, actor: Id, buyer: AccountRef, id: Id, n: nu
   l.qty -= n;
   if (l.qty <= 0) removeListing(w, l);
   recordTrade(w, l.market, l.item, n, l.price);
+  const from = accountNation(w, l.seller);
+  if (from != null && from !== l.market) noteTrade(w, from, l.market, gross);
   if (l.seller.k === 'co') {
     const co = w.companies[l.seller.id];
-    if (co) { co.today.sold += n; co.today.revenue += gross - tax; }
+    // Export sales count in the company's own currency, at the reference exchange rates.
+    const home = co ? w.nations[controller(w.regions[co.region])] : null;
+    const net = home && home.cur !== cur ? Math.round(((gross - tax) * home.fxAnchor) / Math.max(1, w.nations[l.market].fxAnchor)) : gross - tax;
+    if (co) { co.today.sold += n; co.today.revenue += net; }
   }
   if (buyer.k === 'cit' && buyer.id === w.playerId) bump(w, 'buy');
   if (l.seller.k === 'cit' && l.seller.id === w.playerId) bump(w, 'sell', n);

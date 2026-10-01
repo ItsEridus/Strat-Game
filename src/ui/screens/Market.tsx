@@ -8,6 +8,8 @@ import { GOOD_USE, MARKET_KEYS, itemName, kindOf } from '../../data/items';
 import { fmtAmt, fromLocal, localStep, toLocal } from '../../engine/money';
 import { B } from '../../data/balance';
 import { useSort } from '../sort';
+import { RAWS } from '../../data/items';
+import { importParity, worldPriceIn, worldPrices } from '../../sim/trade';
 
 const CATS: [string, string][] = [
   ['raw', '🪨 Raw'], ['food', '🍲 Food'], ['wg', '🔫 Ground weapons'], ['wa', '🚀 Air weapons'], ['ticket', '🎫 Tickets'],
@@ -84,6 +86,11 @@ export function Market({ w }: { w: World }) {
           <thead><tr><th>Day</th><th>Volume</th><th class="num">Avg</th><th class="num">Low–High</th></tr></thead>
           <tbody>{hist.slice(-7).reverse().map((h) => <tr><td>{h.day}</td><td>{h.qty}</td><td class="num">{fmtAmt(n.cur, Math.round(h.value / h.qty))}</td><td class="num">{fmtAmt(n.cur, h.lo)}–{fmtAmt(n.cur, h.hi)}</td></tr>)}</tbody>
         </table>
+      </Panel>
+      <Panel title="World commodity prices" class="wide">
+        <table class="table compact small"><thead><tr><th>Commodity</th><th class="num">World price</th><th class="num">In {n.name}</th><th class="num">Import parity</th><th class="num">30 days</th><th>Last 60 days</th></tr></thead>
+          <tbody>{RAWS.map((k) => { const x = worldPrices(w)[k]; const old = x.hist[x.hist.length - 31] ?? x.hist[0] ?? x.p; return <tr><td><Item k={k} /></td><td class="num">{(x.p * 1000).toFixed(2)} mg</td><td class="num">{fmtAmt(n.cur, worldPriceIn(w, market, k))}</td><td class="num">{fmtAmt(n.cur, importParity(w, market, k))}</td><td class={`num ${x.p >= old ? 'good' : 'bad'}`}>{x.p >= old ? '+' : ''}{Math.round((x.p / old - 1) * 100)}%</td><td><Sparkline values={x.hist} width={120} height={22} /></td></tr>; })}</tbody></table>
+        <Help>World prices (in thousandths of a gold per unit) move every day; oil swings most. No one pays more for a raw material than the import parity: the world price plus freight and the import tariff. Companies with surplus stock export it where it sells for more after exchange rates, freight and tariffs.</Help>
       </Panel>
       <Panel title="Sell from your inventory">
         <p>You have {p.inv[item] ?? 0} {itemName(item)}.</p>

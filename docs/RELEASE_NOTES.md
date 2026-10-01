@@ -3,6 +3,20 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.4.9: world markets and trade
+
+- **World commodity prices.** Oil, grain, iron, copper, titanium, timber and cotton have world prices. They move
+  every day with each commodity's real volatility (oil swings most) and drift back to their long-run level. A
+  supply shock lifts the price. The Market screen shows each price, what it means in your currency, its import
+  parity, the change over 30 days, and a 60-day chart.
+- **Import competition.** No one pays more for a raw material than its import parity: the world price plus
+  freight and the import tariff. High-cost producers in rich countries feel the pressure.
+- **Exports.** AI companies with surplus stock export it where it sells for more after exchange rates, freight
+  (8% of the value) and the importer's tariff and VAT. They price just under the local sellers and convert their
+  earnings home through the currency market. Exporting does not need a presence in the other country, and flows
+  stay modest next to home markets.
+- **Trade statistics.** Each country's Public finances panel shows its exports and imports over the last 30 days.
+
 ### New in 1.4.8: taxes and public finance
 
 - **Real taxes.** New games start with each country's real 2025 taxes:
