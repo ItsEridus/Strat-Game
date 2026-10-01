@@ -46,8 +46,8 @@ export const SYND_JOBS: Record<'smuggle' | 'collect' | 'heist' | 'gunrun', { nam
 };
 export const SRANKS = ['Associate', 'Soldier', 'Capo', 'Underboss', 'Boss'];
 export const PRANKS = ['Officer', 'Sergeant', 'Detective', 'Captain', 'Chief'];
-const SEVERITY: Record<CrimeKind, number> = { pickpocket: 1, burglary: 2, fraud: 3, smuggling: 2, extortion: 2, bribery: 3, assault: 2, corruption: 4, espionage: 5, votebuying: 3, heist: 4, taxevasion: 2, escape: 3, armstrafficking: 4, embezzlement: 3, cybercrime: 3, laundering: 3, insidertrading: 3 };
-const CRIME_NAME: Record<CrimeKind, string> = { pickpocket: 'pickpocketing', burglary: 'burglary', fraud: 'fraud', smuggling: 'smuggling', extortion: 'extortion', bribery: 'bribery', assault: 'assault', corruption: 'corruption', espionage: 'espionage', votebuying: 'vote buying', heist: 'armed robbery', taxevasion: 'tax evasion', escape: 'escape from custody', armstrafficking: 'arms trafficking', embezzlement: 'embezzlement', cybercrime: 'online fraud', laundering: 'money laundering', insidertrading: 'insider trading' };
+const SEVERITY: Record<CrimeKind, number> = { pickpocket: 1, burglary: 2, fraud: 3, smuggling: 2, extortion: 2, bribery: 3, assault: 2, corruption: 4, espionage: 5, votebuying: 3, heist: 4, taxevasion: 2, escape: 3, armstrafficking: 4, embezzlement: 3, cybercrime: 3, laundering: 3, insidertrading: 3, treason: 5 };
+const CRIME_NAME: Record<CrimeKind, string> = { pickpocket: 'pickpocketing', burglary: 'burglary', fraud: 'fraud', smuggling: 'smuggling', extortion: 'extortion', bribery: 'bribery', assault: 'assault', corruption: 'corruption', espionage: 'espionage', votebuying: 'vote buying', heist: 'armed robbery', taxevasion: 'tax evasion', escape: 'escape from custody', armstrafficking: 'arms trafficking', embezzlement: 'embezzlement', cybercrime: 'online fraud', laundering: 'money laundering', insidertrading: 'insider trading', treason: 'treason' };
 
 export const policeName = (w: World, rid: Id) => {
   const r = w.regions[rid];

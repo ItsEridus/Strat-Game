@@ -16,6 +16,7 @@ import { itemName } from '../../data/items';
 import { fmtWhen } from '../../engine/clock';
 import { Diplomacy } from './Diplomacy';
 import { REGIMES, regimeOf } from '../../sim/regimes';
+import { coupRisk } from '../../sim/uprisings';
 import { Bar } from '../common';
 
 export function CountryExtras({ w, id }: { w: World; id: Id }) {
@@ -126,9 +127,11 @@ function RegimePanel({ w, id }: { w: World; id: Id }) {
         <tr><td>Term limits</td><td>{rules.termLimit ? `${rules.termLimit} terms for the head of government` : 'none'}</td></tr>
         <tr><td>Succession</td><td>{({ election: 'by election', party: 'chosen by the ruling party', heir: 'to a royal heir', council: 'by a council of officers' } as const)[rules.succession]}</td></tr>
         <tr><td>Press</td><td>{rules.press >= 0.6 ? 'free' : rules.press >= 0.35 ? 'under pressure' : 'controlled'}</td></tr>
+        <tr><td>Protest movement</td><td><Bar v={n.protest ?? 0} max={100} color="#e39b3a" label={`${Math.round(n.protest ?? 0)}`} /></td></tr>
+        <tr><td>Risk of a coup</td><td>{(coupRisk(w, n) * 100).toFixed(1)}% a year{(n.coupProof ?? 0) > 0.2 ? ' (the army has been purged and watched)' : ''}</td></tr>
       </tbody></table>
       {r.history.length > 0 && <ul class="small">{r.history.slice(-5).reverse().map((h) => <li>{fmtWhen(w, h.t)}: {REGIMES[h.from].label} → {REGIMES[h.to].label} ({h.why})</li>)}</ul>}
-      <Help>Every country starts from its real regime in 2025. Legitimacy follows the economy, the government's popularity, whether elections are free, and the cost of repression. Democracies can slide when leaders are nationalist and legitimacy is low, though strong courts resist it; autocracies can open up when legitimacy collapses.</Help>
+      <Help>Every country starts from its real regime in 2025. Legitimacy follows the economy, the government's popularity, whether elections are free, and the cost of repression. Democracies can slide when leaders are nationalist and legitimacy is low, though strong courts resist it; autocracies can open up when legitimacy collapses. Disloyal officers plot coups, more often in weak states and in turmoil. Protest movements grow when legitimacy is low; governments concede or repress, and a movement that grows large enough brings down an autocracy if the security forces refuse to fire, or forces an early election in a democracy.</Help>
     </Panel>
   );
 }

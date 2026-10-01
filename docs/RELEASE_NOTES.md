@@ -3,6 +3,27 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.2.2: coups and revolutions
+
+The second part of 2.3 Rise & fall.
+
+- **Coups.** Disloyal officers (real citizens of command rank) plot against the government. The chance of an
+  attempt follows the regime, in line with Powell & Thyne's coup data:
+  - rare in full democracies, more common in personalist regimes and juntas;
+  - higher in weak states, when legitimacy collapses, when the regions are in turmoil, or when a war is going badly;
+  - lower with coup-proofing, which cautious autocrats build up.
+- **How a coup ends.** If it succeeds, the senior plotter takes power at the head of a military junta, and
+  democracies condemn it. If it fails, the plotters are arrested for treason (a new charge), the army is purged,
+  and coup-proofing tightens. In 30-year test runs the sixteen countries see two or three attempts, close to the
+  real record.
+- **Protest movements** grow with low legitimacy, regional unrest and unemployment. Governments answer with:
+  - concessions, which democracies and dovish leaders prefer, and which restore some legitimacy;
+  - repression, which costs legitimacy and can backfire when the security forces fire on the crowd.
+- **Revolutions.** A movement that grows large enough brings down an autocracy if the security forces refuse to
+  fire. The regime opens up and elections are called. If they do fire, the uprising is crushed and the world
+  condemns it. In a democracy, mass protest brings the government down through an early election instead.
+- **The regime panel** shows the strength of the protest movement and the yearly risk of a coup.
+
 ### New in 2.2.1: regimes
 
 The first part of 2.3 Rise & fall.

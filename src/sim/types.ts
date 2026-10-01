@@ -234,7 +234,7 @@ export interface CitizenSec {
   handler?: Id; // the officer running them
 }
 
-export type CrimeKind = 'pickpocket' | 'burglary' | 'fraud' | 'smuggling' | 'extortion' | 'bribery' | 'assault' | 'corruption' | 'espionage' | 'votebuying' | 'heist' | 'taxevasion' | 'escape' | 'armstrafficking' | 'embezzlement' | 'cybercrime' | 'laundering' | 'insidertrading';
+export type CrimeKind = 'pickpocket' | 'burglary' | 'fraud' | 'smuggling' | 'extortion' | 'bribery' | 'assault' | 'corruption' | 'espionage' | 'votebuying' | 'heist' | 'taxevasion' | 'escape' | 'armstrafficking' | 'embezzlement' | 'cybercrime' | 'laundering' | 'insidertrading' | 'treason';
 export interface Case {
   id: Id; suspect: Id; kind: CrimeKind; region: Id; nation: Id; evidence: number; opened: number;
   status: 'open' | 'closed'; detective: Id | null; loot: number; outcome?: string; syndicate?: Id | null;
@@ -417,7 +417,9 @@ export interface Nation {
   dip?: import('./diplomacyActions').DipState; // diplomatic capital, recent actions, causes for war (2.0)
   summits?: Record<Id, number>;
   imfRelief?: boolean;
-  regime?: import('./regimes').Regime; // the rules of its politics, and their legitimacy (2.3)
+  regime?: import('./regimes').Regime;
+  coupProof?: number; // purges and loyal guards against a coup, 0..1 (2.3)
+  protest?: number; // the strength of the protest movement, 0..100 (2.3) // the rules of its politics, and their legitimacy (2.3)
   mobilised?: number; // when it mobilised for its current war (2.2)
   warBonds?: number; // war bonds sold to its people (2.2)
   interference?: { by: Id; party: Id; until: number }; // a foreign campaign backing a party in the coming election (2.1)
