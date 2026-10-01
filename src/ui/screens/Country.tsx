@@ -27,6 +27,7 @@ import { rentOf } from '../../sim/housing';
 import type { Id } from '../../sim/types';
 import { MINERAL_LABEL, OPEC_PLUS, SOURCES, SOURCE_INFO, type Mineral } from '../../data/energy';
 import { energyOf, energyPrice, importShare, mineralCutOff } from '../../sim/energy';
+import { foodOf, selfSufficiency as foodSelf } from '../../sim/food';
 
 function BudgetPanel({ w, id }: { w: World; id: Id }) {
   const n = w.nations[id];
@@ -197,7 +198,7 @@ function EnergyPanel({ w, id }: { w: World; id: Id }) {
   const e = energyOf(n);
   const price = energyPrice(w, n);
   return (
-    <Panel title="⚡ Energy & resources">
+    <Panel title="⚡ Energy, food & resources">
       <div class="mixbar" style={{ display: 'flex', height: '14px', borderRadius: '4px', overflow: 'hidden', margin: '4px 0 8px' }}>
         {SOURCES.filter((s) => e.mix[s] > 0.005).map((s) => <span title={`${SOURCE_INFO[s].label} ${Math.round(e.mix[s] * 100)}%`} style={{ width: `${e.mix[s] * 100}%`, background: SOURCE_INFO[s].color }} />)}
       </div>
@@ -208,6 +209,7 @@ function EnergyPanel({ w, id }: { w: World; id: Id }) {
         <tr><td>Grid</td><td>{(e.grid * 100).toFixed(1)}% reliable · {e.blackouts} region-days of blackouts this year</td></tr>
         <tr><td>Reserves</td><td>{(Object.keys(e.reserves) as Mineral[]).length ? (Object.keys(e.reserves) as Mineral[]).map((m) => `${MINERAL_LABEL[m]} ${Math.round(e.reserves[m]!)} yrs`).join(' · ') : <span class="muted">none of note</span>}</td></tr>
         <tr><td>World production</td><td>{(Object.keys(e.share) as Mineral[]).filter((m) => (e.share[m] ?? 0) >= 0.02).map((m) => `${MINERAL_LABEL[m]} ${Math.round(e.share[m]! * 100)}%`).join(' · ') || <span class="muted">small</span>}</td></tr>
+        <tr><td>Food</td><td>harvest {Math.round(foodOf(n).harvest * 100)}% of normal · grows {Math.round(foodSelf(n) * 100)}% of what it eats · imports {Math.round(foodOf(n).imports * 100)}% · supply <span class={foodOf(n).supply < 0.95 ? 'bad' : ''}>{Math.round(foodOf(n).supply * 100)}%</span></td></tr>
         {OPEC_PLUS.includes(n.iso) && <tr><td>OPEC+</td><td>member · output at {Math.round((w.opec?.quota ?? 1) * 100)}% of normal</td></tr>}
         {(['rareearths', 'lithium'] as Mineral[]).map((m) => mineralCutOff(w, n, m) && <tr><td class="bad">Supply cut</td><td class="bad">{MINERAL_LABEL[m]}: the main producer has embargoed {n.name}</td></tr>)}
       </tbody></table>

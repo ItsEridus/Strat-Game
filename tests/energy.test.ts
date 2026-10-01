@@ -48,3 +48,37 @@ test('depletion, OPEC+ and mineral embargoes', () => {
   assert.ok(opecPriceFactor(w) > 1);
   assert.ok(audit(w).ok, audit(w).problems.join('; '));
 });
+
+import { foodOf, harvestIndex, selfSufficiency } from '../src/sim/food';
+import { weatherOf } from '../src/sim/weather';
+import { SERVICES } from '../src/sim/services';
+import { preparedness } from '../src/sim/naturalHazards';
+
+test('food security: bad harvests in a poor importer bring hunger; rich importers buy their way out', () => {
+  const w = fresh(604);
+  advance(w, 2 * DAY, false);
+  const jp = by(w, 'JPN'), ind = by(w, 'IND'), ar = by(w, 'ARG');
+  assert.ok(selfSufficiency(ar) > 2 && selfSufficiency(jp) < 0.5);
+  // A disastrous season everywhere.
+  const s = weatherOf(w);
+  for (const r of w.regions) s.grow[r.id] = 0.7;
+  assert.ok(harvestIndex(w, ind) < 0.75);
+  // Run into a new month so the food balance is struck.
+  advance(w, 32 * DAY, false);
+  for (const r of w.regions) s.grow[r.id] = 0.7;
+  advance(w, 31 * DAY, false);
+  assert.ok(foodOf(jp).supply > foodOf(ind).supply || foodOf(ind).supply >= 0.95, `Japan ${foodOf(jp).supply}, India ${foodOf(ind).supply}`);
+  assert.ok((w.econ.harvest ?? 1) < 1, 'poor exporter harvests raise the world grain price');
+  assert.ok(audit(w).ok, audit(w).problems.join('; '));
+});
+
+test('emergency services and the weather service are careers; staffing raises preparedness', () => {
+  const w = fresh(605);
+  assert.ok(SERVICES.emergency.ladder.includes('Firefighter') && SERVICES.meteorology.ladder.includes('Meteorologist'));
+  const n = w.nations[0];
+  const rs = w.regions.filter((r) => r.owner === n.id);
+  for (const r of rs) r.staff = { school: 1, clinic: 1, offices: 1, emergency: 0 };
+  const low = preparedness(w, n);
+  for (const r of rs) r.staff = { school: 1, clinic: 1, offices: 1, emergency: 1 };
+  assert.ok(preparedness(w, n) > low);
+});

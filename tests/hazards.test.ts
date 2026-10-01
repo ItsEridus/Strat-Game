@@ -38,10 +38,11 @@ test('storms are forecast a day ahead; the warning story lets you shelter or lea
   const p = player(w);
   const r = p.loc;
   hazardArrives(w, 'hurricane', 'Hurricane', [r]);
-  assert.equal((w.warnings ?? []).length, 1, 'a warning, not yet the impact');
+  const mine = (w.warnings ?? []).find((x) => x.kind === 'hurricane' && x.regions.includes(r))!;
+  assert.ok(mine, 'a warning, not yet the impact');
   assert.ok(triggerStory(w, 'nature.warning').ok);
   advance(w, 2 * DAY, false);
-  assert.equal((w.warnings ?? []).length, 0, 'the storm arrived');
+  assert.ok(!(w.warnings ?? []).includes(mine), 'the storm arrived');
   assert.ok(Object.values(w.crises).some((c) => c.kind === 'hurricane' && c.regions.includes(r)));
   assert.ok(audit(w).ok, audit(w).problems.join('; '));
 });

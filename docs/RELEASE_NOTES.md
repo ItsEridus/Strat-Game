@@ -3,6 +3,28 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.8.4: food security, emergency careers and disaster stories
+
+- **Food security.**
+  - Each country grows a real share of the food it eats: Argentina 2.5 times its needs, Canada 1.8, Japan under
+    two-fifths, Saudi Arabia a fifth.
+  - The harvest follows the growing season across its farm regions, and shortfalls are bought abroad.
+  - Rich countries pay what it takes. Poor countries facing dear grain may come up short: approval falls, unrest
+    rises and, at worst, famine strikes.
+  - Embargoes by grain exporters bite.
+  - The big exporters' harvests (the US, Canada, Brazil, Argentina, Russia and Australia) set the world grain price.
+- **New careers.**
+  - Emergency services: firefighter, crew commander, station officer, emergency coordinator, chief fire officer.
+    Well-staffed emergency services raise a country's disaster preparedness.
+  - The weather service: weather observer, forecaster, meteorologist, senior meteorologist, chief
+    meteorologist. Well-staffed weather services make warnings save more lives.
+  - Geologists and energy traders now work in the mining and oil industries.
+- **Two new stories.**
+  - "After the quake": dig with the rescue teams, give to the appeal, or check on your family and neighbours.
+  - "The dry year": irrigate your farm, stock up, or wait for the rain.
+- **Food on the Country screen:** the Country screen's energy panel now also shows harvest, self-sufficiency,
+  imports and food supply.
+
 ### New in 1.8.3: energy and resources
 
 - **Energy mixes.** Each country generates electricity from its real 2023 mix (IEA): coal, gas, oil, nuclear,

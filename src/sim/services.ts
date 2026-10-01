@@ -23,7 +23,7 @@ import { leaveCheck } from './health';
 import { contribute } from './pensions';
 import { recordPay } from './wages';
 
-export type Service = 'teacher' | 'nurse' | 'doctor' | 'clerk' | 'engineer' | 'prosecutor' | 'defender' | 'judge' | 'warden' | 'procurement';
+export type Service = 'teacher' | 'nurse' | 'doctor' | 'clerk' | 'engineer' | 'prosecutor' | 'defender' | 'judge' | 'warden' | 'procurement' | 'emergency' | 'meteorology';
 export interface Post { kind: Service; region: Id; grade: number; since: number; promoted: number; shifts: number; lastDay: number }
 
 interface ServiceDef { label: string; icon: string; place: string; ladder: string[]; pay: number[]; needs: { level: EduLevel; field?: Field[] }[]; per: number; skill: 'lead' | 'end' | 'eco' | 'cons' | 'acc' }
@@ -62,6 +62,13 @@ export const SERVICES: Record<Service, ServiceDef> = {
   procurement: { label: 'Defence procurement', icon: '📑', place: 'defence ministry', per: 250, skill: 'eco',
     ladder: ['Procurement officer', 'Senior procurement officer', 'Programme manager', 'Director of programmes', 'Chief of defence procurement'], pay: [1.6, 2.1, 2.8, 3.6, 4.6],
     needs: [{ level: 'bachelor', field: ['engineering', 'business'] }, { level: 'bachelor', field: ['engineering', 'business'] }, { level: 'master', field: ['engineering', 'business'] }, { level: 'master', field: ['engineering', 'business'] }, { level: 'master', field: ['engineering', 'business'] }] },
+  // Emergency services and the weather service (1.9): staffing saves lives in disasters and sharpens forecasts.
+  emergency: { label: 'Emergency services', icon: '🚒', place: 'fire and rescue service', per: 80, skill: 'end',
+    ladder: ['Firefighter', 'Crew commander', 'Station officer', 'Emergency coordinator', 'Chief fire officer'], pay: [1.2, 1.5, 1.9, 2.5, 3.3],
+    needs: [{ level: 'school' }, { level: 'school' }, { level: 'vocational' }, { level: 'bachelor' }, { level: 'bachelor' }] },
+  meteorology: { label: 'Weather service', icon: '🌦️', place: 'meteorological office', per: 300, skill: 'acc',
+    ladder: ['Weather observer', 'Forecaster', 'Meteorologist', 'Senior meteorologist', 'Chief meteorologist'], pay: [1.3, 1.8, 2.3, 2.9, 3.8],
+    needs: [{ level: 'vocational' }, { level: 'bachelor', field: ['science'] }, { level: 'bachelor', field: ['science'] }, { level: 'master', field: ['science'] }, { level: 'master', field: ['science'] }] },
 };
 export const SERVICE_KEYS = Object.keys(SERVICES) as Service[];
 
@@ -75,7 +82,7 @@ export function maxGrade(c: Citizen, kind: Service): number {
 }
 /** Posts in a region: one per `per` residents (about 13% of people work in these services, as in OECD countries); small places share a teacher, a nurse and a clerk. */
 /** Courts sit in the larger places: the smallest number of residents for each court post. */
-const COURT_MIN: Partial<Record<Service, number>> = { prosecutor: 30, defender: 30, judge: 30, warden: 30, procurement: 40 };
+const COURT_MIN: Partial<Record<Service, number>> = { prosecutor: 30, defender: 30, judge: 30, warden: 30, procurement: 40, emergency: 20, meteorology: 40 };
 export function postsIn(w: World, region: Id, kind: Service): number {
   const n = residents(w, region).length;
   const core = kind === 'teacher' || kind === 'nurse' || kind === 'clerk';
@@ -195,7 +202,7 @@ export function servicesDaily(w: World, fill = false) {
   for (const c of census(w).all) if (c.post) staff.set(`${c.post.region}:${c.post.kind}`, (staff.get(`${c.post.region}:${c.post.kind}`) ?? 0) + 1);
   for (const r of w.regions) {
     const ratio = (kinds: Service[]) => { let have = 0, want = 0; for (const k of kinds) { have += staff.get(`${r.id}:${k}`) ?? 0; want += postsIn(w, r.id, k); } return want ? Math.min(1, have / want) : 0.6; }; // nothing to staff: neutral
-    r.staff = { school: ratio(['teacher']), clinic: ratio(['nurse', 'doctor']), offices: ratio(['clerk', 'engineer']), courts: ratio(['prosecutor', 'defender', 'judge']), prison: ratio(['warden']) };
+    r.staff = { school: ratio(['teacher']), clinic: ratio(['nurse', 'doctor']), offices: ratio(['clerk', 'engineer']), courts: ratio(['prosecutor', 'defender', 'judge']), prison: ratio(['warden']), emergency: ratio(['emergency']), meteorology: ratio(['meteorology']) };
     for (const kind of SERVICE_KEYS) {
       const open = postsIn(w, r.id, kind) - (staff.get(`${r.id}:${kind}`) ?? 0);
       if (open < 0 && !fill) { // more staff than posts (people moved away, budgets): the newest NPC hire is let go

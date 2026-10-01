@@ -40,7 +40,7 @@ export function worldPricesDaily(w: World) {
   const ws = worldPrices(w);
   for (const k of RAWS) {
     const x = ws[k];
-    const target = (basePrice(k) / Math.max(0.3, w.econ.commodity[k] ?? 1)) * (k === 'oil' ? opecPriceFactor(w) : 1); // a supply shock (or an OPEC+ cut) raises the price
+    const target = (basePrice(k) / Math.max(0.3, w.econ.commodity[k] ?? 1)) * (k === 'oil' ? opecPriceFactor(w) : k === 'grain' ? 1 / Math.max(0.5, w.econ.harvest ?? 1) : 1); // a supply shock (or an OPEC+ cut) raises the price
     const drift = -Math.log(x.p / target) / 120;
     x.p = Math.max(target * 0.25, Math.min(target * 4, x.p * Math.exp(drift + gauss(w) * ((VOL[k] ?? 0.25) / Math.sqrt(365)))));
     x.hist.push(x.p);

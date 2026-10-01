@@ -36,7 +36,12 @@ const INSURED: Record<string, number> = { USA: 0.55, CAN: 0.45, AUS: 0.5, GBR: 0
 /** Each market's largest property insurer (for the news). */
 const INSURER: Record<string, string> = { USA: 'State Farm', CAN: 'Intact', MEX: 'GNP Seguros', BRA: 'Porto Seguro', ARG: 'Sancor Seguros', GBR: 'Aviva', DEU: 'Allianz', RUS: 'Rosgosstrakh', TUR: 'Anadolu Sigorta', SAU: 'Tawuniya', ZAF: 'Santam', IND: 'New India Assurance', CHN: 'PICC', JPN: 'Tokio Marine', KOR: 'Samsung Fire & Marine', AUS: 'IAG' };
 
-export const preparedness = (w: World, n: Nation) => Math.max(0.1, Math.min(0.98, (PREPARED[n.iso] ?? 0.45) + (capsOf(w, n).infra - (capsOf(w, n).base?.infra ?? capsOf(w, n).infra)) / 100));
+/** Average staffing of a national service across a country's regions (0.6 where nobody is needed). */
+const staffing = (w: World, n: Nation, k: 'emergency' | 'meteorology') => { const rs = w.regions.filter((r) => r.owner === n.id && r.staff?.[k] != null); return rs.length ? rs.reduce((t, r) => t + r.staff![k]!, 0) / rs.length : 0.6; };
+/** Preparedness: the country's record, its infrastructure since 2025, and how well its emergency services are staffed. */
+export const preparedness = (w: World, n: Nation) => Math.max(0.1, Math.min(0.98, (PREPARED[n.iso] ?? 0.45) + (capsOf(w, n).infra - (capsOf(w, n).base?.infra ?? capsOf(w, n).infra)) / 100 + (staffing(w, n, 'emergency') - 0.6) * 0.15));
+/** How much a public warning saves: better with a staffed weather service. */
+export const warningEffect = (w: World, n: Nation) => Math.min(0.8, preparedness(w, n) * (0.5 + staffing(w, n, 'meteorology') * 0.2));
 export const insuredShare = (n: Nation) => INSURED[n.iso] ?? 0.1;
 
 /** How deadly each kind of hazard is, relative to a hurricane of the same severity. */
@@ -75,7 +80,7 @@ HANDLERS.hazardImpact = (w, d) => {
   const wn = (w.warnings ?? []).find((x) => x.at === d.at) ?? w.warnings?.[d.i];
   if (!wn) return;
   w.warnings = (w.warnings ?? []).filter((x) => x !== wn);
-  strike(w, wn.kind, wn.label, wn.regions, wn.level, wn.size, preparedness(w, w.nations[wn.nation]) * 0.6);
+  strike(w, wn.kind, wn.label, wn.regions, wn.level, wn.size, warningEffect(w, w.nations[wn.nation]));
 };
 
 /** The impact: deaths, damage, insurance, the response, aid and reconstruction. */

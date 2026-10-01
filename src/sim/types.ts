@@ -270,6 +270,7 @@ export interface EconState {
   phase: 'boom' | 'expansion' | 'slowdown' | 'recession';
   hist: number[];
   commodity: Record<string, number>; // world supply multipliers for raw goods
+  harvest?: number; // the big grain exporters' harvest against normal (1.9)
   world?: Record<string, { p: number; hist: number[] }>; // world commodity prices (gold per unit) and their last 60 days
 }
 
@@ -360,7 +361,7 @@ export interface Region {
   pop0?: number; // background population at genesis
   draw?: number; // how attractive the region is to live in, -1..1, smoothed (sim/population.ts)
   blockade: Id | null; // nation whose navy blockades this coast
-  staff?: { school: number; clinic: number; offices: number; courts?: number; prison?: number };
+  staff?: { school: number; clinic: number; offices: number; courts?: number; prison?: number; emergency?: number; meteorology?: number };
   housePx?: number; // housing price index, 0.5..2.5, drifts slowly (sim/housing.ts) // public-service staffing 0..1 (sim/services.ts)
 }
 
@@ -433,7 +434,8 @@ export interface Nation {
   programmes?: import('./defenceIndustry').Programme[]; // defence R&D programmes (1.8)
   armsOrders?: import('./defenceIndustry').ArmsOrder[]; // equipment bought abroad (1.8)
   arsenal?: import('./arsenal').Arsenal;
-  energy?: import('./energy').EnergyState; // energy mix, fuel self-sufficiency, reserves (1.9) // equipment by class: generation and age (1.8) // appointed: chosen by the Commander-in-Chief // military budget (share of revenue), chief of staff, days unpaid
+  energy?: import('./energy').EnergyState;
+  food?: import('./food').FoodState; // harvest, imports and hunger (1.9) // energy mix, fuel self-sufficiency, reserves (1.9) // equipment by class: generation and age (1.8) // appointed: chosen by the Commander-in-Chief // military budget (share of revenue), chief of staff, days unpaid
   alert: number; // national security alert 1 (normal) .. 5 (maximum) // share of daily revenue for national police (regions without their own government, federal crimes)
 }
 
