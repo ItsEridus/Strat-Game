@@ -66,10 +66,10 @@ export const defenceNorm = (n: Nation) => defenceShare(n.iso);
 /** Defence spending as a share of GDP, from the share of revenue. */
 export const milexOfGdp = (n: Nation) => n.defense.budget * defenceBaseline(n.iso).revenue;
 
-/** Effective generation of a class: past its service life, equipment loses edge. */
+/** Effective generation of a class: late in its service life (past 85%), equipment loses its edge. */
 export function effectiveGen(cls: EquipClass, s: ClassState): number {
   if (!s.gen) return 0;
-  const over = Math.max(0, s.age - CLASS_INFO[cls].life * 0.7);
+  const over = Math.max(0, s.age - CLASS_INFO[cls].life * 0.85);
   return Math.max(1, s.gen - over * 0.04);
 }
 
@@ -88,7 +88,7 @@ export function wearFactor(w: World, f: Formation): number {
   const a = arsenalOf(w, w.nations[f.nation]);
   let over = 0;
   let cut = false;
-  for (const cls of Object.keys(KIND_CLASSES[f.kind]) as EquipClass[]) if (a[cls].gen) { over = Math.max(over, a[cls].age - CLASS_INFO[cls].life * 0.7); cut ||= cutOff(w, w.nations[f.nation], cls); }
+  for (const cls of Object.keys(KIND_CLASSES[f.kind]) as EquipClass[]) if (a[cls].gen) { over = Math.max(over, a[cls].age - CLASS_INFO[cls].life * 0.85); cut ||= cutOff(w, w.nations[f.nation], cls); }
   return (1 + Math.max(0, over) * 0.03) * (cut ? 2 : 1);
 }
 
@@ -143,7 +143,7 @@ export function arsenalMonth(w: World, n: Nation, reset = true) {
   const norm = Math.max(1, dailyRevenue(n) * defenceNorm(n) * defenceBaseline(n.iso).split.procurement * 0.7 * Math.max(1, m.days));
   // Renewal follows procurement spending, and needs the contractor's goods to build with.
   const effort = (m.days ? Math.min(3, m.procurement / norm) : 1) * deliveryInputs(w, n, m.procurement);
-  defenceIndustryMonth(w, n, m.rd);
+  defenceIndustryMonth(w, n, m.rd, m.days ? m.procurement : Infinity);
   for (const cls of EQUIP_CLASSES) {
     const st = a[cls];
     if (!st.gen) continue;

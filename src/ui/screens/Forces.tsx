@@ -268,7 +268,7 @@ function ArsenalPanel({ w }: { w: World }) {
           const eff = effectiveGen(cls, st);
           const life = CLASS_INFO[cls].life;
           return <tr><td>{CLASS_INFO[cls].icon} {CLASS_INFO[cls].label}</td><td>{st.gen.toFixed(1)}{eff < st.gen - 0.05 ? <span class="bad"> (fights as {eff.toFixed(1)})</span> : ''}</td><td>{st.frontier.toFixed(1)}{st.supplier != null && st.supplier !== n.id ? <small class="muted"> · bought from {w.nations[st.supplier]?.name}</small> : ''}</td><td>{st.age.toFixed(0)} years</td>
-            <td class={st.age > life * 0.7 ? 'bad' : st.age > life * 0.5 ? 'warn' : 'good'}>{st.age > life * 0.7 ? 'ageing: wears fast, loses edge' : st.age > life * 0.5 ? 'mid-life' : 'modern'}</td></tr>;
+            <td class={st.age > life * 0.85 ? 'bad' : st.age > life * 0.5 ? 'warn' : 'good'}>{st.age > life * 0.85 ? 'ageing: wears fast, loses edge' : st.age > life * 0.5 ? 'mid-life' : 'modern'}</td></tr>;
         })}</tbody>
       </table></div>
       <h4>R&D programmes</h4>
@@ -288,7 +288,7 @@ function ArsenalPanel({ w }: { w: World }) {
         <ActBtn small why={armsOrderCheck(w, p.id, n, cls, seller)} run={(w) => placeOrder(w, p.id, n, cls, seller!)}>{seller ? `Buy from ${seller.name}` : 'Buy abroad'}</ActBtn>
       </div>}
       <Help>R&D programmes are paid from the R&D budget each month. They take years (a new combat aircraft 10–20), slip, overrun and are sometimes cancelled. A finished programme raises the best generation the country can build, and renewal then brings the forces up to it, with spin-offs to civilian technology. Countries that cannot build a class well buy it abroad, if the seller grants an export licence; deliveries take two to four years, and a hostile supplier means no spare parts (equipment wears twice as fast).</Help>
-      <Help>Equipment generations run from 1 to 6 (for fighters: 4 = F-16 or Su-27, 5 = F-35 or J-20). Each generation is worth about 15% in combat. Procurement contracts renew equipment over its service life; without them it ages, wears faster and, past about 70% of its life, loses its edge. Procurement and R&D money goes to the country's defence contractor.</Help>
+      <Help>Equipment generations run from 1 to 6 (for fighters: 4 = F-16 or Su-27, 5 = F-35 or J-20). Each generation is worth about 15% in combat. Procurement contracts renew equipment over its service life; without them it ages, wears faster and, past about 85% of its life, loses its edge. Procurement and R&D money goes to the country's defence contractor.</Help>
     </Panel>
   );
 }

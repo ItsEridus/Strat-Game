@@ -227,8 +227,16 @@ Marshal); from Colonel/Captain you command a formation and give it orders; the m
 of Staff. The defence ministry sets the budget and the national security alert level, raises and disbands
 formations, and — like the intelligence service — fights through fog of war: foreign forces are only visible near
 your borders and seas, through deep networks, or after military reconnaissance (which, with military sabotage,
-joins the intelligence operations). (Armed Forces screen; Military map view; Rankings screen for the world power
-index and citizen leaderboards.)
+joins the intelligence operations).
+
+Defence budgets start at each country's real share of GDP. They split into personnel, operations, procurement and
+R&D. Fourteen classes of equipment, from small arms to carriers, each have a generation and an average age, and
+quality counts in combat. Named R&D programmes take years: a fighter takes 10–20, and programmes slip, overrun or
+are cancelled. Procurement contracts and real goods from defence contractors renew equipment, and neglected forces
+age and wear out. Countries buy abroad under export licences, and a supplier that turns hostile stops sending
+spare parts. Each country has a doctrine and a recruitment system; the loser of a war reviews its doctrine
+afterwards. Exercises raise readiness. Five nuclear powers start with their real arsenals and nuclear doctrines.
+(Armed Forces screen; Military map view; Rankings screen for the world power index and citizen leaderboards.)
 
 **Wars** are declared by congress with goals and a deadline. Battles occupy regions, but ownership only changes
 at settlement. The **Wars** and **Battle** screens explain the scoring ticks, supply and win conditions.

@@ -142,15 +142,15 @@ export function managementFactor(w: World, n: Nation): number {
 
 // ---------- deliveries from the domestic contractor ----------
 
-/** Real inputs: the contractor's own goods become equipment. Returns how much of the month's renewal they could support (0.5..1). */
+/** Real inputs: the contractor's own goods become equipment. Returns how much of the month's renewal they could support (0.7..1). */
 export function deliveryInputs(w: World, n: Nation, spent: number): number {
   const co = contractorOf(w, n.id);
   if (!co || spent <= 0) return 1;
   const key = outputKey(co.industry, co.q);
-  const need = Math.max(1, Math.min(300, Math.round(spent / cur(20))));
+  const need = Math.max(1, Math.min(300, Math.round(spent / cur(60))));
   const have = Math.min(need, co.inv[key] ?? 0);
   if (have > 0) consume(w, coref(co.id), key, have, 'Delivered to the armed forces');
-  return 0.5 + 0.5 * (have / need);
+  return 0.7 + 0.3 * (have / need);
 }
 
 // ---------- the arms trade ----------
@@ -247,16 +247,20 @@ function chronicle(w: World, n: Nation, text: string) {
 }
 
 /** AI defence ministries: keep programmes running where they lag, and buy abroad what they cannot build. */
-function defenceIndustryAI(w: World, n: Nation) {
+function defenceIndustryAI(w: World, n: Nation, rd: number, procurement: number) {
   const president = n.president != null ? w.citizens[n.president] : null;
   if (president?.player) return;
+  const funded = rd >= rdMonthlyNorm(n) * 0.3; // no new programmes without R&D money
   const a = arsenalOf(w, n);
   const leader = (cls: EquipClass) => Math.max(...w.nations.map((x) => arsenalOf(w, x)[cls].frontier));
-  // Start a programme in the class that lags the world most (leaders work on the next generation).
-  const cands = EQUIP_CLASSES.filter((cls) => !programmeCheck(w, null, n, cls)).sort((x, y) => (leader(y) - a[y].frontier) * WEIGHT[y] - (leader(x) - a[x].frontier) * WEIGHT[x]);
+  // Start a programme in the class that lags the world most; leaders work on the next generation of their big systems.
+  const score = (cls: EquipClass) => (leader(cls) - a[cls].frontier + 0.3) * WEIGHT[cls];
+  const cands = funded ? EQUIP_CLASSES.filter((cls) => !programmeCheck(w, null, n, cls)).sort((x, y) => score(y) - score(x)) : [];
   if (cands.length && chance(w, 0.25)) startProgramme(w, null, n, cands[0]);
-  // Buy abroad where the gap is large and nobody at home is closing it.
+  // Buy abroad where the gap is large and nobody at home is closing it (only with procurement money to pay for it).
+  const procNorm = planRevenue(n) * defenceNorm(n) * defenceBaseline(n.iso).split.procurement * 30 * 0.7;
   for (const cls of EQUIP_CLASSES) {
+    if (procurement < procNorm * 0.3) break;
     if (!a[cls].gen) continue;
     if (runningProgrammes(n).some((p) => p.cls === cls) || runningOrders(n).some((o) => o.cls === cls)) continue;
     const s = bestSeller(w, n, cls);
@@ -266,10 +270,10 @@ function defenceIndustryAI(w: World, n: Nation) {
 }
 
 /** The monthly turn for the defence industry (called from the arsenal's month). */
-export function defenceIndustryMonth(w: World, n: Nation, rd: number) {
+export function defenceIndustryMonth(w: World, n: Nation, rd: number, procurement = Infinity) {
   programmesMonth(w, n, rd);
   ordersMonth(w, n);
-  defenceIndustryAI(w, n);
+  defenceIndustryAI(w, n, rd, procurement);
   if (programmesOf(n).length > 40) n.programmes = programmesOf(n).filter((p) => p.status === 'running' || (p.ended ?? 0) > w.time - 1440 * 365 * 20).slice(-40);
   if (ordersOf(n).length > 40) n.armsOrders = ordersOf(n).slice(-40);
 }

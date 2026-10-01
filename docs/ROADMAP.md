@@ -497,6 +497,17 @@ improve or decay, and the power ranking moves for reasons the player can read.
   - a nation that invests in R&D and procurement fields better equipment within the expected years;
   - neglect shows as ageing, unready forces;
   - contracts pass the ledger audit.
+- **Progress:**
+  - 1.7.1: budgets and generations.
+  - 1.7.2: R&D programmes and the arms trade.
+  - 1.7.3: force structure, doctrine and strategic forces.
+  - 1.7.4: careers and stories.
+  - 1.8.0: calibration (`tests/arsenalcal.ts`). Over 30 strategic years at real budgets:
+    - fighter programmes take 12–20 years;
+    - the leading powers reach generation 5.5;
+    - average fleet ages settle at 22–26 years, near the US Air Force's real average of about 29;
+    - a country that stops funding its forces ages from 44 to 74 years and cancels its programmes;
+    - the ledger audit passes.
 
 ## 1.9.0 — Sky & ground
 

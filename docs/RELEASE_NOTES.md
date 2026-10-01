@@ -3,6 +3,25 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.8.0: Arsenal
+
+1.8.0 completes the Arsenal: militaries now get better or worse over time. Releases 1.7.1 to 1.7.4 built it:
+- real defence budgets and equipment generations;
+- R&D programmes and the arms trade;
+- force structure, doctrine and strategic forces;
+- defence careers and stories.
+
+This release calibrates them over 30 strategic years at real budgets (`tests/arsenalcal.ts`):
+
+- **Programmes take realistic times.** New fighters take 12–20 years, and the leading powers reach generation 5.5
+  within about two decades. Leaders now work on the next generation of their big systems rather than picking
+  classes at random.
+- **Fleets age realistically.** With normal spending, average equipment age settles at 22–26 years, near the US Air
+  Force's real average of about 29. Equipment now loses its edge only past 85% of its service life (it was 70%).
+  When the contractor lacks the goods to build with, renewal slows by 30% (it was 50%).
+- **Neglect shows.** A country that stops funding its forces sees its equipment age from 44 to 74 years. It no
+  longer starts R&D programmes it cannot pay for, or orders weapons abroad without procurement money.
+
 ### New in 1.7.4: defence careers and stories
 
 - **Defence procurement** is a new public career: procurement officer, programme manager, director of programmes,
