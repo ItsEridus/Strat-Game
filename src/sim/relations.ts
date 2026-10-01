@@ -8,6 +8,7 @@
 // The relation score that the rest of the game reads moves towards a blend of these.
 // The head of government's character colours the picture: hawks see more threat and
 // trust less, doves the reverse.
+import { estimateOf } from './beliefs';
 import type { Id, Nation, World } from './types';
 import { BLOCS, LANGUAGE, grievanceOf, startTrust, tiesOf, type Bloc } from '../data/diplomacy';
 import { IDEOLOGIES } from '../data/ideologies';
@@ -67,9 +68,11 @@ function assess(w: World, a: Nation, b: Nation, mil: Map<Id, number>, t: Ties) {
   const shared = activeTreaties(w, a.id).filter((x) => x.parties.includes(b.id)).length;
   t.affinity = Math.round(Math.min(100, sim * 60 + (LANGUAGE[a.iso] === LANGUAGE[b.iso] ? 20 : 0) + blocs.length * 10 + shared * 8 + (a.alliances.includes(b.id) ? 10 : 0)));
   // Threat: their power against ours, how close they are, and their intentions (hostility, their leader, their wars on our friends).
-  const ratio = (mil.get(b.id) ?? 0) / Math.max(0.05, mil.get(a.id) ?? 0.05);
+  // Threat as a judges it: b's strength and hostility as a's intelligence estimates them (beliefs.ts).
+  const est = estimateOf(w, a, b);
+  const ratio = ((mil.get(b.id) ?? 0) * (1 + est.bias.mil)) / Math.max(0.05, mil.get(a.id) ?? 0.05);
   const near = borders(w, a.id, b.id) ? 1 : 0.45;
-  const hostile = Math.max(0, -(b.relations[a.id]?.score ?? 0)) / 100;
+  const hostile = Math.max(0, Math.min(100, -(b.relations[a.id]?.score ?? 0) + est.bias.hostile)) / 100;
   const lb = leaderProfile(w, b);
   const warsOnFriends = activeWars(w).some((x) => (x.att === b.id || x.def === b.id) && (a.alliances.includes(enemyOf(x, b.id)) || enemyOf(x, b.id) === a.id)) ? 0.4 : 0;
   const allied = securityPartners(w, a.id, b.id);

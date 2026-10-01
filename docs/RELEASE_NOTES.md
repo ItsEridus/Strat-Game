@@ -3,6 +3,33 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.0.2: governments act on what they believe
+
+The second part of 2.1 Shadows.
+
+- **Estimates, not the truth.** Every government now holds an estimate of each other country's military power,
+  economy, technology and hostility, each with a range.
+- **How clearly it sees** depends on its collection:
+  - its spy network in the country;
+  - its signals, imagery, cyber, open-source and analysis directorates;
+  - how open the country is (a free press gives a lot away);
+  - how good the country's counter-intelligence is.
+
+  In test runs the US and British services misjudge military power by about 10%, smaller services by 20–30%.
+- **Misperceptions linger.** They correct themselves only over months, and hawkish leaders read more menace into
+  what they cannot see clearly. Estimates are refreshed every week. A dossier or a reconnaissance operation
+  sharpens them at once.
+- **Decisions use beliefs.** Whether to go to war, how a crisis is played, whether to bow to an ultimatum,
+  whether to join an alliance and how threatening a neighbour looks all rest on estimates now, including
+  estimates of the other side's allies. Miscalculations happen: in one test run a country attacked a neighbour
+  it believed half as strong as it really was.
+- **Surprise attacks.** If the defender's intelligence had not judged the attacker hostile, the attack comes as
+  a surprise and its forces are caught unready. Every war records what the attacker believed about the
+  defender's strength, and the truth.
+- **"What we believe."** A new panel on the Intelligence screen shows each country's estimated strength (yours
+  = 1) with its range, its hostility, how well you can see it, and last January's estimate checked against the
+  truth. It is visible to officers of the service and to the government.
+
 ### New in 2.0.1: intelligence services as organisations
 
 The first part of 2.1 Shadows.

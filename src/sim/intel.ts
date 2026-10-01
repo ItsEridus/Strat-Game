@@ -24,6 +24,7 @@ import { controller, cref, hhref, jailed, natref, player } from './query';
 import { nationPerm } from './authority';
 import { relation } from './congress';
 import { visible } from './forces';
+import { refresh } from './beliefs';
 import { OP_DIR, dirEdge, dirOfAgent, dirStrength, noteLesson } from './intelOrg';
 
 export const OPS: Record<OpKind, { name: string; desc: string; needs: 'region' | 'subject' | 'formation' | null; rank: number; relation: number }> = {
@@ -172,6 +173,7 @@ function applyOp(w: World, op: SpyOp): string {
         `Leadership: ${t.leader} ${t.president != null ? w.citizens[t.president]?.name : 'vacant'}; unemployment ${Math.round(t.unemployment * 100)}%.`,
       ];
       n.agency.dossiers[t.id] = { t: w.time, lines };
+      refresh(w, n, t, 0.7); // fresh material sharpens the estimate
       n.agency.network[t.id] = Math.min(100, (n.agency.network[t.id] ?? 0) + 3);
       return `Dossier on ${t.name} updated.`;
     }
@@ -233,6 +235,7 @@ function applyOp(w: World, op: SpyOp): string {
     }
     case 'milintel': {
       n.agency.milIntel[t.id] = w.time + 10 * DAY;
+      refresh(w, n, t, 0.9);
       const fs = Object.values(w.forces).filter((f) => f.nation === t.id);
       const by = (b: string) => fs.filter((f) => f.branch === b);
       n.agency.dossiers[t.id] = { t: w.time, lines: [

@@ -12,6 +12,7 @@
 //   to stand by it: those who do cut off the aggressor; those who do not lose the ally's
 //   trust and the alliance's credibility. Attacking a country soon after renouncing a
 //   treaty with it is remembered by everyone as a betrayal.
+import { believedPower } from './beliefs';
 import type { Id, Nation, War, World } from './types';
 import { BLOCS, GLOBAL_POWERS, TRADE_AGREEMENTS, WORLD_REGION } from '../data/diplomacy';
 import { DAY } from '../engine/clock';
@@ -178,7 +179,7 @@ export function willingness(w: World, n: Nation, other: Nation, kind: TreatyKind
       break;
     }
     case 'nonaggression':
-      p = 0.3 + t.threat / 150 + rel / 200 - lp.hawk * 0.3 + (militaryPower(w, other.id) > militaryPower(w, n.id) ? 0.1 : 0);
+      p = 0.3 + t.threat / 150 + rel / 200 - lp.hawk * 0.3 + (believedPower(w, n.id, other.id) > militaryPower(w, n.id) ? 0.1 : 0);
       why = t.threat > 30 ? 'it fears the other side' : 'little reason for a pact';
       break;
     case 'trade':
@@ -240,12 +241,12 @@ export const securityPartners = (w: World, a: Id, b: Id) =>
   w.nations[a].alliances.includes(b) || hasTreaty(w, a, b, 'basing');
 
 /** The deterrent weight of a country's allies (what an attacker must reckon with). */
-export function alliedPower(w: World, target: Id): number {
+export function alliedPower(w: World, target: Id, observer?: Id): number {
   let s = 0;
   for (const t of activeTreaties(w, target)) {
     if (t.kind !== 'defence' && t.kind !== 'guarantee') continue;
     const cred = (t.honoured + 1) / (t.honoured + t.failed + 2);
-    for (const p of t.parties) if (p !== target && !w.nations[p].exile) s += militaryPower(w, p) * cred * 0.5;
+    for (const p of t.parties) if (p !== target && !w.nations[p].exile) s += (observer != null ? believedPower(w, observer, p) : militaryPower(w, p)) * cred * 0.5;
   }
   return s;
 }
@@ -273,7 +274,7 @@ export function onWarDeclared(w: World, war: War) {
       if (ally.exile) continue;
       const lp = leaderProfile(w, ally);
       const rel = ally.relations[def.id]?.score ?? 0;
-      const fear = militaryPower(w, att.id) / Math.max(1, militaryPower(w, p));
+      const fear = believedPower(w, p, att.id) / Math.max(1, militaryPower(w, p));
       const stand = 0.55 + rel / 200 + lp.hawk * 0.2 - Math.max(0, fear - 1) * 0.15 + (t.honoured - t.failed) * 0.05;
       if (chance(w, Math.max(0.05, Math.min(0.97, stand)))) {
         t.honoured++;

@@ -10,6 +10,7 @@
 //   it is weak, exposed and led by a dove, makes its peace with the threat.
 // - Sanctions cost both sides growth, the target more, in proportion to the trade between
 //   them; trade agreements add a little growth (read by strategic.ts).
+import { believedPower } from './beliefs';
 import type { Id, Nation, World } from './types';
 import { dateAt } from '../engine/calendar';
 import { record } from '../engine/events';
@@ -84,7 +85,7 @@ function alignmentMonth(w: World) {
     let worst: Nation | null = null, threat = 0;
     for (const o of w.nations) if (o.id !== n.id && !o.exile) { const t = tiesOfPair(w, n, o).threat; if (t > threat) { threat = t; worst = o; } }
     if (!worst || threat < 60 || (n.relations[worst.id]?.score ?? 0) > -10) { delete n.alignment; continue; }
-    const weak = militaryPower(w, n.id) + alliedPower(w, n.id) < militaryPower(w, worst.id) * 0.25;
+    const weak = militaryPower(w, n.id) + alliedPower(w, n.id) < believedPower(w, n.id, worst.id) * 0.25;
     const lp = leaderProfile(w, n);
     const choice = weak && lp.hawk < 0.4 && !n.alliances.length ? 'bandwagon' : 'balance';
     if (n.alignment?.towards !== worst.id || n.alignment.choice !== choice) {

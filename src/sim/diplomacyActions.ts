@@ -8,6 +8,7 @@
 // - ultimatums (comply, or hand the issuer a cause for war),
 // - mediation between countries at war.
 // The AI governments use the same actions on the same terms.
+import { believedPower } from './beliefs';
 import type { Id, Nation, World } from './types';
 import { DAY } from '../engine/clock';
 import { dateAt } from '../engine/calendar';
@@ -177,7 +178,7 @@ export function doDiplomacy(w: World, n: Nation, a: DipAction, p: DipParams): Re
 }
 
 function ultimatum(w: World, n: Nation, t: Nation, p: DipParams): Result {
-  const ratio = militaryPower(w, n.id) / Math.max(1, militaryPower(w, t.id) + alliedPower(w, t.id)); // its allies stiffen its resolve
+  const ratio = believedPower(w, t.id, n.id) / Math.max(1, militaryPower(w, t.id) + alliedPower(w, t.id)); // how strong they think we are; their allies stiffen their resolve
   const lp = leaderProfile(w, t);
   const comply = Math.max(0.03, Math.min(0.9, (ratio - 1) * 0.35 + 0.15 - lp.risk * 0.2 - lp.nationalism * 0.15));
   const what = demandText(w, n, p);
@@ -280,7 +281,7 @@ export function aiChoice(w: World, n: Nation): [DipAction, DipParams] | null {
       if (p > 0) opts.push(['treaty', { target: t.id, kind }, p]);
     }
     if (ties.trust < -40 && rel < -50) opts.push(['expel', { target: t.id }, 0.02]);
-    if (lp.hawk > 0.6 && t.embargoes.includes(n.id) && militaryPower(w, n.id) > militaryPower(w, t.id) * 1.5) opts.push(['ultimatum', { target: t.id, demand: 'liftSanctions' }, 0.05]);
+    if (lp.hawk > 0.6 && t.embargoes.includes(n.id) && militaryPower(w, n.id) > believedPower(w, n.id, t.id) * 1.5) opts.push(['ultimatum', { target: t.id, demand: 'liftSanctions' }, 0.05]);
   }
   // Renounce treaties with those it has come to hate.
   for (const tr of activeTreaties(w, n.id)) {

@@ -9,6 +9,7 @@
 // settles it; one backing down hands the other a win (approval and standing); escalating
 // past the brink is war. Long stalemates fade. A player who heads a government in a crisis
 // chooses each move on the Diplomacy screen.
+import { believedPower } from './beliefs';
 import type { Id, Nation, World } from './types';
 import { DAY } from '../engine/clock';
 import { nid, notify, record } from '../engine/events';
@@ -53,7 +54,7 @@ function buildNeighbours(w: World) {
 export function resolve(w: World, c: Crisis, id: Id): number {
   const n = w.nations[id], o = w.nations[other(c, id)];
   const lp = leaderProfile(w, n);
-  const mine = militaryPower(w, id) + alliedPower(w, id), theirs = militaryPower(w, o.id) + alliedPower(w, o.id);
+  const mine = militaryPower(w, id) + alliedPower(w, id), theirs = believedPower(w, id, o.id) + alliedPower(w, o.id, id); // their strength as we judge it
   const balance = mine / Math.max(1, mine + theirs) - 0.5;
   const stakes = tiesOfPair(w, n, o).grievance / 200 + (c.kind === 'border' || c.kind === 'detention' ? 0.05 : 0);
   const rally = n.approval < 40 ? 0.1 : 0;

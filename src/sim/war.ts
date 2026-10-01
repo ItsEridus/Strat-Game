@@ -4,6 +4,7 @@
 //  - Holding the quota of occupations settles the war: held goals transfer, other
 //    occupations return, retained regions lose one building level, a 7-day pact follows.
 //  - Deadlines and peace terms (armistice, surrender, demand, trade) also settle wars.
+import { believed, believedPower } from './beliefs';
 import { scoped } from './scope';
 import { alliedPower, onWarDeclared } from './treaties';
 import { casusBelli } from './diplomacyActions';
@@ -130,6 +131,13 @@ export function declareWar(w: World, n: Nation, params: Record<string, any>, p?:
     quota: quotaFor(w, t.id, goals, n.id), occupied: [], counter: [], maxOcc: 0, status: 'active', battles: [], offers: [],
   };
   w.wars[war.id] = war;
+  // What the attacker believed, and whether the defender saw it coming (beliefs.ts).
+  war.intelGap = { believed: Math.round(believedPower(w, n.id, t.id)), truth: Math.round(militaryPower(w, t.id)) };
+  if (believed(w, t, n, 'hostile') < 40) {
+    war.surprise = true;
+    for (const f of Object.values(w.forces)) if (f.nation === t.id) f.readiness = Math.max(0, f.readiness - 15);
+    record(w, 'war', `😱 ${n.name}'s attack took ${t.name} by surprise: its intelligence had not judged ${n.name} that hostile. Its forces were caught unready.`, { nation: t.id, important: true });
+  }
   warDeclared(w, war, cause);
   schedule(w, war.deadline, 'warDeadline', { war: war.id });
   relation(w, n.id, t.id, -25, 'war declared');
@@ -153,7 +161,7 @@ export const WAR_PROPOSAL: ExtraProposal = {
   support(w, n, d, p) {
     const party = partyOf(w, d);
     const hawk = IDEOLOGIES[party?.ideo ?? d.ideo].hawk;
-    const ratio = militaryPower(w, n.id) / Math.max(1, militaryPower(w, p.target) + alliedPower(w, p.target));
+    const ratio = militaryPower(w, n.id) / Math.max(1, believedPower(w, n.id, p.target) + alliedPower(w, p.target, n.id)); // as the government believes it
     const rel = n.relations[p.target]?.score ?? 0;
     const busy = activeWars(w).filter((x) => x.att === n.id || x.def === n.id).length;
     return (casusBelli(w, n, p.target) ? 0.2 : 0) + (hawk - 0.55) * 0.8 + Math.max(-0.4, Math.min(0.3, (ratio - 1) * 0.3)) - rel / 150 - busy * 0.2 + n.warMood * 0.05;
@@ -171,7 +179,7 @@ export const WAR_PROPOSAL: ExtraProposal = {
     const targets = neighborNations(w, n.id).filter((t) => !warCheck(w, n, { target: t, days: 14, goals: [] }));
     const out: { params: Record<string, any>; weight: number }[] = [];
     for (const t of targets) {
-      const ratio = militaryPower(w, n.id) / Math.max(1, militaryPower(w, t) + alliedPower(w, t)); // its allies deter
+      const ratio = militaryPower(w, n.id) / Math.max(1, believedPower(w, n.id, t) + alliedPower(w, t, n.id)); // its allies deter; all as we believe it
       const rel = n.relations[t]?.score ?? 0;
       const cb = casusBelli(w, n, t);
       if (ratio < 1.1 || (rel > 0 && !cb)) continue;

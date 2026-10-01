@@ -10,6 +10,8 @@ import { visible } from '../../sim/forces';
 import { nationPerm } from '../../sim/authority';
 import { B } from '../../data/balance';
 import { DIRECTORATES, DIR_INFO, type Directorate } from '../../data/intelServices';
+import { MEASURES, MEASURE_LABEL, believed, estimateOf, rangeOf } from '../../sim/beliefs';
+import { militaryPower } from '../../sim/war';
 import { OP_DIR, dirOfAgent, joinDirectorate, orgOf, prioritise, staffByDir } from '../../sim/intelOrg';
 import { ARANKS, OPS, analyze, analyzeCheck, joinAgency, joinAgencyCheck, knownDossier, launchOp, leaveAgency, opCheck, quitAsset, setAgencyBudget } from '../../sim/intel';
 
@@ -39,6 +41,7 @@ export function Intel({ w }: { w: World }) {
       </Panel>
 
       <Directorates w={w} official={official} />
+      {(official || p.sec.agency === p.nation || n.president === p.id) && <Estimates w={w} />}
       {official && <DirectorPanel w={w} />}
       <CareerPanel w={w} />
       {(official || (p.sec.agency === p.nation && p.sec.arank >= 1)) && <OpsPanel w={w} />}
@@ -158,6 +161,37 @@ function Directorates({ w, official }: { w: World; official: boolean }) {
         })}</tbody>
       </table></div>
       <Help>A service is eight directorates. Each starts from the real service's strengths in 2025 and moves, month by month, towards what the country now gives it: money (the budget and how it is divided), technology (signals, open sources and cyber follow information technology; imagery follows space), people, and experience. Failed and exposed operations teach lessons, and the directorate improves faster for a while afterwards. Every operation draws on the directorate that runs it.</Help>
+    </Panel>
+  );
+}
+
+function Estimates({ w }: { w: World }) {
+  const p = player(w);
+  const n = w.nations[p.nation];
+  const own = Math.max(1, militaryPower(w, n.id));
+  const foreign = w.nations.filter((x) => x.id !== n.id && !x.exile);
+  const x = (v: number) => `${(v / own).toFixed(2)}×`;
+  const lastReview = (t: typeof foreign[number]) => { const r = estimateOf(w, n, t).review; return r?.[r.length - 1]; };
+  return (
+    <Panel title="📊 What we believe" class="wide">
+      <div class="scroll-x"><table class="table compact small">
+        <thead><tr><th>Country</th><th>Military power (ours = 1)</th><th>Hostility towards us</th><th>How well we see them</th><th>Assessed</th><th>Last year's estimate, checked</th></tr></thead>
+        <tbody>{foreign.map((t) => {
+          const e = estimateOf(w, n, t);
+          const [lo, hi] = rangeOf(w, n, t, 'mil');
+          const h = believed(w, n, t, 'hostile');
+          const rv = lastReview(t);
+          return (
+            <tr><td><NationChip w={w} id={t.id} /></td>
+              <td><b>{x(believed(w, n, t, 'mil'))}</b> <small class="muted">({x(lo)}–{x(hi)})</small></td>
+              <td class={h > 40 ? 'bad' : h > 10 ? 'warn' : 'good'}>{Math.round(h)} <small class="muted">±{Math.round(e.sd.hostile)}</small></td>
+              <td><Bar v={e.quality * 100} max={100} color="#5b8def" label={`${Math.round(e.quality * 100)}%`} /></td>
+              <td class="muted">{fmtDay(e.t)}</td>
+              <td class="small">{rv ? `power ${Math.round((rv.est.mil / Math.max(1, rv.truth.mil) - 1) * 100)}% off; hostility ${Math.round(rv.est.hostile - rv.truth.hostile)} points off` : '—'}</td></tr>
+          );
+        })}</tbody>
+      </table></div>
+      <Help>Governments act on what they believe, not on the truth. Each estimate comes with a range that depends on how well the service can see the country: its network there, its signals, imagery, open-source and analysis directorates, how open the country is, and how good its counter-intelligence is. Estimates carry misperceptions that correct themselves only slowly, and hawkish leaders read more menace into what they cannot see. Decisions about war, crises and alliances use these estimates, so surprise attacks and miscalculations happen. Each January the service's estimates are checked against the truth ({MEASURES.map((k) => MEASURE_LABEL[k].toLowerCase()).join(', ')}).</Help>
     </Panel>
   );
 }

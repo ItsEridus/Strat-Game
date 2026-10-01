@@ -412,6 +412,7 @@ export interface Nation {
   dip?: import('./diplomacyActions').DipState; // diplomatic capital, recent actions, causes for war (2.0)
   summits?: Record<Id, number>;
   imfRelief?: boolean;
+  beliefs?: Record<Id, import('./beliefs').Estimate>; // what the government believes about each other country (2.1)
   alignment?: { towards: Id; choice: 'balance' | 'bandwagon'; since: number }; // facing a far stronger threat (2.0) // under an IMF programme (2.0) // when its leader last met the other's (2.0)
   alliances: Id[];
   embargoes: Id[];
@@ -539,6 +540,8 @@ export interface Battle {
 
 export interface War {
   id: Id;
+  surprise?: boolean; // the defender's intelligence did not see it coming (2.1)
+  intelGap?: { believed: number; truth: number }; // the attacker's estimate of the defender's strength, and the truth
   att: Id;
   def: Id;
   declared: number;
