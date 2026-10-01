@@ -18,6 +18,7 @@ import { eduOfCitizen } from './education';
 import { lifeGate, lifeOf, milestone } from './lifecycle';
 import { workTaxFor, remitWorkTax } from './taxes';
 import { quitJob } from './company';
+import { leaveCheck } from './health';
 
 export type Service = 'teacher' | 'nurse' | 'doctor' | 'clerk' | 'engineer';
 export interface Post { kind: Service; region: Id; grade: number; since: number; promoted: number; shifts: number; lastDay: number }
@@ -94,6 +95,8 @@ export function serviceShiftCheck(w: World, c: Citizen): string | null {
   if (!p) return 'You do not hold a public post.';
   if (jailed(w, c)) return 'You are in prison.';
   if (p.lastDay === today(w) || c.lastWorkDay === today(w)) return 'You already worked a shift today (one per day).';
+  const off = leaveCheck(w, c);
+  if (off) return off;
   if (c.loc !== p.region) return `Your post is in ${w.regions[p.region].name}.`;
   if (c.energy < B.cost.work) return `Not enough energy (${Math.floor(c.energy)}/${B.cost.work}).`;
   const n = w.nations[controller(w.regions[p.region])];

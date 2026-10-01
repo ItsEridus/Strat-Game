@@ -2,6 +2,7 @@
 // and wage funds, and creates goods; it refuses to run (with a reason) when
 // labour, funds, inputs or storage capacity are missing.
 import { endWork, leavePost, logWork } from './services';
+import { leaveCheck, tooIll } from './health';
 import { lifeGate } from './lifecycle';
 import type { AccountRef, Citizen, Company, DayRecord, Id, Industry, World } from './types';
 import { localNews } from './life';
@@ -170,6 +171,8 @@ export function shiftCheck(w: World, c: Citizen): string | null {
   if (tooYoung) return tooYoung;
   if (jailed(w, c)) return 'You are in prison.';
   if (c.job == null) return 'You have no job. Find one on the job market.';
+  const off = leaveCheck(w, c);
+  if (off) return off;
   const co = w.companies[c.job];
   if (!co) return 'Your employer no longer exists.';
   if (c.lastWorkDay === today(w)) return 'You already worked a shift today (one per day).';
@@ -449,6 +452,7 @@ export function publicWorksCheck(w: World, c: Citizen): string | null {
   const tooYoung = lifeGate(w, c, 16, 'Public works');
   if (tooYoung) return tooYoung;
   if (jailed(w, c)) return 'You are in prison.';
+  if (tooIll(w, c)) return 'You are too ill to work. See a doctor.';
   const nat = controller(w.regions[c.loc]);
   const n = w.nations[nat];
   if (c.nation !== nat) return 'Public works only employ citizens in their own country.';

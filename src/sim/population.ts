@@ -35,6 +35,7 @@ import { activeCrises } from './dynamics';
 import { applyCitizenship } from './travel';
 import { fam, bereave, kidComesOfAge } from './family';
 import { assignEducation } from './education';
+import { conditionToll } from './health';
 
 // ---------- health ----------
 
@@ -49,7 +50,8 @@ function healthTarget(w: World, c: Citizen): number {
   let t = 96 - Math.max(0, age - 45) * 0.9 + r.bld.hospital * 2 + ((r.staff?.clinic ?? 0.6) - 0.6) * 8 - Math.max(0, r.pollution - 40) * 0.15;
   if (sick?.has(c.home)) t -= 15;
   if (c.energy < 10) t -= 5; // exhausted and hungry
-  t -= Math.max(0, (c.life?.stress ?? 25) - 65) * 0.3; // long strain wears people down
+  t -= Math.max(0, (c.life?.stress ?? 25) - 65) * 0.3;
+  t -= conditionToll(w, c); // illnesses and injuries // long strain wears people down
   if (c.life?.treated != null && today(w) - c.life.treated < B.goods.treatmentDays) t += B.goods.treatment; // under treatment
   return Math.max(5, Math.min(100, t));
 }

@@ -54,6 +54,7 @@ import { educationDaily } from './education';
 import { servicesDaily } from './services';
 import { housingDaily } from './housing';
 import { lendingDaily } from './loans';
+import { healthDaily } from './health';
 import { adoptionsDaily, petsDaily, pregnanciesHourly } from './kinship';
 
 let done = false;
@@ -155,7 +156,7 @@ export function registerSystems() {
   dailyHooks.push(lifeDaily);
   dailyHooks.push(goodsDaily);
   dailyHooks.push(warChronicleDaily);
-  dailyHooks.push(petsDaily, adoptionsDaily, educationDaily, servicesDaily, housingDaily, lendingDaily);
+  dailyHooks.push(petsDaily, adoptionsDaily, educationDaily, servicesDaily, housingDaily, lendingDaily, healthDaily);
   hourlyHooks.push(pregnanciesHourly);
   dailyHooks.push(populationDaily);
   dailyHooks.push(familyDaily);

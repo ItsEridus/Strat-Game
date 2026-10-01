@@ -13,6 +13,8 @@
 // through real rank ladders to command formations; the most senior officer
 // becomes chief of staff. AI defence ministries raise, supply, deploy and order
 // forces by the same rules the player's government uses.
+import { wound } from './health';
+import { hash01 } from '../engine/rng';
 import { enroll, enrollCheck } from './education';
 import { rank } from '../data/education';
 import { lifeGate, milestone } from './lifecycle';
@@ -475,7 +477,7 @@ export function addSp(w: World, c: Citizen, sp: number) {
 }
 
 /** Service points from war damage (called by the battle system). */
-export const serviceFromDamage = (w: World, c: Citizen, dmg: number) => { if (c.mil.branch) addSp(w, c, dmg / B.forces.dmgPerSp); };
+export const serviceFromDamage = (w: World, c: Citizen, dmg: number) => { if (c.mil.branch) addSp(w, c, dmg / B.forces.dmgPerSp); if (dmg > 0 && hash01(c.id, w.time, 4242) < 0.004) wound(w, c); };
 
 export function onBattleOver(w: World, b: Battle, winner: 'a' | 'd') {
   for (const [id, v] of Object.entries(b.total)) {

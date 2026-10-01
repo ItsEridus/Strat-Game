@@ -44,7 +44,9 @@ export interface Citizen {
   life?: LifeProfile; // personal life: wellbeing, milestones, hobbies, goals (sim/lifecycle.ts, sim/wellbeing.ts)
   family?: Family; // partner, parents, children (sim/family.ts)
   dwelling?: import('./housing').Home;
-  credit?: number; // credit score 300..850 (sim/loans.ts) // where and how they live (sim/housing.ts)
+  credit?: number;
+  conditions?: import('./health').Condition[]; // illnesses and injuries (sim/health.ts)
+  leave?: import('./health').Leave; // sick or parental leave // credit score 300..850 (sim/loans.ts) // where and how they live (sim/housing.ts)
   post?: import('./services').Post; // a public-service post (sim/services.ts)
   edu?: import('./education').Education; // qualifications and current course (sim/education.ts)
   retired?: boolean;
@@ -138,7 +140,8 @@ export interface LifeProfile {
   lastAge?: number; // age at the last birthday processed
   lastRest?: number; lastFamily?: number; lastHobby?: number; // cooldowns (day numbers)
   treated?: number; // day of the last dose of medicine (better recovery for a few days)
-  work?: import('./services').WorkEntry[]; // work history, newest last
+  work?: import('./services').WorkEntry[];
+  parentalTaken?: number; // when parental leave was last taken // work history, newest last
   giftDay?: number; giftFrom?: Id; // the last gift received (one a day from the same person)
   goods?: { clothes?: { t: number; q: number }; gadget?: { t: number; q: number } }; // latest new clothes and gadget (time, grade)
   why?: { happiness: string[]; stress: string[] }; // the main reasons for the current values

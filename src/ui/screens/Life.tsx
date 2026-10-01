@@ -20,6 +20,7 @@ import { nationPerm } from '../../sim/authority';
 import { controller } from '../../sim/query';
 import { SIZES, buyCheck, buyHome, housingCost, priceOf, rentCheck, rentHome, rentOf, sellHome, type HomeSize } from '../../sim/housing';
 import { KIND, buyWithMortgage, creditOf, incomeOf, loanCheck, loansOf, mortgageCheck, rateFor, repayLoan, takePersonalLoan } from '../../sim/loans';
+import { CONDITIONS, clinicCheck, conditionsOf, endLeave, parentalCheck, takeParentalLeave, treated, visitClinic, visitCost } from '../../sim/health';
 import { HOBBIES, HOBBY_ENERGY, hobbyCheck, hobbyLevel, pursueHobby } from '../../sim/hobbies';
 import { STATUS_LABEL, breakUp, familyOf, goOnDate, marry, partnerOf, propose, romanceCheck, tryForChild } from '../../sim/family';
 
@@ -56,6 +57,8 @@ export function Life({ w }: { w: World }) {
           <ActBtn small why={familyTimeCheck(w, p)} run={(w) => familyTime(w)}>🏡 Time with family</ActBtn>
         </div>
       </Panel>
+
+      <Panel title="Health"><HealthPanel w={w} p={p} /></Panel>
 
       <Panel title="Family & close ones" right={<Btn small kind="ghost" onClick={() => store.go('people')}>People</Btn>}>
         <People w={w} p={p} />
@@ -100,6 +103,32 @@ export function Life({ w }: { w: World }) {
           {([['character', '🧍 Character'], ['jobs', '💼 Work'], ['local', '🏘️ Neighbourhood'], ['market', '🛒 Market'], ['companies', '🏭 Companies'], ['politics', '🗳️ Politics'], ['forces', '🎖️ Military'], ['journal', '📓 Journal']] as const).map(([id, label]) => <Btn small kind="ghost" onClick={() => store.go(id)}>{label}</Btn>)}
         </div>
       </Panel>
+    </div>
+  );
+}
+
+function HealthPanel({ w, p }: { w: World; p: Citizen }) {
+  const conds = conditionsOf(p);
+  const v = visitCost(w, p);
+  const leave = p.leave && p.leave.until > w.time ? p.leave : null;
+  return (
+    <div>
+      {conds.length ? (
+        <table class="table compact small"><tbody>{conds.map((x) => (
+          <tr>
+            <td>{CONDITIONS[x.key].icon} {CONDITIONS[x.key].label}</td>
+            <td class="muted">{CONDITIONS[x.key].chronic && !x.until ? 'long-term' : x.until ? `until about ${fmtDate(x.until, 'dayMonth')}` : ''}</td>
+            <td class={treated(w, x) ? 'good' : 'bad'}>{treated(w, x) ? `treated until ${fmtDate(x.treatedUntil!, 'dayMonth')}` : 'untreated'}</td>
+          </tr>
+        ))}</tbody></table>
+      ) : <p class="small muted">No illnesses or injuries.</p>}
+      <div class="row">
+        <ActBtn small why={clinicCheck(w, p)} run={(w) => visitClinic(w)}>🏥 See a doctor ({v.patient ? fmtAmt(v.code, v.patient) : 'free'})</ActBtn>
+        {leave ? <ActBtn small kind="ghost" run={(w) => endLeave(w)}>{leave.kind === 'parental' ? 'End parental leave' : 'Back to work'}</ActBtn>
+          : <ActBtn small why={parentalCheck(w, p)} run={(w) => takeParentalLeave(w)}>👶 Parental leave</ActBtn>}
+      </div>
+      {leave && <p class="small">{leave.kind === 'parental' ? '👶 On parental leave' : '🛌 On sick leave'} until {fmtDate(leave.until, 'medium')}.</p>}
+      <Help>Treatment heals illnesses faster and keeps long-term conditions in check for 30 days at a time. What a visit costs depends on your country's health system. The badly ill go on sick leave, with sick pay for up to four weeks.</Help>
     </div>
   );
 }

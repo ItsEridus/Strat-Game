@@ -3,6 +3,21 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.3.15: illness, treatment and leave
+
+- **Health conditions.** People catch the flu (more often during an epidemic), hurt their backs, get injured at
+  work (more often in manual jobs) or wounded in battle. With age come diabetes, heart disease and cancer, and long
+  stress can turn into depression. Each one weighs on your health until it passes or is treated.
+- **See a doctor.** The new Health panel on the Life screen lists your conditions. A clinic visit treats them all:
+  short illnesses heal faster, and long-term ones are kept in check for 30 days at a time. Good clinics do better.
+  Cost depends on your country's health system: free at the point of use in Britain, Canada and Brazil, a small
+  fee in Germany or Japan, much more in the United States.
+- **Sick leave.** If you're too ill to work, you're on sick leave: no shifts until you're treated or better, with
+  sick pay (60% of your wage) for up to four weeks, from your employer or the state.
+- **Parental leave.** Parents of a baby can take leave on their country's terms: 52 weeks in Germany, Canada,
+  Japan and Korea; 39 in Britain; 12 unpaid weeks in the United States. Your job is kept for you.
+- **The same for everyone.** Everyone else falls ill, sees doctors and takes sick leave by the same rules.
+
 ### New in 1.3.14: loans, mortgages and credit
 
 - **Borrowing.** Take out a mortgage, a student loan or a personal loan. The new Loans and credit panel on the Life
