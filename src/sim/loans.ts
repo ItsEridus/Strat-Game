@@ -11,7 +11,7 @@ import type { Citizen, Id, World } from './types';
 import { B } from '../data/balance';
 import { DAY } from '../engine/clock';
 import { burn, mint, pay } from '../engine/ledger';
-import { fmtAmt } from '../engine/money';
+import { c as cur, fmtAmt } from '../engine/money';
 import { nid, notify } from '../engine/events';
 import { hash01 } from '../engine/rng';
 import { fail, ok, type Result } from '../engine/result';
@@ -73,7 +73,7 @@ export function incomeOf(w: World, c: Citizen): number {
     return Math.round(wages / 30);
   }
   if (c.job != null && w.companies[c.job]) return w.companies[c.job].offer?.wage ?? 0;
-  if (c.post) return Math.round(w.nations[controller(w.regions[c.post.region])].minWage * 1.8);
+  if (c.post) return Math.round(cur(B.wages.min) * 1.8);
   return 0;
 }
 

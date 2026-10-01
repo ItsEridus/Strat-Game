@@ -7,6 +7,7 @@ import { companyCurrency, controller, coref, cref, player } from '../../sim/quer
 import {
   deposit, fire, foundCheck, foundCompany, managerCheck, managerCost, managerShift, productionBlock, relocate, setOffer,
   shiftPreview, transferStock, upgradeCompany, upgradeCost, withdraw,
+  foundCost,
 } from '../../sim/company';
 import { INDUSTRIES, INDUSTRY_INFO, grade, gradeLc, itemName, outputKey } from '../../data/items';
 import { B } from '../../data/balance';
@@ -56,7 +57,7 @@ export function Companies({ w }: { w: World }) {
               })}
             </tbody>
           </table>
-        ) : <Empty>You don’t own a company yet. Founding a basic-grade company costs {B.company.foundCost[0]} gold; the tutorial reward covers it.</Empty>}
+        ) : <Empty>You don’t own a company yet. Founding a basic-grade company here costs {fmtAmt(GOLD, foundCost(w, p.loc))}; the tutorial reward covers it.</Empty>}
       </Panel>
     </div>
   );
@@ -81,7 +82,7 @@ function FoundPanel({ w }: { w: World }) {
           const res = foundCompany(w, p, cref(p.id), ind, region, name);
           if (res.ok) store.sel.company = res.data.id;
           return res;
-        }}>Found (basic grade, {B.company.foundCost[0]} gold)</ActBtn>
+        }}>Found (basic grade, {fmtAmt(GOLD, foundCost(w, region))})</ActBtn>
       </div>
       <Help>
         {raw ? <>Raw producers need no inputs. Output depends on the region’s <b>{ind}</b> richness (here: {(r?.res as any)?.[ind] ?? 0} → ×{B.company.richness[(r?.res as any)?.[ind] ?? 0]}), Production Fields, pollution, and workers’ skill.</>

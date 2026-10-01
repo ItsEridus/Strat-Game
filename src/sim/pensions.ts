@@ -8,7 +8,8 @@ import { addHeirloom } from './legacy';
 import type { Citizen, World } from './types';
 import { DAY } from '../engine/clock';
 import { pay } from '../engine/ledger';
-import { fmtAmt } from '../engine/money';
+import { c as cur, fmtAmt } from '../engine/money';
+import { B } from '../data/balance';
 import { hash01 } from '../engine/rng';
 import { fail, ok, type Result } from '../engine/result';
 import { census } from './census';
@@ -34,18 +35,19 @@ export const PENSIONS: Record<string, { age: number; state: number; contrib: num
 };
 export const pensionRules = (w: World, c: Citizen) => PENSIONS[w.nations[c.nation].iso] ?? { age: 65, state: 0.35, contrib: 0.05 };
 export const pensionOf = (c: Citizen): Pension => (c.pension ??= { days: 0, pot: 0 });
-/** A national average wage per day (minor units), for pension formulas: about 1.8 × the minimum wage. */
-const avgWage = (w: World, c: Citizen) => Math.round(w.nations[c.nation].minWage * 1.8);
+/** A national average wage per day (minor units), for pension formulas: about 9 units a shift. */
+const avgWage = (_w: World, _c: Citizen) => Math.round(cur(B.wages.min) * 1.8);
 /** Working days in a full career (35 years of about 230 working days), on the pace of life. */
 const fullCareer = (w: World) => Math.round(35 * 230 * (lifeYear(w) / (365 * DAY)));
 
 /** Called on every paid shift: a contribution to the pot (to the pension funds in the background economy) and a day on the record. */
-export function contribute(w: World, c: Citizen, gross: number, code: string) {
+export function contribute(w: World, c: Citizen, gross: number, code: string): number {
   const p = pensionOf(c);
   p.days++;
   const rate = pensionRules(w, c).contrib;
   const amt = Math.floor(gross * rate);
-  if (amt > 0 && pay(w, cref(c.id), hhref(c.nation), code, amt, 'Pension contribution')) p.pot += amt;
+  if (amt > 0 && pay(w, cref(c.id), hhref(c.nation), code, amt, 'Pension contribution')) { p.pot += amt; return amt; }
+  return 0;
 }
 
 /** What someone would get a day if they retired now. */

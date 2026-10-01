@@ -3,6 +3,37 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.4.5: real pay, and payslips
+
+- **Pay as it really is.** Pay in every country follows its real 2025 median wage. A typical day's starting pay is
+  about:
+  - $200 in the United States;
+  - £116 in Britain;
+  - ₹780 in India;
+  - ¥12,300 in Japan.
+
+  Prices follow what people earn, so a coffee costs about $5 in Ohio and ₹20 in Mumbai.
+- **What pay is worth abroad.** Gold is worth about $2,500 at real exchange rates in every currency. A month's pay
+  in India buys far less gold than one in the United States, just as a rupee buys fewer dollars.
+- **Cheaper businesses in poorer countries.** Founding or upgrading a company costs less gold where local pay is
+  worth less abroad.
+- **Real minimum wages.** Each country starts with its real 2025 minimum wage: $7.25 an hour federally in the
+  United States, £12.21 in Britain, €12.82 in Germany. Public-sector pay no longer follows the minimum wage.
+- **Sticky wages.** Employers raise pay faster when few people are out of work. Pay cuts are rare: at most once a
+  month, and only after a fortnight of losses.
+- **Payslips.** The Life screen's money tab shows your pay for the month. It covers wages, public-service salaries
+  and military pay:
+  - gross pay;
+  - income tax;
+  - pension contributions;
+  - net pay, and the same per shift.
+- **Money around the world** now also compares a day's pay and real pay against the United States.
+
+### Fixed in 1.4.5
+
+- Everyday prices fit the new money: a coffee, an evening out, flowers, pets, hobbies and haircuts cost what they
+  do in real life.
+
 ### New in 1.4.4: real money
 
 The first step of the economic overhaul (1.5.0).

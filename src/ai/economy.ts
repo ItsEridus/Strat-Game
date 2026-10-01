@@ -1,6 +1,8 @@
 // AI business management and background household demand. AI owners use the
 // same market/company actions (and permission checks) as the player.
 import { hasQuirk } from '../sim/nature';
+import { dateAt } from '../engine/calendar';
+import { goldScale } from '../sim/wages';
 import { housingCost } from '../sim/housing';
 import { isMinor } from '../sim/childhood';
 import type { Company, Id, World } from '../sim/types';
@@ -96,8 +98,10 @@ export function manageCompany(w: World, co: Company) {
     const procured = n.procure[key] ?? 0;
     const glut = listedStock > dailyOut * 4 + procured;
     const profit3 = co.hist.slice(-3).reduce((s, h) => s + h.profit, 0);
-    if (vacancies > 0) wage = Math.round(wage * 1.03);
-    else if (profit3 < 0 && wage > n.minWage) wage = Math.round(wage * 0.98);
+    // Pay rises faster in a tight labour market; cuts are rare and small (wages are sticky): only on the
+    // first of the month, after a fortnight of losses.
+    if (vacancies > 0) wage = Math.round(wage * (n.unemployment < 0.05 ? 1.05 : n.unemployment > 0.15 ? 1.01 : 1.03));
+    else if (wage > n.minWage && dateAt(w.time).day === 1 && co.hist.slice(-14).reduce((s, h) => s + h.profit, 0) < 0) wage = Math.round(wage * 0.97);
     const ikShort = ik && (co.inv[ik] ?? 0) < inputPerUnit(co) * 2;
     if (glut || ikShort) slots = Math.max(workers > 0 ? workers - (glut ? 1 : 0) : 0, 0);
     else if (vacancies <= 0 && funds() > payroll * 6 && (profit3 >= 0 || procured > listedStock)) slots = Math.min(B.company.maxWorkers[co.q - 1], slots + 1);
@@ -171,7 +175,7 @@ export function circulation(w: World) {
   for (const c of census(w).all) {
     if (c.player) continue;
     const done = (c.lastWorkDay === yday ? 1 : 0) + (c.lastTrainDay === yday ? 1 : 0) + (c.flags.hitDay === yday ? 1 : 0) + (c.flags.buildDay === yday ? 1 : 0) + (c.flags.voteDay === yday ? 1 : 0);
-    if (done) mint(w, cref(c.id), GOLD, g(B.missions.aiGold * done), 'Daily missions');
+    if (done) mint(w, cref(c.id), GOLD, Math.max(1, Math.round(g(B.missions.aiGold * done) * goldScale(w, c.nation))), 'Daily missions');
   }
   for (const c of census(w).all) {
     const n = w.nations[c.nation];
@@ -203,7 +207,7 @@ export function entrepreneurship(w: World) {
     const byKey = new Map<string, Company[]>();
     for (const co of companiesOf(w, n.id)) { if (!w.companies[co.id]) continue; const k = outputKey(co.industry, co.q); byKey.set(k, [...(byKey.get(k) ?? []), co]); }
     const maxProducers = Math.round(8 / representation(w, n.id));
-    const founder = () => nationals(w, n.id).filter((c) => !c.player && (c.persona === 'industrialist' || c.persona === 'investor' || c.persona === 'merchant') && (c.wallet.GOLD ?? 0) > B.company.foundCost[0] * 1000 * 1.5 && (c.wallet[n.cur] ?? 0) > cur(200)).sort((a, b) => b.traits.ambition - a.traits.ambition)[0];
+    const founder = () => nationals(w, n.id).filter((c) => !c.player && (c.persona === 'industrialist' || c.persona === 'investor' || c.persona === 'merchant') && (c.wallet.GOLD ?? 0) > g(B.company.foundCost[0]) * goldScale(w, n.id) * 1.5 && (c.wallet[n.cur] ?? 0) > cur(200)).sort((a, b) => b.traits.ambition - a.traits.ambition)[0];
     for (const kind of [...PRODUCTS, ...RAWS] as string[]) {
       // Nobody in the country makes this at all (a new industry, or the last maker failed): someone may start.
       if (![...byKey.keys()].some((k) => kindOf(k) === kind) && chance(w, 0.1)) {

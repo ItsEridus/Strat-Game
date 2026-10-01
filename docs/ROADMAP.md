@@ -252,8 +252,11 @@ real starting condition in the simulation, not a cosmetic flag, and the look can
   5. taxes and public finance;
   6. banks and interest;
   7. statistics and dashboards.
-- **Progress:** money and price levels shipped in 1.4.4. Amounts are kept in one real unit of value (about US$10 at
-  US prices) and shown in each currency at its real exchange rate and price level.
+- **Progress:**
+  - 1.4.4: money and price levels.
+  - 1.4.5: wages and payslips. Amounts are kept in units of local pay. One unit is the same share of a typical
+    day's pay everywhere: about US$25 in the US, ₹98 in India. Each currency shows real money at real 2025 pay,
+    and gold is worth $2,500 at market exchange rates in every currency.
 
 ### Part B: work & enterprise (GEO 1: companies expand or disband)
 

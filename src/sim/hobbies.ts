@@ -14,13 +14,13 @@ import { chance, pick } from '../engine/rng';
 export interface Hobby { icon: string; label: string; doing: string; cost: number; fit?: boolean; social?: boolean; person: string }
 export const HOBBIES: Record<string, Hobby> = {
   running: { icon: '🏃', label: 'Running', doing: 'went for a run', cost: 0, fit: true, person: 'runner' },
-  reading: { icon: '📚', label: 'Reading', doing: 'read for an evening', cost: 1, person: 'reader' },
-  chess: { icon: '♟️', label: 'Chess', doing: 'played chess at the club', cost: 1, social: true, person: 'chess player' },
-  music: { icon: '🎸', label: 'Music', doing: 'practised guitar', cost: 2, person: 'musician' },
-  painting: { icon: '🎨', label: 'Painting', doing: 'painted', cost: 3, person: 'painter' },
-  cooking: { icon: '🍳', label: 'Cooking', doing: 'cooked something new', cost: 4, person: 'cook' },
-  gardening: { icon: '🌱', label: 'Gardening', doing: 'worked in the garden', cost: 1, fit: true, person: 'gardener' },
-  football: { icon: '⚽', label: 'Football', doing: 'played five-a-side', cost: 2, fit: true, social: true, person: 'footballer' },
+  reading: { icon: '📚', label: 'Reading', doing: 'read for an evening', cost: 0.4, person: 'reader' },
+  chess: { icon: '♟️', label: 'Chess', doing: 'played chess at the club', cost: 0.4, social: true, person: 'chess player' },
+  music: { icon: '🎸', label: 'Music', doing: 'practised guitar', cost: 0.8, person: 'musician' },
+  painting: { icon: '🎨', label: 'Painting', doing: 'painted', cost: 1.2, person: 'painter' },
+  cooking: { icon: '🍳', label: 'Cooking', doing: 'cooked something new', cost: 1.6, person: 'cook' },
+  gardening: { icon: '🌱', label: 'Gardening', doing: 'worked in the garden', cost: 0.4, fit: true, person: 'gardener' },
+  football: { icon: '⚽', label: 'Football', doing: 'played five-a-side', cost: 0.8, fit: true, social: true, person: 'footballer' },
 };
 export const HOBBY_ENERGY = 6;
 

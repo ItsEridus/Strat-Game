@@ -12,7 +12,7 @@ import { PARTY_NAMES } from '../data/names';
 import { IDEOLOGIES } from '../data/ideologies';
 import { fail, ok, type Result } from '../engine/result';
 import { burn, pay } from '../engine/ledger';
-import { GOLD, g } from '../engine/money';
+import { GOLD, c as cur, g } from '../engine/money';
 import { DAY, HOUR, dayOf, nextDom } from '../engine/clock';
 import { nid, notify, record, schedule, sendMsg } from '../engine/events';
 import { chance, pick, rand } from '../engine/rng';
@@ -560,7 +560,7 @@ export function dailyOpinion(w: World) {
     let moodSum = 0, jobless = 0;
     for (const c of cits) {
       const income = c.lastIncome;
-      const expected = n.minWage * 1.3;
+      const expected = cur(B.wages.min) * 1.3;
       const incSig = Math.max(-1, Math.min(1, (income - expected) / Math.max(1, expected)));
       const taxSig = -(n.taxes.work + n.taxes.vat - 15) / 30;
       const jobSig = c.job == null && !c.player ? -0.3 : 0.1;
@@ -628,7 +628,7 @@ export function ministerOfferReply(w: World, payload: Record<string, any>, optio
 export function payOfficials(w: World) {
   for (const n of w.nations) {
     if (n.exile) continue;
-    const salary = n.minWage * 2;
+    const salary = cur(B.wages.min) * 2;
     const officials = [n.president, ...Object.values(n.cabinet)].filter((x): x is number => x != null);
     for (const id of officials) if (w.citizens[id] && pay(w, natref(n.id), cref(id), n.cur, salary, 'Official salary')) n.stats.spendToday += salary;
   }

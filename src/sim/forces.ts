@@ -13,6 +13,7 @@
 // through real rank ladders to command formations; the most senior officer
 // becomes chief of staff. AI defence ministries raise, supply, deploy and order
 // forces by the same rules the player's government uses.
+import { recordPay } from './wages';
 import { wound } from './health';
 import { hash01 } from '../engine/rng';
 import { enroll, enrollCheck } from './education';
@@ -451,7 +452,7 @@ export function reportForDuty(w: World, c: Citizen): Result {
   addSp(w, c, B.forces.dutySp);
   const payAmt = cur(B.forces.salary[c.mil.rank] ?? 1);
   const paid = pay(w, natref(n.id), cref(c.id), n.cur, payAmt, `${BRANCH_NAME[c.mil.branch!]} pay`);
-  if (paid) n.stats.spendToday += payAmt;
+  if (paid) { n.stats.spendToday += payAmt; recordPay(w, c, `${n.adj} ${BRANCH_NAME[c.mil.branch!]}`, n.cur, payAmt, 0, 0); }
   const f = Object.values(w.forces).find((x) => x.commander === c.id) ?? Object.values(w.forces).filter((x) => x.nation === c.nation && x.branch === c.mil.branch).sort((a, b) => a.readiness - b.readiness)[0];
   if (f) f.readiness = Math.min(100, f.readiness + 1 + c.mil.rank * 0.1);
   return ok(`Reported for duty${paid ? ` (+${fmtAmt(n.cur, payAmt)})` : ' (pay delayed: treasury empty)'}; +${B.forces.dutySp} service points${f ? `, ${f.name} readiness ${Math.round(f.readiness)}` : ''}.`);

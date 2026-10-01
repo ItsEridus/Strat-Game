@@ -1,4 +1,5 @@
 // Acceptance checklist from the brief (section 17), as executable tests.
+import { goldRate } from '../src/data/economy';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { generateWorld } from '../src/sim/worldgen';
@@ -229,7 +230,7 @@ test('21. long advances stay stable and explainable', () => {
   assert.ok(a.ok, a.problems.join('\n'));
   const cits = Object.values(w.citizens);
   assert.ok(cits.filter((c) => c.job != null).length / cits.length > 0.5, 'most citizens employed');
-  for (const n of w.nations) { assert.ok(Number.isFinite(n.fxAnchor) && n.fxAnchor > 1000 && n.fxAnchor < 100000, 'exchange rates sane'); assert.ok(n.approval >= 0 && n.approval <= 100); }
+  for (const n of w.nations) { const r0 = goldRate(n.cur) * 100; assert.ok(Number.isFinite(n.fxAnchor) && n.fxAnchor > r0 / 10 && n.fxAnchor < r0 * 10, `exchange rate sane: ${n.cur} ${n.fxAnchor} vs ${r0}`); assert.ok(n.approval >= 0 && n.approval <= 100); }
   for (const [k, v] of Object.entries(w.lastPrice)) assert.ok(Number.isFinite(v) && v > 0, k);
   assert.ok(w.chapters.length >= 3, 'monthly chapters written');
 });

@@ -4,7 +4,7 @@
 // a small description of each slot is kept in localStorage so menus can list
 // saves instantly. Saves made by older versions in localStorage still load.
 // Saves can also be exported and imported as files.
-import { priceLevel } from '../data/economy';
+import { goldRate, priceLevel } from '../data/economy';
 import { civilianControl } from '../sim/forces';
 import { newLifeState, normalizeLife } from '../sim/lifecycle';
 import { initFamilies, initPlayerFamily } from '../sim/family';
@@ -95,12 +95,12 @@ function migrate(w: World, from: number): World {
     // 12: housing (1.3.13): tenants, owners and grown children at home, by country ownership rates (stable hash).
     initHousing(w);
   }
-  if (from < 13) {
-    // 13: real money (1.4.4). Amounts keep their real value; each treasury's reference rate for gold
-    // moves to its country's real price level (so gold buys more where prices are lower), with resting
-    // orders repriced to match. Escrowed money and gold are untouched.
+  // 13: real money (1.4.4); its exchange-rate change is folded into 14.
+  if (from < 14) {
+    // 14: units of local pay (1.4.5). Amounts keep their meaning at home; the gold rate moves to real
+    // market exchange rates (gold is worth $2,500 in every currency), with resting orders repriced.
     for (const n of w.nations) {
-      const k = 1 / priceLevel(n.cur);
+      const k = from < 13 ? goldRate(n.cur) / B.fx.startRate : (goldRate(n.cur) * priceLevel(n.cur)) / B.fx.startRate;
       if (k === 1 || !n.fxAnchor) continue;
       n.fxAnchor = Math.round(n.fxAnchor * k);
       for (const o of Object.values(w.fx ?? {})) if (o.cur === n.cur) o.rate = Math.round(o.rate * k);

@@ -5,7 +5,7 @@ import { store } from '../store';
 import { cref, player } from '../../sim/query';
 import { asks, bids, buyGold, cancelOrder, midRate, ordersOf, placeOrder, sellGold } from '../../sim/fx';
 import { GOLD, c as cur, fmtAmt, fromLocal, g, goldForCur, localStep, toLocal } from '../../engine/money';
-import { MONEY, priceLevel } from '../../data/economy';
+import { MONEY, priceLevel, wageLevel } from '../../data/economy';
 import { B } from '../../data/balance';
 import type { Result } from '../../engine/result';
 
@@ -30,7 +30,7 @@ export function Currency({ w }: { w: World }) {
   return (
     <div class="grid">
       <Panel title="Currency market" class="wide" right={<Select value={code} options={w.nations.map((n) => [n.cur, `${n.cur} — ${n.name}`])} onChange={(v) => store.go('fx', { cur: v })} />}>
-        <p class="small">{MONEY[code]?.name ?? code}: {fmtAmt(code, 100)} buys what about $10 buys in the United States.{code !== 'USD' && w.nations.some((n) => n.cur === 'USD') ? ` At today's gold rates, 1 US dollar is ${(toLocal(code, midRate(w, code)) / Math.max(0.01, toLocal('USD', midRate(w, 'USD')))).toFixed(2)} ${code}.` : ''}</p>
+        <p class="small">{MONEY[code]?.name ?? code}: a typical day's starting pay is {fmtAmt(code, cur(B.wages.start))}.{code !== 'USD' && w.nations.some((n) => n.cur === 'USD') ? ` At today's gold rates, 1 US dollar is ${(toLocal(code, midRate(w, code)) / Math.max(0.01, toLocal('USD', midRate(w, 'USD')))).toFixed(2)} ${code}.` : ''}</p>
         <Help>All rates read <b>{code} per 1 gold</b>. <b>Asks</b> are offers to sell gold (you pay {code}); <b>bids</b> are offers to buy gold (you receive {code}). Orders fill partially at the resting order’s rate. Treasuries quote a managed ladder around their reference rate.</Help>
         <div class="stats">
           <div class="stat"><small>Best ask (buy gold)</small><b>{a[0] ? fmtAmt(code, a[0].rate) : '—'}</b></div>
@@ -67,11 +67,11 @@ export function Currency({ w }: { w: World }) {
         )) : <Empty>No open orders.</Empty>}
       </Panel>
       <Panel title="Money around the world" class="wide">
-        <Help>Every country's prices in its own currency. Exchange rates come from the gold market; price levels follow real 2025 data, so a coffee costs far less in Mumbai than in Sydney.</Help>
-        <table class="table small"><thead><tr><th>Country</th><th>Currency</th><th class="num">1 US dollar</th><th class="num">A coffee</th><th class="num">A day's essentials</th><th class="num">Price level (US = 100)</th></tr></thead>
+        <Help>Every country's prices in its own currency, from real 2025 pay and prices. Exchange rates come from the gold market. Real pay compares what a typical wage buys at local prices.</Help>
+        <table class="table small"><thead><tr><th>Country</th><th>Currency</th><th class="num">1 US dollar</th><th class="num">A coffee</th><th class="num">A day's essentials</th><th class="num">A day's pay</th><th class="num">Price level (US = 100)</th><th class="num">Real pay (US = 100)</th></tr></thead>
           <tbody>{w.nations.map((n) => <tr><td>{n.name}</td><td>{MONEY[n.cur]?.name ?? n.cur}</td>
             <td class="num">{n.cur === 'USD' ? '—' : (toLocal(n.cur, midRate(w, n.cur)) / Math.max(0.01, toLocal('USD', midRate(w, 'USD')))).toFixed(2)}</td>
-            <td class="num">{fmtAmt(n.cur, cur(B.social.treatCost))}</td><td class="num">{fmtAmt(n.cur, cur(B.living.essentials))}</td><td class="num">{Math.round(priceLevel(n.cur) * 100)}</td></tr>)}</tbody></table>
+            <td class="num">{fmtAmt(n.cur, cur(B.social.treatCost))}</td><td class="num">{fmtAmt(n.cur, cur(B.living.essentials))}</td><td class="num">{fmtAmt(n.cur, cur(B.wages.start))}</td><td class="num">{Math.round(priceLevel(n.cur) * 100)}</td><td class="num">{Math.round(wageLevel(n.cur) * 100)}</td></tr>)}</tbody></table>
       </Panel>
       <Panel title="Convert currency (routed through gold)">
         <div class="form row">

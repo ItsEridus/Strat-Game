@@ -5,6 +5,7 @@ import { hasQuirk } from './nature';
 import { endWork, leavePost, logWork } from './services';
 import { leaveCheck, tooIll } from './health';
 import { contribute } from './pensions';
+import { goldScale, recordPay } from './wages';
 import { lifeGate } from './lifecycle';
 import type { AccountRef, Citizen, Company, DayRecord, Id, Industry, World } from './types';
 import { localNews } from './life';
@@ -14,7 +15,7 @@ import { INDUSTRY_INFO, INPUT_OF, grade, gradeLc, itemName, outputKey, weightOf 
 import { IDEOLOGIES } from '../data/ideologies';
 import { fail, ok, type Result } from '../engine/result';
 import { acct, burn, consume, freeCap, moveItems, pay, produce } from '../engine/ledger';
-import { GOLD, fmtAmt, g } from '../engine/money';
+import { GOLD, c as cur, fmtAmt, g } from '../engine/money';
 import { DAY } from '../engine/clock';
 import { nid, notify, record } from '../engine/events';
 import { authorize } from './authority';
@@ -203,7 +204,7 @@ export function workShift(w: World, c: Citizen): Result {
   const t = workTaxFor(w, co.region, c, gross);
   pay(w, coref(co.id), cref(c.id), cur, gross, `Wage from ${co.name}`);
   remitWorkTax(w, cref(c.id), cur, t.parts);
-  contribute(w, c, gross, cur);
+  recordPay(w, c, co.name, cur, gross, t.tax, contribute(w, c, gross, cur));
   co.today.wages += gross;
   co.lifetime.wages += gross;
   co.shortage = null;
@@ -336,15 +337,15 @@ export function foundCheck(w: World, actor: Citizen, owner: AccountRef, ind: Ind
   const r = w.regions[region];
   if (!r) return 'Pick a region.';
   if (controller(r) !== controller(w.regions[actor.loc])) return `You must be located in ${w.nations[controller(r)].name} to found a company there.`;
-  const cost = g(B.company.foundCost[0]);
-  if ((acct(w, owner)?.wallet[GOLD] ?? 0) < cost) return `Founding a basic-grade ${INDUSTRY_INFO[ind].name} costs ${B.company.foundCost[0]} gold.`;
+  const cost = foundCost(w, region);
+  if ((acct(w, owner)?.wallet[GOLD] ?? 0) < cost) return `Founding a basic-grade ${INDUSTRY_INFO[ind].name} here costs ${fmtAmt(GOLD, cost)}.`;
   return null;
 }
 
 export function foundCompany(w: World, actor: Citizen, owner: AccountRef, ind: Industry, region: Id, name?: string): Result {
   const why = foundCheck(w, actor, owner, ind, region);
   if (why) return fail(why);
-  burn(w, owner, GOLD, g(B.company.foundCost[0]), 'Company founding');
+  burn(w, owner, GOLD, foundCost(w, region), 'Company founding');
   const co = createCompany(w, owner, ind, 1, region, name?.trim() || undefined);
   record(w, 'company', `${actor.name} founded ${co.name} (${INDUSTRY_INFO[ind].name}) in ${w.regions[region].name}.`, { cit: actor.id, region, player: actor.player });
   localNews(w, region, `🏗️ ${co.name} (${INDUSTRY_INFO[ind].name.toLowerCase()}) opened, founded by ${actor.name}.`);
@@ -352,9 +353,12 @@ export function foundCompany(w: World, actor: Citizen, owner: AccountRef, ind: I
   return ok(`Founded ${co.name}. Deposit wage funds and post a job offer to start production.`, { id: co.id });
 }
 
+/** Gold to found a basic company in a region: the base price, scaled to what pay there is worth abroad. */
+export const foundCost = (w: World, region: Id) => Math.max(1, Math.round(g(B.company.foundCost[0]) * goldScale(w, controller(w.regions[region]))));
+
 export function upgradeCost(w: World, actor: Citizen | null, co: Company) {
   const fc = B.company.foundCost;
-  let cost = g(fc[co.q] - fc[co.q - 1]);
+  let cost = Math.max(1, Math.round(g(fc[co.q] - fc[co.q - 1]) * goldScale(w, controller(w.regions[co.region]))));
   if (actor && studyActive(w, actor, 'lighter')) cost = Math.round(cost * 0.85);
   return cost;
 }
@@ -446,9 +450,8 @@ export function openOffers(w: World, nation: Id) {
 }
 
 // ---------- public works (fallback employer) ----------
-export function publicWorksWage(w: World, nation: Id) {
-  const n = w.nations[nation];
-  return Math.round(n.minWage * B.treasury.publicWorksFrac);
+export function publicWorksWage(_w: World, _nation: Id) {
+  return Math.round(cur(B.wages.min) * B.treasury.publicWorksFrac);
 }
 
 export function publicWorksCheck(w: World, c: Citizen): string | null {

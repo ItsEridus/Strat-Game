@@ -8,7 +8,7 @@ import type { Citizen, Id, World } from './types';
 import { B } from '../data/balance';
 import { rank, type EduLevel, type Field } from '../data/education';
 import { pay } from '../engine/ledger';
-import { fmtAmt } from '../engine/money';
+import { c as cur, fmtAmt } from '../engine/money';
 import { notify } from '../engine/events';
 import { chance, hash01 } from '../engine/rng';
 import { fail, ok, type Result } from '../engine/result';
@@ -21,12 +21,13 @@ import { workTaxFor, remitWorkTax } from './taxes';
 import { quitJob } from './company';
 import { leaveCheck } from './health';
 import { contribute } from './pensions';
+import { recordPay } from './wages';
 
 export type Service = 'teacher' | 'nurse' | 'doctor' | 'clerk' | 'engineer';
 export interface Post { kind: Service; region: Id; grade: number; since: number; promoted: number; shifts: number; lastDay: number }
 
 interface ServiceDef { label: string; icon: string; place: string; ladder: string[]; pay: number[]; needs: { level: EduLevel; field?: Field[] }[]; per: number; skill: 'lead' | 'end' | 'eco' | 'cons' | 'acc' }
-/** Grades, pay (× the national minimum wage per shift) and the qualification each grade needs. */
+/** Grades, pay (× a reference wage of 5 units a shift, about 60% of typical pay) and the qualification each grade needs. */
 export const SERVICES: Record<Service, ServiceDef> = {
   teacher: { label: 'Teacher', icon: '🍎', place: 'school', per: 25, skill: 'lead',
     ladder: ['Teaching assistant', 'Teacher', 'Senior teacher', 'Head of department', 'Head teacher'], pay: [1.3, 1.8, 2.2, 2.7, 3.3],
@@ -62,7 +63,7 @@ export function postsIn(w: World, region: Id, kind: Service): number {
 }
 export const staffOf = (w: World, region: Id, kind: Service) => census(w).all.filter((c) => c.post?.kind === kind && c.post.region === region);
 /** Salary per shift, in minor units. */
-export const salary = (w: World, region: Id, kind: Service, grade: number) => Math.round(w.nations[controller(w.regions[region])].minWage * SERVICES[kind].pay[grade]);
+export const salary = (w: World, region: Id, kind: Service, grade: number) => Math.round(cur(B.wages.min) * SERVICES[kind].pay[grade]);
 
 // ---------- joining, working, leaving ----------
 
@@ -121,7 +122,7 @@ export function serviceShift(w: World, c: Citizen = player(w)): Result {
   pay(w, natref(n.id), cref(c.id), n.cur, gross, `Salary: ${postTitle(p)}`);
   const t = workTaxFor(w, p.region, c, gross);
   remitWorkTax(w, cref(c.id), n.cur, t.parts);
-  contribute(w, c, gross, n.cur);
+  recordPay(w, c, `${n.name}: ${SERVICES[p.kind].place}`, n.cur, gross, t.tax, contribute(w, c, gross, n.cur));
   n.stats.spendToday += gross;
   c.incomeToday += gross - t.tax;
   p.shifts++;

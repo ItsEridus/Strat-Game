@@ -10,7 +10,7 @@ import { initServices } from './services';
 import { initHousing } from './housing';
 import type { Citizen, Company, Id, Ideology, Industry, Nation, Persona, RawRes, Region, Settings, World } from './types';
 import { B, applyBalance } from '../data/balance';
-import { priceLevel } from '../data/economy';
+import { goldRate, minWageShift } from '../data/economy';
 import { NAME_POOLS, NATION_DEFS } from '../data/names';
 import { EARTH } from '../data/earth';
 import { IDEOLOGY_LIST } from '../data/ideologies';
@@ -35,7 +35,7 @@ import { newNarrative } from './story';
 import { ageOf, bornYearsAgo, seniority } from './growth';
 import { AGENCY_NAMES } from '../data/names';
 
-export const SAVE_VERSION = 13; // 5: armed forces; 6: per-region population, home regions; 7: stories, journal, memories, places; 8: no levels (skills, age, reputation); 9: timber, cotton, copper; 10: education; 11: public services; 12: housing; 13: real money
+export const SAVE_VERSION = 14; // 5: armed forces; 6: per-region population, home regions; 7: stories, journal, memories, places; 8: no levels (skills, age, reputation); 9: timber, cotton, copper; 10: education; 11: public services; 12: housing; 13: real money; 14: units of local pay
 
 export function defaultSettings(): Settings {
   const pauseOn: Record<string, boolean> = {};
@@ -253,7 +253,7 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
 
   w.nations = NATION_DEFS.map((d, i): Nation => ({
     id: i, name: d.name, adj: d.adj, color: d.color, cur: d.cur, iso: d.iso, leader: d.leader, legislature: d.legislature, capital: seeds[i], wallet: {}, inv: {},
-    taxes: { ...B.taxes.defaults }, minWage: cur(B.wages.min), president: null, cabinet: {}, deputies: [], seats: {}, congressSize: 5,
+    taxes: { ...B.taxes.defaults }, minWage: Math.min(minWageShift(d.cur), Math.round(cur(B.wages.start) * 0.9)), president: null, cabinet: {}, deputies: [], seats: {}, congressSize: 5,
     relations: {}, alliances: [], embargoes: [], pacts: {}, exile: false, approval: 55, printed: 0, warheads: [], nukeProd: null, intel: 0,
     priorities: { battle: null, side: null, project: null }, termStart: w.time,
     stats: { revenue: 0, spending: 0, revToday: 0, spendToday: 0, revHist: [], spendHist: [] }, aiPlan: { lastWarCheck: 0, lastBuild: 0 }, recruitGoal: 0, fxAnchor: 0, requests: [], propCount: {}, warScore: 0, unemployment: 0, procure: {}, warMood: 0,
@@ -404,8 +404,8 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
 
   // Currency order books: each treasury quotes a ladder around the starting rate.
   for (const n of w.nations) {
-    // Real exchange rates: gold buys more where prices are lower (data/economy.ts).
-    const base = cur((B.fx.startRate / priceLevel(n.cur)) * rand(w, 0.95, 1.05));
+    // Real exchange rates: gold is worth $2,500 at market rates in every currency (data/economy.ts).
+    const base = cur(goldRate(n.cur) * rand(w, 0.97, 1.03));
     n.fxAnchor = base;
     const orig = { k: 'nat' as const, id: n.id };
     for (let k = 1; k <= 4; k++) {

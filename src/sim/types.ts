@@ -145,6 +145,7 @@ export interface LifeProfile {
   lastRest?: number; lastFamily?: number; lastHobby?: number; // cooldowns (day numbers)
   treated?: number; // day of the last dose of medicine (better recovery for a few days)
   work?: import('./services').WorkEntry[];
+  payslips?: import('./wages').Payslip[]; // the player's pay by month (latest last; three kept)
   parentalTaken?: number; // when parental leave was last taken
   will?: import('./legacy').Will; heirlooms?: import('./legacy').Heirloom[]; // what is passed on (sim/legacy.ts)
   grades?: number; lastSchool?: number; lastPlay?: number; schoolDone?: boolean; scholarship?: boolean; // childhood (sim/childhood.ts) // work history, newest last

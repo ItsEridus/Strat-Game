@@ -9,6 +9,7 @@ import type { Citizen, Id, World } from './types';
 import { DAY } from '../engine/clock';
 import { pay } from '../engine/ledger';
 import { c as cur, fmtAmt } from '../engine/money';
+import { B } from '../data/balance';
 import { notify } from '../engine/events';
 import { hash01 } from '../engine/rng';
 import { fail, ok, type Result } from '../engine/result';
@@ -167,7 +168,7 @@ export function endLeave(w: World, c: Citizen = player(w)): Result {
 /** The pay someone's job gives for a day (minor units). */
 function dayPay(w: World, c: Citizen): number {
   if (c.job != null && w.companies[c.job]) return w.companies[c.job].offer?.wage ?? 0;
-  if (c.post) return Math.round(w.nations[controller(w.regions[c.post.region])].minWage * 1.8);
+  if (c.post) return Math.round(cur(B.wages.min) * 1.8);
   return 0;
 }
 
