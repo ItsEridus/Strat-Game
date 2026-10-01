@@ -3,6 +3,26 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.4.13: working for yourself
+
+- **Self-employment.** You can now start your own business from the Life screen's money tab. There are eight kinds:
+  a trades business, private tutoring, a taxi, a café, a restaurant, a shop, a doctor's practice or a law firm.
+  - Each needs a qualification and money to set up.
+  - Takings come from local customers and depend on your skills, local prices and the state of the economy.
+    Some days are slow.
+  - Supplies and rent are paid daily. Profit is taxed as income.
+  - The panel shows a month's takings, costs and profit. You can close the business at any time.
+- **People work for themselves.** Self-employment rises towards each country's real share of workers: about 7%
+  in the United States, 14% in Britain, a quarter in Mexico, Brazil and Turkey, and more in India. The unemployed
+  set up first. A business that loses money for a month with little cash left closes.
+- **Local cafés and restaurants have owners.** When a resident runs one, the neighbourhood café or restaurant
+  carries its name and says who runs it.
+
+### Fixed in 1.4.13
+
+- Unemployment now counts only the labour force: working-age adults who are not studying or retired.
+  Previously, public servants, soldiers, students, retirees and children were counted as unemployed.
+
 ### New in 1.4.12: occupations and the labour market
 
 - **Sixty-seven occupations.** They span fourteen families: agriculture, mining and energy, manufacturing, skilled

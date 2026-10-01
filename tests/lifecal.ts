@@ -25,14 +25,14 @@ for (let d = 1; d <= days; d++) {
   const all = census(w).all;
   const adults = all.filter((c) => ageOf(w, c) >= 18);
   const working = adults.filter((c) => !c.retired && !c.edu?.enrolled && ageOf(w, c) < 65);
-  const employed = working.filter((c) => c.job != null || c.post);
+  const employed = working.filter((c) => c.job != null || c.post || c.business);
   const loans = Object.values(w.loans ?? {});
   const treas = w.nations.map((n, i) => (n.wallet[n.cur] ?? 0) / Math.max(1, treas0[i]));
   console.log([
     `day ${d}`, `people ${all.length}`, `employed ${pct(employed.length, working.length)}`, `retired ${pct(adults.filter((c) => c.retired).length, adults.length)}`,
     `own ${pct(adults.filter((c) => c.dwelling?.kind === 'own').length, adults.length)}`, `loans ${loans.length} (arrears ${loans.filter((l) => l.missed > 0).length})`,
     `ill ${pct(all.filter((c) => c.conditions?.length).length, all.length)}`, `students ${all.filter((c) => c.edu?.enrolled).length}`, `tertiary ${pct(adults.filter((c) => rank(c.edu?.level ?? 'school') >= 2).length, adults.length)}`,
-    `posts ${all.filter((c) => c.post).length}`, `pets ${w.life.pets.filter((p) => !p.gone).length}`, `orphans ${w.life.orphans.length}`,
+    `posts ${all.filter((c) => c.post).length}`, `self-employed ${all.filter((c) => c.business).length}`, `pets ${w.life.pets.filter((p) => !p.gone).length}`, `orphans ${w.life.orphans.length}`,
     `happy ${Math.round(all.reduce((t, c) => t + (c.life?.happiness ?? 50), 0) / all.length)}`, `treasury min ${treas.reduce((m, x) => Math.min(m, x), 9).toFixed(2)}x`,
     `firms ${Object.keys(w.companies).length} (hiring ${Object.values(w.companies).filter((c) => c.offer && c.offer.slots > c.workers.length).length}, losing ${Object.values(w.companies).filter((c) => c.hist.slice(-7).reduce((t, h) => t + h.profit, 0) < 0).length})`,
     `debt max ${Math.max(...w.nations.map((n) => (n.debt ?? 0) / Math.max(1, n.stats.revHist.reduce((x, y) => x + y, 0) / Math.max(1, n.stats.revHist.length) * 365))).toFixed(2)}y (${w.nations.filter((n) => n.debt).length} borrowing)`,

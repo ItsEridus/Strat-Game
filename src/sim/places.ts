@@ -5,6 +5,7 @@
 // the player arrives in another region, the position resets to its station (or
 // to home, in the home region). Layouts come from a hash of the region, never
 // from the world's dice, so venues never move between saves or visits.
+import { census } from './census';
 import type { Citizen, Id, StoryInstance, World } from './types';
 import { DISTRICTS, FAMILIARITY_UNLOCKS, VENUE_KINDS, type DistrictId, type VenueKind } from '../data/places';
 import { EARTH } from '../data/earth';
@@ -32,7 +33,7 @@ export function hash(s: string): number {
   for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
   return h >>> 0;
 }
-const pickStable = <T,>(xs: T[], key: string): T => xs[hash(key) % xs.length];
+export const pickStable = <T,>(xs: T[], key: string): T => xs[hash(key) % xs.length];
 
 // ---------- layout ----------
 
@@ -46,12 +47,15 @@ export function venuesOf(w: World, rid: Id): Venue[] {
     const k = VENUE_KINDS[kind];
     out.push({ id: kind, kind, district: k.district, name: k.names.length ? pickStable(k.names, `${rid}:${kind}`) : kind, icon: k.icon, desc: k.desc, essential: !!k.essential, minFamiliarity: k.minFamiliarity ?? 0, screen: k.screen, ...over });
   };
-  add('home'); add('park'); add('cafe'); add('community'); add('gym'); add('library'); add('lookout');
+  // Cafés and restaurants run by local people take their owner's name and sign.
+  const owned = (kind: 'cafe' | 'restaurant') => census(w).all.find((c) => c.business?.kind === kind && c.business.region === rid && !c.gone);
+  const ownedOver = (kind: 'cafe' | 'restaurant') => { const o = owned(kind); return o ? { name: o.business!.name, desc: `${VENUE_KINDS[kind].desc} Run by ${o.name}.` } : {}; };
+  add('home'); add('park'); add('cafe', ownedOver('cafe')); add('community'); add('gym'); add('library'); add('lookout');
   add('cityhall', { name: `${pickStable(VENUE_KINDS.cityhall.names, `${rid}:hall`)}, ${e.seat || city}` });
   add('parties'); add('police', { name: `${city} ${pickStable(VENUE_KINDS.police.names, `${rid}:pd`)}` });
   if (Object.values(w.papers).some((p) => p.nation === controller(r))) add('newsroom');
   add('clinic', { name: r.bld.hospital > 0 ? `${city} General Hospital` : `${city} Community Clinic` });
-  add('market'); add('restaurant'); add('bank'); add('backroom');
+  add('market'); add('restaurant', ownedOver('restaurant')); add('bank'); add('backroom');
   const cos = companiesIn(w, rid);
   for (const co of cos) out.push({ id: `co:${co.id}`, kind: 'company', district: 'industrial', name: co.name, icon: INDUSTRY_INFO[co.industry]?.icon ?? '🏭', desc: `${INDUSTRY_INFO[co.industry]?.name ?? 'Company'} · ${co.workers.length} staff`, company: co.id, essential: true, minFamiliarity: 0, screen: 'companies' });
   if (cos.length) add('unionhall');

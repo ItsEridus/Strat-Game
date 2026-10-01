@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 // The life hub: one place for who you are, how you are, the people in your life,
 // your money, your routine and what comes next.
+import { BIZ, BIZ_KEYS, bizMonth, closeBusiness, startBusiness, startCheck } from '../../sim/smallBusiness';
 import { MONTHS, fmtDate } from '../../engine/calendar';
 import type { Citizen, World } from '../../sim/types';
 import { ActBtn, Bar, Btn, CitLink, Empty, Help, Panel, RegionLink, Stat, Tabs } from '../common';
@@ -103,6 +104,7 @@ export function Life({ w }: { w: World }) {
       {tab === 'money' && <>
         <Panel title="Home"><HomePanel w={w} p={p} /></Panel>
         <Panel title="Payslip"><PayslipPanel w={w} p={p} /></Panel>
+        <Panel title="Work for yourself"><BusinessPanel w={w} p={p} /></Panel>
         <Panel title="Money this month"><Budget w={w} p={p} /></Panel>
         <Panel title="Loans and credit"><LoansPanel w={w} p={p} /></Panel>
         <Panel title="Retirement"><RetirementPanel w={w} p={p} /></Panel>
@@ -123,6 +125,28 @@ export function Life({ w }: { w: World }) {
       </Panel>
     </div>
   );
+}
+
+function BusinessPanel({ w, p }: { w: World; p: Citizen }) {
+  const b = p.business;
+  const code = w.nations[p.nation].cur;
+  if (b) {
+    const m = bizMonth(p);
+    return <>
+      <p>{BIZ[b.kind].icon} <b>{b.name}</b>, {w.regions[b.region].name} · since {fmtDate(b.since, 'long')}</p>
+      <table class="table compact small"><tbody>
+        <tr><td>Takings ({m.days} days)</td><td class="num">{fmtAmt(code, m.rev)}</td></tr>
+        <tr><td>Supplies, rent and income tax</td><td class="num">−{fmtAmt(code, m.cost)}</td></tr>
+        <tr><td><b>Profit</b></td><td class={`num ${m.profit < 0 ? 'bad' : 'good'}`}><b>{fmtAmt(code, m.profit)}</b></td></tr>
+      </tbody></table>
+      <p class="small muted">Takings depend on your skills, local prices and the economy, and vary day to day. Profit, after income tax, goes straight to your account.</p>
+      <ActBtn small kind="ghost" confirm="Close the business? The set-up costs are not refunded." run={(w) => closeBusiness(w)}>Close the business</ActBtn>
+    </>;
+  }
+  return <>
+    <p class="small muted">Work for yourself instead of an employer. Each business needs a qualification and money to set up.</p>
+    <table class="table compact small"><tbody>{BIZ_KEYS.map((k) => { const d = BIZ[k]; return <tr><td>{d.icon} {d.label}</td><td class="num">{fmtAmt(code, cur(d.start))}</td><td class="num muted">~{fmtAmt(code, cur(d.takings))} a day</td><td><ActBtn small why={startCheck(w, p, k)} confirm={`Set up a ${d.label.toLowerCase()} for ${fmtAmt(code, cur(d.start))}? You will leave your job.`} run={(w) => startBusiness(w, k)}>Start</ActBtn></td></tr>; })}</tbody></table>
+  </>;
 }
 
 function PayslipPanel({ w, p }: { w: World; p: Citizen }) {

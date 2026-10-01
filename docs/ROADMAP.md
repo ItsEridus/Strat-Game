@@ -336,7 +336,7 @@ merge, go public and go bust.
   4. mergers, acquisitions and competition;
   5. screens and stories.
 - **Progress:** 1.4.12 brought occupations (67 in 14 families), industry pay levels, redundancy pay, unemployment
-  benefit by country and collective bargaining.
+  benefit by country and collective bargaining; 1.4.13 self-employment and owned cafés and restaurants.
 
 ## 1.6.0 — The strategic engine (GEO 2: nations advance over time)
 

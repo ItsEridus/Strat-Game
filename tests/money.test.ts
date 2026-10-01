@@ -216,3 +216,24 @@ test('labour market: occupations, redundancy pay and unemployment benefit', asyn
   assert.equal((worker.wallet.EUR ?? 0) - before, worker.benefit!.daily, 'a day of benefit');
   assert.ok(audit(w).ok);
 });
+
+test('small businesses: set up, trade daily, pay tax, and close', async () => {
+  const { startBusiness, smallBusinessDaily, closeBusiness, BIZ } = await import('../src/sim/smallBusiness');
+  const { player, cref } = await import('../src/sim/query');
+  const { mint, audit } = await import('../src/engine/ledger');
+  const w = generateWorld(1810, 'Café', 0, { citizensPerRegion: 1 });
+  const p = player(w);
+  p.loc = p.home;
+  const code = w.nations[p.nation].cur;
+  mint(w, cref(p.id), code, cur(1000), 'test');
+  assert.ok(startBusiness(w, 'cafe').ok);
+  assert.equal(p.business?.kind, 'cafe');
+  assert.equal(p.job, null);
+  for (let i = 0; i < 5; i++) smallBusinessDaily(w);
+  assert.equal(p.business!.hist.length, 5);
+  assert.ok(p.business!.hist.every((h) => h.rev > 0), 'takings every day');
+  assert.ok(BIZ.cafe.start > 0);
+  assert.ok(closeBusiness(w).ok);
+  assert.equal(p.business, undefined);
+  assert.ok(audit(w).ok);
+});

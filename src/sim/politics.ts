@@ -557,21 +557,24 @@ export function resignOffice(w: World, c: Citizen): Result {
 export function dailyOpinion(w: World) {
   for (const n of w.nations) {
     const cits = citizensOf(w, n.id);
-    let moodSum = 0, jobless = 0;
+    let moodSum = 0, jobless = 0, force = 0;
     for (const c of cits) {
       const income = c.lastIncome;
       const expected = cur(B.wages.min) * 1.3;
       const incSig = Math.max(-1, Math.min(1, (income - expected) / Math.max(1, expected)));
       const taxSig = -(n.taxes.work + n.taxes.vat - (n.taxNorm ?? 15)) / 30;
-      const jobSig = c.job == null && !c.player ? -0.3 : 0.1;
+      const jobSig = c.job == null && !c.post && !c.business && !c.player ? -0.3 : 0.1;
       c.mood = Math.max(-1, Math.min(1, c.mood * 0.85 + 0.15 * (incSig * 0.5 + taxSig + jobSig + n.warScore / 200)));
       moodSum += c.mood;
-      if (c.job == null && !['industrialist', 'investor'].includes(c.persona)) jobless++;
+      // Unemployment counts the labour force: working-age adults not studying or retired, without a job, post, business or service.
+      const age = ageOf(w, c);
+      const inForce = age >= B.life.adultAge && !c.retired && !c.edu?.enrolled && !['industrialist', 'investor'].includes(c.persona);
+      if (inForce) { force++; if (c.job == null && !c.post && !c.business && !(c.mil?.branch && !c.mil.reserve)) jobless++; }
       // influence: slow decay, persona-driven drift, office bonus
       const office = n.president === c.id ? 1 : Object.values(n.cabinet).includes(c.id) ? 0.5 : n.deputies.includes(c.id) ? 0.3 : 0;
       c.influence = Math.max(0, c.influence * 0.99 + office + (c.player ? 0 : (c.persona === 'politician' || c.persona === 'journalist' ? 0.25 : 0.05) * c.traits.ambition));
     }
-    n.unemployment = cits.length ? jobless / cits.length : 0;
+    n.unemployment = force ? jobless / force : 0;
     const hh = w.households[n.id];
     const bgMood = hh && hh.unmet > 0 ? -0.2 : 0.1;
     const target = 50 + 40 * (moodSum / Math.max(1, cits.length)) + 10 * bgMood;

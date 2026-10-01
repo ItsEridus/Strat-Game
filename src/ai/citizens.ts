@@ -94,6 +94,7 @@ export function citizenHourly(w: World, c: Citizen) {
 
   // Work
   if (h === c.workHour && c.lastWorkDay !== d && c.post) serviceShift(w, c);
+  else if (c.business) { /* runs their own business (sim/smallBusiness.ts) */ }
   else if (h === c.workHour && c.lastWorkDay !== d) {
     if (c.job != null) {
       const r = workShift(w, c);
