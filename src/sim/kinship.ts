@@ -125,7 +125,18 @@ export const PET_KINDS: Record<string, { icon: string; label: string; cost: numb
   dog: { icon: '🐕', label: 'Dog', cost: 60, upkeep: 2, lifespan: 13, names: ['Max', 'Bella', 'Rocky', 'Luna', 'Buddy', 'Daisy', 'Charlie', 'Milo', 'Ruby', 'Scout'] },
   cat: { icon: '🐈', label: 'Cat', cost: 40, upkeep: 1, lifespan: 15, names: ['Oliver', 'Chloe', 'Leo', 'Nala', 'Simba', 'Misty', 'Tiger', 'Pepper', 'Mochi', 'Smokey'] },
 };
-export const petsOf = (w: World, c: Citizen) => w.life.pets.filter((x) => x.owner === c.id && !x.gone);
+const petIndex = new WeakMap<World, { n: number; t: number; by: Map<Id, Pet[]> }>();
+/** Someone's living pets (indexed by owner; rebuilt when pets come or go). */
+export function petsOf(w: World, c: Citizen): Pet[] {
+  let ix = petIndex.get(w);
+  if (!ix || ix.n !== w.life.pets.length || ix.t !== w.time) {
+    const by = new Map<Id, Pet[]>();
+    for (const x of w.life.pets) if (!x.gone) by.set(x.owner, [...(by.get(x.owner) ?? []), x]);
+    ix = { n: w.life.pets.length, t: w.time, by };
+    petIndex.set(w, ix);
+  }
+  return (ix.by.get(c.id) ?? []).filter((x) => !x.gone);
+}
 export const petAge = (w: World, pet: Pet) => Math.floor((w.time - pet.born) / lifeYear(w));
 
 export function adoptCheck(w: World, p: Citizen, kind: string): string | null {
@@ -138,8 +149,7 @@ export function adoptCheck(w: World, p: Citizen, kind: string): string | null {
   return null;
 }
 
-export function adoptPet(w: World, kind: string): Result {
-  const p = player(w);
+export function adoptPet(w: World, kind: string, p: Citizen = player(w)): Result {
   const why = adoptCheck(w, p, kind);
   if (why) return fail(why);
   const k = PET_KINDS[kind];
@@ -147,7 +157,7 @@ export function adoptPet(w: World, kind: string): Result {
   pay(w, cref(p.id), hhref(p.nation), code, cur(k.cost), `Adopting a ${k.label.toLowerCase()}`);
   const pet: Pet = { id: nid(w), name: pick(w, k.names), kind, born: w.time - Math.round(lifeYear(w) * (1 + (w.rng & 3))), owner: p.id, health: 90, bond: 30, lastCare: today(w) };
   w.life.pets.push(pet);
-  milestone(w, p, 'pet', `adopted ${pet.name}, a ${k.label.toLowerCase()}`);
+  if (p.player) milestone(w, p, 'pet', `adopted ${pet.name}, a ${k.label.toLowerCase()}`);
   return ok(`${k.icon} Meet ${pet.name}! Look after them every day or two: a walk, play, a fuss.`);
 }
 
@@ -158,8 +168,7 @@ export function careCheck(w: World, p: Citizen, pet: Pet | undefined): string | 
   return null;
 }
 
-export function careForPet(w: World, petId: Id): Result {
-  const p = player(w);
+export function careForPet(w: World, petId: Id, p: Citizen = player(w)): Result {
   const pet = w.life.pets.find((x) => x.id === petId);
   const why = careCheck(w, p, pet);
   if (why) return fail(why);
@@ -198,7 +207,7 @@ export function petsDaily(w: World) {
       if (owner.player) notify(w, 'personal', `${k.icon} ${pet.name} was neglected and has been rehomed by a shelter.`, { critical: true, link: 'life' });
     }
   }
-  if (w.life.pets.length > 60) w.life.pets = w.life.pets.filter((x) => !x.gone || w.time - x.gone.t < 365 * DAY);
+  if (w.life.pets.length > 3000) w.life.pets = w.life.pets.filter((x) => !x.gone || w.time - x.gone.t < 365 * DAY);
 }
 
 /** A happy home: a pet one is close to lifts the spirits (read by wellbeing). */

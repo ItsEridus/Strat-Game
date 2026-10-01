@@ -6,7 +6,7 @@ import { SCREENS } from './screens';
 import { StartScreen } from './screens/Start';
 import { ConversationPanel, StoryModal } from './Overlays';
 import { UpdateBanner } from './Updates';
-import { AdvanceBanner, AnnualReviewModal } from './LifeOverlays';
+import { AdvanceBanner, AnnualReviewModal, PeriodModal } from './LifeOverlays';
 import { ScreenIcon } from './icons';
 import { WhatsNew } from './WhatsNew';
 
@@ -82,6 +82,7 @@ export function App() {
       <Guard name="the conversation" quiet><ConversationPanel w={w} /></Guard>
       <Guard name="the story window" quiet><StoryModal w={w} /></Guard>
       <Guard name="the annual review" quiet><AnnualReviewModal w={w} /></Guard>
+      <Guard name="the period summary" quiet><PeriodModal w={w} /></Guard>
       <Guard name="what's new" quiet><WhatsNew /></Guard>
       <div class="toasts">{s.toasts.map((t) => <div class={`toast ${t.ok ? 'ok' : 'err'}`}>{t.text}</div>)}</div>
     </div>

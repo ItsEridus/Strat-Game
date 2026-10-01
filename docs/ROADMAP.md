@@ -1,4 +1,4 @@
-# Roadmap after 1.4: a world that moves (1.5.0 → 2.5.0)
+# Roadmap after 1.4: a world that moves (1.4.x → 3.0.0)
 
 Version 1.4.0 completes the life simulation (see `LIFE_PROGRESS.md`). From there, the plan turns to the world
 around the player. The main thread is the geopolitical simulation requested on 30 September 2026. Nations and
@@ -9,6 +9,9 @@ It opens with a deep economic overhaul (requested the same day), because wages a
 anything is built on them. The calendar now starts on 1 January 2025 (from 1.3.3), so the economy can be anchored to
 real present-day data.
 
+Two threads were added on 1 October 2026: **character creation and customisation** (1.4.x, straight after 1.4.0) and
+a **deeper life simulation** after the geopolitical thread (2.6.0 → 3.0.0, "Life 2.0").
+
 Parts marked **GEO** are the geopolitical simulation. Every version ships as a series of playable patch
 releases (every push is a release); the minor version marks its theme complete.
 
@@ -16,6 +19,7 @@ releases (every push is a release); the minor version marks its theme complete.
 
 | Version | Theme | What the player sees |
 | --- | --- | --- |
+| 1.4.x | **Character creation & customisation** | Design who you are before you are born: looks, background, family, personality and talents; change your look over a life |
 | 1.5.0 | **The real economy** (ECON: a deep economic overhaul) + **Work & enterprise** (GEO 1: companies expand or disband) | Prices, wages, rents, taxes and interest that match each real country; payslips and household budgets; a working life in any occupation; firms that are founded, grow, merge, go public and go bust |
 | 1.6.0 | **The strategic engine** (GEO 2: nations advance over time) | Economies grow or stall, budgets shift, capabilities improve or decay, and the power ranking moves for reasons you can read; years pass in minutes |
 | 1.7.0 | **Law & order** | Police, crime, courts and prisons as full careers and institutions |
@@ -27,6 +31,11 @@ releases (every push is a release); the minor version marks its theme complete.
 | 2.3.0 | **Rise & fall** (GEO 7: regimes, secession, new nations) | Coups, revolutions, democratisation and backsliding, secession, civil wars, new and vanished states |
 | 2.4.0 | **Frontiers** (GEO 8: technology, cyber and space) | A near-future technology race that changes economies, armies and spying |
 | 2.5.0 | **A world of consequences** (GEO 9: world economy, climate, soft power) | Debt crises, central banks, climate over decades, soft power; the decades-long campaign and the World Almanac |
+| 2.6.0 | **Life 2.0: the mind** | Personality that grows from experience, values, mental health in depth, habits and addictions, therapy |
+| 2.7.0 | **Life 2.0: the social fabric** | Friend circles, rivals, communities, relationships under each country's laws, custody and blended families, family gatherings |
+| 2.8.0 | **Life 2.0: the everyday** | A day planner, commuting and cars, cooking, sleep, fitness and the body, shopping, chores |
+| 2.9.0 | **Life 2.0: culture and belonging** | Faith, festivals, languages, migration and integration, identity |
+| 3.0.0 | **Life 2.0: generations** | Dynasties over centuries: family trees, inherited looks and traits, the family name, ancestral homes and businesses, a family chronicle |
 
 **Why this order.** Each part builds on the ones before it:
 - A realistic economy comes first: money, prices, wages and costs underpin every later part.
@@ -96,6 +105,50 @@ releases (every push is a release); the minor version marks its theme complete.
   starts from real-world baselines for the 16 nations (real 2024–2025 data; the calendar starts on 1 January 2025).
 
 ---
+
+## 1.4.x — Character creation & customisation (requested 1 October 2026)
+
+**Goal.** Before a campaign starts, players design who they are, not just a name and a country. Every choice is a
+real starting condition in the simulation, not a cosmetic flag, and the look can change over a life.
+
+- **Who you are.**
+  - Name, sex and pronouns (used everywhere the game writes about you).
+  - Date of birth (with the start age: newborn, 16, 18 or 24), birthplace by region (or "anywhere in the country",
+    weighted by population as today).
+  - Ideology and how strongly it is held, and a faith or none (faith is used fully from 2.9).
+- **Appearance and portrait.**
+  - A layered portrait generator (face shape, skin tone, eyes, eyebrows, nose, mouth, hair style and colour,
+    facial hair, glasses, scars, tattoos), drawn as SVG with no external assets.
+  - It ages with you: grey hair, lines, posture; children get a blend of both parents' features.
+  - Shown on the profile, the top bar, the Life screen, conversations and the family tree. Every NPC gets a generated
+    portrait from a stable hash, so nobody looks alike.
+- **Family background.** One of five starting households (struggling, working, middle, comfortable or wealthy),
+  chosen or rolled with each country's real income distribution. It sets the parents' jobs and savings, the family
+  home (housing from 1.3.13), the school quality and any inheritance. Siblings and grandparents can be chosen to
+  exist.
+- **Personality.** The five existing traits (ambition, risk, loyalty, greed, activity) set with a point budget or
+  from a short questionnaire, plus two to three quirks (night owl, frugal, charming, hot-headed, worrier...), each
+  with a small, documented effect in the simulation.
+- **Talents.** Aptitudes that speed learning-by-doing for a group of skills (a head for numbers, a natural leader,
+  good with hands, athletic, artistic), and one weakness. They work through the existing practice formula, so no
+  new stats.
+- **Presets and randomise.** "Random life" rolls everything from real distributions; presets for quick starts
+  (a factory worker in Detroit, a student in Seoul, a farmer's child in Brazil...); save and share a character code.
+- **Customisation during play.**
+  - Haircuts, clothes and accessories bought with real money (clothing goods from the market show on the
+    portrait).
+  - A name change on marriage (by country custom); glasses, tattoos and piercings.
+  - Fitness and age change the body.
+- **NPC parity.** NPCs are generated with the same building blocks (background, personality, quirks, talents, look),
+  so the people around you are as varied as you.
+- **UI.** A step-by-step creation screen (Identity → Looks → Family → Personality → Talents → Summary) with a live
+  portrait and a plain-language summary of what each choice changes; a "Change your look" panel later.
+- **Saves.** Older saves get portraits and backgrounds from a stable hash; nothing changes for existing characters'
+  stats.
+- **Done when:** a campaign can be started from a fully designed character in under two minutes or from one click,
+  every choice shows in the first hour of play, and portraits are distinct across 10,000 people.
+- **Releases, in order:** portraits for everyone → creation screen (identity, looks) → family background →
+  personality, quirks, talents → presets, random life, character codes → customisation during play.
 
 ## 1.5.0 — The real economy (ECON) and work & enterprise (GEO 1)
 
@@ -688,6 +741,64 @@ improve or decay, and the power ranking moves for reasons the player can read.
   turnover and disasters, and the results are tuned where they don't.
 
 ---
+
+## 2.6.0 → 3.0.0 — Life 2.0: a deeper life simulation (requested 1 October 2026)
+
+After the world can move, the life lived inside it gets deeper. Each part builds on the life systems of 1.3–1.4
+(families, wellbeing, education, housing, health, pensions, legacy) and keeps the rules: the same for every person,
+paid through the ledger, explainable, saved and tested.
+
+### 2.6.0 — The mind
+- **Personality that grows.** The traits from 1.4.x drift with experience: a war veteran's caution, a bankrupt's
+  frugality, success breeding ambition. Each change is recorded with its cause.
+- **Values and beliefs** (family, career, faith, community, freedom) shape choices, conflicts in relationships and
+  how people vote.
+- **Mental health in depth.** Anxiety, depression and burnout, plus grief that changes over time. Therapy, medication
+  and support from family and friends (clinics from 1.3.15). Stigma and access vary by country.
+- **Habits and addictions.** Smoking, drinking, gambling and gaming, with their costs, health effects, and paths to
+  quitting (with relapse).
+- **Memories between NPCs.** Not only about the player: grudges, gratitude and old flames between everyone, so
+  communities have histories.
+
+### 2.7.0 — The social fabric
+- **Circles.** Friend groups, workmates, neighbours, clubs (from hobbies), congregations; reputation within each
+  circle.
+- **Relationships under each country's laws.** Same-sex partnerships and marriage where legal, civil unions,
+  cohabitation; divorce law and alimony by country.
+- **Families that change.** Custody arrangements and visiting rights, step-parents and blended families, family
+  feuds and reconciliations, gatherings (weddings, funerals, holidays) that bring the family together.
+- **Rivals and enemies** with long-running feuds, gossip and rumours that spread through circles.
+- **Dating** through friends, work, hobbies and apps, with compatibility from values and personality.
+
+### 2.8.0 — The everyday
+- **A day planner.** Hour-by-hour schedules, where the existing routine becomes a calendar: work, commute, study,
+  family, hobbies, sleep.
+- **Getting around.** Commuting times from home to work, public transport, buying and running a car (fuel and energy
+  prices from 1.9), accidents.
+- **Body and health habits.** Sleep, diet, cooking versus eating out, fitness and weight, all feeding health from
+  1.3.15.
+- **Home life.** Furniture and home improvements (raising home value), chores and how a household shares them,
+  household appliances and bills.
+
+### 2.9.0 — Culture and belonging
+- **Faith and festivals.** The major religions by country (real shares), places of worship as venues, religious
+  holidays and national festivals on the calendar, and faith communities as circles.
+- **Languages.** Each country's languages, learning one (as a course or by living there), and how language affects
+  jobs and friendships abroad.
+- **Migration and integration.** Moving abroad as a life choice: visas, citizenship tests, culture shock, diaspora
+  communities, sending money home.
+- **Identity.** Regional and national identity, pride and division, all feeding politics from GEO 7.
+
+### 3.0.0 — Generations
+- **Dynasties.** Play a family across a century or more. The legacy archive (1.3.18) becomes a full family chronicle
+  and an interactive family tree.
+- **Inheritance of looks and traits.** Portraits (1.4.x) blend across generations; talents and temperaments run in
+  families, with regression to the mean.
+- **The family name.** Reputation that carries across generations (built on familyRegard from 1.3.9); old money and
+  new money; family businesses handed down (from 1.5); political dynasties (from 2.3).
+- **Ancestral places.** The family home kept or sold, graves and memorials, returning to a birthplace.
+- **Done when:** a hundred-year family campaign stays fast and coherent, every generation's life is in the
+  chronicle, and descendants visibly resemble their ancestors in looks, temperament and fortune.
 
 ## In every version
 

@@ -39,17 +39,19 @@ stages go out in slices.
 | L3 | Schools, universities, clinics and offices as funded institutions; education ladder; qualifications; service careers (teaching, clinical care, administration, technical); work history; promotions; military academy | Done: schools, universities, education ladder 1.3.10; public-service careers, promotions, work history 1.3.11; military academy and commissions 1.3.12 |
 | L4 | Housing (rent/buy/sell); obligations (loans, mortgages, student loans); conditions and treatment; leave; retirement and funded pensions (incl. veterans); living-cost split | Done: housing and the living-cost split 1.3.13; loans, mortgages, student loans, credit 1.3.14; conditions, treatment, sick and parental leave 1.3.15; retirement and pensions 1.3.16 |
 | L5 | Birth start; childhood and parenting; player mortality; wills, trusts, estates, heirlooms | Done: birth start, childhood and parenting 1.3.17; player mortality, wills, trusts, estates, heirlooms 1.3.18 |
-| L6 | Succession to heirs; legacy archive; 8 life chains + 16 standalone encounters; narrative stage 4's five chains; NPC AI parity | In progress: succession and legacy archive 1.3.18; eight life chains 1.3.19; sixteen everyday encounters 1.3.20; narrative stage 4's five chains 1.3.21 |
+| L6 | Succession to heirs; legacy archive; 8 life chains + 16 standalone encounters; narrative stage 4's five chains; NPC AI parity | Done: succession and legacy archive 1.3.18; eight life chains 1.3.19; sixteen everyday encounters 1.3.20; narrative stage 4's five chains 1.3.21; NPC AI parity for life systems 1.3.22 |
 | UI2 | Every screen restyled; cinematic story, review and succession; map polish; optional UI sound; screenshots | Planned |
 | L7 | Calibration, performance, docs, tests, e2e, release 1.4.0 (with narrative stage 5) | Planned |
 
-After 1.4.0: the plan continues in `ROADMAP.md` (1.5.0 → 2.5.0). Its main thread is a realistic geopolitical
+After 1.4.0: the plan continues in `ROADMAP.md`, starting with character creation and customisation (1.4.x), then the
+world (1.5.0 → 2.5.0) and a deeper life simulation (2.6.0 → 3.0.0). Its main thread is a realistic geopolitical
 simulation, in which nations and AI actors advance over time, opening with a deep economic overhaul (realistic wages
 and prices). The earlier requests have their places there: careers
 and employment (1.5), policing, crime careers and prisons (1.7), and weather and natural disasters (1.9).
 
 | Version | Theme |
 | --- | --- |
+| 1.4.x | Character creation & customisation (portraits, background, personality, talents, presets, changing your look) |
 | 1.5.0 | The real economy (deep economic overhaul: prices, wages, costs, taxes, banks) + work & enterprise (GEO 1) |
 | 1.6.0 | The strategic engine (GEO 2: nations advance over time; level-of-detail simulation) |
 | 1.7.0 | Law & order (policing, crime careers, courts, prisons) |
@@ -61,6 +63,7 @@ and employment (1.5), policing, crime careers and prisons (1.7), and weather and
 | 2.3.0 | Rise & fall (GEO 7: regimes, coups, secession, new nations) |
 | 2.4.0 | Frontiers (GEO 8: technology, cyber and space) |
 | 2.5.0 | A world of consequences (GEO 9: world economy, climate, soft power; decades campaign) |
+| 2.6.0 → 3.0.0 | Life 2.0: the mind, the social fabric, the everyday, culture and belonging, generations |
 
 ## Implemented
 
@@ -208,6 +211,17 @@ and employment (1.5), policing, crime careers and prisons (1.7), and weather and
   sick leave and sick pay; parental leave on national terms.
 - `src/sim/pensions.ts`: contribution record and funded pots from every shift; retirement from pension age − 5;
   state, private (annuity) and military pensions; NPCs retire around their pension age.
+
+### L5–L6: a whole life, and what follows (1.3.17–1.3.22)
+- `src/sim/childhood.ts`: start age (newborn to 24), school days and grades, play, pocket money, the minor's keep on the
+  parents, diploma and scholarship at 18; parenting time, closeness and grades shaping a child's adult start.
+- `src/sim/legacy.ts`: wills, inheritance tax, trusts, heirlooms, the player's death and succession, the legacy
+  archive, a new life when a line ends.
+- Stories: eight life chains (`data/stories/life.ts`), sixteen everyday encounters (`encounters.ts`) and five system
+  chains (`chains.ts`: racket, call-up, scoop, campaign, double life).
+- `src/sim/lifeai.ts`: NPC hobbies, pets, study, parental leave and parenting through the player's own actions.
+- `src/sim/periodReview.ts`: "+1 year" (same date next year, fully simulated in background slices) and a summary of
+  any advance of a week or more.
 
 ## Tests
 - `tests/life.test.ts` (6): death/estate/offices, special election, emigration, coming of age, the player's romance,

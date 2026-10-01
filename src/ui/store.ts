@@ -1,5 +1,7 @@
 // UI-side game controller: owns the World, runs the real-time loop at the chosen
 // speed, applies player actions, autosaves, and notifies Preact to re-render.
+import { periodStart, periodSummary } from '../sim/periodReview';
+import { DAY } from '../engine/clock';
 import { useEffect, useState } from 'preact/hooks';
 import type { World } from '../sim/types';
 import type { Result } from '../engine/result';
@@ -231,7 +233,7 @@ class Store {
     const w = this.w;
     if (!w || target <= w.time) return;
     w.settings.paused = true;
-    w.life.advance = { target, from: w.time, label };
+    w.life.advance = { target, from: w.time, label, start: target - w.time >= 7 * DAY ? periodStart(w) : undefined };
     this.advStopped = '';
     this.runAdvance();
   }
@@ -264,12 +266,15 @@ class Store {
       if (!w || !a || this.advCancel) { this.advRunning = false; this.advCancel = false; this.emit(); return; }
       const t0 = Date.now();
       let stopped = false;
-      while (w.time < a.target && Date.now() - t0 < 60) {
+      // Long advances run in the background in bigger slices (the screen redraws a few times a second).
+      const budget = a.target - a.from >= 30 * DAY ? 220 : 60;
+      while (w.time < a.target && Date.now() - t0 < budget) {
         stir(w);
         const r = advance(w, Math.min(60, a.target - w.time), true);
         if (r.stopped) { stopped = true; break; }
       }
       if (w.time >= a.target) {
+        if (a.start) w.life.period = periodSummary(w, a.start, a.label);
         w.life.advance = null;
         this.advRunning = false;
         if (stopped) this.pauseReason = w.notices[0]?.text ?? '';

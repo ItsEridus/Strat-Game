@@ -57,6 +57,7 @@ import { lendingDaily } from './loans';
 import { healthDaily } from './health';
 import { pensionsDaily } from './pensions';
 import { childhoodDaily } from './childhood';
+import { lifeAIDaily } from './lifeai';
 import { adoptionsDaily, petsDaily, pregnanciesHourly } from './kinship';
 
 let done = false;
@@ -158,7 +159,7 @@ export function registerSystems() {
   dailyHooks.push(lifeDaily);
   dailyHooks.push(goodsDaily);
   dailyHooks.push(warChronicleDaily);
-  dailyHooks.push(petsDaily, adoptionsDaily, educationDaily, servicesDaily, housingDaily, lendingDaily, healthDaily, pensionsDaily, childhoodDaily);
+  dailyHooks.push(petsDaily, adoptionsDaily, educationDaily, servicesDaily, housingDaily, lendingDaily, healthDaily, pensionsDaily, childhoodDaily, lifeAIDaily);
   hourlyHooks.push(pregnanciesHourly);
   dailyHooks.push(populationDaily);
   dailyHooks.push(familyDaily);

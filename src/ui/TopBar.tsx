@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { oneYearOn } from '../sim/periodReview';
 import { Emblem, HUD_ICONS } from './icons';
 import { SPEED_LABELS, store, useStore } from './store';
 import { Bar, Amt } from './common';
@@ -54,6 +55,7 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
                   <button onClick={() => { setOpen(false); store.jump(DAY, 'tomorrow'); }}>+1 day</button>
                   <button onClick={() => { setOpen(false); store.jump(7 * DAY, 'a week from now'); }}>+1 week</button>
                   <button onClick={() => { setOpen(false); store.jump(30 * DAY, 'a month from now'); }}>+30 days</button>
+                  <button onClick={() => { setOpen(false); store.startAdvance(oneYearOn(w.time), 'a year from now'); }} title="Live a whole year: the world is simulated in full, in the background">+1 year</button>
                 </div>
                 {ups.slice(0, 14).map((u) => (
                   <button onClick={() => { setOpen(false); store.jumpTo(u.t, u.label); }}>

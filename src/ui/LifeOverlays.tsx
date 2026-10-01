@@ -6,6 +6,7 @@ import { fmtClock, fmtDur } from '../engine/clock';
 import { fmtAmt } from '../engine/money';
 import type { World } from '../sim/types';
 import { pendingReview } from '../sim/lifecycle';
+import { fmtDate } from '../engine/calendar';
 
 /** Shows a long advance in progress, or where it stopped and why. */
 export function AdvanceBanner() {
@@ -62,6 +63,27 @@ export function AnnualReviewModal({ w }: { w: World }) {
           <Btn kind="primary" onClick={() => { close(); store.go('life'); }}>Open my life</Btn>
           <Btn onClick={close}>Continue</Btn>
         </footer>
+      </div>
+    </div>
+  );
+}
+
+/** What happened during a long advance (a week or more), shown once when it ends. */
+export function PeriodModal({ w }: { w: World }) {
+  useStore();
+  const r = w.life.period;
+  if (!r || r.seen || store.advRunning || pendingReview(w)) return null;
+  const close = () => { r.seen = true; store.emit(); };
+  return (
+    <div class="modal-back" onClick={close}>
+      <div class="modal review" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="What happened">
+        <h2>⏩ {fmtDate(r.from, 'medium')} – {fmtDate(r.to, 'medium')}</h2>
+        <p class="muted small">You advanced to {r.label}. The world was simulated in full.</p>
+        <h4>Your life</h4>
+        <ul>{r.you.map((x) => <li>{x}</li>)}</ul>
+        <h4>The world</h4>
+        <ul class="small">{r.world.map((x) => <li>{x}</li>)}</ul>
+        <div class="row"><Btn kind="primary" onClick={close}>Continue</Btn></div>
       </div>
     </div>
   );

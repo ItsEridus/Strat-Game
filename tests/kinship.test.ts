@@ -79,7 +79,7 @@ test('pets are adopted, cared for, cost upkeep and are rehomed if neglected', ()
   assert.equal(pet.bond, bond + 8);
   assert.equal(careForPet(w, pet.id).ok, false, 'once a day');
   const w2 = deserialize(serialize(w));
-  assert.equal(w2.life.pets.length, 1, 'survives save/load');
+  assert.equal(w2.life.pets.filter((x) => x.owner === p.id).length, 1, 'survives save/load');
   advance(w, 25 * DAY, false);
   assert.equal(petsOf(w, p).length, 0, 'neglected for weeks, rehomed');
   assert.ok(audit(w).ok, audit(w).problems.join('; '));

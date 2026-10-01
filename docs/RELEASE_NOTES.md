@@ -3,6 +3,25 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.3.22: a year at a time, and everyone lives a full life
+
+- **Advance a whole year.** The Advance menu has a new "+1 year" option. It takes you to the same date next year,
+  with the whole world simulated in full: every shift, birth, election, battle and price. It runs in the background
+  with a progress bar. You can stop and resume it at any time, and it pauses for anything important in your life.
+- **What happened while you were away.** After any advance of a week or more, a summary shows your life (birthdays,
+  milestones, how your savings changed, or who carried on if you died) and the world (the most important events,
+  and how many wars, elections, crises, business and political events there were).
+- **The same rules for everyone.** The people around you now use the life systems the way you do:
+  - they take up a favourite hobby and spend evenings at it (paying for supplies);
+  - about one adult in three adopts a dog or a cat over a lifetime, and looks after it;
+  - young adults out of work (and ambitious ones) go back to college or university, with a student loan if they
+    need one;
+  - new parents take parental leave where their country pays it;
+  - parents spend time with their children, so at 18 those children are as close to them as the care they got.
+- **The plan grows.** Character creation and customisation now follows 1.4.0 (portraits, family background,
+  personality and talents, changing your look). A deeper Life simulation follows 2.5.0, covering the mind, the
+  social fabric, everyday life, culture and generations. See the roadmap.
+
 ### New in 1.3.21: five stories from the wider world
 
 - **A protection racket.** A gang whose turf covers your business demands a daily fee. Pay, go to the police (a
