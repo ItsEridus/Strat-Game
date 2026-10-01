@@ -7,6 +7,7 @@ import { NATION_DEFS } from '../../data/names';
 import { EARTH } from '../../data/earth';
 import { SLOTS, slotInfo } from '../../engine/save';
 import { Btn, Num, Select } from '../common';
+import { CharacterDesigner, randomLook, type CharacterChoice } from '../CharacterDesigner';
 import type { Settings } from '../../sim/types';
 
 export function StartScreen() {
@@ -17,6 +18,7 @@ export function StartScreen() {
   const [cpn, setCpn] = useState(24);
   const [pace, setPace] = useState(365);
   const [startAge, setStartAge] = useState(24);
+  const [character, setCharacter] = useState<CharacterChoice>(() => ({ look: randomLook(), birthplace: null, ideology: null }));
   const [difficulty, setDifficulty] = useState<Settings['difficulty']>('normal');
   const [adv, setAdv] = useState({ nuclear: true, pirates: true, terrainEvents: false, tournaments: true });
   const [importing, setImporting] = useState(false);
@@ -24,7 +26,7 @@ export function StartScreen() {
   const [text, setText] = useState('');
   const saves = SLOTS.map((s) => slotInfo(s)).filter(Boolean);
   const onFile = async (f: File | undefined) => { if (f) setText(await f.text()); };
-  const begin = () => { setGenerating(true); setTimeout(() => store.newGame(fixed ? seed : null, name, nation, cpn, difficulty, adv, pace, startAge), 60); };
+  const begin = () => { setGenerating(true); setTimeout(() => store.newGame(fixed ? seed : null, name, nation, cpn, difficulty, adv, pace, startAge, { ...character, birthplace: character.birthplace != null && EARTH.regions[character.birthplace]?.nation === nation ? character.birthplace : null }), 60); };
   return (
     <div class="start">
       <TitleBackdrop />
@@ -74,6 +76,8 @@ export function StartScreen() {
           ))}
         </div>
         <p class="muted small">{NATION_DEFS[nation].name}: led by a {NATION_DEFS[nation].leader.toLowerCase()} with the {NATION_DEFS[nation].legislature} · currency {NATION_DEFS[nation].cur} · {EARTH.regions.filter((r) => r.nation === nation).length} regions. Every country plays by the same rules; starting companies, citizens and politics are generated fresh for every campaign, and the future is never fixed: what happens depends on chance as it unfolds.</p>
+        <h4>Your character</h4>
+        <CharacterDesigner nation={nation} value={character} onChange={setCharacter} />
         <h4>Optional advanced systems</h4>
         <div class="checks">
           {(['nuclear', 'pirates', 'tournaments', 'terrainEvents'] as const).map((k) => (

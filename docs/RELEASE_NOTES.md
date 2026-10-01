@@ -3,6 +3,22 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.4.1: faces, and designing who you are
+
+- **A face for everyone.** New portraits are drawn for every person, with:
+  - face shape, skin tone, hair style and colour, eyes, brows, nose, beard, glasses, freckles and marks;
+  - age showing (grey hair, lines, thinning);
+  - a smile or frown with their mood.
+- **Realistic variety.** Looks follow each country's population, presentation follows the first name, and nobody
+  looks quite like anyone else. Children who come of age blend their parents' looks.
+- **Bigger portraits** on profiles and on the Life screen.
+- **Design your character** when you start a campaign:
+  - woman or man and your pronouns (she, he or they);
+  - every feature of your face, with a live portrait and a Randomise button;
+  - where you were born (any region of your country, or anywhere);
+  - your politics.
+  Your choices are where your life really starts.
+
 ### New in 1.4.0: a whole life
 
 1.4.0 completes the life simulation. From 1.3.6 to here, a life in Meridian Reach gained:

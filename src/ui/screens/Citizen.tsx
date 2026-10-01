@@ -14,6 +14,7 @@ import { activityOf, goalText } from '../../sim/npc';
 import { IDEOLOGIES } from '../../data/ideologies';
 import { GOLD } from '../../engine/money';
 import { CitizenExtras } from './CitizenExtras';
+import { Avatar } from '../Avatar';
 import { ActBtn } from '../common';
 import { familyRegard, memoriesOf } from '../../sim/story';
 import { levelLabel } from '../../sim/education';
@@ -33,7 +34,7 @@ export function CitizenProfile({ w }: { w: World }) {
   return (
     <div class="grid">
       <Panel title={`${c.name}${c.player ? ' (you)' : ''}`} class="wide">
-        <div class="stats">
+        <div class="profile-head"><Avatar c={c} size={112} badge={false} w={w} /><div class="stats">
           <Stat label="Citizenship"><NationChip w={w} id={c.nation} /></Stat>
           <Stat label="Location"><RegionLink w={w} id={c.loc} /></Stat>
           <Stat label="Age">{ageOf(w, c)}{calendarPace(w) ? <small class="muted"> · born {fmtDate(c.born, 'short')}</small> : null}</Stat><Stat label="Reputation">{reputation(c).icon} {reputation(c).name}</Stat>
@@ -57,7 +58,7 @@ export function CitizenProfile({ w }: { w: World }) {
           <Stat label="Public record">{c.sec.record.convictions ? `${c.sec.record.convictions} conviction${c.sec.record.convictions > 1 ? 's' : ''}` : 'clean'}{jailed(w, c) ? ' · in prison' : ''}</Stat>
           {p.sec.rivals.includes(c.id) && <Stat label="Status">😠 your rival</Stat>}
           {c.player && <Stat label="Gold"><Amt asset={GOLD} v={c.wallet[GOLD] ?? 0} /></Stat>}
-        </div>
+        </div></div>
       </Panel>
       {!c.player && <Panel title={`💭 What ${c.name.split(' ')[0]} remembers about you`}>
         {memoriesOf(w, c.id).length ? <ul class="memories">{memoriesOf(w, c.id).slice().reverse().map((m) => <li><span class={m.delta > 0 ? 'good' : m.delta < 0 ? 'bad' : 'muted'}>{m.delta > 0 ? '▲' : m.delta < 0 ? '▼' : '•'}</span> You {m.text} <small class="muted">({fmtDate(m.t, 'medium')}{m.visibility === 'public' ? ', public' : ''})</small></li>)}</ul> : <p class="muted small">Nothing in particular yet. First impressions are made in conversation and in what you do.</p>}
@@ -81,8 +82,8 @@ function Gifts({ w, p, c }: { w: World; p: Citizen; c: Citizen }) {
   return (
     <div class="row wrap gifts">
       <small class="muted">Give a gift:</small>
-      <ActBtn small why={giftCheck(w, p, c, 'flowers')} run={(w) => giveGift(w, c.id, 'flowers')}>💐 Flowers</ActBtn>
-      {items.map((k) => <ActBtn small why={giftCheck(w, p, c, k)} run={(w) => giveGift(w, c.id, k)}>🎁 {itemName(k)}</ActBtn>)}
+      <ActBtn small showWhy={false} why={giftCheck(w, p, c, 'flowers')} run={(w) => giveGift(w, c.id, 'flowers')}>💐 Flowers</ActBtn>
+      {items.map((k) => <ActBtn small showWhy={false} why={giftCheck(w, p, c, k)} run={(w) => giveGift(w, c.id, k)}>🎁 {itemName(k)}</ActBtn>)}
     </div>
   );
 }

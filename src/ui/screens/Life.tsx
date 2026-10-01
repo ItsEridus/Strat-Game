@@ -5,6 +5,7 @@ import { MONTHS, fmtDate } from '../../engine/calendar';
 import type { Citizen, World } from '../../sim/types';
 import { ActBtn, Bar, Btn, CitLink, Empty, Help, Panel, RegionLink, Stat, Tabs } from '../common';
 import { store } from '../store';
+import { Avatar } from '../Avatar';
 import { B } from '../../data/balance';
 import { fmtDur } from '../../engine/clock';
 import { c as cur, fmtAmt } from '../../engine/money';
@@ -49,14 +50,14 @@ export function Life({ w }: { w: World }) {
         </Panel>
       )}
       <Panel title={`${stage.icon} ${p.name}`} class="wide hero" right={<Btn kind="primary" onClick={() => store.startAdvance(bday, `your ${age + 1}th birthday`)}>🎂 Advance to next birthday</Btn>}>
-        <div class="stats">
+        <div class="profile-head"><Avatar c={p} size={104} badge={false} w={w} /><div class="stats">
           <Stat label="Age">{age}</Stat>
           <Stat label="Stage of life">{stage.label}</Stat>
           <Stat label="Lives in"><RegionLink w={w} id={p.home} /></Stat>
           <Stat label="Occupation">{occupation(w, p)}</Stat>
           <Stat label="Relationship">{STATUS_LABEL[fam.status]}{partner ? <> · <CitLink w={w} id={partner.id} /></> : null}</Stat>
           <Stat label="Reputation">{rep.icon} {rep.name}</Stat>
-        </div>
+        </div></div>
         <p class="small muted">{fmtDate(w.time, 'long')} · {calendarPace(w) ? `born ${fmtDate(p.born, 'long')} · ` : ''}next birthday {calendarPace(w) ? `on ${fmtDate(bday, 'dayMonth')} (in ${fmtDur(bday - w.time)})` : `in ${fmtDur(bday - w.time)}`} · a time of {stage.can}.{calendarPace(w) ? '' : ` People age ${Math.round(365 / (w.settings.lifeYearDays ?? 365))} years per calendar year.`}</p>
       </Panel>
       <div class="wide life-tabs"><Tabs tabs={[['overview', '🧭 Overview'], ['money', '🏠 Home & money'], ['health', '🩺 Health & learning'], ['legacy', '📜 Legacy']]} value={tab} onChange={setTab} /></div>

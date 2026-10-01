@@ -25,6 +25,7 @@ import { bump } from './progress';
 import { conceive } from './kinship';
 import { milestone } from './lifecycle';
 import { comeOfAgeFrom } from './childhood';
+import { blendLook } from './looks';
 import { fmtDate } from '../engine/calendar';
 
 export function fam(c: Citizen): Family {
@@ -130,6 +131,7 @@ export function kidComesOfAge(w: World, parent: Citizen, kid: Kid) {
     c.rel[player(w).id] = 70;
   }
   comeOfAgeFrom(w, kid, c, parent);
+  c.look = blendLook(w, c, parent, other && f.status === 'married' ? other : undefined);
   releaseTrusts(w, kid, c);
   localNews(w, parent.home, `🎓 ${c.name}, ${parent.name}'s child, came of age.`);
   return c;

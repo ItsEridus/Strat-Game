@@ -317,7 +317,10 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
   const pn = w.nations[playerNation];
   // Where you are born is luck: any region of your nation, big places more likely than small ones.
   const birthplace = weighted(w, regions.filter((r) => r.owner === pn.id), (r) => Math.sqrt(Math.max(1, EARTH.regions[r.id].popReal)))?.id ?? pn.capital;
-  const p = newCitizen(w, playerName.trim().slice(0, 28) || 'Citizen', pn.id, birthplace, 'worker', 'capitalism');
+  const ch = settings.character;
+  const born = ch?.birthplace != null && regions[ch.birthplace]?.owner === pn.id ? ch.birthplace : birthplace;
+  const p = newCitizen(w, playerName.trim().slice(0, 28) || 'Citizen', pn.id, born, 'worker', ch?.ideology ?? 'capitalism');
+  if (ch) { p.look = { ...ch.look }; if (!ch.ideology) p.ideoStr = 0.2; }
   p.player = true;
   const startAge = settings.startAge ?? B.life.playerAge;
   settings.playerMortality ??= true;
