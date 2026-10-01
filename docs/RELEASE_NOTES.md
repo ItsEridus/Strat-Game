@@ -3,6 +3,34 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.1.3: how wars run and end
+
+The third part of 2.2 War & peace. The old rule (a war simply ended at its deadline, with every occupation
+returned unless the quota was met) is gone.
+
+- **Kinds of war.** An invasion claims several regions, a limited war one, and a punitive war none, fought only
+  to hurt the enemy.
+- **Exhaustion.** Each side's war exhaustion (0–100) rises with losses, cost, lost territory and time, and falls
+  with victories. It wears down the government's approval and makes it want peace. An enemy's exhaustion is worth
+  waiting for. Nobody sues for peace in the first fortnight.
+- **Escalation.** Wars climb a ladder: border fighting, a limited war, a general war (both sides strike cities and
+  industry), and nuclear threats. The side with more at stake and more resolve climbs. Exhausted sides step back
+  down. Each rung kills more. Only a country whose own land is occupied, or which is losing badly, makes nuclear
+  threats, and an AI government uses nuclear weapons first only after reaching that rung (and then only as its
+  doctrine allows).
+- **The deadline is a review.**
+  - If both sides still have fight in them, the war drags on for another two weeks (twice at most).
+  - If the attacker holds ground it cannot win and the defender cannot retake, the front freezes: a frozen
+    conflict, with the land still occupied and no peace treaty. Years later, once relations allow, a frozen
+    conflict may be settled and the land returned.
+  - Otherwise the offensive peters out and the occupied land goes back.
+- **Peace terms.**
+  - A negotiated peace brings a non-aggression treaty for three years, not a week.
+  - Land that changes hands becomes a demilitarised zone for two years: no forces can be raised there.
+  - The side that gave ground pays reparations over a year, from a tenth of its gold reserves; prisoners go home.
+- **The Wars screen** shows each war's kind, its rung on the ladder, how often it has dragged on, and each side's
+  exhaustion. Frozen conflicts are listed with past wars.
+
 ### New in 2.1.2: the home front
 
 The second part of 2.2 War & peace.

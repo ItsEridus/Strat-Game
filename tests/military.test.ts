@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { generateWorld } from '../src/sim/worldgen';
 import { registerSystems } from '../src/sim/systems';
-import { advance, advanceTo } from '../src/sim/tick';
+import { advance } from '../src/sim/tick';
 import { audit, produce } from '../src/engine/ledger';
 import { DAY } from '../src/engine/clock';
 import { controller, cref, player } from '../src/sim/query';
@@ -64,7 +64,7 @@ test('occupation stays distinct from ownership until settlement; goals transfer 
   assert.ok(audit(w).ok);
 });
 
-test('deadlines settle wars and return occupations', () => {
+test('at its deadline an exhausted offensive peters out and returns occupations', async () => {
   const w = fresh(33);
   const { a, b, border } = neighbours(w);
   const war = declareWar(w, w.nations[a], { target: b, days: 8, goals: [border] });
@@ -73,7 +73,10 @@ test('deadlines settle wars and return occupations', () => {
   war.battles.push(bt.id);
   finishBattle(w, bt, 'a');
   assert.equal(w.regions[border].occ?.nation, a);
-  advanceTo(w, war.deadline + 10, false);
+  war.extensions = 2; // no more reprieves
+  war.exhaust = { [a]: 90, [b]: 90 }; // and the attacker is spent: it cannot hold on
+  const { onWarDeadline } = await import('../src/sim/war');
+  onWarDeadline(w, war.id);
   assert.equal(war.status, 'ended');
   assert.equal(w.regions[border].occ, null);
   assert.equal(w.regions[border].owner, b);

@@ -4,6 +4,7 @@
 //  - Holding the quota of occupations settles the war: held goals transfer, other
 //    occupations return, retained regions lose one building level, a 7-day pact follows.
 //  - Deadlines and peace terms (armistice, surrender, demand, trade) also settle wars.
+import { exhaustionOf, peaceTerms, reviewAtDeadline } from './warCourse';
 import { releasePrisoners, takePrisoners } from './warHome';
 import { bestWarCase, warCase } from './warDecision';
 import { believed, believedPower } from './beliefs';
@@ -314,6 +315,7 @@ export function settle(w: World, war: War, kind: Terms['kind'], offer?: PeaceOff
   if (kind === 'demand' && offer && offer.from === war.def) keepDef = [...war.counter];
   if (kind === 'trade' && offer) { if (offer.take != null) keepAtt = [offer.take]; if (offer.give != null) keepDef = [offer.give]; }
   const transferred: string[] = [];
+  const movedIds: Id[] = [];
   const relBefore = att.relations[def.id]?.score ?? 0;
   for (const rid of [...war.occupied, ...war.counter]) {
     const r = w.regions[rid];
@@ -322,6 +324,7 @@ export function settle(w: World, war: War, kind: Terms['kind'], offer?: PeaceOff
     if (toAtt || toDef) {
       r.owner = toAtt ? war.att : war.def;
       transferred.push(`${r.name} → ${w.nations[r.owner].name}`);
+      movedIds.push(rid);
       for (const k of Object.keys(r.bld) as (keyof typeof r.bld)[]) r.bld[k] = Math.max(0, r.bld[k] - B.war.buildingDamage);
       if (r.project != null) { const p = w.projects[r.project]; if (p && !p.done) cancelProject(w, p, 'region changed hands'); r.project = null; }
     }
@@ -330,6 +333,7 @@ export function settle(w: World, war: War, kind: Terms['kind'], offer?: PeaceOff
   for (const bid of war.battles) { const b = w.battles[bid]; if (b && !b.done) { finishBattle(w, b, null); battleEnded(w, war, b, null, 'called off by the peace'); } }
   war.status = 'ended';
   releasePrisoners(w, war);
+  peaceTerms(w, war, kind, movedIds); // treaty, demilitarised zone, reparations (warCourse.ts)
   const label = { conquest: 'conquest', deadline: 'deadline', armistice: 'armistice', surrender: 'surrender', demand: 'demand', trade: 'territorial trade' }[kind];
   war.outcome = `${label}${transferred.length ? `: ${transferred.join(', ')}` : ': no territory changed hands'}`;
   const until = w.time + B.war.pactDays * DAY;
@@ -354,7 +358,11 @@ export function settle(w: World, war: War, kind: Terms['kind'], offer?: PeaceOff
 
 export function onWarDeadline(w: World, warId: Id) {
   const war = w.wars[warId];
-  if (war && war.status === 'active') settle(w, war, 'deadline');
+  if (!war || war.status !== 'active') return;
+  // The deadline is a review (warCourse.ts): the war may drag on, freeze, or peter out.
+  const r = reviewAtDeadline(w, war);
+  if (r === 'extended') schedule(w, war.deadline, 'warDeadline', { war: war.id });
+  else if (r === 'deadline') settle(w, war, 'deadline');
 }
 
 // ---------- peace terms (congress proposals) ----------
@@ -398,7 +406,11 @@ export function peaceAppetite(w: World, n: Nation, war: War, kind: string, offer
   const timeLeft = (war.deadline - w.time) / Math.max(1, war.deadline - war.declared);
   const treasuryStress = (n.wallet[n.cur] ?? 0) < 2000 * 100 ? 0.2 : 0;
   const losing = mine ? 1 - progress - (1 - timeLeft) * 0.5 : progress;
-  let s = losing * 0.6 + treasuryStress + (-n.warScore / 200);
+  // Exhaustion (warCourse.ts): a worn-out country wants out; an exhausted enemy is worth waiting for.
+  const mineEx = exhaustionOf(war, n.id) / 100, theirEx = exhaustionOf(war, enemyOf(war, n.id)) / 100;
+  // Nobody sues for peace in the first fortnight: early resolve fades as the war goes on.
+  const early = Math.max(0, 1 - (w.time - war.declared) / (14 * DAY)) * 0.5;
+  let s = losing * 0.6 + treasuryStress + (-n.warScore / 200) + mineEx * 0.8 - theirEx * 0.3 - early;
   if (kind === 'armistice') s += mine ? -0.1 + (1 - timeLeft) * 0.4 : 0.1;
   if (kind === 'demand') s += offerFrom === war.att ? (mine ? 0 : progress - 0.7) : -0.3;
   if (kind === 'surrender') s += 0.3;

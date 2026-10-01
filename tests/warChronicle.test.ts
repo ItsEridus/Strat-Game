@@ -107,6 +107,7 @@ test('a rejected offer and a deadline are explained', () => {
   w.time += 3 * 60;
   peaceHousekeeping(w);
   assert.ok(war.chronicle!.events.some((e) => e.icon === '✋' && /rejected/.test(e.text)), 'rejection recorded');
+  war.extensions = 2; war.exhaust = { [a]: 90, [b]: 90 }; // nothing left to fight with
   onWarDeadline(w, war.id);
   assert.equal(war.chronicle!.ending!.kind, 'deadline');
   assert.match(war.chronicle!.ending!.headline, /deadline ran out/);

@@ -20,6 +20,7 @@ import { controller, cref, natref, player, seatShare, studyActive } from './quer
 import type { ExtraProposal } from './congressExtra';
 import { relation } from './congress';
 import { activeWars, enemyOf } from './war';
+import { levelOf } from './warCourse';
 
 export function nukeCosts(w: World, nation: Id) {
   const f = 1 + (seatShare(w, w.nations[nation]).centralism ?? 0) * IDEOLOGIES.centralism.fx.nukeCost;
@@ -204,6 +205,7 @@ export function nuclearAI(w: World) {
     const enemy = enemyOf(war, n.id);
     const struck = Object.values(w.nukes).some((x) => x.from === enemy && x.status === 'hit' && w.regions[x.target].owner === n.id);
     if (!doctrinePermits(w, n, struck)) continue;
+    if (!struck && levelOf(war) < 4) continue; // first use only after the war has climbed to nuclear threats (warCourse.ts)
     const target = w.regions.filter((r) => controller(r) === enemy).sort((a, b) => (b.bld.base + b.bld.industrial + b.bld.hospital) - (a.bld.base + a.bld.industrial + a.bld.hospital))[0];
     if (target) launch(w, actor, n.warheads[0].region, target.id);
   }

@@ -163,6 +163,7 @@ export function initForces(w: World) {
 // ---------- raising, disbanding, orders, command ----------
 
 export function raiseCheck(w: World, actor: Id, nation: Id, kind: FormationKind, rid: Id): string | null {
+  if ((w.regions[rid]?.dmzUntil ?? 0) > w.time) return 'A demilitarised zone under the peace treaty: no forces may be raised there.';
   const n = w.nations[nation];
   const k = KINDS[kind];
   if (!nationPerm(w, actor, nation, 'war')) return 'Only the defence minister, vice president or national leader raises forces.';

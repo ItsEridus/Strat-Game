@@ -26,6 +26,7 @@ import { die, relocate } from './population';
 import { wound } from './health';
 import { publicOffice, returnToDuty, returnToDutyCheck, toReserve } from './forces';
 import { dailyRevenue } from './publicFinance';
+import { levelOf } from './warCourse';
 
 export interface WarToll { killed: Record<Id, number>; wounded: Record<Id, number>; captured: Record<Id, number>; refugees: Record<Id, number>; spent: Record<Id, number> }
 export function tollOf(war: War): WarToll {
@@ -76,7 +77,7 @@ function casualties(w: World, days = 1) {
     for (const side of [war.att, war.def]) {
       const n = w.nations[side];
       const losing = n.warScore < 0;
-      const rate = Math.min(0.2, (fighting.has(side) ? 0.0015 : 0.0003) * (losing ? 1.5 : 1) * days);
+      const rate = Math.min(0.2, (fighting.has(side) ? 0.0015 : 0.0003) * (losing ? 1.5 : 1) * (1 + (levelOf(war) - 1) * 0.25) * days); // higher rungs kill more
       for (const c of census(w).all) {
         if (c.nation !== side || !onDuty(c) || c.player) continue;
         if (chance(w, rate)) {

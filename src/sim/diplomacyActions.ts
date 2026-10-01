@@ -27,7 +27,7 @@ import { activeWars, militaryPower, peaceAppetite, settle, warBetween } from './
 export type DipAction = 'praise' | 'condemn' | 'summit' | 'aid' | 'loan' | 'sanction' | 'liftSanctions' | 'expel' | 'treaty' | 'renounce' | 'ultimatum' | 'mediate';
 export type Demand = 'liftSanctions' | 'endWar' | 'leaveAlliance';
 export interface DipParams { target: Id; kind?: TreatyKind; treaty?: Id; demand?: Demand; war?: Id; other?: Id }
-export interface IntlLoan { id: Id; from: Id; to: Id; left: number; monthly: number; defaulted?: boolean; imf?: boolean }
+export interface IntlLoan { id: Id; from: Id; to: Id; left: number; monthly: number; defaulted?: boolean; imf?: boolean; reparations?: boolean }
 export interface DipState { capital: number; last: Record<string, number>; casusBelli?: Record<Id, number> }
 
 export const DIP_INFO: Record<DipAction, { name: string; capital: number; cooldown: number; desc: string }> = {

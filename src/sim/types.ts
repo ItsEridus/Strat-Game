@@ -348,6 +348,7 @@ export interface Region {
   links: Id[];
   core: Id; // original / rightful nation
   owner: Id; // legal owner
+  dmzUntil?: number; // demilitarised after changing hands (2.2)
   occ: { nation: Id; war: Id; since?: number } | null; // provisional occupier (since when: 2.2)
   terrain: Terrain;
   res: Partial<Record<RawRes, number>>; // richness 1..3
@@ -559,8 +560,15 @@ export interface War {
   occupied: Id[]; // regions currently occupied by the attacker under this war
   counter: Id[]; // attacker regions occupied by the defender
   maxOcc: number;
-  status: 'active' | 'ended';
+  status: 'active' | 'ended' | 'frozen';
   outcome?: string;
+  kind?: import('./warCourse').WarKind; // invasion, limited or punitive (2.2)
+  exhaust?: Record<Id, number>; // each side's war exhaustion, 0..100 (2.2)
+  level?: number; // escalation: 1 border fighting .. 4 nuclear threats (2.2)
+  extensions?: number; // times the deadline passed with both sides still fighting (2.2)
+  frozen?: number; // when it froze along the front line (2.2)
+  log?: { t: number; text: string }[]; // escalations and reviews (2.2)
+  reparations?: { from: Id; to: Id; amount: number }; // (2.2)
   battles: Id[];
   offers: PeaceOffer[];
   chronicle?: WarChronicle; // why it started, what happened, why it ended (wars from before 1.3.4 have none)

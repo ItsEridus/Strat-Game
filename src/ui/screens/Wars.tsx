@@ -1,4 +1,5 @@
 import type { War, World } from '../../sim/types';
+import { LEVEL_LABEL, WAR_KIND_LABEL, exhaustionOf, exhaustionWords, levelOf, warKindOf } from '../../sim/warCourse';
 import { tollLine } from '../../sim/warHome';
 import { ActBtn, Btn, Empty, NationChip, Panel, RegionLink, Help } from '../common';
 import { store } from '../store';
@@ -11,7 +12,7 @@ import { useSort } from '../sort';
 export function Wars({ w }: { w: World }) {
   const p = player(w);
   const wars = activeWars(w).sort((a, b) => ((b.att === p.nation || b.def === p.nation) ? 1 : 0) - ((a.att === p.nation || a.def === p.nation) ? 1 : 0));
-  const ended = Object.values(w.wars).filter((x) => x.status === 'ended').sort((a, b) => b.declared - a.declared).slice(0, 10);
+  const ended = Object.values(w.wars).filter((x) => x.status === 'ended' || x.status === 'frozen').sort((a, b) => b.declared - a.declared).slice(0, 10);
   const n = w.nations[p.nation];
   const unsupplied = w.regions.filter((r) => r.owner === p.nation && !r.supplied);
   const past = useSort('past-wars', ended, { war: (x) => `${w.nations[x.att].name} ${w.nations[x.def].name}`, declared: (x) => x.declared, outcome: (x) => x.chronicle?.ending?.headline ?? x.outcome ?? '' }, { key: 'declared', dir: 'desc' });
@@ -60,10 +61,12 @@ function WarCard({ w, war }: { w: World; war: War }) {
       <p>Win condition: <b>{war.occupied.length}/{war.quota}</b> occupations held at once. Occupied by attacker: {war.occupied.map((r) => w.regions[r].name).join(', ') || 'none'}. Counter-occupied: {war.counter.map((r) => w.regions[r].name).join(', ') || 'none'}.</p>
       {war.occupied.some((r) => !war.goals.includes(r)) && <p class="small muted">Non-goal occupations count toward the quota but are returned at settlement.</p>}
       {war.surprise && <p class="small warn">😱 The attack took {w.nations[war.def].name} by surprise.</p>}
+      <p class="small">This is {WAR_KIND_LABEL[warKindOf(war)]}, now at <b>{LEVEL_LABEL[levelOf(war)]}</b>{war.extensions ? `; the deadline has passed ${war.extensions} time${war.extensions > 1 ? 's' : ''} with both sides still fighting` : ''}.</p>
       <h4>The toll</h4>
       <table class="table compact small"><tbody>{[war.att, war.def].map((s) => (
-        <tr><td><NationChip w={w} id={s} />{w.nations[s].mobilised ? ' · mobilised' : ''}</td><td>{tollLine(w, war, s)}</td></tr>
+        <tr><td><NationChip w={w} id={s} />{w.nations[s].mobilised ? ' · mobilised' : ''}</td><td>{tollLine(w, war, s)}</td><td>exhaustion <b>{Math.round(exhaustionOf(war, s))}</b> ({exhaustionWords(exhaustionOf(war, s))})</td></tr>
       ))}</tbody></table>
+      <p class="small muted">The deadline is a review: if both sides still have fight in them the war drags on; if the attacker holds ground that neither side can change, the front freezes into a conflict without peace; otherwise the offensive peters out. Exhausted countries want peace, and a negotiated peace brings a treaty, reparations from the side that gave ground and a demilitarised border.</p>
       <h4>Battles</h4>
       {battles.length ? battles.map((b) => (
         <div class="row small"><RegionLink w={w} id={b.region} /> round {b.round} ({b.wins.a}–{b.wins.d}){b.airOnly ? ' · air' : ''}
