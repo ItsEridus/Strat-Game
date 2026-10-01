@@ -65,6 +65,7 @@ export interface PrisonSystem {
   escapes: number;
   lastRiot?: number;
   hist: { t: number; inmates: number; places: number }[]; // monthly
+  staffing?: number; // prison officers against posts (0..1)
 }
 
 /** The usual police share of revenue, against which prison funding is measured. */
@@ -91,7 +92,7 @@ export const funding = (n: Nation) => budgetOf(n).police / POLICE_NORM;
 /** Conditions follow funding, the state's effectiveness and overcrowding. */
 function conditionsTarget(n: Nation, p: PrisonSystem) {
   const eff = baselineOf(n.iso).effectiveness;
-  return Math.max(5, Math.min(95, 30 + eff * 45 + (funding(n) - 1) * 25 - Math.max(0, occupancy(p) - 1) * 60));
+  return Math.max(5, Math.min(95, 30 + eff * 45 + (funding(n) - 1) * 25 - Math.max(0, occupancy(p) - 1) * 60 + ((p.staffing ?? 0.6) - 0.6) * 20));
 }
 
 /** How long courts send people away for, against the median country. */
@@ -110,6 +111,8 @@ export function prisonsDaily(w: World) {
     // Places: built slowly when funding is above the usual level, lost when it is cut.
     const f = funding(n);
     p.places = Math.max(1, Math.round(p.places * (1 + (f - 1) * 0.0004)));
+    const rs = w.regions.filter((r) => r.owner === n.id && r.staff?.prison != null);
+    p.staffing = rs.length ? rs.reduce((t, r) => t + r.staff!.prison!, 0) / rs.length : 0.6;
     p.conditions += (conditionsTarget(n, p) - p.conditions) * 0.05;
     if (day % 30 === 0) { p.hist.push({ t: w.time, inmates: p.inmates, places: p.places }); if (p.hist.length > 60) p.hist.shift(); }
     // Riots: crowded, run-down prisons boil over.
@@ -297,6 +300,29 @@ function escape(w: World, c: Citizen, quiet: boolean) {
   c.sec.heat = Math.min(100, c.sec.heat + 80);
   openCase(w, c, 'escape', c.loc, 60, 0);
   if (!quiet || c.nation === player(w).nation) record(w, 'justice', `🏃 ${c.name} escaped from prison in ${w.nations[c.nation].name}.`, { nation: c.nation, cit: c.id });
+}
+
+// ---------- visits ----------
+
+export function visitCheck(w: World, c: Citizen): string | null {
+  if (!jailed(w, c)) return 'Visits are for prisoners.';
+  if ((c.sec.last.visit ?? -1e12) > w.time - 7 * DAY) return 'One visiting order a week.';
+  return null;
+}
+/** A visiting order: someone close comes to see you. */
+export function requestVisit(w: World, c: Citizen): Result {
+  const why = visitCheck(w, c);
+  if (why) return fail(why);
+  c.sec.last.visit = w.time;
+  const close = Object.entries(c.rel).map(([id, v]) => [w.citizens[Number(id)], v] as const).filter(([x, v]) => x && !x.gone && !jailed(w, x) && v >= 30).sort((a, b) => b[1] - a[1]);
+  if (!close.length) { lifeOf(c).stress = Math.min(100, lifeOf(c).stress + 3); return ok('Visiting hour comes and goes. Nobody came.'); }
+  const [v] = close[0];
+  const l = lifeOf(c);
+  l.happiness = Math.min(100, l.happiness + 6);
+  l.stress = Math.max(0, l.stress - 10);
+  insideOf(c).conduct = Math.min(100, insideOf(c).conduct + 3);
+  c.rel[v.id] = Math.min(100, (c.rel[v.id] ?? 0) + 3);
+  return ok(`${v.name} came to visit. Forty minutes across a table, and the week feels shorter.`);
 }
 
 // ---------- re-entry ----------

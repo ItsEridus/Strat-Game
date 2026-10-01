@@ -91,6 +91,8 @@ export const OCCUPATIONS: Record<string, Occupation> = {
   // Security and defence
   guard: { label: 'Security guard', family: 'security', pay: 0.75, edu: 'school', industries: ['wg', 'wa', 'oil'] },
   police: { label: 'Police officer', family: 'security', pay: 1.5, edu: 'school' },
+  prisonofficer: { label: 'Prison officer', family: 'security', pay: 1.1, edu: 'school' },
+  warden: { label: 'Prison governor', family: 'security', pay: 2.2, edu: 'bachelor' },
   soldier: { label: 'Soldier', family: 'security', pay: 1.0, edu: 'school' },
   officer: { label: 'Military officer', family: 'security', pay: 1.9, edu: 'bachelor' },
   // Arts and media

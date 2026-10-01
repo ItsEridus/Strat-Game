@@ -3,6 +3,30 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.6.4: policing as an institution
+
+- **Trust in the police.** Each country starts from its real institutions: high in Germany, Britain and Japan, low
+  in Mexico and Russia. Trust rises when cases are solved and falls with corruption scandals and violent arrests.
+  Where people trust the police, witnesses come forward and cases build faster.
+- **Clearance.** The Law & Order screen shows the share of reported crimes brought to court each month.
+- **Corruption and internal affairs.**
+  - Bribes now go into a real officer's pocket.
+  - As an officer you can take an envelope from the organisation on your patch: dirty money, and thinner files on
+    them.
+  - Internal affairs reviews officers every month, more effectively where the rule of law is strong.
+- **Use of force.** A few arrests turn violent, more often where institutions are weak. Videos and protests cost
+  the police trust.
+- **National investigations.** The Minister of the Interior or the leader can open a 30-day investigation:
+  - into an organisation: more evidence and new cases against its members;
+  - a sweep for police corruption;
+  - a counter-espionage drive.
+
+  AI governments go after their strongest organisations, and order corruption sweeps when trust collapses.
+- **Prison officers.** A new public career runs from prison officer to governor (warden). How well prisons are
+  staffed affects conditions inside.
+- **Prison visits.** In prison, send a visiting order once a week. Someone close to you comes, which helps your
+  mood, your stress and your conduct record.
+
 ### New in 1.6.3: white-collar crime, laundering and informants
 
 - **Dirty money.** Money from crime is dirty until you launder it.

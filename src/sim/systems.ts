@@ -3,6 +3,7 @@
 import { prisonsDaily } from './prisons';
 import { courtsDaily } from './courts';
 import { whiteCollarDaily } from './whitecollar';
+import { policingDaily } from './policing';
 import { lod } from './tick';
 import { powerMonthly } from './worldHistory';
 import { budgetDaily } from './nationalBudget';
@@ -156,7 +157,7 @@ export function registerSystems() {
   // Stage 6: law & order, intelligence, a dynamic world and a responsive society
   HANDLERS.opResolve = (w, p) => resolveOp(w, p.id);
   hourlyHooks.push(crimeHourly);
-  dailyHooks.push((w: World) => { dynamicsDaily(w); crimeDaily(w); whiteCollarDaily(w); courtsDaily(w); prisonsDaily(w); playerRackets(w); policeRecruitment(w); intelDaily(w); npcDaily(w); });
+  dailyHooks.push((w: World) => { dynamicsDaily(w); crimeDaily(w); policingDaily(w); whiteCollarDaily(w); courtsDaily(w); prisonsDaily(w); playerRackets(w); policeRecruitment(w); intelDaily(w); npcDaily(w); });
   REPLY_HANDLERS.arrest = (w, m, o) => replyArrest(w, m.payload!.case, o);
   REPLY_HANDLERS.extortion = (w, m, o) => replyExtortion(w, m.payload!, o);
   REPLY_HANDLERS.syndInvite = (w, m, o) => replySyndInvite(w, m.payload!, o);

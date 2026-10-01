@@ -21,6 +21,7 @@ import { practise } from './growth';
 import { SERVICES } from './services';
 import { CRIME_NAME, SEVERITY, openCase } from './crime';
 import { release } from './prisons';
+import { noteSolved } from './policing';
 
 /** Share of convictions that come from guilty pleas (approximate: US federal ~97%, England and Wales Crown Court ~70%, Germany's Absprachen ~20%, Japan rare). */
 export const PLEA_RATE: Record<string, number> = { USA: 0.95, CAN: 0.8, MEX: 0.5, BRA: 0.3, ARG: 0.5, GBR: 0.7, DEU: 0.2, RUS: 0.6, TUR: 0.3, SAU: 0.3, ZAF: 0.4, IND: 0.3, CHN: 0.5, JPN: 0.05, KOR: 0.2, AUS: 0.7 };
@@ -73,6 +74,7 @@ export function afterVerdict(w: World, k: Case, convicted: boolean, plea: boolea
   const s = w.citizens[k.suspect];
   const st = courtStats(w.nations[k.nation]);
   st.trials++;
+  noteSolved(w.nations[k.nation]);
   if (convicted) st.convictions++; else st.acquittals++;
   if (plea) st.pleas++;
   if (k.innocent && convicted) st.wrongful++;

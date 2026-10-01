@@ -27,6 +27,7 @@ import { nationPerm } from './authority';
 import { isAdult, practise } from './growth';
 import { admit, release, reoffendPull, sentenceFactor } from './prisons';
 import { markDirty } from './whitecollar';
+import { arrestForce, bribeRecipient, noteCold, noteReported, witnessFactor } from './policing';
 import { afterVerdict, bailAmount, convictionChance, maybeFrame, payDefence, pleaRate, postBail, settleBail } from './courts';
 
 // ---------- definitions ----------
@@ -156,6 +157,7 @@ export function openCase(w: World, suspect: Citizen, kind: CrimeKind, rid: Id, e
   if (existing) { existing.evidence = Math.min(100, existing.evidence + evidence); existing.loot += loot; return existing; }
   const k: Case = { id: nid(w), suspect: suspect.id, kind, region: rid, nation: controller(w.regions[rid]), evidence: Math.min(100, evidence), opened: w.time, status: 'open', detective: null, loot, syndicate: suspect.sec.syndicate };
   w.cases[k.id] = k;
+  noteReported(w.nations[k.nation]);
   localNews(w, rid, `🚨 Police are investigating a ${CRIME_NAME[kind]}.`);
   if (suspect.player) notify(w, 'personal', `🚨 ${policeName(w, rid)} opened a ${CRIME_NAME[kind]} investigation. Evidence ${Math.round(k.evidence)}%.`, { link: 'crime' });
   return k;
@@ -427,6 +429,7 @@ function tryArrest(w: World, k: Case, by: Citizen | null): boolean {
   const s = w.citizens[k.suspect];
   if (!s || jailed(w, s) || controller(w.regions[s.loc]) !== k.nation) return false;
   s.sec.record.arrests++;
+  arrestForce(w, s, k.nation);
   localNews(w, s.loc, `🚔 ${s.name} was arrested${by ? ` by ${by.name}` : ''} (${CRIME_NAME[k.kind]}).`);
   if (by) {
     by.sec.collars++;
@@ -470,7 +473,9 @@ function bribeAttempt(w: World, s: Citizen, k: Case): boolean {
   if ((s.wallet[code] ?? 0) < amount) return false;
   const corrupt = Math.max(0.1, 0.55 - r.police / 200);
   if (chance(w, corrupt)) {
-    pay(w, cref(s.id), hhref(k.nation), code, amount, 'Bribe');
+    const officer = bribeRecipient(w, k.region);
+    pay(w, cref(s.id), officer ? cref(officer.id) : hhref(k.nation), code, amount, 'Bribe');
+    if (officer) markDirty(officer, code, amount);
     k.status = 'closed';
     k.outcome = 'dropped (bribe)';
     s.flags.pendingTrial = 0;
@@ -621,13 +626,13 @@ export function crimeDaily(w: World) {
       continue;
     }
     const r = w.regions[k.region];
-    k.evidence = Math.min(100, k.evidence + B.police.evidencePerDay * (r.police / 50) + s.sec.heat / 25 - (k.detective ? 0 : 0.5));
+    k.evidence = Math.min(100, k.evidence + B.police.evidencePerDay * (r.police / 50) * witnessFactor(w.nations[k.nation]) + s.sec.heat / 25 - (k.detective ? 0 : 0.5));
     if (k.evidence >= B.police.arrestAt) {
       // The arresting officer comes from the region's own force, else the nation's.
       let officers = officersOf(w, k.region).filter((c) => !c.player && !jailed(w, c));
       if (!officers.length) officers = w.regions.filter((x) => x.owner === k.nation).flatMap((x) => officersOf(w, x.id)).filter((c) => !c.player && !jailed(w, c));
       tryArrest(w, k, officers.length ? pick(w, officers) : null);
-    } else if (w.time - k.opened > B.justice.coldAfterDays * DAY && k.evidence < 40) { k.status = 'closed'; k.outcome = 'went cold'; if (!s.player && !k.innocent) maybeFrame(w, k); }
+    } else if (w.time - k.opened > B.justice.coldAfterDays * DAY && k.evidence < 40) { k.status = 'closed'; k.outcome = 'went cold'; noteCold(w.nations[k.nation]); if (!s.player && !k.innocent) maybeFrame(w, k); }
   }
   for (const c of census(w).all) {
     c.sec.heat = Math.max(0, c.sec.heat - B.justice.heatDecay);

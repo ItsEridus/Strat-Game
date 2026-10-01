@@ -23,7 +23,7 @@ import { leaveCheck } from './health';
 import { contribute } from './pensions';
 import { recordPay } from './wages';
 
-export type Service = 'teacher' | 'nurse' | 'doctor' | 'clerk' | 'engineer' | 'prosecutor' | 'defender' | 'judge';
+export type Service = 'teacher' | 'nurse' | 'doctor' | 'clerk' | 'engineer' | 'prosecutor' | 'defender' | 'judge' | 'warden';
 export interface Post { kind: Service; region: Id; grade: number; since: number; promoted: number; shifts: number; lastDay: number }
 
 interface ServiceDef { label: string; icon: string; place: string; ladder: string[]; pay: number[]; needs: { level: EduLevel; field?: Field[] }[]; per: number; skill: 'lead' | 'end' | 'eco' | 'cons' | 'acc' }
@@ -54,6 +54,10 @@ export const SERVICES: Record<Service, ServiceDef> = {
   judge: { label: 'Judge', icon: '⚖️', place: 'courts', per: 300, skill: 'cons',
     ladder: ['Magistrate', 'District judge', 'Circuit judge', 'Appeal judge', 'Chief justice'], pay: [3.0, 3.8, 4.6, 5.6, 7.0],
     needs: [{ level: 'bachelor', field: ['law'] }, { level: 'master', field: ['law'] }, { level: 'master', field: ['law'] }, { level: 'master', field: ['law'] }, { level: 'doctorate', field: ['law'] }] },
+  // The prison service (1.7): staffing keeps prisons safe and decent.
+  warden: { label: 'Prison officer', icon: '🔑', place: 'prison', per: 120, skill: 'end',
+    ladder: ['Prison officer', 'Senior prison officer', 'Supervising officer', 'Deputy governor', 'Governor (warden)'], pay: [1.2, 1.5, 1.9, 2.6, 3.4],
+    needs: [{ level: 'school' }, { level: 'school' }, { level: 'vocational' }, { level: 'bachelor' }, { level: 'bachelor' }] },
 };
 export const SERVICE_KEYS = Object.keys(SERVICES) as Service[];
 
@@ -67,7 +71,7 @@ export function maxGrade(c: Citizen, kind: Service): number {
 }
 /** Posts in a region: one per `per` residents (about 13% of people work in these services, as in OECD countries); small places share a teacher, a nurse and a clerk. */
 /** Courts sit in the larger places: the smallest number of residents for each court post. */
-const COURT_MIN: Partial<Record<Service, number>> = { prosecutor: 30, defender: 30, judge: 30 };
+const COURT_MIN: Partial<Record<Service, number>> = { prosecutor: 30, defender: 30, judge: 30, warden: 30 };
 export function postsIn(w: World, region: Id, kind: Service): number {
   const n = residents(w, region).length;
   const core = kind === 'teacher' || kind === 'nurse' || kind === 'clerk';
@@ -187,7 +191,7 @@ export function servicesDaily(w: World, fill = false) {
   for (const c of census(w).all) if (c.post) staff.set(`${c.post.region}:${c.post.kind}`, (staff.get(`${c.post.region}:${c.post.kind}`) ?? 0) + 1);
   for (const r of w.regions) {
     const ratio = (kinds: Service[]) => { let have = 0, want = 0; for (const k of kinds) { have += staff.get(`${r.id}:${k}`) ?? 0; want += postsIn(w, r.id, k); } return want ? Math.min(1, have / want) : 0.6; }; // nothing to staff: neutral
-    r.staff = { school: ratio(['teacher']), clinic: ratio(['nurse', 'doctor']), offices: ratio(['clerk', 'engineer']), courts: ratio(['prosecutor', 'defender', 'judge']) };
+    r.staff = { school: ratio(['teacher']), clinic: ratio(['nurse', 'doctor']), offices: ratio(['clerk', 'engineer']), courts: ratio(['prosecutor', 'defender', 'judge']), prison: ratio(['warden']) };
     for (const kind of SERVICE_KEYS) {
       const open = postsIn(w, r.id, kind) - (staff.get(`${r.id}:${kind}`) ?? 0);
       if (open < 0 && !fill) { // more staff than posts (people moved away, budgets): the newest NPC hire is let go

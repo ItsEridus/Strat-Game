@@ -13,7 +13,9 @@ import {
   joinSyndicate, joinSyndicateCheck, leavePolice, leaveSyndicate, orderRaid, patrol, patrolCheck, policeName, raidCheck, setPoliceFunding, syndicateJob,
 } from '../../sim/crime';
 import { appeal, appealChance, appealCheck, appealFee, courtStats, hireForTrial, hireForTrialCheck, pleaRate } from '../../sim/courts';
+import { INVESTIGATION_COST, investigationCheck, openInvestigation, policingOf, protectionCheck, takeProtection } from '../../sim/policing';
 import { cultivate, cultivateCheck, cyberCheck, cyberFraud, dirtyOf, embezzle, embezzleCheck, informantsOf, launder, launderCheck, launderOptions, setEvasion } from '../../sim/whitecollar';
+import { requestVisit, visitCheck } from '../../sim/prisons';
 import { escapeChance, escapeCheck, funding, hasLiveRecord, incarcerationRate, insideOf, justiceOf, occupancy, paroleChance, paroleCheck, paroleHearing, prisonClass, prisonClassCheck, prisonOf, prisonWork, prisonWorkCheck, spentAt, tryEscape } from '../../sim/prisons';
 
 export function Crime({ w }: { w: World }) {
@@ -62,6 +64,7 @@ export function Crime({ w }: { w: World }) {
               <ActBtn kind="primary" why={prisonWorkCheck(w, p)} run={(w) => prisonWork(w, p)}>Work a shift</ActBtn>
               <ActBtn why={prisonClassCheck(w, p)} run={(w) => prisonClass(w, p)}>Go to class</ActBtn>
               <ActBtn why={paroleCheck(w, p)} run={(w) => paroleHearing(w, p)}>Apply for parole</ActBtn>
+              <ActBtn why={visitCheck(w, p)} run={(w) => requestVisit(w, p)}>Send a visiting order</ActBtn>
               <ActBtn kind="danger" why={escapeCheck(w, p)} confirm={`Try to escape? About a ${Math.round(escapeChance(w, p) * 100)}% chance; if caught, extra time and a ruined file.`} run={(w) => tryEscape(w, p)}>Try to escape</ActBtn>
             </div>
             <Help>Work and classes build conduct, which the parole board weighs with your record. The board can hear you after {Math.round(justiceOf(w.nations[p.nation]).parole * 100)}% of your sentence. Gangs prey on newcomers in crowded, run-down prisons; members of an organisation are protected.</Help>
@@ -101,8 +104,12 @@ export function Crime({ w }: { w: World }) {
           <tr><td>Unrest</td><td><Bar v={r.unrest} max={100} color="#e39b3a" label={`${Math.round(r.unrest)}`} /></td></tr>
           <tr><td>Organised crime</td><td>{onTurf.length ? onTurf.map((s) => `${s.name} (${s.style})`).join(', ') : <span class="muted">none known</span>}</td></tr>
           <tr><td>Officers here</td><td>{census(w).all.filter((c) => c.sec.police === r.id).length}</td></tr>
+          {(() => { const pg = policingOf(w.nations[nat]); return (<>
+            <tr><td>Trust in the police</td><td><Bar v={pg.trust} max={100} color="#5b8def" label={`${Math.round(pg.trust)}`} /></td></tr>
+            <tr><td>Cases cleared</td><td>{Math.round(pg.clearance * 100)}% last month · {pg.scandals} corruption scandals · {pg.incidents} use-of-force incidents</td></tr>
+          </>); })()}
         </tbody></table>
-        <Help>Crime rises with unemployment, poverty, recession, city size, unrest and gangs, and falls with policing (state police budgets, national police funding, officers) and welfare. Above 50 it cuts local production.</Help>
+        <Help>Crime rises with unemployment, poverty, recession, city size, unrest and gangs, and falls with policing (state police budgets, national police funding, officers) and welfare. Above 50 it cuts local production. Where people trust the police, witnesses come forward and cases build faster; corruption scandals and violent arrests cost that trust.</Help>
       </Panel>
 
       <Panel title="🦹 Street crime">
@@ -166,6 +173,7 @@ function PolicePanel({ w }: { w: World }) {
     <Panel title={`👮 ${PRANKS[p.sec.prank]}, ${policeName(w, p.sec.police)}`}>
       <p class="small">{p.sec.collars} arrests{next != null ? ` · ${next - p.sec.collars} more for ${PRANKS[p.sec.prank + 1]}` : ''}.</p>
       <ActBtn kind="primary" why={patrolCheck(w, p)} run={(w) => patrol(w, p)}>Patrol (−{B.police.patrolEnergy}⚡)</ActBtn>
+      <ActBtn kind="danger" why={protectionCheck(w, p)} confirm="Take money to look the other way? Internal affairs reviews officers every month." run={(w) => takeProtection(w, p)}>Take an envelope</ActBtn>
       <h4>Open cases in your jurisdiction</h4>
       {cases.length ? <table class="table compact small"><tbody>{cases.map((k) => (
         <tr><td>{CRIME_NAME[k.kind]}</td><td><RegionLink w={w} id={k.region} /></td><td>{p.sec.prank >= 2 ? <CitLink w={w} id={k.suspect} /> : <span class="muted">suspect withheld</span>}</td><td>{Math.round(k.evidence)}%</td>
@@ -198,7 +206,14 @@ function InteriorPanel({ w }: { w: World }) {
       {synds.length > 0 && <div class="row small">Raid
         <Select value={target} options={synds.map((s) => [s.id, `${s.name} (strength ${Math.round(s.strength)})`])} onChange={setTarget} />
         <ActBtn small why={raidCheck(w, p.id, target)} run={(w) => orderRaid(w, p.id, target)}>Order raid (100)</ActBtn></div>}
-      <Help>Funding the {n.name} national police raises policing everywhere (and costs the treasury daily). Raids seize assets, arrest members and weaken organisations.</Help>
+      <h4>National investigations</h4>
+      {policingOf(n).investigations.map((i) => <p class="small">🔎 {i.kind === 'syndicate' ? w.syndicates[i.target!]?.name ?? 'an organisation' : i.kind === 'corruption' ? 'Police corruption' : 'Foreign espionage'} · until {fmtDay(i.until)}</p>)}
+      <div class="row small">
+        {synds.length > 0 && <ActBtn small why={investigationCheck(w, p.id, p.nation, 'syndicate', target)} run={(w) => openInvestigation(w, p.id, p.nation, 'syndicate', target)}>Investigate the selected organisation</ActBtn>}
+        <ActBtn small why={investigationCheck(w, p.id, p.nation, 'corruption')} run={(w) => openInvestigation(w, p.id, p.nation, 'corruption')}>Police corruption sweep</ActBtn>
+        <ActBtn small why={investigationCheck(w, p.id, p.nation, 'espionage')} run={(w) => openInvestigation(w, p.id, p.nation, 'espionage')}>Counter-espionage drive</ActBtn>
+      </div>
+      <Help>Funding the {n.name} national police raises policing everywhere (and costs the treasury daily). Raids seize assets, arrest members and weaken organisations. National investigations run for 30 days (<Amt asset={n.cur} v={INVESTIGATION_COST()} /> each): into an organisation (evidence and new cases against its members), police corruption (internal affairs works harder; trust dips while it runs) or foreign espionage (counter-intelligence and spy cases).</Help>
     </Panel>
   );
 }

@@ -7,7 +7,7 @@ import { audit, mint } from '../src/engine/ledger';
 import { c as cur } from '../src/engine/money';
 import { B } from '../src/data/balance';
 import { DAY } from '../src/engine/clock';
-import { cref, jailed, player } from '../src/sim/query';
+import { cref, jailed, natref, player, syndref } from '../src/sim/query';
 import { openCase, trial } from '../src/sim/crime';
 import { applyCheck } from '../src/sim/company';
 import { JUSTICE, admit, escapeChance, incarcerationRate, insideOf, occupancy, paroleCheck, paroleHearing, prisonClass, prisonOf, prisonWork, prisonWorkCheck, prisonsDaily, recordBars, release, sentenceFactor, tryEscape, vetted } from '../src/sim/prisons';
@@ -264,4 +264,54 @@ test('online fraud takes foreign money; insiders are reviewed; informants feed e
   cultivate(w, det, s.id);
   markDirty(p, 'XXX', 0);
   assert.ok(audit(w).ok, audit(w).problems.join('; '));
+});
+
+import { investigationCheck, openInvestigation, policingDaily, policingOf, takeProtection, witnessFactor } from '../src/sim/policing';
+import { requestVisit } from '../src/sim/prisons';
+
+test('police trust starts from real institutions; low trust slows cases', () => {
+  const w = fresh(93);
+  const by = (iso: string) => w.nations.find((n) => n.iso === iso);
+  const de = by('DEU'), mx = by('MEX');
+  if (de && mx) {
+    assert.ok(policingOf(de).trust > policingOf(mx).trust + 20, `${policingOf(de).trust} vs ${policingOf(mx).trust}`);
+    assert.ok(witnessFactor(de) > witnessFactor(mx));
+  }
+});
+
+test('protection money is dirty and internal affairs catches it; national investigations run and close', () => {
+  const w = fresh(94);
+  const p = player(w);
+  const s = Object.values(w.syndicates)[0];
+  const n = w.nations[s.nation];
+  p.sec.police = s.turf[0]; p.sec.prank = 1;
+  mint(w, syndref(s.id), n.cur, cur(500), 'test');
+  const r = takeProtection(w, p);
+  assert.ok(r.ok, r.msg);
+  assert.ok(dirtyOf(p, n.cur) > 0 && (p.flags.bribes ?? 0) === 1);
+  p.flags.bribes = 15; // a lot of envelopes
+  w.time += ((30 - (Math.floor(w.time / DAY) % 30)) % 30) * DAY;
+  for (let i = 0; i < 10 && p.flags.bribes; i++) { policingDaily(w); w.time += 30 * DAY; }
+  assert.ok(Object.values(w.cases).some((k) => k.kind === 'corruption' && k.suspect === p.id), 'internal affairs opened a file');
+  // A national investigation (the leader orders it).
+  const leader = n.president!;
+  mint(w, natref(n.id), n.cur, cur(1000), 'test');
+  assert.equal(investigationCheck(w, leader, n.id, 'syndicate', s.id), null);
+  assert.ok(openInvestigation(w, leader, n.id, 'syndicate', s.id).ok);
+  assert.match(investigationCheck(w, leader, n.id, 'syndicate', s.id) ?? '', /already/);
+  w.time += 31 * DAY;
+  policingDaily(w);
+  assert.equal(policingOf(n).investigations.length, 0, 'closed after 30 days');
+  assert.ok(audit(w).ok, audit(w).problems.join('; '));
+});
+
+test('prison visits from people who care; prison officers are a career', () => {
+  const w = fresh(95);
+  const p = jail(w, 10);
+  const friend = Object.values(w.citizens).find((c) => !c.player && !c.gone)!;
+  p.rel[friend.id] = 60;
+  const r = requestVisit(w, p);
+  assert.match(r.msg, new RegExp(friend.name));
+  assert.match(requestVisit(w, p).msg, /week/);
+  assert.ok(SERVICES.warden.ladder.length === 5);
 });

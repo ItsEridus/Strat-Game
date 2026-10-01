@@ -358,7 +358,7 @@ export interface Region {
   pop0?: number; // background population at genesis
   draw?: number; // how attractive the region is to live in, -1..1, smoothed (sim/population.ts)
   blockade: Id | null; // nation whose navy blockades this coast
-  staff?: { school: number; clinic: number; offices: number; courts?: number };
+  staff?: { school: number; clinic: number; offices: number; courts?: number; prison?: number };
   housePx?: number; // housing price index, 0.5..2.5, drifts slowly (sim/housing.ts) // public-service staffing 0..1 (sim/services.ts)
 }
 
@@ -390,6 +390,7 @@ export interface Nation {
   infraBonus?: number; healthBonus?: number; // built up by public investment (strategic engine)
   strategy?: { kind: import('./nationalBudget').Strategy; since: number; why: string };
   powerHist?: import('./worldHistory').PowerPoint[]; // power index each month
+  policing?: import('./policing').Policing; // trust, clearance, investigations (1.7)
   courts?: import('./courts').CourtStats; // trials, pleas, appeals and exonerations (1.7)
   prison?: import('./prisons').PrisonSystem; // the national prison system (1.7)
   chronicle?: { t: number; text: string }[]; // the nation's history (strategy changes and other turning points)
