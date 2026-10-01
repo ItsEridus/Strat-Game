@@ -11,6 +11,7 @@ import { bestOffer } from '../ai/citizens';
 import { notify } from '../engine/events';
 import { hobbyCheck, pursueHobby } from './hobbies';
 import { study, studyCheck } from './education';
+import { schoolDay, schoolDayCheck } from './childhood';
 import { serviceShift, serviceShiftCheck } from './services';
 import { familyTime, familyTimeCheck, rest, restCheck } from './wellbeing';
 
@@ -25,6 +26,7 @@ export function routineHourly(w: World) {
   if (r.work && h === p.workHour && p.post && !serviceShiftCheck(w, p)) serviceShift(w, p);
   if (r.work && h === p.workHour && p.job != null && p.lastWorkDay !== today(w) && !shiftCheck(w, p)) workShift(w, p);
   if (r.school && h === 9 && !studyCheck(w, p)) study(w, p);
+  if (r.school && h === 8 && !schoolDayCheck(w, p)) schoolDay(w, p);
   if (r.family && h === 19 && !familyTimeCheck(w, p)) familyTime(w, p);
   if (r.hobby && h === 20 && !hobbyCheck(w, p, r.hobby)) pursueHobby(w, r.hobby, p);
   if (r.rest && h === 21 && !restCheck(w, p)) rest(w, p);

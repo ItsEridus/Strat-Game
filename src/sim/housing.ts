@@ -52,7 +52,7 @@ export function assignHome(w: World, c: Citizen) {
   const own = OWNERSHIP[w.nations[c.nation].iso] ?? 0.65;
   const h = hash01(c.id, 1313, 1);
   const married = c.family?.status === 'married';
-  const kind: Home['kind'] = age < 25 && (c.family?.parents ?? []).some((id) => w.citizens[id]?.home === c.home && !w.citizens[id]?.gone) && h < 0.6 ? 'family'
+  const kind: Home['kind'] = age < 18 ? 'family' : age < 25 && (c.family?.parents ?? []).some((id) => w.citizens[id]?.home === c.home && !w.citizens[id]?.gone) && h < 0.6 ? 'family'
     : h < own * Math.min(1, (age - 18) / 25) ? 'own' : 'rent';
   const size: HomeSize = kind === 'family' ? 'room' : married || (c.family?.kids.length ?? 0) > 0 ? (hash01(c.id, 1313, 2) < 0.6 ? 'house' : 'flat') : hash01(c.id, 1313, 3) < 0.25 ? 'room' : hash01(c.id, 1313, 4) < 0.8 ? 'flat' : 'house';
   c.dwelling = { kind, region: c.home, size, since: w.time, paid: kind === 'own' ? priceOf(w, c.home, size) : undefined };

@@ -3,7 +3,7 @@
 // citizens; the bereaved grieve and inherit. The player lives by the same rules:
 // ask someone out, take them on dates, propose, marry, start a family — and a
 // partner who is neglected may leave.
-import type { Citizen, Family, Id, World } from './types';
+import type { Citizen, Family, Id, Kid, World } from './types';
 import { B } from '../data/balance';
 import { NAME_POOLS } from '../data/names';
 import { DAY } from '../engine/clock';
@@ -23,6 +23,7 @@ import { newResident, regionTarget } from './population';
 import { bump } from './progress';
 import { conceive } from './kinship';
 import { milestone } from './lifecycle';
+import { comeOfAgeFrom } from './childhood';
 import { fmtDate } from '../engine/calendar';
 
 export function fam(c: Citizen): Family {
@@ -111,7 +112,7 @@ export function bereave(w: World, c: Citizen) {
 }
 
 /** A child raised in a family turns 18 and becomes a citizen in their own right. */
-export function kidComesOfAge(w: World, parent: Citizen, kid: { name: string; born: number }) {
+export function kidComesOfAge(w: World, parent: Citizen, kid: Kid) {
   const f = fam(parent);
   f.kids = f.kids.filter((k) => k !== kid);
   const nation = w.nations[parent.nation];
@@ -127,6 +128,7 @@ export function kidComesOfAge(w: World, parent: Citizen, kid: { name: string; bo
     notify(w, 'personal', `🎓 Your child ${c.name} has turned 18 and is starting out on their own.`, { critical: true, link: 'character' });
     c.rel[player(w).id] = 70;
   }
+  comeOfAgeFrom(w, kid, c, parent);
   localNews(w, parent.home, `🎓 ${c.name}, ${parent.name}'s child, came of age.`);
   return c;
 }

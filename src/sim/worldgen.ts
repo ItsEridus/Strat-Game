@@ -319,7 +319,8 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
   const birthplace = weighted(w, regions.filter((r) => r.owner === pn.id), (r) => Math.sqrt(Math.max(1, EARTH.regions[r.id].popReal)))?.id ?? pn.capital;
   const p = newCitizen(w, playerName.trim().slice(0, 28) || 'Citizen', pn.id, birthplace, 'worker', 'capitalism');
   p.player = true;
-  p.born = bornYearsAgo(w, B.life.playerAge, randInt(w, 20, 340)); // a birthday later in the year
+  const startAge = settings.startAge ?? B.life.playerAge;
+  p.born = bornYearsAgo(w, startAge, startAge === 0 ? randInt(w, 0, 3) : randInt(w, 20, 340)); // a birthday later in the year (or just born)
   autoAllocate(p, 3);
   p.workHour = 9; p.trainHour = 8; p.traits = { ambition: 1, risk: 0.5, loyalty: 0.5, greed: 0.5, activity: 1 };
   p.energy = B.energy.baseMax;
@@ -327,7 +328,8 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
   invalidateCensus(w);
   w.playerId = p.id;
   const diff = { easy: 2, normal: 1, hard: 0.5 }[settings.difficulty];
-  mint(w, cref(p.id), pn.cur, cur(60 * diff), 'Starting funds');
+  mint(w, cref(p.id), pn.cur, cur((startAge < B.life.adultAge ? 5 : 60) * diff), startAge < B.life.adultAge ? 'Piggy bank' : 'Starting funds');
+  if (startAge < B.life.adultAge) { lifeOf(p).grades = 50; p.energy = 60; }
   mint(w, cref(p.id), GOLD, g(2 * diff), 'Starting funds');
   produce(w, cref(p.id), 'food:1', 10, 'genesis');
   produce(w, cref(p.id), 'food:2', 3, 'genesis');

@@ -3,6 +3,21 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.3.17: growing up, and raising children
+
+- **Choose when your life starts.** New campaigns can begin at 24 (as before), at 18 just out of school, at 16 still
+  at school, or as a newborn growing up in a family.
+- **Childhood.** As a child you live at home on your parents' budget and get pocket money. From 5 you go to school
+  (by hand, or in your routine at 08:00): school days raise your grades, and skipping school lowers them. Play with
+  friends for a happier childhood. You can work part-time from 16.
+- **Leaving school at 18.** Grades of 35 or more earn a secondary diploma. Grades of 85 or more earn a scholarship
+  that pays the fees for your first degree.
+- **Raising children.** Spend time with each of your children (once a day each): reading and play when they're
+  small, homework when they're at school, long talks when they're teenagers. Closeness fades if you're never there.
+  Their grades follow their school and your attention.
+- **Who they become.** At 18, a child's grades decide their diploma, and good students go on to college or
+  university. How close they are to you depends on the time you spent together.
+
 ### New in 1.3.16: retirement and pensions
 
 - **Pensions by country.** Each country has its own pension age (60 in India, Turkey and South Africa; 67 in the

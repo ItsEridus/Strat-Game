@@ -22,6 +22,7 @@ import { SIZES, buyCheck, buyHome, housingCost, priceOf, rentCheck, rentHome, re
 import { KIND, buyWithMortgage, creditOf, incomeOf, loanCheck, loansOf, mortgageCheck, rateFor, repayLoan, takePersonalLoan } from '../../sim/loans';
 import { CONDITIONS, clinicCheck, conditionsOf, endLeave, parentalCheck, takeParentalLeave, treated, visitClinic, visitCost } from '../../sim/health';
 import { pensionOf, pensionQuote, pensionRules, retire, retireCheck } from '../../sim/pensions';
+import { isMinor, parentTime, parentTimeCheck, play, playCheck, schoolDay, schoolDayCheck } from '../../sim/childhood';
 import { HOBBIES, HOBBY_ENERGY, hobbyCheck, hobbyLevel, pursueHobby } from '../../sim/hobbies';
 import { STATUS_LABEL, breakUp, familyOf, goOnDate, marry, partnerOf, propose, romanceCheck, tryForChild } from '../../sim/family';
 
@@ -58,6 +59,8 @@ export function Life({ w }: { w: World }) {
           <ActBtn small why={familyTimeCheck(w, p)} run={(w) => familyTime(w)}>🏡 Time with family</ActBtn>
         </div>
       </Panel>
+
+      {isMinor(w, p) && <Panel title="Growing up"><ChildhoodPanel w={w} p={p} /></Panel>}
 
       <Panel title="Health"><HealthPanel w={w} p={p} /></Panel>
 
@@ -106,6 +109,20 @@ export function Life({ w }: { w: World }) {
           {([['character', '🧍 Character'], ['jobs', '💼 Work'], ['local', '🏘️ Neighbourhood'], ['market', '🛒 Market'], ['companies', '🏭 Companies'], ['politics', '🗳️ Politics'], ['forces', '🎖️ Military'], ['journal', '📓 Journal']] as const).map(([id, label]) => <Btn small kind="ghost" onClick={() => store.go(id)}>{label}</Btn>)}
         </div>
       </Panel>
+    </div>
+  );
+}
+
+function ChildhoodPanel({ w, p }: { w: World; p: Citizen }) {
+  const L = lifeOf(p);
+  return (
+    <div>
+      <p>{ageOf(w, p) < 5 ? '🍼 Too young for school: home with your family.' : `🎒 At school in ${w.regions[p.home].name}. Grades: ${Math.round(L.grades ?? 50)}/100.`}</p>
+      <div class="row">
+        <ActBtn small kind="primary" why={schoolDayCheck(w, p)} run={(w) => schoolDay(w)}>🎒 Go to school</ActBtn>
+        <ActBtn small why={playCheck(w, p)} run={(w) => play(w)}>⚽ Play with friends</ActBtn>
+      </div>
+      <Help>School days (or "School / studies" in your routine at 08:00) raise your grades; skipping school lowers them. At {B.life.adultAge} school ends: 35+ earns a diploma, 85+ a scholarship that pays your first degree. You can work part-time from 16. Your parents pay for your keep and give you pocket money.</Help>
     </div>
   );
 }
@@ -347,7 +364,7 @@ function People({ w, p }: { w: World; p: Citizen }) {
             <td class="num small">{c.gone ? '' : `♥ ${Math.round(c.rel[p.id] ?? 0)}`}</td>
           </tr>
         ))}
-        {fam.kids.map((k) => <tr><td class="muted small">Child</td><td>{k.name} <small class="muted">· {ageOf(w, k)} · at home{k.how ? ` · ${KID_HOW[k.how]}` : ''}</small></td><td /></tr>)}
+        {fam.kids.map((k) => <tr><td class="muted small">Child</td><td>{k.name} <small class="muted">· {ageOf(w, k)} · at home{k.how ? ` · ${KID_HOW[k.how]}` : ''}{k.bond != null ? ` · closeness ${Math.round(k.bond)}` : ''}{k.grades != null && ageOf(w, k) >= 5 ? ` · grades ${Math.round(k.grades)}` : ''}</small></td><td>{(p.family?.kids ?? []).includes(k) && <ActBtn small why={parentTimeCheck(w, p, k)} run={(w) => parentTime(w, k.name)}>Spend time</ActBtn>}</td></tr>)}
         {sib.grown.map((c) => <tr><td class="muted small">Sibling</td><td><CitLink w={w} id={c.id} />{c.gone ? <small class="muted"> ({c.gone.why === 'died' ? 'died' : 'moved abroad'})</small> : <small class="muted"> · {ageOf(w, c)} · {occupation(w, c)}</small>}</td><td class="num small">{c.gone ? '' : `♥ ${Math.round(c.rel[p.id] ?? 0)}`}</td></tr>)}
         {sib.young.map((k) => <tr><td class="muted small">Sibling</td><td>{k.name} <small class="muted">· {ageOf(w, k)} · at home with your parents</small></td><td /></tr>)}
       </tbody>
@@ -397,7 +414,7 @@ function RoutinePanel({ w, p }: { w: World; p: Citizen }) {
     <div>
       <label class="check"><input type="checkbox" checked={r.work} onChange={() => toggle('work')} /> Work my shift at {hh(p.workHour)} {p.job == null ? <small class="muted">(no job yet)</small> : null}</label>
       <label class="check"><input type="checkbox" checked={!!r.jobHunt} onChange={() => toggle('jobHunt')} /> Look for work when unemployed (apply to the best offer nearby)</label>
-      {p.edu?.enrolled && <label class="check"><input type="checkbox" checked={r.school} onChange={() => toggle('school')} /> Classes at 09:00</label>}
+      {(p.edu?.enrolled || isMinor(w, p)) && <label class="check"><input type="checkbox" checked={r.school} onChange={() => toggle('school')} /> {isMinor(w, p) ? 'School at 08:00' : 'Classes at 09:00'}</label>}
       <label class="check"><input type="checkbox" checked={r.train} onChange={() => toggle('train')} /> Train at {hh(p.trainHour)}</label>
       <label class="check"><input type="checkbox" checked={r.family} onChange={() => toggle('family')} /> Evening with family at 19:00</label>
       <label class="check">Hobby at 20:00: <select value={r.hobby ?? ''} onChange={(e) => { r.hobby = (e.target as HTMLSelectElement).value || null; store.emit(); }}>

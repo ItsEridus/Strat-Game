@@ -45,6 +45,7 @@ export function schoolQuality(w: World, r: Region): number {
   return Math.max(10, Math.min(100, Math.round((n.eduQ ?? 60) + (w.govs[r.id]?.dev ?? 0) * 3 + ((r.staff?.school ?? 0.6) - 0.6) * 25 - (r.occ ? 15 : 0))));
 }
 
+const feeFor = (w: World, c: Citizen, nation: Id, course: Course) => (course === 'bachelor' && c.life?.scholarship && rank(c.edu?.level ?? 'school') < rank('bachelor') ? 0 : tuitionYear(w, nation, course));
 const tuitionYear = (w: World, nation: Id, course: Course) => cur(Math.round(eduOf(w.nations[nation].iso).tuition * COURSES[course].tuition));
 /** Study days a course needs: about 180 a year of study, on the pace of life. */
 export const courseDays = (w: World, course: Course) => Math.max(10, Math.round(COURSES[course].years * 180 * (lifeYear(w) / (365 * DAY))));
@@ -68,7 +69,7 @@ export function enrollCheck(w: World, c: Citizen, course: Course, field: Field, 
   const r = w.regions[courseRegion(w, c, course)];
   if (k.uni && !hasUniversity(w, r)) return `There is no university in ${r.name}; move to a larger city.`;
   const nat = controller(r);
-  const fee = tuitionYear(w, nat, course);
+  const fee = feeFor(w, c, nat, course);
   const code = w.nations[nat].cur;
   if (loan && fee > 0) return loanCheck(w, c, 'student', fee);
   if ((c.wallet[code] ?? 0) < fee) return `The first year's fees are ${fmtAmt(code, fee)}. A student loan can cover them.`;
@@ -81,7 +82,7 @@ export function enroll(w: World, course: Course, field: Field, c: Citizen = play
   if (why) return fail(why);
   const r = w.regions[courseRegion(w, c, course)];
   const nat = controller(r);
-  const fee = tuitionYear(w, nat, course);
+  const fee = feeFor(w, c, nat, course);
   if (fee > 0 && loan) borrow(w, c, 'student', fee, `${COURSES[course].label}, year 1`);
   if (fee > 0) pay(w, cref(c.id), natref(nat), w.nations[nat].cur, fee, `Tuition: ${COURSES[course].label}`);
   eduOfCitizen(c).enrolled = { course, field, region: r.id, since: w.time, days: 0, need: courseDays(w, course), lastDay: -1, paidYears: 1, loan };
@@ -166,7 +167,7 @@ export function educationDaily(w: World) {
     // A new academic year: the next year's fees (or the course ends).
     if (w.time - e.since >= e.paidYears * lifeYear(w)) {
       const nat = controller(w.regions[e.region]);
-      const fee = tuitionYear(w, nat, e.course);
+      const fee = feeFor(w, c, nat, e.course);
       if (fee > 0 && e.loan && !loanCheck(w, c, 'student', fee)) borrow(w, c, 'student', fee, `${COURSES[e.course].label}, year ${e.paidYears + 1}`);
       if (fee > 0 && !pay(w, cref(c.id), natref(nat), w.nations[nat].cur, fee, `Tuition: ${COURSES[e.course].label}`)) {
         delete c.edu!.enrolled;
@@ -188,6 +189,7 @@ export function educationDaily(w: World) {
 export function assignEducation(w: World, c: Citizen) {
   if (c.edu) return;
   const age = ageOf(w, c);
+  if (age < B.life.adultAge) { c.edu = { level: 'none' }; return; } // still at school (sim/childhood.ts)
   const share = eduOf(w.nations[c.nation].iso).tertiary;
   const h = hash01(c.id, 1310, 3);
   const fields = Object.keys(FIELDS) as Field[];

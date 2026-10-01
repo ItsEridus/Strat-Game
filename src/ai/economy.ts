@@ -1,6 +1,7 @@
 // AI business management and background household demand. AI owners use the
 // same market/company actions (and permission checks) as the player.
 import { housingCost } from '../sim/housing';
+import { isMinor } from '../sim/childhood';
 import type { Company, Id, World } from '../sim/types';
 import { census, companiesOf, nationals, representation } from '../sim/census';
 import { B } from '../data/balance';
@@ -173,6 +174,7 @@ export function circulation(w: World) {
   }
   for (const c of census(w).all) {
     const n = w.nations[c.nation];
+    if (c.player && isMinor(w, c)) { const parent = (c.family?.parents ?? []).map((id) => w.citizens[id]).find((x) => x && !x.gone); if (parent) pay(w, cref(parent.id), hhref(parent.nation), w.nations[parent.nation].cur, Math.min(parent.wallet[w.nations[parent.nation].cur] ?? 0, cur(B.family.childPerDay)), 'Raising children'); continue; }
     const cash = c.wallet[n.cur] ?? 0;
     const kids = c.family?.kids.length ?? 0;
     const forKids = Math.min(Math.max(0, cash - cur(B.living.essentials)), cur(B.family.childPerDay * kids));

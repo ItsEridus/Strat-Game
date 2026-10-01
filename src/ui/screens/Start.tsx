@@ -16,6 +16,7 @@ export function StartScreen() {
   const [fixed, setFixed] = useState(false);
   const [cpn, setCpn] = useState(24);
   const [pace, setPace] = useState(365);
+  const [startAge, setStartAge] = useState(24);
   const [difficulty, setDifficulty] = useState<Settings['difficulty']>('normal');
   const [adv, setAdv] = useState({ nuclear: true, pirates: true, terrainEvents: false, tournaments: true });
   const [importing, setImporting] = useState(false);
@@ -23,7 +24,7 @@ export function StartScreen() {
   const [text, setText] = useState('');
   const saves = SLOTS.map((s) => slotInfo(s)).filter(Boolean);
   const onFile = async (f: File | undefined) => { if (f) setText(await f.text()); };
-  const begin = () => { setGenerating(true); setTimeout(() => store.newGame(fixed ? seed : null, name, nation, cpn, difficulty, adv, pace), 60); };
+  const begin = () => { setGenerating(true); setTimeout(() => store.newGame(fixed ? seed : null, name, nation, cpn, difficulty, adv, pace, startAge), 60); };
   return (
     <div class="start">
       <TitleBackdrop />
@@ -53,6 +54,7 @@ export function StartScreen() {
           <label>Your name <input value={name} maxLength={28} onInput={(e) => setName((e.target as HTMLInputElement).value)} /></label>
           <label>Difficulty <Select value={difficulty} options={[['easy', 'Easy — more starting funds'], ['normal', 'Normal'], ['hard', 'Hard — leaner start']]} onChange={setDifficulty} /></label>
           <label>AI citizens per region <Select value={cpn} options={[[8, '8 (≈4,000 people · fastest)'], [16, '16 (≈8,000 people)'], [24, '24 (≈12,500 people · default)'], [32, '32 (≈16,500 people · slowest)']]} onChange={setCpn} /></label>
+          <label>Start your life <Select value={startAge} options={[[24, 'As a young adult, 24 (default)'], [18, 'At 18, just out of school'], [16, 'At 16, still at school'], [0, 'As a newborn: grow up in a family']]} onChange={setStartAge} /></label>
           <label>Pace of life <Select value={pace} options={[[365, 'With the calendar — one year of age per year (default)'], [120, 'Quick — three years of age per calendar year'], [72, 'Brisk — five years of age per calendar year'], [36, 'Generations — ten years of age per calendar year']]} onChange={setPace} /></label>
         </div>
         <h4>Choose your nation</h4>

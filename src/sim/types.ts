@@ -142,7 +142,8 @@ export interface LifeProfile {
   lastRest?: number; lastFamily?: number; lastHobby?: number; // cooldowns (day numbers)
   treated?: number; // day of the last dose of medicine (better recovery for a few days)
   work?: import('./services').WorkEntry[];
-  parentalTaken?: number; // when parental leave was last taken // work history, newest last
+  parentalTaken?: number; // when parental leave was last taken
+  grades?: number; lastSchool?: number; lastPlay?: number; schoolDone?: boolean; scholarship?: boolean; // childhood (sim/childhood.ts) // work history, newest last
   giftDay?: number; giftFrom?: Id; // the last gift received (one a day from the same person)
   goods?: { clothes?: { t: number; q: number }; gadget?: { t: number; q: number } }; // latest new clothes and gadget (time, grade)
   why?: { happiness: string[]; stress: string[] }; // the main reasons for the current values
@@ -175,7 +176,7 @@ export interface LifeState {
 
 /** Family ties. Children under 18 are not yet citizens: they live in `kids` until they come of age. */
 /** A child growing up at home (a compact record until 18). `how` is set when they are not one's own by birth. */
-export interface Kid { name: string; born: number; how?: 'adopted' | 'grandchild' | 'sibling' | 'stepchild' | 'fostered' }
+export interface Kid { name: string; born: number; how?: 'adopted' | 'grandchild' | 'sibling' | 'stepchild' | 'fostered'; bond?: number; grades?: number; lastTime?: number }
 
 export interface Family {
   partner: Id | null;
@@ -647,6 +648,7 @@ export interface Settings {
   adminUsed?: boolean; // the admin panel changed this campaign
   clock24?: boolean; // show times on a 24-hour clock
   advanceStops?: 'personal' | 'all'; // what interrupts a long advance (default: personal matters only)
+  startAge?: number; // the player's age at the start (0 = born into the world; default 24)
   lifeYearDays?: number; // pace of life: world days per year of age (undefined = 365, for older saves)
   fixedFate?: boolean; // reproducible: never mix outside randomness into the world's dice (see ui/store.ts)
 }
