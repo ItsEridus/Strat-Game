@@ -73,3 +73,21 @@ test('households: a real budget split, inequality and poverty measured', async (
   const s = livingStandards(w, player(w).nation);
   assert.ok(s.adults > 5 && s.wealthGini > 0 && s.wealthGini < 1);
 });
+
+test('companies pay rent, energy and corporate tax, and keep accounts', async () => {
+  const { accounts, premisesRent, corpTaxRate } = await import('../src/sim/companyCosts');
+  const { closeCompanyDay } = await import('../src/sim/company');
+  const { audit } = await import('../src/engine/ledger');
+  const w = generateWorld(1804, 'Books', 0, { citizensPerRegion: 2 });
+  const co = Object.values(w.companies).find((c) => c.workers.length)!;
+  const code = w.nations[w.regions[co.region].owner].cur;
+  const before = co.wallet[code] ?? 0;
+  closeCompanyDay(w);
+  const day = co.hist.at(-1)!;
+  assert.equal(day.overheads, Math.min(before, premisesRent(w, co)), 'a day of rent (nothing produced yet)');
+  const a = accounts(w, co);
+  assert.equal(a.days, 1);
+  assert.ok(a.capital > 0 && a.depreciation > 0);
+  assert.ok(corpTaxRate(w, co) >= 0.2 && corpTaxRate(w, co) <= 0.35, 'a real corporate tax rate');
+  assert.ok(audit(w).ok);
+});

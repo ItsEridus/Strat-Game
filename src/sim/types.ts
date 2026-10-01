@@ -271,6 +271,8 @@ export interface DayRecord {
   revenue: number;
   wages: number;
   inputCost: number;
+  overheads?: number; // rent for premises and energy (1.4.7)
+  tax?: number; // corporate tax paid (on the first of the month)
   profit: number;
   note?: string;
 }

@@ -3,6 +3,29 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.4.7: what it costs to run a company
+
+- **Overheads.** Besides wages and materials, companies now pay:
+  - rent for their premises, more for a bigger plant and where property is dear;
+  - energy for everything they produce.
+
+  A plant with no staff keeps a smaller lease. The money goes to the local economy.
+- **Corporate tax.** On the first of each month, a company pays tax on the previous month's profit at its country's
+  real 2025 rate: 25% in the United States, Britain and India, 30% in Germany, Japan and Australia, 34% in
+  Brazil. AI owners keep a reserve for it.
+- **Prices cover costs.** AI companies now price in their overheads as well as wages and materials.
+- **Accounts.** Every company page has a profit-and-loss statement for the last 30 days:
+  - sales;
+  - wages;
+  - materials;
+  - premises and energy;
+  - depreciation;
+  - operating profit;
+  - corporate tax;
+  - net profit.
+
+  A balance sheet shows cash, stock, and plant and equipment.
+
 ### New in 1.4.6: households and the cost of living
 
 - **Where your money goes.** Your everyday costs now appear in your monthly budget as real household spending:

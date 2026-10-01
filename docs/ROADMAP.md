@@ -259,6 +259,8 @@ real starting condition in the simulation, not a cosmetic flag, and the look can
     and gold is worth $2,500 at market exchange rates in every currency.
   - 1.4.6: households and the cost of living. Budgets are split by national surveys, inequality and poverty are
     measured, and household spending responds to confidence.
+  - 1.4.7: company costs and pricing. Companies pay rent for premises, energy and corporate tax at real
+    rates, keep accounts, and price in their overheads.
 
 ### Part B: work & enterprise (GEO 1: companies expand or disband)
 

@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { accounts, corpTaxRate, premisesRent } from '../../sim/companyCosts';
 import { fromLocal as fromL, localStep as stepL, toLocal as toL } from '../../engine/money';
 import type { Company, Industry, World } from '../../sim/types';
 import { ActBtn, Amt, Btn, CitLink, Empty, Grade, Item, Num, Panel, RegionLink, Select, Help, Sparkline } from '../common';
@@ -144,6 +145,7 @@ function CompanyDetail({ w, co }: { w: World; co: Company }) {
         {co.workers.length > 0 && <StaffTable w={w} co={co} />}
         {!co.workers.length && <Empty>No employees.</Empty>}
       </Panel>
+      <Panel title="Accounts (last 30 days)"><AccountsPanel w={w} co={co} /></Panel>
       <Panel title="Funds">
         <div class="form row">
           <label>Amount ({c}) <Num value={amt} step={stepL(c)} onInput={setAmt} /></label>
@@ -213,4 +215,26 @@ function StaffTable({ w, co }: { w: World; co: Company }) {
       <tbody>{sort.rows.map((c) => <tr><td><CitLink w={w} id={c.id} /></td><td>{c.eco.toFixed(1)}</td><td><ActBtn small kind="danger" run={(w) => fire(w, p.id, co.id, c.id)}>Dismiss</ActBtn></td></tr>)}</tbody>
     </table>
   );
+}
+
+function AccountsPanel({ w, co }: { w: World; co: Company }) {
+  const a = accounts(w, co);
+  const c = companyCurrency(w, co);
+  const row = (label: string, v: number, strong = false) => <tr><td>{strong ? <b>{label}</b> : label}</td><td class={`num ${v < 0 ? 'bad' : ''}`}>{strong ? <b>{fmtAmt(c, v)}</b> : fmtAmt(c, v)}</td></tr>;
+  const stock = Object.entries(co.inv).reduce((t, [k, q]) => t + (refPrice(w, controller(w.regions[co.region]), k) ?? 0) * q, 0);
+  if (!a.days) return <Empty>No trading days yet.</Empty>;
+  return <>
+    <table class="table compact small"><tbody>
+      {row('Sales', a.revenue)}
+      {row('Wages', -a.wages)}
+      {row('Materials', -a.inputs)}
+      {row('Premises and energy', -a.overheads)}
+      {row('Depreciation', -a.depreciation)}
+      {row('Operating profit', a.operating, true)}
+      {row(`Corporate tax (${Math.round(corpTaxRate(w, co) * 100)}%)`, -a.tax)}
+      {row('Net profit', a.net, true)}
+    </tbody></table>
+    <p class="small"><b>Balance sheet:</b> cash {fmtAmt(c, co.wallet[c] ?? 0)} · stock {fmtAmt(c, stock)} · plant and equipment {fmtAmt(c, a.capital)} · total {fmtAmt(c, (co.wallet[c] ?? 0) + stock + a.capital)}</p>
+    <p class="small muted">Rent for premises is {fmtAmt(c, premisesRent(w, co))} a day here. Corporate tax is paid on the first of each month on the previous month's profit.</p>
+  </>;
 }

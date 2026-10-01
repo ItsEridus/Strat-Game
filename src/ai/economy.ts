@@ -1,6 +1,7 @@
 // AI business management and background household demand. AI owners use the
 // same market/company actions (and permission checks) as the player.
 import { hasQuirk } from '../sim/nature';
+import { corpTaxRate, overheadPerUnit } from '../sim/companyCosts';
 import { BASKET_LABELS, basketOf } from '../data/economy';
 import { dateAt } from '../engine/calendar';
 import { goldScale } from '../sim/wages';
@@ -32,7 +33,7 @@ export function operatorOf(w: World, co: Company): Id | null {
 export function unitCost(w: World, co: Company): number {
   const units = Math.max(0.5, baseUnits(co) * productionFactors(w, co, null).mult);
   const wage = co.offer?.wage ?? cur(B.wages.start);
-  let cost = wage / units;
+  let cost = wage / units + overheadPerUnit(w, co, units * Math.max(1, co.workers.length));
   const ik = inputKey(co);
   if (ik) {
     const market = controller(w.regions[co.region]);
@@ -115,7 +116,10 @@ export function manageCompany(w: World, co: Company) {
 
   // 4. Owner cash management: keep a buffer, take the rest as profit, top up if short.
   const owner = co.owner.k === 'cit' ? w.citizens[co.owner.id] : null;
-  const buffer = payroll * 5 + (ik ? cur(60) : 0);
+  // Keep a reserve for this month's corporate tax (paid on the 1st) as well as five days of wages.
+  const d0 = dateAt(w.time).day;
+  const monthProfit = co.hist.slice(-Math.min(30, d0)).reduce((t, h) => t + h.profit, 0);
+  const buffer = payroll * 5 + (ik ? cur(60) : 0) + Math.round(Math.max(0, monthProfit) * corpTaxRate(w, co));
   if (co.owner.k === 'hold' && funds() > buffer * 2 && !w.citizens[w.holdings[co.owner.id]?.ceo ?? -1]?.player) {
     pay(w, ref, co.owner, currency, Math.floor(funds() - buffer * 1.5), `Profit from ${co.name}`);
   }

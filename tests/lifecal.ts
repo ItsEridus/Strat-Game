@@ -33,6 +33,7 @@ for (let d = 1; d <= days; d++) {
     `ill ${pct(all.filter((c) => c.conditions?.length).length, all.length)}`, `students ${all.filter((c) => c.edu?.enrolled).length}`, `tertiary ${pct(adults.filter((c) => rank(c.edu?.level ?? 'school') >= 2).length, adults.length)}`,
     `posts ${all.filter((c) => c.post).length}`, `pets ${w.life.pets.filter((p) => !p.gone).length}`, `orphans ${w.life.orphans.length}`,
     `happy ${Math.round(all.reduce((t, c) => t + (c.life?.happiness ?? 50), 0) / all.length)}`, `treasury min ${treas.reduce((m, x) => Math.min(m, x), 9).toFixed(2)}x`,
+    `firms ${Object.keys(w.companies).length} (hiring ${Object.values(w.companies).filter((c) => c.offer && c.offer.slots > c.workers.length).length}, losing ${Object.values(w.companies).filter((c) => c.hist.slice(-7).reduce((t, h) => t + h.profit, 0) < 0).length})`,
     a.ok ? 'audit ok' : `AUDIT ${a.problems.slice(0, 3).join('; ')}`, `${Math.round((Date.now() - t0) / d)} ms/day`,
   ].join(' | '));
 }

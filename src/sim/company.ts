@@ -6,6 +6,7 @@ import { endWork, leavePost, logWork } from './services';
 import { leaveCheck, tooIll } from './health';
 import { contribute } from './pensions';
 import { goldScale, recordPay } from './wages';
+import { payOverheads } from './companyCosts';
 import { lifeGate } from './lifecycle';
 import type { AccountRef, Citizen, Company, DayRecord, Id, Industry, World } from './types';
 import { localNews } from './life';
@@ -432,7 +433,8 @@ export function relocate(w: World, actor: Citizen, coId: Id, region: Id): Result
 export function closeCompanyDay(w: World) {
   const d = today(w);
   for (const co of Object.values(w.companies)) {
-    co.today.profit = co.today.revenue - co.today.wages - co.today.inputCost;
+    payOverheads(w, co);
+    co.today.profit = co.today.revenue - co.today.wages - co.today.inputCost - (co.today.overheads ?? 0);
     co.lifetime.revenue += co.today.revenue;
     co.lifetime.profit += co.today.profit;
     co.hist.push(co.today);
