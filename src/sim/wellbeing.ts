@@ -16,6 +16,7 @@ import { adjustRel } from './social';
 import { petComfort } from './kinship';
 import { SIZES } from './housing';
 import { incomeOf, loansOf } from './loans';
+import { hasQuirk } from './nature';
 
 type Part = [string, number];
 
@@ -31,6 +32,8 @@ function parts(w: World, c: Citizen, friends: number): { happy: Part[]; stress: 
     if ((partner.rel[c.id] ?? 0) < 20) { happy.push(['trouble with your partner', -8]); stress.push(['trouble with your partner', 15]); }
   }
   const kids = (f?.kids.length ?? 0) + (f?.children.length ?? 0);
+  if (hasQuirk(c, 'worrier')) stress.push(['a worrier by nature', 6]);
+  if (hasQuirk(c, 'workaholic') && c.job != null) stress.push(['always working', 3]);
   if (kids) { happy.push(['your children', Math.min(9, kids * 3)]); stress.push(['raising children', Math.min(12, (f?.kids.length ?? 0) * 4)]); }
   if (friends) happy.push(['friends', Math.min(6, friends)]);
   else if (adult) happy.push(['loneliness', -4]);

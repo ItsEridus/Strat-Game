@@ -148,7 +148,7 @@ real starting condition in the simulation, not a cosmetic flag, and the look can
 - **Done when:** a campaign can be started from a fully designed character in under two minutes or from one click,
   every choice shows in the first hour of play, and portraits are distinct across 10,000 people.
 - **Progress:** portraits for everyone and the creation screen (identity, looks, birthplace, politics) shipped in
-  1.4.1.
+  1.4.1; family background, talents, quirks and personality in 1.4.2.
 - **Releases, in order:** portraits for everyone → creation screen (identity, looks) → family background →
   personality, quirks, talents → presets, random life, character codes → customisation during play.
 

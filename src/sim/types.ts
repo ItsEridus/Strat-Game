@@ -43,7 +43,9 @@ export interface Citizen {
   health?: number; // 0..100 (sim/population.ts); undefined = 90
   life?: LifeProfile; // personal life: wellbeing, milestones, hobbies, goals (sim/lifecycle.ts, sim/wellbeing.ts)
   family?: Family; // partner, parents, children (sim/family.ts)
-  look?: import('./looks').Look; // a designed or changed appearance (otherwise generated: sim/looks.ts)
+  look?: import('./looks').Look;
+  nature?: import('./nature').Nature; // talent, weakness, quirks (designed for the player; otherwise from a hash)
+  background?: import('./nature').Background; // the family a life started in // a designed or changed appearance (otherwise generated: sim/looks.ts)
   dwelling?: import('./housing').Home;
   credit?: number;
   pension?: import('./pensions').Pension; // contribution record, pot and pensions in payment (sim/pensions.ts)
@@ -656,7 +658,7 @@ export interface Settings {
   uiSound?: boolean; uiVolume?: number; // optional interface sound (ui/sound.ts)
   playerMortality?: boolean; // the player can die (and play continues as their heir); off for saves from before 1.3.18
   startAge?: number;
-  character?: { look: import('./looks').Look; birthplace: Id | null; ideology: Ideology | null }; // designed at the start (ui/CharacterDesigner.tsx) // the player's age at the start (0 = born into the world; default 24)
+  character?: { look: import('./looks').Look; birthplace: Id | null; ideology: Ideology | null; nature?: import('./nature').Nature; background?: import('./nature').Background; traits?: Citizen['traits'] }; // designed at the start (ui/CharacterDesigner.tsx) // the player's age at the start (0 = born into the world; default 24)
   lifeYearDays?: number; // pace of life: world days per year of age (undefined = 365, for older saves)
   fixedFate?: boolean; // reproducible: never mix outside randomness into the world's dice (see ui/store.ts)
 }

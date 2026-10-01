@@ -7,6 +7,8 @@ import { ageing, blendLook, lookOf, sexOf } from '../src/sim/looks';
 import { census } from '../src/sim/census';
 import { bornYearsAgo } from '../src/sim/growth';
 import { deserialize, serialize } from '../src/engine/save';
+import { practise } from '../src/sim/growth';
+import { remember } from '../src/sim/story';
 
 registerSystems();
 
@@ -43,4 +45,21 @@ test('children blend their parents', () => {
   a.look = { ...lookOf(w, a), skin: 0 }; b.look = { ...lookOf(w, b), skin: 6 };
   const l = blendLook(w, kid, a, b);
   assert.ok(l.skin >= 2 && l.skin <= 4);
+});
+
+test('background, talents and quirks have real effects', () => {
+  const base = { look: { sex: 'm' as const, skin: 2, face: 0, hair: 0, hairColor: 1, eyes: 0, brows: 0, nose: 0, beard: 0, glasses: false, freckles: false }, birthplace: null, ideology: null };
+  const rich = generateWorld(1705, 'Rich', 0, { citizensPerRegion: 3, character: { ...base, background: 'wealthy', nature: { talent: 'numbers', weakness: 'hands', quirks: ['charming'] } } });
+  const poor = generateWorld(1705, 'Poor', 0, { citizensPerRegion: 3, character: { ...base, background: 'struggling', nature: { talent: 'hands', weakness: 'numbers', quirks: [] } } });
+  const pr = player(rich), pp = player(poor);
+  const code = rich.nations[0].cur;
+  assert.ok((pr.wallet[code] ?? 0) > (pp.wallet[code] ?? 0) * 5, 'a wealthy start');
+  assert.equal(pr.dwelling!.kind, 'own');
+  const e0 = pr.attrs.eco, f0 = pp.attrs.eco;
+  practise(rich, pr, 'eco', 1); practise(poor, pp, 'eco', 1);
+  assert.ok(pr.attrs.eco - e0 > (pp.attrs.eco - f0) * 1.5, 'talent speeds learning; weakness slows it');
+  const npc = census(rich).all.find((c) => !c.player)!;
+  const r0 = npc.rel[pr.id] ?? 0;
+  remember(rich, npc, 8, 'was kind', 'private');
+  assert.equal((npc.rel[pr.id] ?? 0) - r0, 10, 'charming: +25%');
 });

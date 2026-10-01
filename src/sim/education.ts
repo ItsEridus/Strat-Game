@@ -2,6 +2,7 @@
 // funded from national revenue through the ledger (teachers' pay goes to the
 // households); an education ladder from secondary school to a doctorate; and
 // courses taken by studying, day by day, like any other skill.
+import { hasQuirk } from './nature';
 import { addHeirloom } from './legacy';
 import { fmtDate } from '../engine/calendar';
 const fmtDateL = (t: number) => fmtDate(t, 'long');
@@ -116,7 +117,7 @@ export function study(w: World, c: Citizen = player(w)): Result {
   c.energy -= B.edu.studyEnergy;
   e.lastDay = today(w);
   const q = schoolQuality(w, w.regions[e.region]);
-  e.days += 0.8 + q / 250;
+  e.days += (0.8 + q / 250) * (hasQuirk(c, 'bookworm') ? 1.2 : 1);
   for (const a of FIELDS[e.field].skills) practise(w, c, a, B.practice.study);
   const L = lifeOf(c);
   L.stress = Math.min(100, L.stress + 0.5);

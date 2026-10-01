@@ -1,6 +1,7 @@
 // Companies, employment and production chains. A shift consumes energy, inputs
 // and wage funds, and creates goods; it refuses to run (with a reason) when
 // labour, funds, inputs or storage capacity are missing.
+import { hasQuirk } from './nature';
 import { endWork, leavePost, logWork } from './services';
 import { leaveCheck, tooIll } from './health';
 import { contribute } from './pensions';
@@ -209,7 +210,7 @@ export function workShift(w: World, c: Citizen): Result {
   c.lastWorkDay = today(w);
   c.incomeToday += gross - t.tax;
   c.eco = +(c.eco + B.eco.gainBase / (1 + c.eco / 5)).toFixed(3);
-  practise(w, c, 'eco', B.practice.work);
+  practise(w, c, 'eco', B.practice.work * (hasQuirk(c, 'workaholic') ? 1.2 : 1));
   if (c.player) bump(w, 'work');
   return ok(`Worked at ${co.name}: produced ${made} ${itemName(outputKey(co.industry, co.q))}, earned ${fmtAmt(cur, gross - t.tax)} net (${fmtAmt(cur, t.tax)} tax${t.stateRate ? `, incl. ${t.stateRate}% ${w.regions[co.region].name} state tax` : ''}).`);
 }

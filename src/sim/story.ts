@@ -8,6 +8,7 @@
 //
 // Selection happens in the hourly hook (or an explicit action), never while
 // rendering: opening a screen does not consume randomness or change offers.
+import { hasQuirk } from './nature';
 import type { Citizen, Id, JournalEntry, Memory, Msg, StoryInstance, World } from './types';
 import { fail, ok, type Result } from '../engine/result';
 import { DAY, HOUR } from '../engine/clock';
@@ -131,6 +132,7 @@ export function journal(w: World, e: Omit<JournalEntry, 'id' | 't'>) {
 
 /** Relationship change with a reason the person remembers. */
 export function remember(w: World, npc: Citizen, delta: number, text: string, visibility: Memory['visibility'] = 'private', story?: Id, about: Id = w.playerId) {
+  if (delta > 0 && w.citizens[about] && hasQuirk(w.citizens[about], 'charming')) delta = Math.round(delta * 1.25);
   if (delta) adjustRel(npc, about, delta);
   const list = (w.story.memories[npc.id] ??= []);
   list.push({ t: w.time, text, delta, visibility, story, about });

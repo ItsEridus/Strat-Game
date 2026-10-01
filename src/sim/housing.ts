@@ -3,6 +3,7 @@
 // sought-after places cost more; prices move slowly. Rent and upkeep are part
 // of daily living costs (paid to the background economy, where landlords,
 // builders and repairers are); buying and selling trade with it too.
+import { MORTGAGE } from './mortgageHook';
 import { addHeirloom } from './legacy';
 import type { Citizen, Id, Region, World } from './types';
 import { B } from '../data/balance';
@@ -58,8 +59,6 @@ export function assignHome(w: World, c: Citizen) {
   const size: HomeSize = kind === 'family' ? 'room' : married || (c.family?.kids.length ?? 0) > 0 ? (hash01(c.id, 1313, 2) < 0.6 ? 'house' : 'flat') : hash01(c.id, 1313, 3) < 0.25 ? 'room' : hash01(c.id, 1313, 4) < 0.8 ? 'flat' : 'house';
   c.dwelling = { kind, region: c.home, size, since: w.time, paid: kind === 'own' ? priceOf(w, c.home, size) : undefined };
 }
-/** Set by sim/loans.ts (avoids an import cycle): buying with a mortgage. */
-export const MORTGAGE: { loanCheck?: (w: World, c: Citizen, amount: number) => string | null; borrow?: (w: World, c: Citizen, amount: number, note: string) => boolean } = {};
 
 /** An owner died: the heir moves in if they live there and do not own a home; otherwise the home is sold for the estate. */
 export function settleHome(w: World, c: Citizen, heir: Citizen | null) {

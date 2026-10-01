@@ -8,6 +8,7 @@
 // Leaving the world is done properly: a death hands the estate to the family
 // (or the state), offices fall vacant and are refilled, commands pass on, and
 // the person stays on record so history can still name them.
+import { hasQuirk } from './nature';
 import { playerDies, settleWill } from './legacy';
 import type { Citizen, Id, Ideology, Nation, Persona, Region, World } from './types';
 import { B } from '../data/balance';
@@ -50,6 +51,7 @@ function healthTarget(w: World, c: Citizen): number {
   const r = w.regions[c.home];
   let t = 96 - Math.max(0, age - 45) * 0.9 + r.bld.hospital * 2 + ((r.staff?.clinic ?? 0.6) - 0.6) * 8 - Math.max(0, r.pollution - 40) * 0.15;
   if (sick?.has(c.home)) t -= 15;
+  if (hasQuirk(c, 'sporty')) t += 3;
   if (c.energy < 10) t -= 5; // exhausted and hungry
   t -= Math.max(0, (c.life?.stress ?? 25) - 65) * 0.3;
   t -= conditionToll(w, c); // illnesses and injuries // long strain wears people down

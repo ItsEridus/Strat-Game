@@ -3,6 +3,7 @@
 // lives on their parents' budget; at 18 school ends with a diploma by grades,
 // and top grades win a scholarship. Parents spend time with their children:
 // closeness and school results shape who the child becomes at 18.
+import { hasQuirk } from './nature';
 import type { Citizen, Kid, World } from './types';
 import { B } from '../data/balance';
 import { pay } from '../engine/ledger';
@@ -35,7 +36,7 @@ export function schoolDay(w: World, c: Citizen = player(w)): Result {
   L.lastSchool = today(w);
   c.energy -= 4;
   const q = schoolQuality(w, w.regions[c.home]);
-  L.grades = Math.min(100, (L.grades ?? 50) + (0.25 + q / 400) * (1 - (L.grades ?? 50) / 120));
+  L.grades = Math.min(100, (L.grades ?? 50) + (0.25 + q / 400) * (1 - (L.grades ?? 50) / 120) * (hasQuirk(c, 'bookworm') ? 1.2 : 1));
   practise(w, c, 'acc', 0.3); practise(w, c, 'lead', 0.2);
   return ok(`🎒 A day at school (grades ${Math.round(L.grades)}).`);
 }

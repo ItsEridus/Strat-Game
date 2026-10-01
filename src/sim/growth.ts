@@ -5,6 +5,7 @@
 // opens doors is who you are in the world: your age, your record, your
 // reputation (influence and fame), your years of service. Used identically for
 // the player and AI citizens.
+import { learnFactor } from './nature';
 import { calendarAge, dateAt, nextAnniversary, timeOfDate } from '../engine/calendar';
 import type { Attr, Citizen, World } from './types';
 import { B } from '../data/balance';
@@ -66,7 +67,7 @@ export function practise(w: World, c: Citizen, a: Attr, effort: number) {
   if (effort <= 0) return;
   const age = ageOf(w, c);
   const youth = age < 30 ? 1.2 : age < 50 ? 1 : age < 65 ? 0.75 : 0.5;
-  const gain = (effort * B.growth.rate * youth) / (1 + c.attrs[a] / B.growth.soft);
+  const gain = (effort * B.growth.rate * youth * learnFactor(c, a)) / (1 + c.attrs[a] / B.growth.soft);
   const before = Math.floor(c.attrs[a]);
   c.attrs[a] = Math.round((c.attrs[a] + gain) * 1000) / 1000;
   const after = Math.floor(c.attrs[a]);

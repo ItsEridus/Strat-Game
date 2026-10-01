@@ -3,6 +3,28 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.4.2: where you come from, and who you are
+
+- **Family background.** Choose the family you grow up in, or let chance decide with your country's real mix:
+  struggling, working class, middle class, comfortable or wealthy. It changes:
+  - your starting money, from a lean start to a trust fund;
+  - your parents' savings and home;
+  - your own first home;
+  - your schooling: university is likelier from a comfortable home, and children start school with better or
+    worse grades.
+- **Talents and a weakness.** A head for numbers, a natural leader, good with hands, athletic or sharp-eyed: the
+  matching skills grow a third faster as you practise. Your weakness grows a quarter slower.
+- **Quirks** (up to two), each with a real effect:
+  - charming: people warm to you faster;
+  - frugal: essentials cost less;
+  - bookworm: study and school go faster;
+  - sporty: a little healthier;
+  - worrier: more stress, but a better credit score;
+  - workaholic: you learn more at work, and carry more stress.
+- **Personality.** Set your ambition (it speeds promotions), appetite for risk, loyalty, love of money and energy.
+- **Everyone has them.** Every person now has a background, a talent and maybe a quirk, by the same rules. Profiles
+  show how someone grew up and their nature.
+
 ### New in 1.4.1: faces, and designing who you are
 
 - **A face for everyone.** New portraits are drawn for every person, with:

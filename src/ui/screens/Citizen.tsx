@@ -19,6 +19,7 @@ import { ActBtn } from '../common';
 import { familyRegard, memoriesOf } from '../../sim/story';
 import { levelLabel } from '../../sim/education';
 import { postTitle } from '../../sim/services';
+import { BACKGROUNDS, QUIRKS, TALENTS, backgroundOf, natureOf } from '../../sim/nature';
 import { startTalk, talkCheck } from '../../sim/interact';
 
 export function CitizenProfile({ w }: { w: World }) {
@@ -53,6 +54,8 @@ export function CitizenProfile({ w }: { w: World }) {
           <Stat label="Doing">{activityOf(w, c)}</Stat>
           {!c.player && c.sec.goal && (Math.abs(c.rel[p.id] ?? 0) >= 20 || c.sec.fame > 5 || c.influence > 30) && <Stat label="Ambition">{goalText(w, c)}</Stat>}
           <Stat label="Education">{levelLabel(c)}</Stat>
+          <Stat label="Grew up">{BACKGROUNDS[backgroundOf(w, c)].label}</Stat>
+          <Stat label="Nature">{TALENTS[natureOf(c).talent].icon} {TALENTS[natureOf(c).talent].label}{natureOf(c).quirks.map((q) => ` · ${QUIRKS[q].icon} ${QUIRKS[q].label}`).join('')}</Stat>
           {c.post && <Stat label="Public service">{postTitle(c.post)}</Stat>}
           <Stat label="Fame">{c.sec.fame.toFixed(0)}</Stat>
           <Stat label="Public record">{c.sec.record.convictions ? `${c.sec.record.convictions} conviction${c.sec.record.convictions > 1 ? 's' : ''}` : 'clean'}{jailed(w, c) ? ' · in prison' : ''}</Stat>

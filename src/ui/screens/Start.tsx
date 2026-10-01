@@ -18,7 +18,7 @@ export function StartScreen() {
   const [cpn, setCpn] = useState(24);
   const [pace, setPace] = useState(365);
   const [startAge, setStartAge] = useState(24);
-  const [character, setCharacter] = useState<CharacterChoice>(() => ({ look: randomLook(), birthplace: null, ideology: null }));
+  const [character, setCharacter] = useState<CharacterChoice>(() => ({ look: randomLook(), birthplace: null, ideology: null, nature: { talent: 'numbers', weakness: 'hands', quirks: [] }, traits: { ambition: 0.7, risk: 0.5, loyalty: 0.5, greed: 0.5, activity: 0.8 } }));
   const [difficulty, setDifficulty] = useState<Settings['difficulty']>('normal');
   const [adv, setAdv] = useState({ nuclear: true, pirates: true, terrainEvents: false, tournaments: true });
   const [importing, setImporting] = useState(false);

@@ -6,6 +6,7 @@
 // annuity; lenders check that repayments are affordable; missed payments hurt
 // credit, and a mortgage in long arrears ends in repossession. Every coin moves
 // through the ledger.
+import { hasQuirk } from './nature';
 import type { Citizen, Id, World } from './types';
 import { B } from '../data/balance';
 import { DAY } from '../engine/clock';
@@ -18,7 +19,8 @@ import { census } from './census';
 import { controller, cref, hhref, jailed, player, today } from './query';
 import { ageOf } from './growth';
 import { lifeGate, lifeOf, milestone } from './lifecycle';
-import { MORTGAGE, SIZES, priceOf, type HomeSize } from './housing';
+import { SIZES, priceOf, type HomeSize } from './housing';
+import { MORTGAGE } from './mortgageHook';
 
 export type LoanKind = 'mortgage' | 'student' | 'personal';
 export interface Loan { id: Id; kind: LoanKind; borrower: Id; nation: Id; cur: string; principal: number; balance: number; rate: number; payment: number; start: number; term: number; paid: number; missed: number; note: string }
@@ -47,7 +49,7 @@ export function loansOf(w: World, c: Citizen): Loan[] {
 }
 export const debtOf = (w: World, c: Citizen) => loansOf(w, c).reduce((t, l) => t + l.balance, 0);
 /** Credit score 300–850: starts at 650, rises with payments made, falls with missed ones. */
-export const creditOf = (c: Citizen) => c.credit ?? 650;
+export const creditOf = (c: Citizen) => c.credit ?? (hasQuirk(c, 'worrier') ? 690 : 650);
 const adjustCredit = (c: Citizen, d: number) => { c.credit = Math.max(300, Math.min(850, creditOf(c) + d)); };
 
 /** The rate a lender offers (annual %): the policy rate, the kind's spread, and a premium for weak credit. */

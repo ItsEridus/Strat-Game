@@ -1,4 +1,6 @@
 // Deterministic world generation from a seed.
+import { priceOf } from './housing';
+import { backgroundOf, BACKGROUNDS } from './nature';
 import { civilianControl } from './forces';
 import { lifeOf, newLifeState } from './lifecycle';
 import { initFamilies, initPlayerFamily } from './family';
@@ -13,9 +15,9 @@ import { EARTH } from '../data/earth';
 import { IDEOLOGY_LIST } from '../data/ideologies';
 import { RAWS, outputKey, refValue } from '../data/items';
 import { HOTSPOTS, NEW_INDUSTRIES, NEW_RAWS, depositChance } from '../data/resources';
-import { chance, next, pick, rand, randInt, shuffle, weighted } from '../engine/rng';
+import { chance, hash01, next, pick, rand, randInt, shuffle, weighted } from '../engine/rng';
 import { GOLD, c as cur, g } from '../engine/money';
-import { mint, produce } from '../engine/ledger';
+import { burn, mint, produce } from '../engine/ledger';
 import { DAY, HOUR } from '../engine/clock';
 import { NOTICE_CATS, record } from '../engine/events';
 import { cref, coref, hhref, natref } from './query';
@@ -29,7 +31,7 @@ import { initGovs } from './stategov';
 import { initCrime } from './crime';
 import { initForces, seedOfficers } from './forces';
 import { newNarrative } from './story';
-import { bornYearsAgo, seniority } from './growth';
+import { ageOf, bornYearsAgo, seniority } from './growth';
 import { AGENCY_NAMES } from '../data/names';
 
 export const SAVE_VERSION = 12; // 5: armed forces; 6: per-region population, home regions; 7: stories, journal, memories, places; 8: no levels (skills, age, reputation); 9: timber, cotton, copper; 10: education; 11: public services; 12: housing
@@ -195,6 +197,31 @@ function makeGenesisCitizen(w: World, n: Nation, loc: Id, persona: Persona, ideo
   return c;
 }
 
+/** The family a life starts in: money, the parents' savings and home, your own home and schooling (the player). */
+function applyBackground(w: World, p: Citizen, traits?: Citizen['traits']) {
+  if (traits) p.traits = { ...traits };
+  const bg = backgroundOf(w, p);
+  p.background = bg;
+  const b = BACKGROUNDS[bg];
+  const code = w.nations[p.nation].cur;
+  const adult = ageOf(w, p) >= B.life.adultAge;
+  const extra = Math.round((p.wallet[code] ?? 0) * (b.money - 1));
+  if (extra > 0) mint(w, cref(p.id), code, extra, bg === 'wealthy' ? 'Trust fund' : 'Help from family');
+  else if (extra < 0) burn(w, cref(p.id), code, Math.min(-extra, p.wallet[code] ?? 0), 'A lean start');
+  for (const id of p.family?.parents ?? []) {
+    const par = w.citizens[id];
+    if (!par) continue;
+    mint(w, cref(par.id), code, cur(Math.round(250 * b.parents)), 'Family savings');
+    par.background = bg;
+    if (par.dwelling) par.dwelling = { ...par.dwelling, kind: hash01(par.id, 1422, 1) < b.own ? 'own' : 'rent', size: bg === 'struggling' ? 'room' : bg === 'working' ? 'flat' : 'house' };
+  }
+  if (adult) {
+    if (p.dwelling?.kind !== 'family') p.dwelling = { kind: bg === 'wealthy' ? 'own' : 'rent', region: p.home, size: bg === 'struggling' ? 'room' : bg === 'wealthy' ? 'house' : 'flat', since: w.time, paid: bg === 'wealthy' ? priceOf(w, p.home, 'house') : undefined };
+    if (p.edu && p.edu.level === 'school' && hash01(p.id, 1422, 2) < b.uni) p.edu = { level: 'bachelor', field: (['business', 'engineering', 'law', 'science', 'arts', 'teaching', 'medicine'] as const)[Math.floor(hash01(p.id, 1422, 3) * 7)] };
+    if (p.edu && p.edu.level === 'bachelor' && bg === 'struggling') p.edu = { level: 'school' };
+  } else lifeOf(p).grades = Math.max(10, Math.min(95, (lifeOf(p).grades ?? 50) + b.grades));
+}
+
 export function generateWorld(seed: number, playerName: string, playerNation: number, opts: Partial<Settings> = {}): World {
   const settings = { ...defaultSettings(), ...opts };
   applyBalance(settings.balance);
@@ -320,7 +347,7 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
   const ch = settings.character;
   const born = ch?.birthplace != null && regions[ch.birthplace]?.owner === pn.id ? ch.birthplace : birthplace;
   const p = newCitizen(w, playerName.trim().slice(0, 28) || 'Citizen', pn.id, born, 'worker', ch?.ideology ?? 'capitalism');
-  if (ch) { p.look = { ...ch.look }; if (!ch.ideology) p.ideoStr = 0.2; }
+  if (ch) { p.look = { ...ch.look }; if (!ch.ideology) p.ideoStr = 0.2; if (ch.nature) p.nature = ch.nature; if (ch.background) p.background = ch.background; }
   p.player = true;
   const startAge = settings.startAge ?? B.life.playerAge;
   settings.playerMortality ??= true;
@@ -400,6 +427,7 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
   initEducation(w);
   initServices(w);
   initHousing(w);
+  applyBackground(w, p, settings.character?.traits);
   w.player.routine = { work: true, train: true, family: true, rest: true, hobby: null, school: false, jobHunt: true };
   lifeOf(p);
 

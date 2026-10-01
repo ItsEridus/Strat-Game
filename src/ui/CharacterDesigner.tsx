@@ -2,12 +2,13 @@
 // Every choice becomes a real starting condition (sim/worldgen.ts applies it).
 import { EARTH } from '../data/earth';
 import { IDEOLOGIES, IDEOLOGY_LIST } from '../data/ideologies';
-import type { Ideology } from '../sim/types';
+import type { Citizen, Ideology } from '../sim/types';
+import { BACKGROUNDS, QUIRKS, TALENTS, type Background, type Nature, type QuirkKey, type TalentKey } from '../sim/nature';
 import { FACE_SHAPES, HAIR_COLORS, HAIR_STYLES, SKIN_TONES, EYE_COLORS, SHIRTS, type Look } from '../sim/looks';
 import { Face } from './Avatar';
 import { Btn, Select } from './common';
 
-export interface CharacterChoice { look: Look; birthplace: number | null; ideology: Ideology | null }
+export interface CharacterChoice { look: Look; birthplace: number | null; ideology: Ideology | null; background?: Background; nature?: Nature; traits?: Citizen['traits'] }
 
 /** A random look (for "Randomise" and new characters). */
 export function randomLook(sex?: 'f' | 'm'): Look {
@@ -31,6 +32,9 @@ function Stepper({ label, value, max, onChange, names, swatch }: { label: string
 export function CharacterDesigner({ nation, value, onChange }: { nation: number; value: CharacterChoice; onChange: (c: CharacterChoice) => void }) {
   const L = value.look;
   const set = (patch: Partial<Look>) => onChange({ ...value, look: { ...L, ...patch } });
+  const nat: Nature = value.nature ?? { talent: 'numbers', weakness: 'hands', quirks: [] };
+  const setNature = (patch: Partial<Nature>) => { const n = { ...nat, ...patch }; if (n.weakness === n.talent) n.weakness = (Object.keys(TALENTS) as TalentKey[]).find((k) => k !== n.talent)!; onChange({ ...value, nature: n }); };
+  const tr = value.traits ?? { ambition: 0.7, risk: 0.5, loyalty: 0.5, greed: 0.5, activity: 0.8 };
   const regions = EARTH.regions.map((r, i) => ({ r, i })).filter((x) => x.r.nation === nation).sort((a, b) => a.r.name.localeCompare(b.r.name));
   return (
     <div class="designer">
@@ -64,6 +68,24 @@ export function CharacterDesigner({ nation, value, onChange }: { nation: number;
           <option value="">Anywhere in the country (bigger places more likely)</option>
           {regions.map((x) => <option value={x.i}>{x.r.name}</option>)}
         </select></label>
+        <label>Family background <select value={value.background ?? ''} onChange={(e) => onChange({ ...value, background: ((e.target as HTMLSelectElement).value || undefined) as Background | undefined })}>
+          <option value="">As chance would have it (your country's real mix)</option>
+          {(Object.keys(BACKGROUNDS) as Background[]).map((k) => <option value={k}>{BACKGROUNDS[k].label}: {BACKGROUNDS[k].desc}</option>)}
+        </select></label>
+        <div class="row wrap">
+          <label>Talent <select value={nat.talent} onChange={(e) => setNature({ talent: (e.target as HTMLSelectElement).value as TalentKey })}>{(Object.keys(TALENTS) as TalentKey[]).map((k) => <option value={k}>{TALENTS[k].icon} {TALENTS[k].label}</option>)}</select></label>
+          <label>Weakness <select value={nat.weakness} onChange={(e) => setNature({ weakness: (e.target as HTMLSelectElement).value as TalentKey })}>{(Object.keys(TALENTS) as TalentKey[]).filter((k) => k !== nat.talent).map((k) => <option value={k}>{TALENTS[k].label}</option>)}</select></label>
+        </div>
+        <small class="muted">{TALENTS[nat.talent].desc}; {TALENTS[nat.weakness].skills.join(' and ')} grow a quarter slower.</small>
+        <div class="row wrap"><span class="muted small">Quirks (up to two):</span>
+          {(Object.keys(QUIRKS) as QuirkKey[]).map((q) => <label class="check" title={QUIRKS[q].desc}><input type="checkbox" checked={nat.quirks.includes(q)} onChange={() => setNature({ quirks: nat.quirks.includes(q) ? nat.quirks.filter((x) => x !== q) : [...nat.quirks, q].slice(-2) })} /> {QUIRKS[q].icon} {QUIRKS[q].label}</label>)}
+        </div>
+        <details class="small"><summary>Personality</summary>
+          {(['ambition', 'risk', 'loyalty', 'greed', 'activity'] as const).map((k) => (
+            <label class="row">{({ ambition: 'Ambition', risk: 'Appetite for risk', loyalty: 'Loyalty', greed: 'Love of money', activity: 'Energy' })[k]} <input type="range" min="0" max="100" value={Math.round(tr[k] * 100)} onInput={(e) => onChange({ ...value, traits: { ...tr, [k]: +(e.target as HTMLInputElement).value / 100 } })} /> {Math.round(tr[k] * 100)}</label>
+          ))}
+          <small class="muted">Ambition speeds promotions; other traits shape how people around you read you.</small>
+        </details>
         <label>Politics <select value={value.ideology ?? ''} onChange={(e) => onChange({ ...value, ideology: ((e.target as HTMLSelectElement).value || null) as Ideology | null })}>
           <option value="">Undecided (centrist leanings)</option>
           {IDEOLOGY_LIST.map((k) => <option value={k}>{IDEOLOGIES[k].name}</option>)}

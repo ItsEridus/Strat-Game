@@ -3,6 +3,7 @@
 // salary from the national treasury (with work tax, like any wage). Each post
 // has a ladder of grades; promotions come with service, good work and the
 // qualifications for the grade. Staffing feeds back into the service itself.
+import { hasQuirk } from './nature';
 import type { Citizen, Id, World } from './types';
 import { B } from '../data/balance';
 import { rank, type EduLevel, type Field } from '../data/education';
@@ -125,7 +126,7 @@ export function serviceShift(w: World, c: Citizen = player(w)): Result {
   c.incomeToday += gross - t.tax;
   p.shifts++;
   p.lastDay = c.lastWorkDay = today(w);
-  practise(w, c, SERVICES[p.kind].skill, B.practice.work);
+  practise(w, c, SERVICES[p.kind].skill, B.practice.work * (hasQuirk(c, 'workaholic') ? 1.2 : 1));
   return ok(`${SERVICES[p.kind].icon} A day's work as a ${postTitle(p).toLowerCase()}: ${fmtAmt(n.cur, gross - t.tax)} net (${fmtAmt(n.cur, t.tax)} tax).`);
 }
 
