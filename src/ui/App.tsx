@@ -44,10 +44,10 @@ export function App() {
   // Each new screen opens at its top; going back returns to where you were on it.
   useEffect(() => {
     // Restore the scroll position; retry for a few frames while the page is still laying out (fonts, late panels).
-    // Slow machines can take a while to lay out a long screen, so keep trying for up to 2.5 s, unless the user scrolls.
+    // Slow machines can take a while to lay out a long screen, so keep trying for up to 5 s, unless the user scrolls.
     // Timers, not animation frames: a browser that is not drawing (a background tab, a headless test) skips frames.
     const y = store.scrollTo;
-    const until = performance.now() + 2500;
+    const until = performance.now() + 5000;
     let timer = 0, stopped = false;
     const stop = () => { stopped = true; };
     const go = () => { if (stopped) return; window.scrollTo(0, y); if (Math.abs(window.scrollY - y) > 1 && performance.now() < until) timer = window.setTimeout(go, 40); };

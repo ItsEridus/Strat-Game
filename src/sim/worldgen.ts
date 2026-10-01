@@ -1,4 +1,5 @@
 // Deterministic world generation from a seed.
+import { defenceShare } from '../data/arsenal';
 import { industryPay } from './labour';
 import { priceOf } from './housing';
 import { backgroundOf, BACKGROUNDS } from './nature';
@@ -260,7 +261,7 @@ export function generateWorld(seed: number, playerName: string, playerNation: nu
     stats: { revenue: 0, spending: 0, revToday: 0, spendToday: 0, revHist: [], spendHist: [] }, aiPlan: { lastWarCheck: 0, lastBuild: 0 }, recruitGoal: 0, fxAnchor: 0, requests: [], propCount: {}, warScore: 0, unemployment: 0, procure: {}, warMood: 0,
     agency: { name: AGENCY_NAMES[d.cur] ?? `${d.adj} Intelligence Service`, budget: B.intel.budget, network: {}, counter: 20, dossiers: {}, milIntel: {}, focus: [], opsRun: 0, caught: 0, exposed: 0 },
     policeFunding: 0.02,
-    defense: { budget: B.forces.budget, chief: null, unpaid: 0 }, alert: 1,
+    defense: { budget: defenceShare(d.iso), chief: null, unpaid: 0 }, alert: 1,
   }));
   for (const n of w.nations) for (const m of w.nations) if (m.id !== n.id) n.relations[m.id] = { score: randInt(w, -10, 20), hist: [] };
   w.households = w.nations.map((n) => ({ nation: n.id, wallet: {}, inv: {}, pop: regions.filter((r) => r.owner === n.id).reduce((s, r) => s + r.pop, 0), unmet: 0 }));

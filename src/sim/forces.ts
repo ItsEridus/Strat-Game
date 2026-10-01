@@ -14,6 +14,7 @@
 // becomes chief of staff. AI defence ministries raise, supply, deploy and order
 // forces by the same rules the player's government uses.
 import { capsOf, techAvg } from './strategic';
+import { defenceContracts, formationGen, kindGen, qualityFactor, upkeepScale, wearFactor } from './arsenal';
 import { baselineOf } from '../data/nationBaselines';
 import { recordPay } from './wages';
 import { wound } from './health';
@@ -60,7 +61,7 @@ export function power(w: World, f: Formation): number {
   const cmd = f.commander != null ? w.citizens[f.commander] : null;
   if (cmd) p *= 1 + cmd.mil.rank * 0.02;
   if (w.nations[f.nation].defense.chief != null) p *= 1 + B.forces.chiefBonus;
-  return p;
+  return p * qualityFactor(formationGen(w, f));
 }
 
 /** Naval power a nation (and its allies) has in a sea zone. */
@@ -114,6 +115,7 @@ function makeFormation(w: World, nation: Id, kind: FormationKind, loc: Id, name:
     id: nid(w), nation, branch: k.branch, kind, name, loc, zone: k.branch === 'navy' ? seasOf(loc)[0] ?? null : null,
     strength, equipment: rand(w, 70, 95), readiness: rand(w, 55, 80), morale: rand(w, 60, 80), experience: rand(w, 0, 20),
     commander: null, order: { kind: k.branch === 'navy' ? 'patrol' : 'garrison', target: null }, path: [], created: w.time, kills: 0,
+    gen: kindGen(w, w.nations[nation], kind),
   };
   w.forces[f.id] = f;
   return f;
@@ -595,18 +597,20 @@ export function forcesDaily(w: World) {
     const fs = formationsOf(w, n.id);
     // Upkeep from the military budget (capped at a share of yesterday's revenue plus a reserve draw).
     const alertMult = 1 + (n.alert - 1) * B.forces.alertUpkeep;
-    const need = Math.round(fs.reduce((s, f) => s + cur(KINDS[f.kind].upkeep * B.forces.upkeepScale) * (f.strength / 100), 0) * alertMult);
+    const needRaw = fs.reduce((s, f) => s + cur(KINDS[f.kind].upkeep * B.forces.upkeepScale) * (f.strength / 100), 0);
+    const need = Math.round(needRaw * upkeepScale(w, n, needRaw) * alertMult);
     const cap = Math.floor((n.stats.revHist[n.stats.revHist.length - 1] ?? 0) * n.defense.budget) + Math.floor((n.wallet[n.cur] ?? 0) * 0.01);
     const amt = Math.min(need, cap, n.wallet[n.cur] ?? 0);
     if (amt > 0 && pay(w, natref(n.id), hhref(n.id), n.cur, amt, 'Military upkeep')) n.stats.spendToday += amt;
-    procurement(w, n.id, cap - amt); // what's left of the budget buys supplies
+    const supplies = procurement(w, n.id, cap - amt); // spares and supplies for formations first
+    defenceContracts(w, n, cap - amt - supplies); // then procurement and R&D contracts
     const funded = need > 0 ? amt / need : 1;
     n.defense.unpaid = funded < 0.8 ? n.defense.unpaid + 1 : 0;
     for (const f of fs) {
       const k = KINDS[f.kind];
       // Supplies: national stocks keep equipment up.
       // Wear and repair: equipment wears slowly (fast in battle); repairs draw national stocks.
-      f.equipment = Math.max(0, f.equipment - 0.3);
+      f.equipment = Math.max(0, f.equipment - 0.3 * wearFactor(w, f));
       if (f.equipment < 80 && (dayOf(w.time) + f.id) % 3 === 0) {
         const parts = Object.entries(k.supply).map(([item, q]) => [item, Math.max(1, Math.round((q * f.strength) / 100))] as [string, number]);
         if (parts.every(([item, q]) => (n.inv[item] ?? 0) >= q)) {
@@ -707,9 +711,9 @@ function blockades(w: World) {
 }
 
 /** Military procurement within the remaining budget, at sensible prices (by policy, for any government). */
-function procurement(w: World, nation: Id, budget: number) {
+function procurement(w: World, nation: Id, budget: number): number {
   const n = w.nations[nation];
-  if (budget <= 0 || n.exile) return;
+  if (budget <= 0 || n.exile) return 0;
   const need: Record<string, number> = {};
   for (const f of formationsOf(w, nation)) if (f.equipment < 80) for (const [item, q] of Object.entries(KINDS[f.kind].supply)) need[item] = (need[item] ?? 0) + q * 2;
   let left = budget;
@@ -724,6 +728,7 @@ function procurement(w: World, nation: Id, budget: number) {
     left -= spent;
     n.stats.spendToday += spent;
   }
+  return budget - left;
 }
 
 /** Genesis: career officers and NCOs already serving, with ranks that fit their experience. */

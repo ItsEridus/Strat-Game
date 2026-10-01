@@ -132,6 +132,7 @@ export interface Formation {
   path: (Id | string)[]; // remaining route (regions or sea zones)
   created: number;
   kills: number; // enemy strength destroyed
+  gen?: number; // equipment generation fielded (1.8)
 }
 
 /** Law, underworld, intelligence and public-profile state of a citizen. */
@@ -426,7 +427,8 @@ export interface Nation {
   policeFunding: number;
   eduFunding?: number; // share of daily revenue for schools and universities (sim/education.ts)
   eduQ?: number; // quality of public education, 0..100, follows funding slowly
-  defense: { budget: number; chief: Id | null; unpaid: number; appointed?: boolean }; // appointed: chosen by the Commander-in-Chief // military budget (share of revenue), chief of staff, days unpaid
+  defense: { budget: number; chief: Id | null; unpaid: number; appointed?: boolean; split?: import('./arsenal').DefenceSplit; upkeepK?: number; month?: { procurement: number; rd: number; days: number } };
+  arsenal?: import('./arsenal').Arsenal; // equipment by class: generation and age (1.8) // appointed: chosen by the Commander-in-Chief // military budget (share of revenue), chief of staff, days unpaid
   alert: number; // national security alert 1 (normal) .. 5 (maximum) // share of daily revenue for national police (regions without their own government, federal crimes)
 }
 

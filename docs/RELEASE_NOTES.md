@@ -3,6 +3,35 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.7.1: the arsenal
+
+The first part of 1.8 Arsenal: militaries now have budgets, equipment generations and ageing.
+
+- **Real defence budgets.** Each country's defence spending starts at its real share of GDP (SIPRI, 2024):
+  - 3.4% for the United States;
+  - over 7% for Russia and Saudi Arabia;
+  - around 2% for most US allies;
+  - under 1% for Mexico, Argentina and South Africa.
+
+  Budgets are still set as a share of revenue, and grand strategies now scale each country's own normal level. The
+  budget splits into personnel, operations and maintenance, procurement and R&D, as in national defence reports.
+- **Equipment generations.** Fourteen classes of equipment, from small arms and armour to submarines, carriers,
+  missiles, command and surveillance, and electronic warfare. Each has a generation (1–6) and an average age,
+  starting from each country's real inventory. Only the US, China, Russia, Britain, India and Japan field
+  carriers, and only the US, Russia and China field bombers.
+- **Quality counts.** Formations field a mix of generations. Each generation is worth about 15% in combat.
+- **Ageing and wear.** Procurement contracts renew equipment over its service life. Without them it ages, wears
+  out faster and, past about 70% of its life, fights below its generation.
+- **Defence contracts.** Procurement and R&D money is paid to the country's own defence contractor, the largest
+  aerospace or ground-weapons company. Spares and supplies for formations are bought first.
+- **Arsenal panel.** The Forces screen shows spending as a share of GDP, the budget split, and the generation, age
+  and condition of every class of equipment. The order of battle shows each formation's generation.
+
+### Fixed in 1.7.1
+
+- Going back to a long screen now keeps trying to restore your scroll position for up to 5 seconds while the page
+  lays out (it was 2.5 seconds).
+
 ### New in 1.7.0: Law & order
 
 1.7.0 completes Law & order: police, crime, courts and prisons are now careers and institutions. Releases 1.6.1 to

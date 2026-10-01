@@ -11,6 +11,8 @@ import { controller, player } from '../../sim/query';
 import { nationPerm } from '../../sim/authority';
 import { B } from '../../data/balance';
 import { EARTH } from '../../data/earth';
+import { CLASS_INFO, EQUIP_CLASSES } from '../../data/arsenal';
+import { arsenalOf, defenceNorm, effectiveGen, formationGen, milexOfGdp, splitOf } from '../../sim/arsenal';
 import { ALERT_NAMES, BRANCH_ICON, BRANCH_NAME, KINDS, RANKS } from '../../data/military';
 import {
   canOrder, commandCheck, discharge, disband, dutyCheck, enlist, enlistCheck, formationsOf, navalPower, orderCheck, power, raiseCheck, raiseFormation,
@@ -36,19 +38,20 @@ export function Forces({ w }: { w: World }) {
           {(['army', 'navy', 'air'] as Branch[]).map((b) => <div class="stat"><small>{BRANCH_ICON[b]} {BRANCH_NAME[b]}</small><b>{total(b).length} formations · power {Math.round(total(b).reduce((s, f) => s + power(w, f), 0) * 10)}</b></div>)}
           <div class="stat"><small>Commander-in-Chief</small><b>{n.president != null ? <><CitLink w={w} id={n.president} /> <small class="muted">({n.leader})</small></> : 'vacant'}</b></div>
           <div class="stat"><small>Chief of Staff</small><b>{n.defense.chief != null ? <>{rankName(w.citizens[n.defense.chief])} <CitLink w={w} id={n.defense.chief} /></> : 'vacant'}</b></div>
-          <div class="stat"><small>Military budget</small><b>{Math.round(n.defense.budget * 100)}% of revenue{n.defense.unpaid ? <span class="bad"> · unpaid {n.defense.unpaid}d</span> : ''}</b></div>
+          <div class="stat"><small>Military budget</small><b>{Math.round(n.defense.budget * 1000) / 10}% of revenue ({milexOfGdp(n).toFixed(1)}% of GDP){n.defense.unpaid ? <span class="bad"> · unpaid {n.defense.unpaid}d</span> : ''}</b></div>
           <div class="stat"><small>Security alert</small><b class={n.alert >= 4 ? 'bad' : n.alert >= 3 ? 'warn' : ''}>{n.alert} · {ALERT_NAMES[n.alert]}</b></div>
         </div>
         <Help>Formations fight in battles alongside citizens: divisions in or next to the battle region (defenders garrisoned there fight automatically), air wings within {B.forces.airRangeKm.toLocaleString()} km on strike or superiority missions, fleets in a sea that touches the coast. Invasions need a land border — or naval superiority for an amphibious landing; otherwise they are air assaults. Upkeep comes from the military budget; unpaid forces lose morale and readiness; equipment wears and is repaired from national stocks.</Help>
       </Panel>
 
+      <ArsenalPanel w={w} />
       <CommandPanel w={w} />
       <ServicePanel w={w} />
       {ministry && <MinistryPanel w={w} />}
 
       <Panel title="📋 Order of battle" class="wide">
         <div class="scroll-x"><table class="table compact small">
-          <thead><tr><th>Formation</th><th>Where</th><th>Strength</th><th>Equip.</th><th>Ready</th><th>Morale</th><th>Exp.</th><th>Commander</th><th>Orders</th><th /></tr></thead>
+          <thead><tr><th>Formation</th><th>Where</th><th>Strength</th><th>Equip.</th><th>Gen.</th><th>Ready</th><th>Morale</th><th>Exp.</th><th>Commander</th><th>Orders</th><th /></tr></thead>
           <tbody>{mine.map((f) => <FormationRow w={w} f={f} />)}</tbody>
         </table></div>
       </Panel>
@@ -69,6 +72,7 @@ function FormationRow({ w, f }: { w: World; f: Formation }) {
         <td>{f.branch === 'navy' ? <>{f.zone}<br /><span class="muted">port: <RegionLink w={w} id={f.loc} /></span></> : <RegionLink w={w} id={f.loc} />}</td>
         <td><Bar v={f.strength} max={100} color="#46b873" label={`${Math.round(f.strength)}`} /></td>
         <td><Bar v={f.equipment} max={100} color="#5b8def" label={`${Math.round(f.equipment)}`} /></td>
+        <td>{formationGen(w, f).toFixed(1)}</td>
         <td>{Math.round(f.readiness)}</td><td>{Math.round(f.morale)}</td><td>{Math.round(f.experience)}</td>
         <td>{f.commander != null ? <>{rankName(w.citizens[f.commander])}<br /><CitLink w={w} id={f.commander} /></> : <span class="muted">none</span>}</td>
         <td>{orderText(w, f)}</td>
@@ -236,6 +240,30 @@ function ForeignPanel({ w }: { w: World }) {
         <tr><td><NationChip w={w} id={f.nation} /></td><td>{KINDS[f.kind].icon} {f.name}</td><td>{f.branch === 'navy' ? f.zone : w.regions[f.loc].name}</td><td>str {Math.round(f.strength)}</td></tr>
       ))}</tbody></table> : <Empty>No foreign formations in view.</Empty>}
       <p class="small muted">{hidden} foreign formations are beyond your sight. Forces near your borders and seas are visible; deep intelligence networks (50+) or a "Military reconnaissance" operation reveal the rest.</p>
+    </Panel>
+  );
+}
+
+/** The national arsenal: the defence budget's split and each class of equipment's generation and age. */
+function ArsenalPanel({ w }: { w: World }) {
+  const n = w.nations[player(w).nation];
+  const a = arsenalOf(w, n);
+  const s = splitOf(n);
+  return (
+    <Panel title="🏭 Arsenal" class="wide">
+      <p class="small">Defence spending: <b>{milexOfGdp(n).toFixed(1)}% of GDP</b> (usually {(defenceNorm(n) * 100).toFixed(1)}% of revenue) · personnel {Math.round(s.personnel * 100)}% · operations and maintenance {Math.round(s.om * 100)}% · procurement {Math.round(s.procurement * 100)}% · R&D {Math.round(s.rd * 100)}%</p>
+      <div class="scroll-x"><table class="table compact small">
+        <thead><tr><th>Equipment</th><th>Generation</th><th>Average age</th><th>Condition</th></tr></thead>
+        <tbody>{EQUIP_CLASSES.map((cls) => {
+          const st = a[cls];
+          if (!st.gen) return <tr><td>{CLASS_INFO[cls].icon} {CLASS_INFO[cls].label}</td><td colSpan={3} class="muted">not fielded</td></tr>;
+          const eff = effectiveGen(cls, st);
+          const life = CLASS_INFO[cls].life;
+          return <tr><td>{CLASS_INFO[cls].icon} {CLASS_INFO[cls].label}</td><td>{st.gen.toFixed(1)}{eff < st.gen - 0.05 ? <span class="bad"> (fights as {eff.toFixed(1)})</span> : ''}</td><td>{st.age.toFixed(0)} years</td>
+            <td class={st.age > life * 0.7 ? 'bad' : st.age > life * 0.5 ? 'warn' : 'good'}>{st.age > life * 0.7 ? 'ageing: wears fast, loses edge' : st.age > life * 0.5 ? 'mid-life' : 'modern'}</td></tr>;
+        })}</tbody>
+      </table></div>
+      <Help>Equipment generations run from 1 to 6 (for fighters: 4 = F-16 or Su-27, 5 = F-35 or J-20). Each generation is worth about 15% in combat. Procurement contracts renew equipment over its service life; without them it ages, wears faster and, past about 70% of its life, loses its edge. Procurement and R&D money goes to the country's defence contractor.</Help>
     </Panel>
   );
 }

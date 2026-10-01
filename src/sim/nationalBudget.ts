@@ -20,6 +20,7 @@ import { capsOf } from './strategic';
 import { dailyRevenue } from './publicFinance';
 import { EXTRA_PROPOSALS } from './congressExtra';
 import { nationScores } from './forces';
+import { defenceNorm } from './arsenal';
 
 export type BudgetLine = 'defence' | 'intelligence' | 'police' | 'education' | 'health' | 'research' | 'infrastructure' | 'welfare';
 export const BUDGET_LINES: BudgetLine[] = ['defence', 'intelligence', 'police', 'education', 'health', 'research', 'infrastructure', 'welfare'];
@@ -104,9 +105,9 @@ export function strategyBudget(n: Nation, kind: Strategy): Budget {
   const d = defaults(n);
   const set = (k: BudgetLine, v: number) => { b[k] = Math.round(v * 1000) / 1000; };
   switch (kind) {
-    case 'development': set('research', d.research * 1.4); set('infrastructure', d.infrastructure * 1.4); set('education', Math.max(b.education, 0.06)); set('defence', Math.min(b.defence, B.forces.budget)); break;
-    case 'buildup': set('defence', Math.max(b.defence, B.forces.budget * 1.6)); set('intelligence', Math.max(b.intelligence, B.intel.budget * 1.5)); set('research', d.research); set('infrastructure', d.infrastructure * 0.8); break;
-    case 'regional': set('defence', B.forces.budget * 1.2); set('intelligence', B.intel.budget * 1.3); set('research', d.research * 1.2); break;
+    case 'development': set('research', d.research * 1.4); set('infrastructure', d.infrastructure * 1.4); set('education', Math.max(b.education, 0.06)); set('defence', Math.min(b.defence, defenceNorm(n))); break;
+    case 'buildup': set('defence', Math.max(b.defence, defenceNorm(n) * 1.6)); set('intelligence', Math.max(b.intelligence, B.intel.budget * 1.5)); set('research', d.research); set('infrastructure', d.infrastructure * 0.8); break;
+    case 'regional': set('defence', defenceNorm(n) * 1.2); set('intelligence', B.intel.budget * 1.3); set('research', d.research * 1.2); break;
     case 'reform': set('police', Math.max(b.police, 0.035)); set('education', Math.max(b.education, 0.065)); set('health', d.health * 1.3); break;
     case 'retrenchment': for (const k of BUDGET_LINES) set(k, b[k] * 0.85); break;
   }
