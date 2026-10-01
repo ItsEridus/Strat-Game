@@ -45,15 +45,17 @@ export function App() {
   useEffect(() => {
     // Restore the scroll position; retry for a few frames while the page is still laying out (fonts, late panels).
     // Slow machines can take a while to lay out a long screen, so keep trying for up to 2.5 s, unless the user scrolls.
+    // Timers, not animation frames: a browser that is not drawing (a background tab, a headless test) skips frames.
     const y = store.scrollTo;
     const until = performance.now() + 2500;
-    let raf = 0, stopped = false;
+    let timer = 0, stopped = false;
     const stop = () => { stopped = true; };
-    const go = () => { if (stopped) return; window.scrollTo(0, y); if (Math.abs(window.scrollY - y) > 1 && performance.now() < until) raf = requestAnimationFrame(go); };
+    const go = () => { if (stopped) return; window.scrollTo(0, y); if (Math.abs(window.scrollY - y) > 1 && performance.now() < until) timer = window.setTimeout(go, 40); };
     window.addEventListener('wheel', stop, { passive: true });
     window.addEventListener('touchstart', stop, { passive: true });
     go();
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('wheel', stop); window.removeEventListener('touchstart', stop); };
+    timer = timer || window.setTimeout(go, 0); // and once more after this render has been laid out
+    return () => { clearTimeout(timer); window.removeEventListener('wheel', stop); window.removeEventListener('touchstart', stop); };
   }, [s.page, !!s.w]);
   if (!s.w) return <><StartScreen /><WhatsNew /></>;
   const w = s.w;

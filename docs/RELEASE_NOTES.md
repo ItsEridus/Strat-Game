@@ -3,6 +3,12 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### Fixed in 1.5.3
+
+- **Going back keeps your place, everywhere.** Some browsers skip drawing frames for pages they are not showing
+  (a background tab, an automated test). There, going back to a long screen could still land at the top. The game
+  now retries on a timer instead.
+
 ### New in 1.5.2: national budgets and grand strategy
 
 - **A national budget.** Each government divides its revenue between eight lines: defence, intelligence, police,
