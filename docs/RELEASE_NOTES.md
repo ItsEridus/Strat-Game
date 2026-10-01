@@ -3,6 +3,25 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.7.4: defence careers and stories
+
+- **Defence procurement** is a new public career: procurement officer, programme manager, director of programmes,
+  chief of defence procurement. Experienced programme managers cut the technical setbacks of the country's R&D
+  programmes by up to a third.
+- **New occupations at defence companies:** defence engineer and test pilot.
+- **Arms trafficking.** Soldiers of an organisation and above can move weapons to buyers who cannot get an export
+  licence. It pays well, and the police treat it as one of the most serious crimes.
+- **Three new stories:**
+  - "Over budget and behind schedule": as minister, decide what to do with a programme running far over budget.
+    You can press on, rescope it, cancel it or blame the contractor.
+  - "The export licence": a friendly country asks to buy equipment from your defence industry.
+  - "Exercise season": for those in uniform when their branch exercises.
+
+### Fixed in 1.7.4
+
+- Jury service ("Twelve good people") was often withdrawn before you could serve, because the case went to an
+  ordinary trial in the meantime. A case before your jury now waits for your verdict.
+
 ### New in 1.7.3: force structure, doctrine and strategic forces
 
 - **Recruitment.** Countries with a draft (Russia, Turkey, Korea, Brazil, Mexico and China) keep twice the share of

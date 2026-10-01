@@ -229,7 +229,7 @@ export interface CitizenSec {
   handler?: Id; // the officer running them
 }
 
-export type CrimeKind = 'pickpocket' | 'burglary' | 'fraud' | 'smuggling' | 'extortion' | 'bribery' | 'assault' | 'corruption' | 'espionage' | 'votebuying' | 'heist' | 'taxevasion' | 'escape' | 'embezzlement' | 'cybercrime' | 'laundering' | 'insidertrading';
+export type CrimeKind = 'pickpocket' | 'burglary' | 'fraud' | 'smuggling' | 'extortion' | 'bribery' | 'assault' | 'corruption' | 'espionage' | 'votebuying' | 'heist' | 'taxevasion' | 'escape' | 'armstrafficking' | 'embezzlement' | 'cybercrime' | 'laundering' | 'insidertrading';
 export interface Case {
   id: Id; suspect: Id; kind: CrimeKind; region: Id; nation: Id; evidence: number; opened: number;
   status: 'open' | 'closed'; detective: Id | null; loot: number; outcome?: string; syndicate?: Id | null;

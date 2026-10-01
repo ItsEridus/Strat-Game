@@ -168,3 +168,30 @@ test('doctrine shapes combat; exercises cost fuel and raise readiness; losers re
   assert.ok(adopted);
   assert.ok(audit(w).ok, audit(w).problems.join('; '));
 });
+
+import { chooseStory, triggerStory } from '../src/sim/story';
+import { player } from '../src/sim/query';
+import { SYND_JOBS } from '../src/sim/crime';
+import { SERVICES } from '../src/sim/services';
+
+const storyInst = (w: any, id: string) => Object.values(w.story.instances).find((i: any) => i.def === id) as any;
+
+test('defence stories: a programme over budget and an export licence, for the minister', () => {
+  const w = fresh(310);
+  const p = player(w);
+  const n = w.nations[p.nation];
+  n.president = p.id;
+  // A troubled programme.
+  const cls = (['smallarms', 'armour', 'artillery', 'drones'] as const).find((c) => !programmeCheck(w, p.id, n, c))!;
+  startProgramme(w, p.id, n, cls);
+  runningProgrammes(n)[0].overrun = 0.5;
+  assert.ok(triggerStory(w, 'defence.overrun').ok);
+  assert.ok(chooseStory(w, storyInst(w, 'defence.overrun').id, 'restructure').ok);
+  assert.ok(runningProgrammes(n)[0].overrun < 0.5);
+  // An export licence request from a friendly country.
+  for (const x of w.nations) { x.relations[n.id] = { score: 40, hist: [] }; n.relations[x.id] = { score: 40, hist: [] }; }
+  const r = triggerStory(w, 'defence.licence');
+  if (r.ok) assert.ok(chooseStory(w, storyInst(w, 'defence.licence').id, 'approve').ok);
+  assert.ok(SYND_JOBS.gunrun && SERVICES.procurement.ladder.includes('Programme manager'));
+  assert.ok(audit(w).ok, audit(w).problems.join('; '));
+});

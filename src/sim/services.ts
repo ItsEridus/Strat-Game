@@ -23,7 +23,7 @@ import { leaveCheck } from './health';
 import { contribute } from './pensions';
 import { recordPay } from './wages';
 
-export type Service = 'teacher' | 'nurse' | 'doctor' | 'clerk' | 'engineer' | 'prosecutor' | 'defender' | 'judge' | 'warden';
+export type Service = 'teacher' | 'nurse' | 'doctor' | 'clerk' | 'engineer' | 'prosecutor' | 'defender' | 'judge' | 'warden' | 'procurement';
 export interface Post { kind: Service; region: Id; grade: number; since: number; promoted: number; shifts: number; lastDay: number }
 
 interface ServiceDef { label: string; icon: string; place: string; ladder: string[]; pay: number[]; needs: { level: EduLevel; field?: Field[] }[]; per: number; skill: 'lead' | 'end' | 'eco' | 'cons' | 'acc' }
@@ -58,6 +58,10 @@ export const SERVICES: Record<Service, ServiceDef> = {
   warden: { label: 'Prison officer', icon: '🔑', place: 'prison', per: 120, skill: 'end',
     ladder: ['Prison officer', 'Senior prison officer', 'Supervising officer', 'Deputy governor', 'Governor (warden)'], pay: [1.2, 1.5, 1.9, 2.6, 3.4],
     needs: [{ level: 'school' }, { level: 'school' }, { level: 'vocational' }, { level: 'bachelor' }, { level: 'bachelor' }] },
+  // Defence procurement (1.8): buying equipment and running R&D programmes.
+  procurement: { label: 'Defence procurement', icon: '📑', place: 'defence ministry', per: 250, skill: 'eco',
+    ladder: ['Procurement officer', 'Senior procurement officer', 'Programme manager', 'Director of programmes', 'Chief of defence procurement'], pay: [1.6, 2.1, 2.8, 3.6, 4.6],
+    needs: [{ level: 'bachelor', field: ['engineering', 'business'] }, { level: 'bachelor', field: ['engineering', 'business'] }, { level: 'master', field: ['engineering', 'business'] }, { level: 'master', field: ['engineering', 'business'] }, { level: 'master', field: ['engineering', 'business'] }] },
 };
 export const SERVICE_KEYS = Object.keys(SERVICES) as Service[];
 
@@ -71,7 +75,7 @@ export function maxGrade(c: Citizen, kind: Service): number {
 }
 /** Posts in a region: one per `per` residents (about 13% of people work in these services, as in OECD countries); small places share a teacher, a nurse and a clerk. */
 /** Courts sit in the larger places: the smallest number of residents for each court post. */
-const COURT_MIN: Partial<Record<Service, number>> = { prosecutor: 30, defender: 30, judge: 30, warden: 30 };
+const COURT_MIN: Partial<Record<Service, number>> = { prosecutor: 30, defender: 30, judge: 30, warden: 30, procurement: 40 };
 export function postsIn(w: World, region: Id, kind: Service): number {
   const n = residents(w, region).length;
   const core = kind === 'teacher' || kind === 'nurse' || kind === 'clerk';

@@ -41,6 +41,10 @@ export const OCCUPATIONS: Record<string, Occupation> = {
   pharmacist: { label: 'Pharmacist', family: 'health', pay: 2.7, edu: 'master', field: ['medicine'], industries: ['medicine'] },
   electrical: { label: 'Electronics engineer', family: 'science', pay: 2.2, edu: 'bachelor', field: ['engineering'], industries: ['electronics', 'wa'] },
   aeroeng: { label: 'Aerospace engineer', family: 'science', pay: 2.6, edu: 'bachelor', field: ['engineering'], industries: ['wa'] },
+  defeng: { label: 'Defence engineer', family: 'science', pay: 2.4, edu: 'bachelor', field: ['engineering'], industries: ['wa', 'wg'] },
+  testpilot: { label: 'Test pilot', family: 'science', pay: 3.2, edu: 'bachelor', field: ['engineering'], industries: ['wa'] },
+  procofficer: { label: 'Procurement officer', family: 'public', pay: 1.6, edu: 'bachelor', field: ['engineering', 'business'] },
+  progmanager: { label: 'Programme manager', family: 'public', pay: 2.6, edu: 'master', field: ['engineering', 'business'] },
   // Skilled trades
   labourer: { label: 'Construction labourer', family: 'trades', pay: 0.9, edu: 'school', industries: ['materials'] },
   bricklayer: { label: 'Bricklayer', family: 'trades', pay: 1.1, edu: 'vocational', industries: ['materials'] },

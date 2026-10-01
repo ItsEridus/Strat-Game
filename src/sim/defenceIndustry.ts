@@ -106,7 +106,7 @@ function programmesMonth(w: World, n: Nation, rd: number) {
     p.elapsed = (p.elapsed ?? 0) + 1;
     // Technical risk: harder leaps beyond the country's current frontier slip more often.
     const leap = p.target - a[p.cls].frontier;
-    if (chance(w, 0.012 + leap * 0.02)) {
+    if (chance(w, (0.012 + leap * 0.02) * managementFactor(w, n))) {
       p.slips++;
       p.overrun = Math.round((p.overrun + 0.05 + hash01(p.id, p.slips) * 0.1) * 100) / 100;
       p.progress = Math.max(0, p.progress - 0.02);
@@ -131,6 +131,13 @@ function finish(w: World, n: Nation, p: Programme) {
   c.tech[civ] = Math.min(130, c.tech[civ] + 0.5);
   const years = Math.round((p.elapsed ?? 0) / 12);
   chronicle(w, n, `🎖️ The ${p.name} entered service: ${n.adj} forces can now field generation ${p.target} ${CLASS_INFO[p.cls].label.toLowerCase()} (${years} years${p.overrun > 0.05 ? `, ${Math.round(p.overrun * 100)}% over budget` : ''}).`);
+}
+
+/** Experienced programme managers in the defence ministry cut technical setbacks (up to a third). */
+export function managementFactor(w: World, n: Nation): number {
+  let senior = 0;
+  for (const c of Object.values(w.citizens)) if (c.post?.kind === 'procurement' && c.post.grade >= 2 && w.regions[c.post.region].owner === n.id) senior++;
+  return 1 - Math.min(0.33, senior * 0.08);
 }
 
 // ---------- deliveries from the domestic contractor ----------

@@ -38,15 +38,16 @@ export const CRIMES: Record<'pickpocket' | 'burglary' | 'fraud', { name: string;
   burglary: { name: 'Burglary', desc: 'Break into a local company warehouse and take goods.', energy: 25, severity: 2, heat: 16, base: 0.65, cd: 12 },
   fraud: { name: 'Fraud', desc: 'Defraud a local company of cash (economic skill helps).', energy: 20, severity: 3, heat: 20, base: 0.5, cd: 24 },
 };
-export const SYND_JOBS: Record<'smuggle' | 'collect' | 'heist', { name: string; desc: string; energy: number; severity: number; heat: number; base: number; rank: number; cd: number }> = {
+export const SYND_JOBS: Record<'smuggle' | 'collect' | 'heist' | 'gunrun', { name: string; desc: string; energy: number; severity: number; heat: number; base: number; rank: number; cd: number }> = {
   smuggle: { name: 'Smuggling run', desc: 'Move contraband across the region for the syndicate. Paid from its coffers.', energy: 20, severity: 2, heat: 10, base: 0.75, rank: 0, cd: 12 },
   collect: { name: 'Collect protection', desc: 'Lean on businesses on the syndicate’s turf; you keep a cut.', energy: 15, severity: 2, heat: 12, base: 0.8, rank: 1, cd: 12 },
   heist: { name: 'Heist', desc: 'A planned raid on a company’s cash. Big payout, big risk.', energy: 40, severity: 4, heat: 30, base: 0.45, rank: 2, cd: 48 },
+  gunrun: { name: 'Arms trafficking', desc: 'Move stolen and surplus weapons to buyers who cannot get an export licence. Well paid, and the police take it seriously.', energy: 25, severity: 3, heat: 14, base: 0.6, rank: 1, cd: 24 },
 };
 export const SRANKS = ['Associate', 'Soldier', 'Capo', 'Underboss', 'Boss'];
 export const PRANKS = ['Officer', 'Sergeant', 'Detective', 'Captain', 'Chief'];
-const SEVERITY: Record<CrimeKind, number> = { pickpocket: 1, burglary: 2, fraud: 3, smuggling: 2, extortion: 2, bribery: 3, assault: 2, corruption: 4, espionage: 5, votebuying: 3, heist: 4, taxevasion: 2, escape: 3, embezzlement: 3, cybercrime: 3, laundering: 3, insidertrading: 3 };
-const CRIME_NAME: Record<CrimeKind, string> = { pickpocket: 'pickpocketing', burglary: 'burglary', fraud: 'fraud', smuggling: 'smuggling', extortion: 'extortion', bribery: 'bribery', assault: 'assault', corruption: 'corruption', espionage: 'espionage', votebuying: 'vote buying', heist: 'armed robbery', taxevasion: 'tax evasion', escape: 'escape from custody', embezzlement: 'embezzlement', cybercrime: 'online fraud', laundering: 'money laundering', insidertrading: 'insider trading' };
+const SEVERITY: Record<CrimeKind, number> = { pickpocket: 1, burglary: 2, fraud: 3, smuggling: 2, extortion: 2, bribery: 3, assault: 2, corruption: 4, espionage: 5, votebuying: 3, heist: 4, taxevasion: 2, escape: 3, armstrafficking: 4, embezzlement: 3, cybercrime: 3, laundering: 3, insidertrading: 3 };
+const CRIME_NAME: Record<CrimeKind, string> = { pickpocket: 'pickpocketing', burglary: 'burglary', fraud: 'fraud', smuggling: 'smuggling', extortion: 'extortion', bribery: 'bribery', assault: 'assault', corruption: 'corruption', espionage: 'espionage', votebuying: 'vote buying', heist: 'armed robbery', taxevasion: 'tax evasion', escape: 'escape from custody', armstrafficking: 'arms trafficking', embezzlement: 'embezzlement', cybercrime: 'online fraud', laundering: 'money laundering', insidertrading: 'insider trading' };
 
 export const policeName = (w: World, rid: Id) => {
   const r = w.regions[rid];
@@ -287,12 +288,16 @@ export function syndicateJob(w: World, c: Citizen, job: keyof typeof SYND_JOBS):
   const n = w.nations[s.nation];
   c.energy -= def.energy;
   c.sec.last[job] = w.time;
-  const kind: CrimeKind = job === 'smuggle' ? 'smuggling' : job === 'collect' ? 'extortion' : 'heist';
+  const kind: CrimeKind = job === 'smuggle' ? 'smuggling' : job === 'collect' ? 'extortion' : job === 'gunrun' ? 'armstrafficking' : 'heist';
   const res = attempt(w, c, kind, def.base, def.heat);
   let msg = 'The job went bad.';
   let loot = 0;
   if (res.ok) {
-    if (job === 'smuggle') {
+    if (job === 'gunrun') {
+      loot = Math.min(s.wallet[n.cur] ?? 0, cur(rand(w, 40, 100)));
+      if (loot > 0) pay(w, syndref(s.id), cref(c.id), n.cur, loot, `${s.name}: arms deal`);
+      msg = `The crates changed hands at a quiet dock. ${s.name} paid you ${fmtAmt(n.cur, loot)}.`;
+    } else if (job === 'smuggle') {
       loot = Math.min(s.wallet[n.cur] ?? 0, cur(rand(w, 15, 40)));
       if (loot > 0) pay(w, syndref(s.id), cref(c.id), n.cur, loot, `${s.name}: smuggling fee`);
       msg = `Delivered. ${s.name} paid you ${fmtAmt(n.cur, loot)}.`;
@@ -620,8 +625,10 @@ export function crimeDaily(w: World) {
   }
   syndicatesDaily(w);
   // Cases: evidence builds with policing and suspects' heat; old weak cases go cold.
+  // A case before the player's jury waits for its verdict.
+  const jury = new Set(Object.values(w.story.instances).filter((i) => i.def === 'justice.jury' && (i.status === 'active' || i.status === 'offered')).map((i) => i.bind.k as number));
   for (const k of Object.values(w.cases)) {
-    if (k.status !== 'open') continue;
+    if (k.status !== 'open' || jury.has(k.id)) continue;
     const s = w.citizens[k.suspect];
     if (!s) { k.status = 'closed'; k.outcome = 'suspect gone'; continue; }
     if (s.flags.pendingTrial === k.id) {
@@ -839,7 +846,7 @@ export function crimeHourly(w: World) {
     if (c.sec.police != null && h === (c.workHour + 2) % 24) { if (!patrolCheck(w, c)) patrol(w, c); continue; }
     if ((c.id + h) % 24 !== 0) continue; // each citizen considers crime once a day
     if (c.sec.syndicate != null) {
-      const jobs = (['heist', 'collect', 'smuggle'] as const).filter((j) => !jobCheck(w, c, j));
+      const jobs = (['heist', 'gunrun', 'collect', 'smuggle'] as const).filter((j) => !jobCheck(w, c, j));
       if (jobs.length && chance(w, 0.35)) syndicateJob(w, c, jobs[0]);
       continue;
     }
