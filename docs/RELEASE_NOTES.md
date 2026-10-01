@@ -3,6 +3,41 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.0.1: intelligence services as organisations
+
+The first part of 2.1 Shadows.
+
+- **Eight directorates.** Every intelligence service is now an organisation with eight directorates: human
+  intelligence, signals, imagery, open sources, cyber, analysis, covert action and counter-intelligence.
+- **Real starting strengths.** Each starts from the real service in 2025 (rounded judgements from public sources).
+  For example:
+  - the US leads in signals and satellites;
+  - Russia is strong in human intelligence and covert action;
+  - China in cyber and counter-intelligence;
+  - Britain in human and signals intelligence.
+- **Services change slowly.** Month by month, each directorate moves towards what the country now gives it:
+  - money: the budget, and how the director divides it;
+  - technology: signals, open sources and cyber follow information technology, and imagery follows space;
+  - people: the officers who serve in it.
+
+  A service that is starved declines over years, not overnight.
+- **Failure teaches.** A failed or exposed operation teaches lessons, and the directorate improves faster for a
+  while afterwards. A service that catches foreign agents sharpens its counter-intelligence.
+- **Operations depend on the directorate that runs them:**
+  - reconnaissance on imagery;
+  - sabotage, scandals and propaganda on covert action;
+  - theft on cyber;
+  - recruitment on human intelligence;
+  - dossiers on analysis.
+
+  Human intelligence builds networks abroad, and counter-intelligence protects the country at home.
+- **Careers.** Officers serve in a directorate and can transfer. Operations run by an officer's own directorate go
+  a little better.
+- **On the Intelligence screen,** a Directorates panel shows each directorate's strength, trend, budget share and
+  staff. The Director of Intelligence can shift money between directorates.
+- **The roadmap** (docs/ROADMAP.md) now records the progress of every part from 1.6 to 2.0. It lists what 2.0 did
+  not build, and where each of those items is now planned.
+
 ### New in 2.0.0: The great game
 
 2.0 is complete. Over 1.9.3 to 1.9.7 the world's countries gained real foreign policies:

@@ -13,29 +13,30 @@ Two threads were added on 1 October 2026: **character creation and customisation
 a **deeper life simulation** after the geopolitical thread (2.6.0 → 3.0.0, "Life 2.0").
 
 Parts marked **GEO** are the geopolitical simulation. Every version ships as a series of playable patch
-releases (every push is a release); the minor version marks its theme complete.
+releases (every push is a release); the minor version marks its theme complete. The parts of a theme ship as patches of the
+version before it (2.0's parts were 1.9.3 to 1.9.7, and 2.0.0 marked it complete), so 2.1's parts are 2.0.x.
 
 ## At a glance
 
-| Version | Theme | What the player sees |
-| --- | --- | --- |
-| 1.4.x | **Character creation & customisation** | Design who you are before you are born: looks, background, family, personality and talents; change your look over a life |
-| 1.5.0 | **The real economy** (ECON: a deep economic overhaul) + **Work & enterprise** (GEO 1: companies expand or disband) | Prices, wages, rents, taxes and interest that match each real country; payslips and household budgets; a working life in any occupation; firms that are founded, grow, merge, go public and go bust |
-| 1.6.0 | **The strategic engine** (GEO 2: nations advance over time) | Economies grow or stall, budgets shift, capabilities improve or decay, and the power ranking moves for reasons you can read; years pass in minutes |
-| 1.7.0 | **Law & order** | Police, crime, courts and prisons as full careers and institutions |
-| 1.8.0 | **Arsenal** (GEO 3: militaries get better) | Defence budgets, R&D programmes, equipment generations, procurement from real defence firms, arms trade, doctrine that learns |
-| 1.9.0 | **Sky & ground** | Real weather and climate zones, natural hazards by real geography, resources and energy |
-| 2.0.0 | **The great game** (GEO 4: diplomacy and the international order) | Treaties, alliances, sanctions, a Security Council, blocs and summits; leaders whose character shapes policy |
-| 2.1.0 | **Shadows** (GEO 5: intelligence gets better) | Services that grow and learn; governments act on estimates, so surprise and miscalculation happen |
-| 2.2.0 | **War & peace** (GEO 6: realistic wars) | Wars with causes, escalation, fronts, mobilisation, exhaustion, negotiated endings and long aftermaths |
-| 2.3.0 | **Rise & fall** (GEO 7: regimes, secession, new nations) | Coups, revolutions, democratisation and backsliding, secession, civil wars, new and vanished states |
-| 2.4.0 | **Frontiers** (GEO 8: technology, cyber and space) | A near-future technology race that changes economies, armies and spying |
-| 2.5.0 | **A world of consequences** (GEO 9: world economy, climate, soft power) | Debt crises, central banks, climate over decades, soft power; the decades-long campaign and the World Almanac |
-| 2.6.0 | **Life 2.0: the mind** | Personality that grows from experience, values, mental health in depth, habits and addictions, therapy |
-| 2.7.0 | **Life 2.0: the social fabric** | Friend circles, rivals, communities, relationships under each country's laws, custody and blended families, family gatherings |
-| 2.8.0 | **Life 2.0: the everyday** | A day planner, commuting and cars, cooking, sleep, fitness and the body, shopping, chores |
-| 2.9.0 | **Life 2.0: culture and belonging** | Faith, festivals, languages, migration and integration, identity |
-| 3.0.0 | **Life 2.0: generations** | Dynasties over centuries: family trees, inherited looks and traits, the family name, ancestral homes and businesses, a family chronicle |
+| Version | Theme | What the player sees | Status |
+| --- | --- | --- | --- |
+| 1.4.x | **Character creation & customisation** | Design who you are before you are born: looks, background, family, personality and talents; change your look over a life | ✅ done |
+| 1.5.0 | **The real economy** (ECON: a deep economic overhaul) + **Work & enterprise** (GEO 1: companies expand or disband) | Prices, wages, rents, taxes and interest that match each real country; payslips and household budgets; a working life in any occupation; firms that are founded, grow, merge, go public and go bust | ✅ done |
+| 1.6.0 | **The strategic engine** (GEO 2: nations advance over time) | Economies grow or stall, budgets shift, capabilities improve or decay, and the power ranking moves for reasons you can read; years pass in minutes | ✅ done |
+| 1.7.0 | **Law & order** | Police, crime, courts and prisons as full careers and institutions | ✅ done |
+| 1.8.0 | **Arsenal** (GEO 3: militaries get better) | Defence budgets, R&D programmes, equipment generations, procurement from real defence firms, arms trade, doctrine that learns | ✅ done |
+| 1.9.0 | **Sky & ground** | Real weather and climate zones, natural hazards by real geography, resources and energy | ✅ done |
+| 2.0.0 | **The great game** (GEO 4: diplomacy and the international order) | Treaties, alliances, sanctions, a Security Council, blocs and summits; leaders whose character shapes policy | ✅ done |
+| 2.1.0 | **Shadows** (GEO 5: intelligence gets better) | Services that grow and learn; governments act on estimates, so surprise and miscalculation happen | ▶ next |
+| 2.2.0 | **War & peace** (GEO 6: realistic wars) | Wars with causes, escalation, fronts, mobilisation, exhaustion, negotiated endings and long aftermaths | planned |
+| 2.3.0 | **Rise & fall** (GEO 7: regimes, secession, new nations) | Coups, revolutions, democratisation and backsliding, secession, civil wars, new and vanished states | planned |
+| 2.4.0 | **Frontiers** (GEO 8: technology, cyber and space) | A near-future technology race that changes economies, armies and spying | planned |
+| 2.5.0 | **A world of consequences** (GEO 9: world economy, climate, soft power) | Debt crises, central banks, climate over decades, soft power; the decades-long campaign and the World Almanac | planned |
+| 2.6.0 | **Life 2.0: the mind** | Personality that grows from experience, values, mental health in depth, habits and addictions, therapy | planned |
+| 2.7.0 | **Life 2.0: the social fabric** | Friend circles, rivals, communities, relationships under each country's laws, custody and blended families, family gatherings | planned |
+| 2.8.0 | **Life 2.0: the everyday** | A day planner, commuting and cars, cooking, sleep, fitness and the body, shopping, chores | planned |
+| 2.9.0 | **Life 2.0: culture and belonging** | Faith, festivals, languages, migration and integration, identity | planned |
+| 3.0.0 | **Life 2.0: generations** | Dynasties over centuries: family trees, inherited looks and traits, the family name, ancestral homes and businesses, a family chronicle | planned |
 
 **Why this order.** Each part builds on the ones before it:
 - A realistic economy comes first: money, prices, wages and costs underpin every later part.
@@ -411,6 +412,10 @@ improve or decay, and the power ranking moves for reasons the player can read.
   - Not yet met: the target of a full default world simulating a year in at most 3 minutes. It takes about 13
     minutes today, and smaller worlds are proportionally faster.
 
+- **Progress:** shipped as 1.6.0: the monthly strategic turn and the pace of history, capability stocks and
+  growth, national budgets and grand strategy, the power index and level-of-detail time, calibrated over 30 years.
+  **Complete in 1.6.0.**
+
 ## 1.7.0 — Law & order
 
 *Includes the prison system and the policing and crime careers overhaul requested earlier.*
@@ -458,6 +463,10 @@ improve or decay, and the power ranking moves for reasons the player can read.
     - clearance is 47–67% of reported crimes;
     - trust in the police runs from about 15–20 in Russia and Mexico to about 60 in the US and western Europe.
   - Still to do: counter-terrorism waits for 2.1.
+
+- **Progress:** 1.6.1 prisons; 1.6.2 the courts; 1.6.3 white-collar crime, laundering and informants; 1.6.4
+  policing as an institution; 1.7.0 calibration (prison populations, pleas, convictions, clearance, police trust).
+  **Complete in 1.7.0.**
 
 ## 1.8.0 — Arsenal (GEO 3: militaries get better)
 
@@ -509,6 +518,10 @@ improve or decay, and the power ranking moves for reasons the player can read.
     - a country that stops funding its forces ages from 44 to 74 years and cancels its programmes;
     - the ledger audit passes.
 
+- **Progress:** 1.7.1 the arsenal (equipment by class, generation and age); 1.7.2 R&D programmes and the arms
+  trade; 1.7.3 force structure, doctrine and strategic forces; 1.7.4 defence careers and stories; 1.8.0
+  calibration over 30 strategic years. **Complete in 1.8.0.**
+
 ## 1.9.0 — Sky & ground
 
 *Includes the weather overhaul and the natural disasters overhaul requested earlier.*
@@ -552,6 +565,11 @@ improve or decay, and the power ranking moves for reasons the player can read.
     - the audit passes.
   - Still to do: national harvests vary by only a few per cent a year (real yields vary more), and terrain has no
     elevation, so highland cities run warm.
+
+- **Progress:** 1.8.1 weather and climate; 1.8.2 natural hazards; 1.8.3 energy and resources; 1.8.4 food security,
+  emergency careers and disaster stories; 1.9.0 calibration (disasters at real rates, harvests, food imports).
+  Also requested along the way: top speed of a day per second (1.9.0), skipping a year (1.9.1), and skipping a year
+  statistically in seconds (1.9.2). **Complete in 1.9.0.**
 
 ## 2.0.0 — The great game (GEO 4: diplomacy and the international order)
 
@@ -611,6 +629,17 @@ improve or decay, and the power ranking moves for reasons the player can read.
   - alliances form under threat and loosen without it;
   - sanctions cost their targets plausible shares of GDP;
   - long peaceful stretches happen, and so do betrayals when interests shift.
+
+- **Progress:** 1.9.3 relations 2.0 (trust, affinity, threat, trade ties, grievances, prestige, leaders' outlook);
+  1.9.4 treaties as objects (the 2025 order seeded from real treaties) and diplomatic actions with capital and
+  costs; 1.9.5 the UN Security Council and General Assembly, the G20, WTO disputes and IMF programmes; 1.9.6 crises
+  with an escalation ladder, arms races, balancing and bandwagoning, polarity, and the growth cost of sanctions;
+  1.9.7 diplomatic careers and the three stories; 2.0.0 calibration over decades (rivalries persist, deterrence in
+  crises). **Complete in 2.0.0.**
+- **Not yet built, carried forward:** offensive alliances and military access; recognition; customs unions;
+  per-partner tariffs and quotas, sectoral and secondary sanctions and smuggling to evade them (→ 2.5); UN
+  peacekeeping and resolutions authorising force (→ 2.2); a Secretary-General and organisation budgets; spheres of
+  influence and hedging; a relations map and briefings before decisions; a foreign minister in the cabinet.
 
 ## 2.1.0 — Shadows (GEO 5: intelligence gets better)
 

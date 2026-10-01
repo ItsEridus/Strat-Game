@@ -9,6 +9,8 @@ import { controller, player } from '../../sim/query';
 import { visible } from '../../sim/forces';
 import { nationPerm } from '../../sim/authority';
 import { B } from '../../data/balance';
+import { DIRECTORATES, DIR_INFO, type Directorate } from '../../data/intelServices';
+import { OP_DIR, dirOfAgent, joinDirectorate, orgOf, prioritise, staffByDir } from '../../sim/intelOrg';
 import { ARANKS, OPS, analyze, analyzeCheck, joinAgency, joinAgencyCheck, knownDossier, launchOp, leaveAgency, opCheck, quitAsset, setAgencyBudget } from '../../sim/intel';
 
 export function Intel({ w }: { w: World }) {
@@ -36,6 +38,7 @@ export function Intel({ w }: { w: World }) {
         <Help>The budget builds networks in the focus countries (slower against strong counter-intelligence) and sustains counter-intelligence at home. Deeper networks unlock bolder operations and raise success odds. Exposed operations cost relations, networks and sometimes agents.</Help>
       </Panel>
 
+      <Directorates w={w} official={official} />
       {official && <DirectorPanel w={w} />}
       <CareerPanel w={w} />
       {(official || (p.sec.agency === p.nation && p.sec.arank >= 1)) && <OpsPanel w={w} />}
@@ -76,6 +79,7 @@ function DirectorPanel({ w }: { w: World }) {
 
 function CareerPanel({ w }: { w: World }) {
   const p = player(w);
+  const [dir, setDir] = useState<Directorate>(dirOfAgent(p));
   const [target, setTarget] = useState(w.nations.find((x) => x.id !== p.nation)!.id);
   return (
     <Panel title="🎖️ Your intelligence career">
@@ -86,7 +90,10 @@ function CareerPanel({ w }: { w: World }) {
         </>
       ) : (
         <>
-          <p><b>{ARANKS[p.sec.arank]}</b> · tradecraft {p.sec.tradecraft.toFixed(1)} · successful operations {p.flags.opWins ?? 0}</p>
+          <p><b>{ARANKS[p.sec.arank]}</b>, {DIR_INFO[dirOfAgent(p)].label.toLowerCase()} directorate · tradecraft {p.sec.tradecraft.toFixed(1)} · successful operations {p.flags.opWins ?? 0}</p>
+          <div class="row small">Transfer to <Select value={dir} options={DIRECTORATES.map((d) => [d, DIR_INFO[d].label] as [Directorate, string])} onChange={setDir} />
+            <ActBtn small why={dir === dirOfAgent(p) ? 'You already serve there.' : null} run={(w) => joinDirectorate(w, p, dir)}>Transfer</ActBtn></div>
+          <p class="small muted">Operations run by your own directorate go a little better.</p>
           <div class="row small">File a report on <Select value={target} options={w.nations.filter((x) => x.id !== p.nation).map((x) => [x.id, x.name])} onChange={setTarget} />
             <ActBtn small why={analyzeCheck(w, p, target)} run={(w) => analyze(w, p, target)}>Analyse (−10⚡)</ActBtn></div>
           <ActBtn small kind="ghost" confirm="Resign from the service?" run={(w) => leaveAgency(w, p)}>Resign</ActBtn>
@@ -125,6 +132,32 @@ function OpsPanel({ w }: { w: World }) {
         <ActBtn kind="primary" why={opCheck(w, p.id, p.nation, kind, target, rid, sid)} run={(w) => launchOp(w, p.id, p.nation, kind, target, rid, sid)}>Launch</ActBtn>
       </div>
       <p class="small muted">{def.desc} Needs network {B.intel.minNetwork[kind]}, takes {B.intel.opHours[kind]}h, costs {B.intel.opCost[kind]} from the treasury{def.relation ? `; if exposed, relations fall ~${-def.relation - 6}` : ''}.</p>
+    </Panel>
+  );
+}
+
+function Directorates({ w, official }: { w: World; official: boolean }) {
+  const p = player(w);
+  const n = w.nations[p.nation];
+  const o = orgOf(n);
+  const staff = staffByDir(w, n.id);
+  return (
+    <Panel title="🏢 Directorates" class="wide">
+      <div class="scroll-x"><table class="table compact small">
+        <thead><tr><th>Directorate</th><th>Strength</th><th>Trend</th><th>Budget</th><th>Staff</th><th>Runs</th>{official && <th></th>}</tr></thead>
+        <tbody>{DIRECTORATES.map((d) => {
+          const trend = o.prev ? o.dirs[d] - o.prev[d] : 0;
+          const runs = (Object.keys(OPS) as OpKind[]).filter((k) => OP_DIR[k] === d).map((k) => OPS[k].name.toLowerCase());
+          return (
+            <tr><td title={DIR_INFO[d].desc}>{DIR_INFO[d].icon} {DIR_INFO[d].label}{o.lessons[d] > 0.3 ? <small class="muted"> (learning from failure)</small> : null}</td>
+              <td><Bar v={o.dirs[d]} max={100} color="#8a63d2" label={`${Math.round(o.dirs[d])}`} /></td>
+              <td class={trend > 0.05 ? 'good' : trend < -0.05 ? 'bad' : 'muted'}>{trend > 0.05 ? '▲' : trend < -0.05 ? '▼' : '—'}</td>
+              <td>{Math.round(o.split[d] * 100)}%</td><td>{staff[d]}</td><td class="muted">{runs.join(', ') || '—'}</td>
+              {official && <td><ActBtn small run={(w) => prioritise(w, p.id, p.nation, d)}>Prioritise</ActBtn></td>}</tr>
+          );
+        })}</tbody>
+      </table></div>
+      <Help>A service is eight directorates. Each starts from the real service's strengths in 2025 and moves, month by month, towards what the country now gives it: money (the budget and how it is divided), technology (signals, open sources and cyber follow information technology; imagery follows space), people, and experience. Failed and exposed operations teach lessons, and the directorate improves faster for a while afterwards. Every operation draws on the directorate that runs it.</Help>
     </Panel>
   );
 }

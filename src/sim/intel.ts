@@ -24,6 +24,7 @@ import { controller, cref, hhref, jailed, natref, player } from './query';
 import { nationPerm } from './authority';
 import { relation } from './congress';
 import { visible } from './forces';
+import { OP_DIR, dirEdge, dirOfAgent, dirStrength, noteLesson } from './intelOrg';
 
 export const OPS: Record<OpKind, { name: string; desc: string; needs: 'region' | 'subject' | 'formation' | null; rank: number; relation: number }> = {
   intel: { name: 'Gather intelligence', desc: 'Compile a dossier: treasury, forces, warheads, organised crime, leadership.', needs: null, rank: 1, relation: -4 },
@@ -113,7 +114,9 @@ export function resolveOp(w: World, id: Id) {
   const p = player(w);
   const net = op.kind === 'counter' ? 60 : n.agency.network[op.target] ?? 0;
   const counter = op.kind === 'counter' ? 0 : t.agency.counter;
-  const pSuccess = Math.max(0.05, Math.min(0.92, 0.35 + net / 150 + (agent?.sec.tradecraft ?? 5) / 100 - counter / 200));
+  // The directorate that runs it, and the agent's own directorate, matter (intelOrg.ts).
+  const ownDir = agent && dirOfAgent(agent) === OP_DIR[op.kind] ? 0.04 : 0;
+  const pSuccess = Math.max(0.05, Math.min(0.92, 0.35 + net / 150 + (agent?.sec.tradecraft ?? 5) / 100 - counter / 200 + dirEdge(n, op.kind) + ownDir));
   const success = chance(w, pSuccess);
   const exposed = op.kind !== 'counter' && chance(w, success ? (counter / 50) * 0.06 : 0.18 + counter / 300);
   let text = '';
@@ -125,6 +128,8 @@ export function resolveOp(w: World, id: Id) {
     op.status = 'failed';
     text = 'The operation failed.';
   }
+  if (!success || exposed) noteLesson(n, OP_DIR[op.kind], exposed ? 1 : 0.4); // failure teaches
+  if (exposed && op.kind !== 'counter') noteLesson(t, 'counter', 0.3); // and so does catching them
   if (exposed) {
     op.status = 'exposed';
     n.agency.exposed++;
@@ -393,12 +398,12 @@ export function intelDaily(w: World) {
     for (const o of w.nations) {
       if (o.id === n.id) continue;
       let v = (a.network[o.id] ?? 0) * (1 - B.intel.networkDecay / 100);
-      if (a.focus.includes(o.id)) v += (per * B.intel.networkGain * (1 - o.agency.counter / 200)) / (1 + v / 50);
+      if (a.focus.includes(o.id)) v += (per * B.intel.networkGain * (1 - o.agency.counter / 200) * (dirStrength(n, 'humint') / 60)) / (1 + v / 50); // case officers build networks
       // Assets inside the country keep feeding the network.
       v += assets.get(`${o.id}|${n.id}`) ?? 0;
       a.network[o.id] = Math.max(0, Math.min(100, v));
     }
-    a.counter += (Math.min(90, 15 + a.budget * 600) - a.counter) * 0.08;
+    a.counter += (Math.min(95, (15 + a.budget * 600) * 0.5 + dirStrength(n, 'counter') * 0.5) - a.counter) * 0.08;
   }
   // Salaries for citizens in the service.
   for (const c of census(w).all) {

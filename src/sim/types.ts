@@ -214,6 +214,7 @@ export interface CitizenSec {
   prank: number; // 0 officer, 1 sergeant, 2 detective, 3 captain, 4 chief
   collars: number; // arrests made
   agency: Id | null; // nation whose intelligence service employs them
+  dir?: import('../data/intelServices').Directorate; // the directorate they serve in (2.1)
   arank: number; // 0 analyst, 1 case officer, 2 field agent, 3 station chief, 4 deputy director
   tradecraft: number;
   asset: Id | null; // foreign service secretly paying them (double agent)
@@ -250,6 +251,7 @@ export interface Agency {
   milIntel: Record<Id, number>; // foreign order of battle known until this time
   focus: Id[]; // nations the service prioritises
   opsRun: number; caught: number; exposed: number;
+  org?: import('./intelOrg').ServiceOrg; // directorates, budget split and lessons (2.1)
 }
 export type OpKind = 'intel' | 'sabotage' | 'theft' | 'unrest' | 'propaganda' | 'scandal' | 'recruit' | 'counter' | 'milintel' | 'milsabotage';
 export interface SpyOp {
