@@ -15,6 +15,7 @@ import { lifeOf } from './lifecycle';
 import { adjustRel } from './social';
 import { petComfort } from './kinship';
 import { SIZES } from './housing';
+import { incomeOf, loansOf } from './loans';
 
 type Part = [string, number];
 
@@ -64,6 +65,9 @@ function parts(w: World, c: Citizen, friends: number): { happy: Part[]; stress: 
     if (comfort) happy.push([home.kind === 'own' ? 'a home of your own' : SIZES[home.size].label.toLowerCase(), comfort]);
     if (home.kind === 'family' && ageOf(w, c) >= 28) { happy.push(['still living with family', -2]); stress.push(['still living with family', 2]); }
   }
+  const loans = loansOf(w, c);
+  if (loans.some((l) => l.missed > 0)) stress.push(['payments in arrears', 10]);
+  else if (loans.length) { const share = loans.reduce((t, l) => t + l.payment, 0) / Math.max(1, incomeOf(w, c)); if (share > 0.25) stress.push(['heavy debt repayments', Math.min(8, Math.round(share * 12))]); }
   const pet = petComfort(w, c);
   if (pet >= 30) { happy.push(['a pet at home', pet >= 70 ? 4 : 2]); stress.push(['a pet at home', -3]); }
   const g = L.goods;

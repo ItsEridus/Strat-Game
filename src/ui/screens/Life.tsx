@@ -19,6 +19,7 @@ import { COURSES, FIELDS, eduOf, type Course, type Field } from '../../data/educ
 import { nationPerm } from '../../sim/authority';
 import { controller } from '../../sim/query';
 import { SIZES, buyCheck, buyHome, housingCost, priceOf, rentCheck, rentHome, rentOf, sellHome, type HomeSize } from '../../sim/housing';
+import { KIND, buyWithMortgage, creditOf, incomeOf, loanCheck, loansOf, mortgageCheck, rateFor, repayLoan, takePersonalLoan } from '../../sim/loans';
 import { HOBBIES, HOBBY_ENERGY, hobbyCheck, hobbyLevel, pursueHobby } from '../../sim/hobbies';
 import { STATUS_LABEL, breakUp, familyOf, goOnDate, marry, partnerOf, propose, romanceCheck, tryForChild } from '../../sim/family';
 
@@ -84,6 +85,8 @@ export function Life({ w }: { w: World }) {
 
       <Panel title="Hobbies"><Hobbies w={w} p={p} /></Panel>
 
+      <Panel title="Loans and credit"><LoansPanel w={w} p={p} /></Panel>
+
       <Panel title="Money this month"><Budget w={w} p={p} /></Panel>
 
       <Panel title="Daily routine"><RoutinePanel w={w} p={p} /></Panel>
@@ -97,6 +100,39 @@ export function Life({ w }: { w: World }) {
           {([['character', '🧍 Character'], ['jobs', '💼 Work'], ['local', '🏘️ Neighbourhood'], ['market', '🛒 Market'], ['companies', '🏭 Companies'], ['politics', '🗳️ Politics'], ['forces', '🎖️ Military'], ['journal', '📓 Journal']] as const).map(([id, label]) => <Btn small kind="ghost" onClick={() => store.go(id)}>{label}</Btn>)}
         </div>
       </Panel>
+    </div>
+  );
+}
+
+function LoansPanel({ w, p }: { w: World; p: Citizen }) {
+  const code = w.nations[p.nation].cur;
+  const loans = loansOf(w, p);
+  const [amt, setAmt] = useState(20);
+  return (
+    <div>
+      <div class="stats">
+        <Stat label="Credit score">{creditOf(p)}</Stat>
+        <Stat label="Income lenders count">{fmtAmt(code, incomeOf(w, p))} a day</Stat>
+        <Stat label="Personal loan rate">{rateFor(w, p, 'personal')}%</Stat>
+        <Stat label="Mortgage rate">{rateFor(w, p, 'mortgage')}%</Stat>
+      </div>
+      {loans.length ? (
+        <table class="table compact small">
+          <thead><tr><th>Loan</th><th class="num">Owed</th><th class="num">Rate</th><th class="num">A day</th><th /></tr></thead>
+          <tbody>{loans.map((l) => (
+            <tr>
+              <td>{KIND[l.kind].icon} {KIND[l.kind].label} <small class="muted">· {l.note}{l.missed ? ` · ⚠️ ${l.missed} missed` : ''}{l.start > w.time ? ' · payments not started' : ''}</small></td>
+              <td class="num">{fmtAmt(l.cur, l.balance)}</td><td class="num">{l.rate}%</td><td class="num">{fmtAmt(l.cur, l.payment)}</td>
+              <td><ActBtn small kind="ghost" confirm={`Pay off ${fmtAmt(l.cur, l.balance)} now?`} run={(w) => repayLoan(w, l.id)}>Pay off</ActBtn></td>
+            </tr>
+          ))}</tbody>
+        </table>
+      ) : <Empty>No loans.</Empty>}
+      <div class="row small">Personal loan
+        <select value={amt} onChange={(ev) => setAmt(+(ev.target as HTMLSelectElement).value)}>{[20, 50, 100, 200, 500, 1000].map((x) => <option value={x}>{fmtAmt(code, cur(x))}</option>)}</select>
+        <ActBtn small why={loanCheck(w, p, 'personal', cur(amt))} run={(w) => takePersonalLoan(w, cur(amt))}>Borrow</ActBtn>
+      </div>
+      <Help>Rates follow your country's central-bank rate plus a margin; weak credit costs more. Repayments may take up to {Math.round(B.loans.maxShare * 100)}% of your income. Missed payments hurt your credit, and a mortgage {B.loans.repossessAfter} days in arrears ends in repossession. Paying on time builds credit.</Help>
     </div>
   );
 }
@@ -121,7 +157,7 @@ function HomePanel({ w, p }: { w: World; p: Citizen }) {
             <td>{SIZES[s].icon} {SIZES[s].label}</td>
             <td class="num">{fmtAmt(code, rentOf(w, here, s))}</td>
             <td class="num">{fmtAmt(code, priceOf(w, here, s))}</td>
-            <td class="row"><ActBtn small why={rentCheck(w, p, s)} run={(w) => rentHome(w, s)}>Rent</ActBtn><ActBtn small why={buyCheck(w, p, s)} run={(w) => buyHome(w, s)}>Buy</ActBtn></td>
+            <td class="row"><ActBtn small why={rentCheck(w, p, s)} run={(w) => rentHome(w, s)}>Rent</ActBtn><ActBtn small why={buyCheck(w, p, s)} run={(w) => buyHome(w, s)}>Buy</ActBtn><ActBtn small why={mortgageCheck(w, p, s)} run={(w) => buyWithMortgage(w, s)}>Mortgage</ActBtn></td>
           </tr>
         ))}</tbody>
       </table>
@@ -138,6 +174,7 @@ function EducationPanel({ w, p }: { w: World; p: Citizen }) {
   const code = w.nations[nat].cur;
   const [course, setCourse] = useState<Course>('bachelor');
   const [field, setField] = useState<Field>('business');
+  const [loan, setLoan] = useState(false);
   const [share, setShare] = useState(Math.round((w.nations[p.nation].eduFunding ?? eduOf(w.nations[p.nation].iso).funding) * 100));
   const fee = (k: Course) => cur(Math.round(eduOf(w.nations[nat].iso).tuition * COURSES[k].tuition));
   return (
@@ -158,7 +195,8 @@ function EducationPanel({ w, p }: { w: World; p: Citizen }) {
           <div class="row wrap small">
             <select value={course} onChange={(ev) => setCourse((ev.target as HTMLSelectElement).value as Course)}>{(Object.keys(COURSES) as Course[]).map((k) => <option value={k}>{COURSES[k].icon} {COURSES[k].label} ({COURSES[k].years} yr)</option>)}</select>
             <select value={field} onChange={(ev) => setField((ev.target as HTMLSelectElement).value as Field)}>{(Object.keys(FIELDS) as Field[]).map((k) => <option value={k}>{FIELDS[k].icon} {FIELDS[k].label}</option>)}</select>
-            <ActBtn small why={enrollCheck(w, p, course, field)} run={(w) => enroll(w, course, field)}>Enrol ({fee(course) ? `${fmtAmt(code, fee(course))} a year` : 'no fees'})</ActBtn>
+            <label class="check"><input type="checkbox" checked={loan} onChange={() => setLoan(!loan)} /> with a student loan</label>
+            <ActBtn small why={enrollCheck(w, p, course, field, loan)} run={(w) => enroll(w, course, field, p, loan)}>Enrol ({fee(course) ? `${fmtAmt(code, fee(course))} a year` : 'no fees'})</ActBtn>
           </div>
           <Help>About {courseDays(w, course)} study days. Studying builds the skills of your field.</Help>
         </>

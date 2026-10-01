@@ -17,11 +17,12 @@ import { ageOf, lifeYear, practise } from './growth';
 import { lifeOf, milestone } from './lifecycle';
 import { nationPerm } from './authority';
 import { RANKS } from '../data/military';
+import { borrow, loanCheck } from './loans';
 
 export interface Education {
   level: EduLevel;
   field?: Field; // of the highest qualification
-  enrolled?: { course: Course; field: Field; region: Id; since: number; days: number; need: number; lastDay: number; paidYears: number };
+  enrolled?: { course: Course; field: Field; region: Id; since: number; days: number; need: number; lastDay: number; paidYears: number; loan?: boolean };
 }
 
 export const eduOfCitizen = (c: Citizen): Education => (c.edu ??= { level: 'school' });
@@ -50,7 +51,7 @@ export const courseDays = (w: World, course: Course) => Math.max(10, Math.round(
 
 // ---------- enrolling and studying ----------
 
-export function enrollCheck(w: World, c: Citizen, course: Course, field: Field): string | null {
+export function enrollCheck(w: World, c: Citizen, course: Course, field: Field, loan = false): string | null {
   const k = COURSES[course];
   if (!k || !FIELDS[field]) return 'Unknown course.';
   if (jailed(w, c)) return 'You are in prison.';
@@ -69,19 +70,21 @@ export function enrollCheck(w: World, c: Citizen, course: Course, field: Field):
   const nat = controller(r);
   const fee = tuitionYear(w, nat, course);
   const code = w.nations[nat].cur;
-  if ((c.wallet[code] ?? 0) < fee) return `The first year's fees are ${fmtAmt(code, fee)}.`;
+  if (loan && fee > 0) return loanCheck(w, c, 'student', fee);
+  if ((c.wallet[code] ?? 0) < fee) return `The first year's fees are ${fmtAmt(code, fee)}. A student loan can cover them.`;
   return null;
 }
 
 /** Enrol at the local college or university: the first year's fees go to the state. */
-export function enroll(w: World, course: Course, field: Field, c: Citizen = player(w)): Result {
-  const why = enrollCheck(w, c, course, field);
+export function enroll(w: World, course: Course, field: Field, c: Citizen = player(w), loan = false): Result {
+  const why = enrollCheck(w, c, course, field, loan);
   if (why) return fail(why);
   const r = w.regions[courseRegion(w, c, course)];
   const nat = controller(r);
   const fee = tuitionYear(w, nat, course);
+  if (fee > 0 && loan) borrow(w, c, 'student', fee, `${COURSES[course].label}, year 1`);
   if (fee > 0) pay(w, cref(c.id), natref(nat), w.nations[nat].cur, fee, `Tuition: ${COURSES[course].label}`);
-  eduOfCitizen(c).enrolled = { course, field, region: r.id, since: w.time, days: 0, need: courseDays(w, course), lastDay: -1, paidYears: 1 };
+  eduOfCitizen(c).enrolled = { course, field, region: r.id, since: w.time, days: 0, need: courseDays(w, course), lastDay: -1, paidYears: 1, loan };
   if (c.player) { routineOfPlayer(w).school = true; }
   return ok(`${COURSES[course].icon} Enrolled: ${COURSES[course].label} in ${FIELDS[field].label.toLowerCase()} at ${course === 'academy' || course === 'ocs' ? `the ${w.nations[c.nation].adj} military academy in ${r.name}` : hasUniversity(w, r) && COURSES[course].uni ? `the University of ${r.name}` : `${r.name} College`}. Study days needed: ${courseDays(w, course)}.`);
 }
@@ -164,6 +167,7 @@ export function educationDaily(w: World) {
     if (w.time - e.since >= e.paidYears * lifeYear(w)) {
       const nat = controller(w.regions[e.region]);
       const fee = tuitionYear(w, nat, e.course);
+      if (fee > 0 && e.loan && !loanCheck(w, c, 'student', fee)) borrow(w, c, 'student', fee, `${COURSES[e.course].label}, year ${e.paidYears + 1}`);
       if (fee > 0 && !pay(w, cref(c.id), natref(nat), w.nations[nat].cur, fee, `Tuition: ${COURSES[e.course].label}`)) {
         delete c.edu!.enrolled;
         if (c.player) { notify(w, 'personal', `🎓 You could not pay next year's fees (${fmtAmt(w.nations[nat].cur, fee)}) and had to leave your course.`, { critical: true, link: 'life' }); routineOfPlayer(w).school = false; }

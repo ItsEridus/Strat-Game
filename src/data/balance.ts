@@ -140,6 +140,7 @@ export const BALANCE = {
     churn: 0.0015, // SOLO daily share of residents coming and going in a steady region
     companiesPerCitizen: 0.8, // SOLO starting companies relative to the old 24-citizen industry plan (1 = same ratio)
   },
+  loans: { maxShare: 0.4, deposit: 0.1, repossessAfter: 60 }, // SOLO repayments at most 40% of income; 10% deposit on a mortgage; repossession after 60 missed days
   housing: { rent: { room: 0.8, flat: 1.5, house: 2.6 }, yield: 0.05, upkeep: 0.015, fees: 0.04, depositDays: 30 }, // SOLO rent per day by size (× regional index); price = a year's rent / yield; owners' upkeep+tax a year; buying/selling fees
   living: { essentials: 3.1, perDay: 4, discretionary: 0.05, comfort: 150 }, // SOLO daily living costs + 5%/day of cash above 150 spent on lifestyle; paid to the background economy (closes the money loop)
   wages: { start: 8, min: 5 }, // SOLO starting offer and minimum wage (currency)

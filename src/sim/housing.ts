@@ -112,7 +112,7 @@ export function buyCheck(w: World, c: Citizen, size: HomeSize): string | null {
   if (c.dwelling?.kind === 'own' && c.dwelling.region === c.loc && c.dwelling.size === size) return 'You already own one here.';
   const code = w.nations[controller(w.regions[c.loc])].cur;
   const need = Math.round(priceOf(w, c.loc, size) * (1 + B.housing.fees)) - (c.dwelling?.kind === 'own' ? Math.floor(priceOf(w, c.dwelling.region, c.dwelling.size) * (1 - B.housing.fees)) : 0);
-  if ((c.wallet[code] ?? 0) < need) return `You need ${fmtAmt(code, need)} (price plus fees${c.dwelling?.kind === 'own' ? ', after selling your home' : ''}). A mortgage can help (coming with loans).`;
+  if ((c.wallet[code] ?? 0) < need) return `You need ${fmtAmt(code, need)} (price plus fees${c.dwelling?.kind === 'own' ? ', after selling your home' : ''}). A mortgage needs only a 10% deposit.`;
   return null;
 }
 

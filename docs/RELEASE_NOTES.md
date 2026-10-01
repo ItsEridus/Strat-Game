@@ -3,6 +3,24 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.3.14: loans, mortgages and credit
+
+- **Borrowing.** Take out a mortgage, a student loan or a personal loan. The new Loans and credit panel on the Life
+  screen shows what you owe, your rates and your daily payments.
+- **Real rates.** Rates follow each country's central-bank rate at the start of 2025, plus a margin: a mortgage
+  costs about 3% in Japan and 6% in the United States, but about 49% in Turkey. Weak credit costs more.
+- **Mortgages.** Buy a home with a 10% deposit and borrow the rest over 25 years, using the new Mortgage button in
+  the Home panel.
+- **Student loans.** Tick "with a student loan" when you enrol, and each year's fees are borrowed. Payments start
+  a year later.
+- **Affordability.** Lenders count your wages, and repayments may take at most 40% of your income. Personal loans go
+  up to about three months of income.
+- **Credit score** (300–850). Paying on time builds it. Missed payments hurt it and add stress. A mortgage 60 days in
+  arrears ends in repossession: the home is sold, the debt cleared, and anything left over is yours. You can pay any
+  loan off early.
+- **Like real banks.** A loan creates the money it lends, and repaying it retires that money. Interest is the
+  lenders' income. People across the world buy homes with mortgages too.
+
 ### New in 1.3.13: a place to live
 
 - **Everyone has a home.** People rent, own, or (when young) live with family. Ownership rates follow each country:

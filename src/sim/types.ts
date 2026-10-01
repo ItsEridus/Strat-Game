@@ -43,7 +43,8 @@ export interface Citizen {
   health?: number; // 0..100 (sim/population.ts); undefined = 90
   life?: LifeProfile; // personal life: wellbeing, milestones, hobbies, goals (sim/lifecycle.ts, sim/wellbeing.ts)
   family?: Family; // partner, parents, children (sim/family.ts)
-  dwelling?: import('./housing').Home; // where and how they live (sim/housing.ts)
+  dwelling?: import('./housing').Home;
+  credit?: number; // credit score 300..850 (sim/loans.ts) // where and how they live (sim/housing.ts)
   post?: import('./services').Post; // a public-service post (sim/services.ts)
   edu?: import('./education').Education; // qualifications and current course (sim/education.ts)
   retired?: boolean;
@@ -767,7 +768,8 @@ export interface World {
   queue: ScheduledEvent[];
   stats: Stats;
   ledger: { t: number; text: string; amount: number; asset: AssetId; ref: string }[]; // player's transaction history
-  budget?: import('../engine/budget').BudgetMonth[]; // the player's money by category and month (engine/budget.ts)
+  budget?: import('../engine/budget').BudgetMonth[];
+  loans?: Record<Id, import('./loans').Loan>; // mortgages, student and personal loans (sim/loans.ts) // the player's money by category and month (engine/budget.ts)
   calendar: { nextDaily: number; terrainDone?: Id[]; baseCitizens?: number; basePop?: number };
 }
 
