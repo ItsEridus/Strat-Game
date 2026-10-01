@@ -293,3 +293,20 @@ test('power index 2.0: tiers from economy, military quality and technology', asy
   assert.ok(s.some((x) => w.nations[x.id].iso === 'CHN' && x.tier === 'superpower'));
   assert.ok(s.every((x) => x.total >= 0 && x.total <= 100));
 });
+
+test('strategic engine: a monthly turn grows productivity and technology from real baselines', async () => {
+  const { capsOf, strategicMonth, techAvg } = await import('../src/sim/strategic');
+  const { TECH_DOMAINS } = await import('../src/data/nationBaselines');
+  const w = generateWorld(1814, 'History', 0, { citizensPerRegion: 1 });
+  const ind = w.nations.find((n) => n.iso === 'IND')!, jpn = w.nations.find((n) => n.iso === 'JPN')!;
+  const t0 = techAvg(capsOf(w, ind));
+  for (let m = 0; m < 24; m++) {
+    const leaders = Object.fromEntries(TECH_DOMAINS.map((d) => [d, Math.max(...w.nations.map((n) => capsOf(w, n).tech[d]))])) as any;
+    for (const n of w.nations) strategicMonth(w, n, leaders);
+  }
+  const gi = capsOf(w, ind).productivity, gj = capsOf(w, jpn).productivity;
+  assert.ok(gi > 1.06 && gi < 1.2, `India grows fast: ${gi}`);
+  assert.ok(gj > 0.98 && gj < 1.05, `Japan grows slowly: ${gj}`);
+  assert.ok(techAvg(capsOf(w, ind)) > t0, 'technology spreads');
+  assert.equal(capsOf(w, ind).hist.length, 24);
+});

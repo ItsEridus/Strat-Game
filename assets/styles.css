@@ -576,3 +576,4 @@ th.sortable.sorted .arrow { opacity: 1; }
 .swatches { display: inline-flex; gap: 4px; flex-wrap: wrap; }
 .swatches .swatch { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--line-3); cursor: pointer; padding: 0; }
 .swatches .swatch.on { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold); }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }

@@ -3,6 +3,30 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.5.1: nations develop over time
+
+The first step of the strategic engine (1.6.0).
+
+- **Capabilities.** Every country starts from real 2025 data:
+  - technology in six domains (industrial, military, information, medical, energy and space);
+  - human capital, measured from its people's education;
+  - infrastructure, from its buildings and state development;
+  - institutions: rule of law, control of corruption, government effectiveness and press freedom;
+  - cohesion, from approval and unrest.
+- **A monthly strategic turn.** On the first of each month:
+  - R&D adds technology, with diminishing returns, and the leaders' know-how spreads to others;
+  - productivity grows at the country's real potential rate (6% a year for India, under 1% for Japan and Germany);
+  - the rate is adjusted for skills, infrastructure, institutions, catching up, unrest, war and the world economy.
+- **Growth you can see.** Productivity raises what every company in the country produces, and a company's
+  production preview shows it.
+- **National development.** Each country's page has a panel showing:
+  - productivity since 2025;
+  - the growth rate and what moved it this month;
+  - technology by domain, human capital, infrastructure, cohesion and institutions;
+  - charts of all of these.
+- **Pace of history.** A new setting lets nations develop at real speed (the default), three times faster, or a
+  decade in under a year.
+
 ### New in 1.5.0: the real economy, and work and enterprise
 
 1.5.0 completes the economic overhaul. Releases 1.4.4 to 1.4.18 delivered it step by step:

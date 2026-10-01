@@ -7,6 +7,7 @@ import { leaveCheck, tooIll } from './health';
 import { contribute } from './pensions';
 import { goldScale, recordPay } from './wages';
 import { jobLost } from './labour';
+import { productivityOf } from './strategic';
 import { noteBirth } from './companyLife';
 import { payOverheads } from './companyCosts';
 import { lifeGate } from './lifecycle';
@@ -86,6 +87,8 @@ export function productionFactors(w: World, co: Company, worker: Citizen | null)
   if (crisis) f.push(crisis);
   const infra = infraBonus(w, co.region);
   if (infra > 1 && !r.occ) f.push({ label: `State infrastructure L${w.govs[co.region]!.dev}`, mult: infra });
+  const prod = productivityOf(w, controller(r));
+  if (Math.abs(prod - 1) > 0.005) f.push({ label: `National productivity (${prod >= 1 ? '+' : ''}${Math.round((prod - 1) * 100)}% since 2025)`, mult: prod });
   const depotLvl = depotBonusFor(w, co);
   if (depotLvl) f.push({ label: `Resource depots (${depotLvl})`, mult: 1 + depotLvl * B.pirates.depotBonus });
   if (worker && studyActive(w, worker, 'hustler')) f.push({ label: 'Hustler study', mult: 1.1 });

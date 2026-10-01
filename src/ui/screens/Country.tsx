@@ -1,5 +1,5 @@
 import type { Ministry, World } from '../../sim/types';
-import { Amt, CitLink, NationChip, Panel, RegionLink, Select, Sparkline, Stat, Help } from '../common';
+import { Amt, Bar, CitLink, NationChip, Panel, RegionLink, Select, Sparkline, Stat, Help } from '../common';
 import { store } from '../store';
 import { citizensOf, player, seatShare } from '../../sim/query';
 import { taxCeilings } from '../../sim/taxes';
@@ -12,6 +12,8 @@ import { StatesTable } from './StateGov';
 import { livingStandards } from '../../sim/livingStandards';
 import { BARGAINING, benefitRules } from '../../sim/labour';
 import { inflation, priceChange } from '../../sim/statistics';
+import { capsOf, techAvg } from '../../sim/strategic';
+import { TECH_DOMAINS, TECH_LABEL } from '../../data/nationBaselines';
 import { policyRateOf } from '../../sim/loans';
 import { depositRate } from '../../sim/banking';
 import { MONTHS } from '../../engine/calendar';
@@ -21,6 +23,27 @@ import { B } from '../../data/balance';
 import { c as cur } from '../../engine/money';
 import { rentOf } from '../../sim/housing';
 import type { Id } from '../../sim/types';
+
+function DevelopmentPanel({ w, id }: { w: World; id: Id }) {
+  const n = w.nations[id];
+  const c = capsOf(w, n);
+  const pct = (x: number) => `${Math.round(x * 100)}`;
+  const bar = (label: string, v: number) => <div class="row small"><span style={{ width: '9em' }}>{label}</span><Bar v={v} max={100} color="#3fb5a8" label={`${Math.round(v)}`} /></div>;
+  return <>
+    <div class="stats">
+      <div class="stat"><small>Productivity since 2025</small><b>{c.productivity >= 1 ? '+' : ''}{((c.productivity - 1) * 100).toFixed(1)}%</b><Sparkline values={c.hist.map((h) => h.productivity)} width={150} height={30} /></div>
+      <div class="stat"><small>Growth rate</small><b>{c.growth.toFixed(1)}% a year</b><Sparkline values={c.hist.map((h) => h.growth)} width={150} height={30} /></div>
+      <div class="stat"><small>Technology (average)</small><b>{techAvg(c).toFixed(1)}</b><Sparkline values={c.hist.map((h) => h.tech)} width={150} height={30} /></div>
+    </div>
+    {c.why.length > 0 && <p class="small">This month's growth: {c.why.join(' · ')} (percentage points).</p>}
+    <div class="grid2">
+      <div>{TECH_DOMAINS.map((d) => bar(`${TECH_LABEL[d]} technology`, c.tech[d]))}</div>
+      <div>{bar('Human capital', c.human)}{bar('Infrastructure', c.infra)}{bar('Cohesion', c.cohesion)}
+        <p class="small muted">Institutions: rule of law {pct(c.inst.law)} · control of corruption {pct(c.inst.corruption)} · government effectiveness {pct(c.inst.effectiveness)} · press freedom {pct(c.inst.press)} (of 100).</p></div>
+    </div>
+    <Help>Each month, R&D adds technology (with diminishing returns) and the leaders' know-how spreads through trade. Productivity grows at the country's potential rate (IMF), adjusted for skills, infrastructure, institutions, catching up, unrest, war and the world economy, and raises what every company produces. Starting levels are real 2025 data. The Pace of history setting (Settings) can speed this up.</Help>
+  </>;
+}
 
 function EconomyPanel({ w, id }: { w: World; id: Id }) {
   const n = w.nations[id];
@@ -96,6 +119,7 @@ export function Country({ w }: { w: World }) {
         <Help>Ceilings = 25 + 0.5 × communist seat % − 0.4 (import) / 0.3 (VAT, work) × capitalist seat % (documented formula; mixed-congress combination is an interpretation).</Help>
       </Panel>
       <Panel title="Economy" class="wide"><EconomyPanel w={w} id={id} /></Panel>
+      <Panel title="National development" class="wide"><DevelopmentPanel w={w} id={id} /></Panel>
       <Panel title="Public finances">
         <table class="table compact small"><tbody>
           <tr><td>Revenue (a day, last month)</td><td class="num">{fmtAmt(n.cur, Math.round(dailyRevenue(n)))}</td></tr>
