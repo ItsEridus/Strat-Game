@@ -1,6 +1,7 @@
 // Regional construction: governments start projects; anyone contributes labour
 // (energy → points) or materials. A project completes exactly once, consuming
 // its materials and raising the building level.
+import { constructionFactor } from './weather';
 import { lifeGate } from './lifecycle';
 import type { AccountRef, BuildingType, Citizen, Id, Nation, Project, World } from './types';
 import { B } from '../data/balance';
@@ -130,7 +131,7 @@ export function contributeLabor(w: World, c: Citizen, pid: Id, times = 1): Resul
 /** Add labour points (also used by public works) and check completion. */
 export function addPoints(w: World, p: Project, who: Id | null, pts: number) {
   if (p.done) return;
-  p.points = Math.min(p.needPts, p.points + pts);
+  p.points = Math.min(p.needPts, p.points + pts * (w.weather ? constructionFactor(w, p.region) : 1));
   if (who != null) p.contrib[who] = (p.contrib[who] ?? 0) + pts;
   checkComplete(w, p);
 }

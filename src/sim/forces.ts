@@ -13,6 +13,7 @@
 // through real rank ladders to command formations; the most senior officer
 // becomes chief of staff. AI defence ministries raise, supply, deploy and order
 // forces by the same rules the player's government uses.
+import { combatWeather } from './weather';
 import { conscriptionOf, doctrineFactor, serviceShareFactor, upkeepFactor } from './forceStructure';
 import { capsOf, techAvg } from './strategic';
 import { defenceContracts, formationGen, kindGen, qualityFactor, upkeepScale, wearFactor } from './arsenal';
@@ -62,7 +63,7 @@ export function power(w: World, f: Formation): number {
   const cmd = f.commander != null ? w.citizens[f.commander] : null;
   if (cmd) p *= 1 + cmd.mil.rank * 0.02;
   if (w.nations[f.nation].defense.chief != null) p *= 1 + B.forces.chiefBonus;
-  return p * qualityFactor(formationGen(w, f)) * doctrineFactor(w, f);
+  return p * qualityFactor(formationGen(w, f)) * doctrineFactor(w, f) * combatWeather(w, f).mult;
 }
 
 /** Naval power a nation (and its allies) has in a sea zone. */

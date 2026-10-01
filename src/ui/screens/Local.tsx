@@ -1,6 +1,7 @@
 // Neighbourhood: the place you are in right now — its people, what they are
 // doing this hour, what worries them, its businesses and its news — and the
 // things you can do here in person: talk, canvass, hold a rally.
+import { WX_INFO, ZONE_LABEL, forecast, growingIndex, weatherAt, zoneOf } from '../../sim/weather';
 import { useSort } from '../sort';
 import { AppointmentsPanel, MeetControls, PlacesPanel } from './Places';
 import { SEASON_ICON, fmtDate, partOfDay, seasonAt } from '../../engine/calendar';
@@ -93,6 +94,8 @@ export function Local({ w }: { w: World }) {
         <div class="row"><button class="btn sm" onClick={() => store.go('jobs')}>Find work</button><button class="btn sm" onClick={() => store.go('companies')}>Start a business</button></div>
       </Panel>
 
+      <WeatherPanel w={w} />
+
       <Panel title="📰 Local news">
         {news.length ? <ul class="news small">{news.map((x) => <li><small class="muted">{fmtDay(x.t)}</small> {x.text}</li>)}</ul> : <Empty>A quiet place. Nothing has made the local paper lately.</Empty>}
         <div class="row small">Elsewhere: {w.regions[r.id].links.slice(0, 6).map((l) => <RegionLink w={w} id={l} />).reduce((a: any[], x, i) => (i ? [...a, ', ', x] : [x]), [])}</div>
@@ -123,3 +126,23 @@ function PersonCard({ w, c }: { w: World; c: Citizen }) {
   );
 }
 
+
+/** Today's weather where you are, tomorrow's forecast and the growing season. */
+function WeatherPanel({ w }: { w: World }) {
+  const p = player(w);
+  if (!w.weather) return null;
+  const x = weatherAt(w, p.loc);
+  const f = forecast(w, p.loc);
+  const g = growingIndex(w, p.loc);
+  return (
+    <Panel title={`${WX_INFO[x.kind].icon} Weather in ${w.regions[p.loc].name}`}>
+      <table class="table compact small"><tbody>
+        <tr><td>Today</td><td>{WX_INFO[x.kind].label} · {x.t}°C{x.mm ? ` · ${x.mm} mm` : ''} · wind {x.wind} km/h</td></tr>
+        <tr><td>Tomorrow (forecast)</td><td>{WX_INFO[f.kind].icon} {f.t}°C · {f.rainChance}% chance of rain or snow</td></tr>
+        <tr><td>Climate</td><td>{ZONE_LABEL[zoneOf(w, p.loc)]}</td></tr>
+        <tr><td>Growing season</td><td class={g < 0.9 ? 'bad' : g > 1.05 ? 'good' : ''}>{g < 0.9 ? 'poor (dry, frost or heat)' : g > 1.05 ? 'good' : 'normal'} · farms at {Math.round(g * 100)}%</td></tr>
+      </tbody></table>
+      <p class="small muted">Forecasts are uncertain, less so where meteorology is better. Storms ground flights and stop work outdoors; snow and heavy rain slow building and overland travel; cold and heat raise energy bills; mud, winter, heavy seas and bad flying weather hamper military operations.</p>
+    </Panel>
+  );
+}

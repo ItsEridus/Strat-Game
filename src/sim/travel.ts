@@ -1,5 +1,6 @@
 // Travel and citizenship. Location (where you are) and citizenship (who you
 // belong to) are separate. Travel shows methods, ticket use and energy first.
+import { flightsGrounded, overlandFactor } from './weather';
 import { lifeGate } from './lifecycle';
 import { ageOf } from './growth';
 import type { Citizen, Id, World } from './types';
@@ -56,14 +57,14 @@ export function travelOptions(w: World, c: Citizen, dest: Id): TravelOption[] {
   const opts: TravelOption[] = [];
   const base = jailed(w, c) ? 'You are in prison.' : inLockdown(w, c.loc) || inLockdown(w, dest) ? 'Travel is blocked by an epidemic lockdown.' : c.mining ? 'Travel is blocked while mining.' : c.loc === dest ? 'You are already here.' : null;
   if (landNeighbour(w, c.loc, dest)) {
-    const e = Math.round(B.travel.walkEnergy * light);
+    const e = Math.round(B.travel.walkEnergy * light * (w.weather ? overlandFactor(w, c.loc) : 1));
     opts.push({ id: 'walk', label: 'Go overland (bordering region)', ticket: null, energy: e, why: base ?? (c.energy < e ? `Needs ${e} energy.` : null) });
   }
   for (let q = 1; q <= 5; q++) {
     const range = B.travel.ticketRangeKm[q - 1];
     const e = Math.max(1, Math.round(B.travel.energyPer1000km * Math.max(1, km / 1000) * (1 - B.travel.qualityDiscount * (q - 1)) * light));
     const key = `ticket:${q}`;
-    const why = base ?? (km > range ? `${grade(q)} tickets reach ${range.toLocaleString()} km (this trip is ${km.toLocaleString()} km).` : (c.inv[key] ?? 0) < 1 ? `You have no ${gradeLc(q)} tickets.` : c.energy < e ? `Needs ${e} energy.` : null);
+    const why = base ?? (w.weather ? flightsGrounded(w, c.loc, dest) : null) ?? (km > range ? `${grade(q)} tickets reach ${range.toLocaleString()} km (this trip is ${km.toLocaleString()} km).` : (c.inv[key] ?? 0) < 1 ? `You have no ${gradeLc(q)} tickets.` : c.energy < e ? `Needs ${e} energy.` : null);
     opts.push({ id: `t${q}`, label: `${grade(q)} ticket (up to ${range >= 20000 ? 'anywhere' : `${range.toLocaleString()} km`})`, ticket: key, energy: e, why });
   }
   return opts;

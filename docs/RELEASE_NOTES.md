@@ -3,6 +3,28 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.8.1: weather and climate
+
+The first part of 1.9 Sky & ground.
+
+- **Climate zones.** Every region has a climate: tropical, arid, temperate, continental, subarctic or alpine. It comes
+  from latitude, terrain and coast. Western Europe and the southern hemisphere are mild and maritime. Moscow,
+  Ottawa, Beijing and Seoul have hard winters and hot summers. Seasons are reversed south of the equator, and South
+  and East Asia have a summer monsoon. Average temperatures in most capitals are within about 5°C of the real ones
+  (high-altitude cities such as Mexico City run warm, because the map has no elevations).
+- **Daily weather:** temperature, rain or snow, wind and storms. Warm and cold spells last for days.
+- **Forecasts.** Tomorrow's forecast is uncertain, and more accurate where meteorology is better.
+- **Weather matters.**
+  - Farms follow the growing season: drought, frost and heat cut harvests, and good rains raise them.
+  - Storms stop work outdoors.
+  - Snow and heavy rain slow construction.
+  - Cold and heat raise companies' energy bills.
+  - Storms ground flights, and snow makes overland travel harder.
+  - Military operations suffer in mud (armour), bitter winter, heavy seas and bad flying weather.
+  - Your mood lifts on fine days and sags in storms and heatwaves.
+- **Where to see it.** Weather for where you are is in the top bar. The Neighbourhood screen has today's weather,
+  tomorrow's forecast, the climate zone and the growing season.
+
 ### New in 1.8.0: Arsenal
 
 1.8.0 completes the Arsenal: militaries now get better or worse over time. Releases 1.7.1 to 1.7.4 built it:

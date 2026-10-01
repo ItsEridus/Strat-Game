@@ -778,6 +778,7 @@ export interface World {
   settings: Settings;
   playerId: Id;
   player: PlayerState;
+  weather?: import('./weather').WeatherState; // today's and tomorrow's weather by region (1.9)
   story: NarrativeState; // stories, journal, relationship memories, places (see sim/story.ts)
   life: LifeState; // life simulation: reviews, long advances (see sim/lifecycle.ts)
   regions: Region[];

@@ -1,3 +1,4 @@
+import { WX_INFO } from '../sim/weather';
 import { useState } from 'preact/hooks';
 import { oneYearOn } from '../sim/periodReview';
 import { Emblem, HUD_ICONS } from './icons';
@@ -43,7 +44,7 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
               {k === 0 ? '⏸' : '▶'.repeat(k)}
             </button>
           ))}
-          <span class="clock-desc">{partOfDay(w.time).icon} {partOfDay(w.time).name} · {SEASON_ICON[seasonAt(w.time, latitudeOf(p.loc))]} {seasonAt(w.time, latitudeOf(p.loc))}</span>
+          <span class="clock-desc">{partOfDay(w.time).icon} {partOfDay(w.time).name} · {SEASON_ICON[seasonAt(w.time, latitudeOf(p.loc))]} {seasonAt(w.time, latitudeOf(p.loc))}{w.weather?.today[p.loc] ? ` · ${WX_INFO[w.weather.today[p.loc].kind].icon} ${w.weather.today[p.loc].t}°C` : ''}</span>
           <div class="adv">
             <button onClick={() => setOpen(!open)} title="Advance time to an event">⏭ Advance</button>
             {open && (
