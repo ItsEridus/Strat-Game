@@ -8,6 +8,7 @@ import { DAY } from '../src/engine/clock';
 import { census } from '../src/sim/census';
 import { ageOf } from '../src/sim/growth';
 import { rank } from '../src/data/education';
+import { inflation } from '../src/sim/statistics';
 
 registerSystems();
 const days = Number(process.argv[2] ?? 180);
@@ -37,6 +38,7 @@ for (let d = 1; d <= days; d++) {
     `debt max ${Math.max(...w.nations.map((n) => (n.debt ?? 0) / Math.max(1, n.stats.revHist.reduce((x, y) => x + y, 0) / Math.max(1, n.stats.revHist.length) * 365))).toFixed(2)}y (${w.nations.filter((n) => n.debt).length} borrowing)`,
     `approval ${Math.round(w.nations.reduce((t, n) => t + n.approval, 0) / w.nations.length)}`,
     `trade ${Math.round(w.nations.reduce((t, n) => t + (n.trade?.hist.at(-1)?.exp ?? 0), 0) / 1000)}g/day`,
+    `inflation ${w.nations.map((n) => { const x = inflation(w, n.id); return x == null ? '-' : Math.round(x); }).join('/')}`,
     a.ok ? 'audit ok' : `AUDIT ${a.problems.slice(0, 3).join('; ')}`, `${Math.round((Date.now() - t0) / d)} ms/day`,
   ].join(' | '));
 }

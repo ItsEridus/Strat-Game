@@ -10,12 +10,36 @@ import { itemName } from '../../data/items';
 import { CountryExtras } from './CountryExtras';
 import { StatesTable } from './StateGov';
 import { livingStandards } from '../../sim/livingStandards';
+import { inflation } from '../../sim/statistics';
+import { MONTHS } from '../../engine/calendar';
 import { bondRate, dailyRevenue, dailySpending } from '../../sim/publicFinance';
 import { BASKET_LABELS, basketOf } from '../../data/economy';
 import { B } from '../../data/balance';
 import { c as cur } from '../../engine/money';
 import { rentOf } from '../../sim/housing';
 import type { Id } from '../../sim/types';
+
+function EconomyPanel({ w, id }: { w: World; id: Id }) {
+  const n = w.nations[id];
+  const s = n.stats2;
+  const ms = s?.months ?? [];
+  const last = ms[ms.length - 1];
+  const chart = (label: string, values: number[], text: string) => <div class="stat"><small>{label}</small><b>{text}</b><Sparkline values={values} width={150} height={30} /></div>;
+  const cpiNowV = s?.cpi.at(-1) ?? 100;
+  return <>
+    <div class="stats">
+      {chart('GDP (last month)', ms.map((m) => m.gdp / Math.max(1, m.days)), last ? `${fmtAmt(n.cur, Math.round(last.gdp / Math.max(1, last.days)))} a day` : 'first month in progress')}
+      {chart('Prices (CPI)', (s?.cpi ?? []).slice(-90), cpiNowV.toFixed(1))}
+      {chart('Inflation (a year)', ms.filter((m) => m.inflation != null).map((m) => m.inflation!), inflation(w, id) == null ? 'measured from April' : `${inflation(w, id)!.toFixed(1)}%`)}
+      {chart('Unemployment', ms.map((m) => m.unemployment * 100), `${(n.unemployment * 100).toFixed(1)}%`)}
+      {chart('Average pay on offer', ms.map((m) => m.wage), last ? fmtAmt(n.cur, last.wage) : '—')}
+      {chart('Trade balance (30 days)', ms.map((m) => m.exports - m.imports), fmtAmt(GOLD, (n.trade?.hist ?? []).reduce((t, d) => t + d.exp - d.imp, 0)))}
+    </div>
+    {ms.length > 0 && <table class="table compact small"><thead><tr><th>Month</th><th class="num">GDP a day</th><th class="num">CPI</th><th class="num">Inflation</th><th class="num">Unemployment</th><th class="num">Pay</th><th class="num">Exports</th><th class="num">Imports</th></tr></thead>
+      <tbody>{ms.slice(-6).reverse().map((m) => { const [y, mo] = m.key.split('-').map(Number); return <tr><td>{MONTHS[mo - 1]} {y}</td><td class="num">{fmtAmt(n.cur, Math.round(m.gdp / Math.max(1, m.days)))}</td><td class="num">{m.cpi.toFixed(1)}</td><td class="num">{m.inflation == null ? '—' : `${m.inflation.toFixed(1)}%`}</td><td class="num">{(m.unemployment * 100).toFixed(1)}%</td><td class="num">{fmtAmt(n.cur, m.wage)}</td><td class="num">{fmtAmt(GOLD, m.exports)}</td><td class="num">{fmtAmt(GOLD, m.imports)}</td></tr>; })}</tbody></table>}
+    <Help>Official statistics, computed from what happens in the simulation. GDP is the value companies add (sales less materials) plus government spending. Prices follow a basket: food 40%, rent 27%, transport 10%, clothes 10%, electronics 8% and medicine 5%. A month's figures are published on the 1st.</Help>
+  </>;
+}
 
 function LivingPanel({ w, id }: { w: World; id: Id }) {
   const n = w.nations[id];
@@ -66,6 +90,7 @@ export function Country({ w }: { w: World }) {
         </tbody></table>
         <Help>Ceilings = 25 + 0.5 × communist seat % − 0.4 (import) / 0.3 (VAT, work) × capitalist seat % (documented formula; mixed-congress combination is an interpretation).</Help>
       </Panel>
+      <Panel title="Economy" class="wide"><EconomyPanel w={w} id={id} /></Panel>
       <Panel title="Public finances">
         <table class="table compact small"><tbody>
           <tr><td>Revenue (a day, last month)</td><td class="num">{fmtAmt(n.cur, Math.round(dailyRevenue(n)))}</td></tr>

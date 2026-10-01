@@ -372,6 +372,8 @@ export interface Nation {
   debtIssued?: number; // bonds issued in total (statistics)
   interestPaid?: number; // interest paid on the debt in total
   trade?: { exp: number; imp: number; hist: { exp: number; imp: number }[] }; // exports and imports today and the last 30 days (gold minor)
+  stats2?: import('./statistics').NationalStats; // official statistics (1.4.10)
+  policyRate?: number; // the central bank's policy rate (%)
   minWage: number; // minor units
   president: Id | null;
   cabinet: Partial<Record<Ministry, Id>>;

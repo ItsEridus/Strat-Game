@@ -89,7 +89,7 @@ export function manageCompany(w: World, co: Company) {
     if (cheapestOther && cheapestOther.price < price && listed > baseUnits(co) * 3) price = Math.round((price + cheapestOther.price) / 2);
     // Imports cap raw-material prices: no one pays more than the world price plus freight and tariff.
     if (isRaw(key)) price = Math.min(price, importParity(w, market, key));
-    price = Math.max(price, Math.round(cost * B.market.minPriceFrac), 1);
+    price = Math.min(Math.max(price, Math.round(cost * B.market.minPriceFrac), 1), Math.round(cost * 3));
     co.prices[key] = price;
     for (const l of mine) if (l.price !== price) repriceListing(w, actor, l.id, price);
     const stock = co.inv[key] ?? 0;

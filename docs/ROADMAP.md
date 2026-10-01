@@ -264,6 +264,7 @@ real starting condition in the simulation, not a cosmetic flag, and the look can
   - 1.4.8: taxes and public finance. Taxes start at real 2025 rates, income tax is progressive, and governments
     borrow, pay interest and repay public debt.
   - 1.4.9: world commodity prices, import parity, AI exports and trade statistics.
+  - 1.4.10: monthly statistics (GDP, CPI, inflation, unemployment, pay, trade) and an Economy panel.
 
 ### Part B: work & enterprise (GEO 1: companies expand or disband)
 

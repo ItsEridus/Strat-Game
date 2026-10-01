@@ -3,6 +3,35 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.4.10: economic statistics
+
+- **An Economy panel for every country.** It shows the official statistics, computed from what actually happens in
+  the simulation, with a chart for each:
+  - GDP: the value companies add (sales less materials) plus government spending;
+  - a consumer price index;
+  - inflation;
+  - unemployment;
+  - average pay on offer;
+  - the trade balance.
+
+  A table lists the last six months.
+- **A real consumer basket.** Prices are measured on each country's own markets, as a month's average of
+  everything sold, with these weights:
+  - food 40%;
+  - rent 27%;
+  - transport 10%;
+  - clothes 10%;
+  - electronics 8%;
+  - medicine 5%.
+
+  The index is 100 in January 2025. Inflation is reported once there are three months of data, over a full year
+  when there is one.
+- **Monthly publication.** Each month's figures are published on the 1st.
+
+### Fixed in 1.4.10
+
+- AI companies no longer price goods at more than three times their cost.
+
 ### New in 1.4.9: world markets and trade
 
 - **World commodity prices.** Oil, grain, iron, copper, titanium, timber and cotton have world prices. They move

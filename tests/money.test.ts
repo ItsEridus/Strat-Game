@@ -143,3 +143,20 @@ test('trade: world prices move, imports cap raw prices, exports are counted', as
   assert.ok((ind.trade?.exp ?? 0) > 0 && (usa.trade?.imp ?? 0) > 0);
   assert.ok(audit(w).ok);
 });
+
+test('statistics: monthly GDP, prices, inflation and unemployment from the simulation', async () => {
+  const { advance } = await import('../src/sim/tick');
+  const { DAY } = await import('../src/engine/clock');
+  const { inflation } = await import('../src/sim/statistics');
+  const w = generateWorld(1807, 'Stats', 0, { citizensPerRegion: 1 });
+  w.settings.playerMortality = false;
+  advance(w, 33 * DAY, false);
+  const usa = w.nations.find((n) => n.cur === 'USD')!;
+  const m = usa.stats2!.months.at(-1)!;
+  assert.equal(m.key, '2025-01');
+  assert.ok(m.gdp > 0 && m.days >= 28, `GDP ${m.gdp} over ${m.days} days`);
+  assert.ok(m.cpi > 50 && m.cpi < 200, `CPI ${m.cpi}`);
+  assert.equal(inflation(w, usa.id), undefined, 'not enough data for a rate yet');
+  assert.equal(m.cpi, 100, 'the index is based on January');
+  assert.ok(m.unemployment >= 0 && m.unemployment <= 1);
+});
