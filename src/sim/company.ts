@@ -3,6 +3,7 @@
 // labour, funds, inputs or storage capacity are missing.
 import { endWork, leavePost, logWork } from './services';
 import { leaveCheck, tooIll } from './health';
+import { contribute } from './pensions';
 import { lifeGate } from './lifecycle';
 import type { AccountRef, Citizen, Company, DayRecord, Id, Industry, World } from './types';
 import { localNews } from './life';
@@ -201,6 +202,7 @@ export function workShift(w: World, c: Citizen): Result {
   const t = workTaxFor(w, co.region, c, gross);
   pay(w, coref(co.id), cref(c.id), cur, gross, `Wage from ${co.name}`);
   remitWorkTax(w, cref(c.id), cur, t.parts);
+  contribute(w, c, gross, cur);
   co.today.wages += gross;
   co.lifetime.wages += gross;
   co.shortage = null;

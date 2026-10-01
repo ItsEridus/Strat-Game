@@ -3,6 +3,21 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.3.16: retirement and pensions
+
+- **Pensions by country.** Each country has its own pension age (60 in India, Turkey and South Africa; 67 in the
+  United States, Germany and Australia) and its own state pension, from about 10% of an average wage in India to
+  60% in Brazil and Turkey after a full career.
+- **Earn it by working.** Every paid shift adds to your working record, and the state pension is full after 35
+  years. Where your country has funded pensions, a share of each wage goes into your own pension pot: 11.5% in
+  Australia, 12% in India, 5% in the United States and Britain.
+- **Retire when you choose,** from five years before pension age (with a smaller state pension, 6% less for each
+  year early). The new Retirement panel on the Life screen shows your record, your pot and what you'd get. Your pot
+  is paid out over about 20 years.
+- **Veterans.** Twenty years in uniform earn a military pension on top, larger for higher ranks.
+- **The same for everyone.** People retire around their country's pension age and draw their pensions from the
+  treasury and the pension funds. People who had already retired get a pension from their past working life.
+
 ### New in 1.3.15: illness, treatment and leave
 
 - **Health conditions.** People catch the flu (more often during an epidemic), hurt their backs, get injured at

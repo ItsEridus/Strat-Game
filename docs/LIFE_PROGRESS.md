@@ -37,7 +37,7 @@ stages go out in slices.
 | N3 | Narrative stage 3: districts, venues, familiarity, availability, appointments | Done |
 | L2 | Family graph with real children, pregnancy, adoption, guardians, siblings; hobbies, pets, gifts; story protagonists and memory subjects; budgets | Done: groundwork 1.3.2; pregnancy, siblings, gifts, pets 1.3.6; hobbies 1.3.7; adoption, care, guardians, child costs 1.3.8; memory subjects, protagonists, budgets 1.3.9 |
 | L3 | Schools, universities, clinics and offices as funded institutions; education ladder; qualifications; service careers (teaching, clinical care, administration, technical); work history; promotions; military academy | Done: schools, universities, education ladder 1.3.10; public-service careers, promotions, work history 1.3.11; military academy and commissions 1.3.12 |
-| L4 | Housing (rent/buy/sell); obligations (loans, mortgages, student loans); conditions and treatment; leave; retirement and funded pensions (incl. veterans); living-cost split | In progress: housing and the living-cost split 1.3.13; loans, mortgages, student loans, credit 1.3.14; conditions, treatment, sick and parental leave 1.3.15 |
+| L4 | Housing (rent/buy/sell); obligations (loans, mortgages, student loans); conditions and treatment; leave; retirement and funded pensions (incl. veterans); living-cost split | Done: housing and the living-cost split 1.3.13; loans, mortgages, student loans, credit 1.3.14; conditions, treatment, sick and parental leave 1.3.15; retirement and pensions 1.3.16 |
 | L5 | Birth start; childhood and parenting; player mortality; wills, trusts, estates, heirlooms | Planned |
 | L6 | Succession to heirs; legacy archive; 8 life chains + 16 standalone encounters; narrative stage 4's five chains; NPC AI parity | Planned |
 | UI2 | Every screen restyled; cinematic story, review and succession; map polish; optional UI sound; screenshots | Planned |
@@ -196,6 +196,18 @@ and employment (1.5), policing, crime careers and prisons (1.7), and weather and
   qualified locals, staffing feeding schools and health; work history for every job.
 - Officer ranks need a commission (`MilService.commissioned`): the academy (cadets to 24, grants a bachelor's) or
   officer training (graduates); NPCs take the same routes when they reach the bar.
+
+### L4: housing, obligations, health and retirement (1.3.13–1.3.16)
+- `src/sim/housing.ts`: dwellings (rent, own, family) by country ownership rates; rooms, flats and houses priced by a
+  regional index that drifts with each region's pull; rent, buy, sell, move; living costs split into essentials and
+  housing (calibrated to the old average).
+- `src/sim/loans.ts`: mortgages, student and personal loans at each country's 2025 policy rate plus a spread;
+  annuity payments, affordability, credit scores, arrears and repossession; bank-credit model (lending mints,
+  principal repayments burn, interest to households).
+- `src/sim/health.ts`: conditions by age, stress, work and epidemics; clinic treatment priced by health system;
+  sick leave and sick pay; parental leave on national terms.
+- `src/sim/pensions.ts`: contribution record and funded pots from every shift; retirement from pension age − 5;
+  state, private (annuity) and military pensions; NPCs retire around their pension age.
 
 ## Tests
 - `tests/life.test.ts` (6): death/estate/offices, special election, emigration, coming of age, the player's romance,

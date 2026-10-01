@@ -106,7 +106,7 @@ function busyIds(w: World): Set<Id> {
 }
 const openDeals = (w: World, c: Citizen) => busyIds(w).has(c.id);
 
-function holdsOffice(w: World, c: Citizen): boolean {
+export function holdsOffice(w: World, c: Citizen): boolean {
   const n = w.nations[c.nation];
   if (n.president === c.id || n.deputies.includes(c.id) || Object.values(n.cabinet).includes(c.id) || n.defense.chief === c.id) return true;
   if (w.govs.some((s) => s && (s.head.cit === c.id || s.candidates.some((x) => x.cit === c.id)))) return true;
@@ -330,12 +330,7 @@ export function populationDaily(w: World) {
     const age = ageOf(w, c);
     if (age > 62 && (c.id + d) % 7 === 0) { const k = 1 - 0.0015 * (age - 62) / 10; c.attrs.str = +(c.attrs.str * k).toFixed(3); c.attrs.end = +(c.attrs.end * k).toFixed(3); }
     if (c.player) continue;
-    if (!c.retired && age >= B.life.retireAge && chance(w, 0.004 * (age - B.life.retireAge + 1)) && !holdsOffice(w, c)) {
-      c.retired = true;
-      const co = c.job != null ? w.companies[c.job] : null;
-      if (co) quitJob(w, c, true);
-      localNews(w, c.home, `🎉 ${c.name} retired${co ? ` after years at ${co.name}` : ''}, aged ${age}.`);
-    }
+    // Retirement and pensions: sim/pensions.ts (around each country's pension age).
   }
   // Deaths (old age, illness). People in the middle of a deal are spared until it closes.
   const busy = busyIds(w);

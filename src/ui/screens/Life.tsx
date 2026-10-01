@@ -21,6 +21,7 @@ import { controller } from '../../sim/query';
 import { SIZES, buyCheck, buyHome, housingCost, priceOf, rentCheck, rentHome, rentOf, sellHome, type HomeSize } from '../../sim/housing';
 import { KIND, buyWithMortgage, creditOf, incomeOf, loanCheck, loansOf, mortgageCheck, rateFor, repayLoan, takePersonalLoan } from '../../sim/loans';
 import { CONDITIONS, clinicCheck, conditionsOf, endLeave, parentalCheck, takeParentalLeave, treated, visitClinic, visitCost } from '../../sim/health';
+import { pensionOf, pensionQuote, pensionRules, retire, retireCheck } from '../../sim/pensions';
 import { HOBBIES, HOBBY_ENERGY, hobbyCheck, hobbyLevel, pursueHobby } from '../../sim/hobbies';
 import { STATUS_LABEL, breakUp, familyOf, goOnDate, marry, partnerOf, propose, romanceCheck, tryForChild } from '../../sim/family';
 
@@ -88,6 +89,8 @@ export function Life({ w }: { w: World }) {
 
       <Panel title="Hobbies"><Hobbies w={w} p={p} /></Panel>
 
+      <Panel title="Retirement"><RetirementPanel w={w} p={p} /></Panel>
+
       <Panel title="Loans and credit"><LoansPanel w={w} p={p} /></Panel>
 
       <Panel title="Money this month"><Budget w={w} p={p} /></Panel>
@@ -103,6 +106,31 @@ export function Life({ w }: { w: World }) {
           {([['character', '🧍 Character'], ['jobs', '💼 Work'], ['local', '🏘️ Neighbourhood'], ['market', '🛒 Market'], ['companies', '🏭 Companies'], ['politics', '🗳️ Politics'], ['forces', '🎖️ Military'], ['journal', '📓 Journal']] as const).map(([id, label]) => <Btn small kind="ghost" onClick={() => store.go(id)}>{label}</Btn>)}
         </div>
       </Panel>
+    </div>
+  );
+}
+
+function RetirementPanel({ w, p }: { w: World; p: Citizen }) {
+  const code = w.nations[p.nation].cur;
+  const r = pensionRules(w, p);
+  const pen = pensionOf(p);
+  const q = pensionQuote(w, p);
+  return (
+    <div>
+      {p.retired ? (
+        <p>🌅 Retired{pen.since ? ` since ${fmtDate(pen.since, 'medium')}` : ''}. Pensions a day: {fmtAmt(code, pen.state ?? 0)} state{pen.private ? ` · ${fmtAmt(code, pen.private)} private (pot ${fmtAmt(code, pen.pot)})` : ''}{pen.military ? ` · ${fmtAmt(code, pen.military)} military` : ''}.</p>
+      ) : (
+        <>
+          <div class="stats">
+            <Stat label="Pension age">{r.age} <small class="muted">(earliest {r.age - 5})</small></Stat>
+            <Stat label="Working years on record">{q.years} of 35</Stat>
+            <Stat label="Pension pot">{fmtAmt(code, pen.pot)}</Stat>
+            <Stat label="If you retired now">{fmtAmt(code, q.state + q.private + q.military)} a day</Stat>
+          </div>
+          <ActBtn small why={retireCheck(w, p)} confirm={`Retire now? You leave work${q.early ? ` and your state pension is ${q.early * 6}% lower for retiring early` : ''}.`} run={(w) => retire(w)}>🌅 Retire</ActBtn>
+        </>
+      )}
+      <Help>Every paid shift counts toward the state pension (full after 35 years) and pays {Math.round(r.contrib * 100)}% of your wage into your pension pot{r.contrib ? '' : ' (your country has no funded pension; the state pension is the main one)'}. The pot is paid out over about 20 years. Twenty years in uniform earn a military pension.</Help>
     </div>
   );
 }

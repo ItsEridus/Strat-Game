@@ -19,6 +19,7 @@ import { lifeGate, lifeOf, milestone } from './lifecycle';
 import { workTaxFor, remitWorkTax } from './taxes';
 import { quitJob } from './company';
 import { leaveCheck } from './health';
+import { contribute } from './pensions';
 
 export type Service = 'teacher' | 'nurse' | 'doctor' | 'clerk' | 'engineer';
 export interface Post { kind: Service; region: Id; grade: number; since: number; promoted: number; shifts: number; lastDay: number }
@@ -115,6 +116,7 @@ export function serviceShift(w: World, c: Citizen = player(w)): Result {
   pay(w, natref(n.id), cref(c.id), n.cur, gross, `Salary: ${postTitle(p)}`);
   const t = workTaxFor(w, p.region, c, gross);
   remitWorkTax(w, cref(c.id), n.cur, t.parts);
+  contribute(w, c, gross, n.cur);
   n.stats.spendToday += gross;
   c.incomeToday += gross - t.tax;
   p.shifts++;

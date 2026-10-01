@@ -45,6 +45,7 @@ export interface Citizen {
   family?: Family; // partner, parents, children (sim/family.ts)
   dwelling?: import('./housing').Home;
   credit?: number;
+  pension?: import('./pensions').Pension; // contribution record, pot and pensions in payment (sim/pensions.ts)
   conditions?: import('./health').Condition[]; // illnesses and injuries (sim/health.ts)
   leave?: import('./health').Leave; // sick or parental leave // credit score 300..850 (sim/loans.ts) // where and how they live (sim/housing.ts)
   post?: import('./services').Post; // a public-service post (sim/services.ts)
