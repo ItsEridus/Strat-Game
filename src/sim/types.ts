@@ -428,6 +428,8 @@ export interface Nation {
   eduFunding?: number; // share of daily revenue for schools and universities (sim/education.ts)
   eduQ?: number; // quality of public education, 0..100, follows funding slowly
   defense: { budget: number; chief: Id | null; unpaid: number; appointed?: boolean; split?: import('./arsenal').DefenceSplit; upkeepK?: number; month?: { procurement: number; rd: number; days: number } };
+  programmes?: import('./defenceIndustry').Programme[]; // defence R&D programmes (1.8)
+  armsOrders?: import('./defenceIndustry').ArmsOrder[]; // equipment bought abroad (1.8)
   arsenal?: import('./arsenal').Arsenal; // equipment by class: generation and age (1.8) // appointed: chosen by the Commander-in-Chief // military budget (share of revenue), chief of staff, days unpaid
   alert: number; // national security alert 1 (normal) .. 5 (maximum) // share of daily revenue for national police (regions without their own government, federal crimes)
 }

@@ -12,6 +12,8 @@ import { nationPerm } from '../../sim/authority';
 import { B } from '../../data/balance';
 import { EARTH } from '../../data/earth';
 import { CLASS_INFO, EQUIP_CLASSES } from '../../data/arsenal';
+import { bestSeller, cancelProgramme, orderCheck as armsOrderCheck, placeOrder, programmeCheck, runningOrders, runningProgrammes, startProgramme } from '../../sim/defenceIndustry';
+import type { EquipClass } from '../../data/arsenal';
 import { arsenalOf, defenceNorm, effectiveGen, formationGen, milexOfGdp, splitOf } from '../../sim/arsenal';
 import { ALERT_NAMES, BRANCH_ICON, BRANCH_NAME, KINDS, RANKS } from '../../data/military';
 import {
@@ -246,23 +248,44 @@ function ForeignPanel({ w }: { w: World }) {
 
 /** The national arsenal: the defence budget's split and each class of equipment's generation and age. */
 function ArsenalPanel({ w }: { w: World }) {
-  const n = w.nations[player(w).nation];
+  const p = player(w);
+  const n = w.nations[p.nation];
+  const minister = nationPerm(w, p.id, n.id, 'war');
+  const [cls, setCls] = useState<EquipClass>('fighters');
+  const seller = bestSeller(w, n, cls);
   const a = arsenalOf(w, n);
   const s = splitOf(n);
   return (
     <Panel title="🏭 Arsenal" class="wide">
       <p class="small">Defence spending: <b>{milexOfGdp(n).toFixed(1)}% of GDP</b> (usually {(defenceNorm(n) * 100).toFixed(1)}% of revenue) · personnel {Math.round(s.personnel * 100)}% · operations and maintenance {Math.round(s.om * 100)}% · procurement {Math.round(s.procurement * 100)}% · R&D {Math.round(s.rd * 100)}%</p>
       <div class="scroll-x"><table class="table compact small">
-        <thead><tr><th>Equipment</th><th>Generation</th><th>Average age</th><th>Condition</th></tr></thead>
+        <thead><tr><th>Equipment</th><th>Generation</th><th>Best we can build</th><th>Average age</th><th>Condition</th></tr></thead>
         <tbody>{EQUIP_CLASSES.map((cls) => {
           const st = a[cls];
-          if (!st.gen) return <tr><td>{CLASS_INFO[cls].icon} {CLASS_INFO[cls].label}</td><td colSpan={3} class="muted">not fielded</td></tr>;
+          if (!st.gen) return <tr><td>{CLASS_INFO[cls].icon} {CLASS_INFO[cls].label}</td><td colSpan={4} class="muted">not fielded</td></tr>;
           const eff = effectiveGen(cls, st);
           const life = CLASS_INFO[cls].life;
-          return <tr><td>{CLASS_INFO[cls].icon} {CLASS_INFO[cls].label}</td><td>{st.gen.toFixed(1)}{eff < st.gen - 0.05 ? <span class="bad"> (fights as {eff.toFixed(1)})</span> : ''}</td><td>{st.age.toFixed(0)} years</td>
+          return <tr><td>{CLASS_INFO[cls].icon} {CLASS_INFO[cls].label}</td><td>{st.gen.toFixed(1)}{eff < st.gen - 0.05 ? <span class="bad"> (fights as {eff.toFixed(1)})</span> : ''}</td><td>{st.frontier.toFixed(1)}{st.supplier != null && st.supplier !== n.id ? <small class="muted"> · bought from {w.nations[st.supplier]?.name}</small> : ''}</td><td>{st.age.toFixed(0)} years</td>
             <td class={st.age > life * 0.7 ? 'bad' : st.age > life * 0.5 ? 'warn' : 'good'}>{st.age > life * 0.7 ? 'ageing: wears fast, loses edge' : st.age > life * 0.5 ? 'mid-life' : 'modern'}</td></tr>;
         })}</tbody>
       </table></div>
+      <h4>R&D programmes</h4>
+      {runningProgrammes(n).length ? <table class="table compact small"><tbody>{runningProgrammes(n).map((pr) => (
+        <tr><td><b>{pr.name}</b><br /><small class="muted">{CLASS_INFO[pr.cls].label}, generation {pr.target}</small></td>
+          <td><Bar v={pr.progress * 100} max={100} color="#5b8def" label={`${Math.round(pr.progress * 100)}%`} /></td>
+          <td>{Math.round(pr.months / 12)} years planned · {pr.overrun > 0 ? <span class="warn">{Math.round(pr.overrun * 100)}% over budget</span> : 'on budget'}{pr.starved ? <span class="bad"> · underfunded</span> : ''}</td>
+          <td>{minister && <ActBtn small kind="ghost" confirm={`Cancel the ${pr.name} programme? The money spent is gone.`} run={(w) => cancelProgramme(w, p.id, n, pr.id)}>Cancel</ActBtn>}</td></tr>
+      ))}</tbody></table> : <p class="small muted">No programmes running.</p>}
+      <h4>Orders from abroad</h4>
+      {runningOrders(n).length ? <table class="table compact small"><tbody>{runningOrders(n).map((o) => (
+        <tr><td>{CLASS_INFO[o.cls].label}, generation {o.gen}</td><td>from {w.nations[o.seller]?.name}</td><td><Bar v={o.delivered * 100} max={100} color="#46b873" label={`${Math.round(o.delivered * 100)}% delivered`} /></td></tr>
+      ))}</tbody></table> : <p class="small muted">No orders being delivered.</p>}
+      {minister && <div class="row small">
+        <Select value={cls} options={EQUIP_CLASSES.map((c) => [c, CLASS_INFO[c].label] as [EquipClass, string])} onChange={setCls} />
+        <ActBtn small why={programmeCheck(w, p.id, n, cls)} run={(w) => startProgramme(w, p.id, n, cls)}>Start a programme</ActBtn>
+        <ActBtn small why={armsOrderCheck(w, p.id, n, cls, seller)} run={(w) => placeOrder(w, p.id, n, cls, seller!)}>{seller ? `Buy from ${seller.name}` : 'Buy abroad'}</ActBtn>
+      </div>}
+      <Help>R&D programmes are paid from the R&D budget each month. They take years (a new combat aircraft 10–20), slip, overrun and are sometimes cancelled. A finished programme raises the best generation the country can build, and renewal then brings the forces up to it, with spin-offs to civilian technology. Countries that cannot build a class well buy it abroad, if the seller grants an export licence; deliveries take two to four years, and a hostile supplier means no spare parts (equipment wears twice as fast).</Help>
       <Help>Equipment generations run from 1 to 6 (for fighters: 4 = F-16 or Su-27, 5 = F-35 or J-20). Each generation is worth about 15% in combat. Procurement contracts renew equipment over its service life; without them it ages, wears faster and, past about 70% of its life, loses its edge. Procurement and R&D money goes to the country's defence contractor.</Help>
     </Panel>
   );

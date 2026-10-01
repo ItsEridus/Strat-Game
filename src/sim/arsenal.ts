@@ -13,8 +13,9 @@ import { pay } from '../engine/ledger';
 import { companyCurrency, coref, hhref, natref } from './query';
 import { capsOf, historyPace } from './strategic';
 import { dailyRevenue } from './publicFinance';
+import { cutOff, defenceIndustryMonth, deliveryInputs, orderInstalments } from './defenceIndustry';
 
-export interface ClassState { gen: number; age: number; frontier: number }
+export interface ClassState { gen: number; age: number; frontier: number; supplier?: Id } // supplier: the country it was bought from (spare parts)
 export type Arsenal = Record<EquipClass, ClassState>;
 export interface DefenceSplit { personnel: number; om: number; procurement: number; rd: number }
 
@@ -86,8 +87,9 @@ export const qualityFactor = (gen: number) => Math.max(0.6, 0.55 + 0.15 * gen);
 export function wearFactor(w: World, f: Formation): number {
   const a = arsenalOf(w, w.nations[f.nation]);
   let over = 0;
-  for (const cls of Object.keys(KIND_CLASSES[f.kind]) as EquipClass[]) if (a[cls].gen) over = Math.max(over, a[cls].age - CLASS_INFO[cls].life * 0.7);
-  return 1 + Math.max(0, over) * 0.03;
+  let cut = false;
+  for (const cls of Object.keys(KIND_CLASSES[f.kind]) as EquipClass[]) if (a[cls].gen) { over = Math.max(over, a[cls].age - CLASS_INFO[cls].life * 0.7); cut ||= cutOff(w, w.nations[f.nation], cls); }
+  return (1 + Math.max(0, over) * 0.03) * (cut ? 2 : 1);
 }
 
 // ---------- money ----------
@@ -117,7 +119,7 @@ export function upkeepScale(w: World, n: Nation, needRaw: number): number {
 export function defenceContracts(w: World, n: Nation, available: number): { procurement: number; rd: number } {
   const s = splitOf(n);
   const base = Math.max(0, Math.round(dailyRevenue(n) * n.defense.budget));
-  const want = { procurement: Math.round(base * s.procurement * 0.7), rd: Math.round(base * s.rd) }; // the rest of procurement buys supplies and spares (forces.ts)
+  const want = { procurement: Math.max(0, Math.round(base * s.procurement * 0.7 - orderInstalments(n) / 30)), rd: Math.round(base * s.rd) }; // the rest of procurement buys supplies and spares (forces.ts)
   const out = { procurement: 0, rd: 0 };
   const co = contractorOf(w, n.id);
   const to = co && companyCurrency(w, co) === n.cur ? coref(co.id) : hhref(n.id);
@@ -134,12 +136,14 @@ export function defenceContracts(w: World, n: Nation, available: number): { proc
 // ---------- monthly: ageing and renewal ----------
 
 /** One month: equipment ages; procurement renews it in proportion to spending against the country's usual level. */
-export function arsenalMonth(w: World, n: Nation) {
+export function arsenalMonth(w: World, n: Nation, reset = true) {
   const a = arsenalOf(w, n);
   splitOf(n);
   const m = n.defense.month ?? { procurement: 0, rd: 0, days: 0 };
   const norm = Math.max(1, dailyRevenue(n) * defenceNorm(n) * defenceBaseline(n.iso).split.procurement * 0.7 * Math.max(1, m.days));
-  const effort = m.days ? Math.min(3, m.procurement / norm) : 1;
+  // Renewal follows procurement spending, and needs the contractor's goods to build with.
+  const effort = (m.days ? Math.min(3, m.procurement / norm) : 1) * deliveryInputs(w, n, m.procurement);
+  defenceIndustryMonth(w, n, m.rd);
   for (const cls of EQUIP_CLASSES) {
     const st = a[cls];
     if (!st.gen) continue;
@@ -149,13 +153,14 @@ export function arsenalMonth(w: World, n: Nation) {
     st.age = Math.max(0, st.age * (1 - r));
     st.gen = Math.round((st.gen + (st.frontier - st.gen) * r * 1.5) * 1000) / 1000;
   }
-  n.defense.month = { procurement: 0, rd: 0, days: 0 };
+  if (reset) n.defense.month = { procurement: 0, rd: 0, days: 0 };
   // Formations drift towards the national mix as deliveries reach them.
   for (const f of Object.values(w.forces)) if (f.nation === n.id) { const g = kindGen(w, n, f.kind); f.gen = f.gen == null ? g : Math.round((f.gen + (g - f.gen) * 0.15) * 1000) / 1000; }
 }
 
 export function arsenalDaily(w: World) {
   if (dateAt(w.time).day !== 1) return;
-  for (let k = 0; k < historyPace(w); k++) for (const n of w.nations) if (!n.exile) arsenalMonth(w, n);
+  const pace = historyPace(w);
+  for (let k = 0; k < pace; k++) for (const n of w.nations) if (!n.exile) arsenalMonth(w, n, k === pace - 1);
 }
 

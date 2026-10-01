@@ -3,6 +3,31 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.7.2: R&D programmes and the arms trade
+
+- **R&D programmes.**
+  - Each country runs named programmes for the next generation of a class of equipment.
+  - Each programme has a budget, a schedule and technical risk:
+    - a new combat aircraft takes 10–20 years and a frigate design 5–10;
+    - setbacks bring delays and overruns;
+    - badly overrun or starved programmes are cancelled.
+  - The defence industry can carry about six major programmes at a time in the United States and one in Mexico.
+  - A finished programme raises the best generation the country can build. Renewal then brings the forces up to it,
+    and the programme spins off civilian technology.
+- **Real inputs.** Deliveries from the domestic defence contractor use its own output, aircraft or ground weapons.
+  Without the goods, renewal runs at half speed.
+- **The arms trade.**
+  - Countries that cannot build a class well buy it abroad, from the best seller that will grant an export
+    licence.
+  - Licences go only to allies and friendly countries, never across an embargo or a war, never to someone at war
+    with the seller's allies, and never between rival great powers.
+  - Payments go to the seller's contractor over two to four years, and deliveries modernise the buyer's forces as
+    they arrive.
+  - A licence can be withdrawn, halting deliveries. Equipment bought from a supplier that turns hostile gets no
+    spare parts and wears twice as fast.
+- **Your country's programmes and orders** are on the Forces screen. As Minister of Defence or leader you can start
+  and cancel programmes and buy abroad.
+
 ### New in 1.7.1: the arsenal
 
 The first part of 1.8 Arsenal: militaries now have budgets, equipment generations and ageing.
