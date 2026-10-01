@@ -53,8 +53,12 @@ export function maxGrade(c: Citizen, kind: Service): number {
   SERVICES[kind].needs.forEach((n, i) => { if (rank(e.level) >= rank(n.level) && (!n.field || (e.field && n.field.includes(e.field)))) g = i; });
   return g;
 }
-/** Posts in a region: one per `per` residents (at least one), at the grade needed. */
-export const postsIn = (w: World, region: Id, kind: Service) => Math.max(1, Math.round(residents(w, region).length / SERVICES[kind].per * 3));
+/** Posts in a region: one per `per` residents (about 13% of people work in these services, as in OECD countries); small places share a teacher, a nurse and a clerk. */
+export function postsIn(w: World, region: Id, kind: Service): number {
+  const n = residents(w, region).length;
+  const core = kind === 'teacher' || kind === 'nurse' || kind === 'clerk';
+  return Math.max(core && n >= 6 ? 1 : 0, Math.round(n / SERVICES[kind].per));
+}
 export const staffOf = (w: World, region: Id, kind: Service) => census(w).all.filter((c) => c.post?.kind === kind && c.post.region === region);
 /** Salary per shift, in minor units. */
 export const salary = (w: World, region: Id, kind: Service, grade: number) => Math.round(w.nations[controller(w.regions[region])].minWage * SERVICES[kind].pay[grade]);
@@ -165,11 +169,18 @@ export function servicesDaily(w: World, fill = false) {
   const staff = new Map<string, number>();
   for (const c of census(w).all) if (c.post) staff.set(`${c.post.region}:${c.post.kind}`, (staff.get(`${c.post.region}:${c.post.kind}`) ?? 0) + 1);
   for (const r of w.regions) {
-    const ratio = (kinds: Service[]) => { let have = 0, want = 0; for (const k of kinds) { have += staff.get(`${r.id}:${k}`) ?? 0; want += postsIn(w, r.id, k); } return want ? Math.min(1, have / want) : 0; };
+    const ratio = (kinds: Service[]) => { let have = 0, want = 0; for (const k of kinds) { have += staff.get(`${r.id}:${k}`) ?? 0; want += postsIn(w, r.id, k); } return want ? Math.min(1, have / want) : 0.6; }; // nothing to staff: neutral
     r.staff = { school: ratio(['teacher']), clinic: ratio(['nurse', 'doctor']), offices: ratio(['clerk', 'engineer']) };
     for (const kind of SERVICE_KEYS) {
       const open = postsIn(w, r.id, kind) - (staff.get(`${r.id}:${kind}`) ?? 0);
+      if (open < 0 && !fill) { // more staff than posts (people moved away, budgets): the newest NPC hire is let go
+        const extra = residents(w, r.id).filter((c) => c.post?.kind === kind && c.post.region === r.id && !c.player).sort((a, b) => b.post!.since - a.post!.since)[0];
+        if (extra) leavePost(w, extra, 'post cut');
+        continue;
+      }
       if (open <= 0 || (!fill && hash01(r.id, d, kind.length) > 0.3)) continue;
+      const nat = w.nations[controller(r)];
+      if (!fill && (nat.wallet[nat.cur] ?? 0) < salary(w, r.id, kind, 1) * 90) continue; // no hiring without three months of pay in the treasury
       const cand = residents(w, r.id).find((c) => !c.player && !c.gone && !c.post && !c.retired && c.job == null && !c.edu?.enrolled && ageOf(w, c) >= 18 && ageOf(w, c) < B.life.retireAge && !jailed(w, c) && maxGrade(c, kind) >= 0 && !c.unit);
       if (cand) { takePost(w, kind, cand); if (fill) { cand.post!.grade = Math.min(maxGrade(cand, kind), Math.floor(hash01(cand.id, 11) * 4)); cand.post!.since = w.time - Math.floor(hash01(cand.id, 12) * 3000) * 1440; } }
     }

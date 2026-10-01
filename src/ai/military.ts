@@ -133,11 +133,12 @@ function pickTarget(w: World, n: Nation, warId: Id): Id | null {
   const war = w.wars[warId];
   const enemy = enemyOf(war, n.id);
   const opts: { id: Id; s: number }[] = [];
+  const contested = new Set(Object.values(w.battles).filter((b) => !b.done).map((b) => b.region));
   for (const r of w.regions) {
     const liberation = r.owner === n.id && r.occ?.nation === enemy;
     const invade = r.owner === enemy && controller(r) === enemy;
     if (!liberation && !invade) continue;
-    if (Object.values(w.battles).some((b) => !b.done && b.region === r.id)) continue;
+    if (contested.has(r.id)) continue;
     const border = isBorder(w, n.id, r.id) || (n.exile && r.core === n.id);
     let s = border ? 10 : 1;
     if (liberation) s += 12 + (w.regions.some((x) => x.owner === n.id && !x.supplied) ? 6 : 0);

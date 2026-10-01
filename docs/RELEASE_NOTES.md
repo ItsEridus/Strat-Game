@@ -3,6 +3,42 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.4.0: a whole life
+
+1.4.0 completes the life simulation. From 1.3.6 to here, a life in Meridian Reach gained:
+
+- **Family:** pregnancy and birth, brothers and sisters, gifts, pets, adoption and children in care, guardians,
+  raising children (closeness and grades that shape who they become), and starting your own life as a newborn.
+- **Learning and work:** schools and universities funded by governments, an education ladder from school to
+  doctorate with fees and student loans, public-service careers with promotions, the military academy, and a work
+  history.
+- **Home and money:** renting, buying and selling homes priced by region, mortgages and loans at each country's real
+  rates, credit scores, a monthly budget, and pensions by country.
+- **Health:** illnesses and injuries, clinic visits priced by each health system, sick leave and parental leave.
+- **Legacy:** wills, inheritance tax, trusts, heirlooms, death, and carrying on as your heir.
+- **Stories:** eight life chains, sixteen everyday encounters and five stories from the wider world.
+- **Time:** advance by a whole year, with a summary of what happened.
+- **Fairness:** everyone else lives by the same rules.
+
+New in this release:
+
+- **Calibration** over long simulated runs:
+  - Public services employ about one person in eight, as in OECD countries. Governments no longer hire staff they
+    can't pay for.
+  - Clinic visits cost what the game's current money scale can bear; 1.5.0 re-anchors all prices.
+  - Home ownership stays near each country's real rate.
+- **Moving home as an owner** is now a swap: you settle only the price difference, from savings or with a mortgage.
+  You can downsize if needed, and a cheaper place leaves you money over.
+- **A faster world:** less work per simulated day for calendar dates, war planning and naval power. Long runs are
+  about a quarter quicker.
+- **The README** describes the life simulation, and no longer mentions the levels removed in 1.3.
+
+### Fixed in 1.4.0
+
+- When a homeowner dies, the home now passes to their heir (if the heir lives there and has no home of their own)
+  or is sold for the estate. Before, its value was lost.
+- An owner who moved for work could lose their home's value if nobody could buy it at once.
+
 ### New in 1.3.23: a calmer Life screen, big moments on the big screen
 
 - **The Life screen in four tabs:** Overview (how you are, family, routine, milestones), Home & money (home, budget,

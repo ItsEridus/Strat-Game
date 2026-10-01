@@ -12,6 +12,7 @@ import { cref, hhref, natref, player } from './query';
 import { ageOf } from './growth';
 import { lifeOf } from './lifecycle';
 import { siblingsOf } from './kinship';
+import { settleHome } from './housing';
 
 export interface Will { shares: { id: Id; share: number }[]; kids: number; written: number } // shares of the money (0..1) to named people; `kids`: share held in trust for the children still at home
 export interface Trust { id: Id; kid: string; born: number; cur: string; amount: number; from: string }
@@ -50,6 +51,7 @@ export function writeWill(w: World, shares: { id: Id; share: number }[], kids: n
  * kin (`heir`) with everything else (called before the remainder is moved).
  */
 export function settleWill(w: World, c: Citizen, heir: Citizen | null) {
+  settleHome(w, c, heir); // the home passes to the heir, or is sold into the estate
   const code = w.nations[c.nation].cur;
   const cash = c.wallet[code] ?? 0;
   if (cash <= 0) return;

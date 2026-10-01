@@ -15,10 +15,17 @@ const short = (s: string) => s.slice(0, 3);
 export interface CalDate { year: number; month: number; day: number; weekday: number; yday: number } // month 0-11, day 1-31, yday 0-365
 
 /** The calendar date of a world time (minutes). Works for times before the campaign began. */
+const dateCache = new Map<number, CalDate>();
 export function dateAt(t: number): CalDate {
-  const d = new Date(EPOCH_MS + (dayOf(t) - 1) * MS_DAY);
+  const k = dayOf(t);
+  const hit = dateCache.get(k);
+  if (hit) return hit;
+  const d = new Date(EPOCH_MS + (k - 1) * MS_DAY);
   const year = d.getUTCFullYear();
-  return { year, month: d.getUTCMonth(), day: d.getUTCDate(), weekday: d.getUTCDay(), yday: Math.round((d.getTime() - Date.UTC(year, 0, 1)) / MS_DAY) };
+  const r: CalDate = Object.freeze({ year, month: d.getUTCMonth(), day: d.getUTCDate(), weekday: d.getUTCDay(), yday: Math.round((d.getTime() - Date.UTC(year, 0, 1)) / MS_DAY) });
+  if (dateCache.size > 4096) dateCache.clear();
+  dateCache.set(k, r);
+  return r;
 }
 
 /** World time (minutes) at the start of a calendar date. */

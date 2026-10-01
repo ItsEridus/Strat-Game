@@ -1,6 +1,6 @@
 {
   "name": "strat-game",
-  "version": "1.3.23",
+  "version": "1.4.0",
   "private": true,
   "description": "Single-player society strategy simulator (economy, politics, war).",
   "scripts": {

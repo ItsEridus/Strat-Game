@@ -78,8 +78,8 @@ chose to pause on (Settings → Alerts). Closing the game pauses the world.
 **Your first days.** Follow Mara Voss, your civic guide (dashboard card and inbox):
 
 1. **Employment:** take a job (compare net wages after tax), then **work** one shift a day.
-2. **Character:** **train** once a day for training power, and spend attribute points. Every point has a
-   concrete, previewed effect.
+2. **Character:** **train** once a day for training power. Skills grow by practice (working, training, studying,
+   fighting...), quickly at first and slower later; there are no levels.
 3. **Goods Market:** buy food, then **eat** (inventory or dashboard) to restore energy. Eating uses an
    allowance that refills every 45 minutes.
 4. **Currency Market:** exchange currency and gold. Gold pays for companies, studies and shop items.
@@ -88,13 +88,29 @@ chose to pause on (Settings → Alerts). Closing the game pauses the world.
 Energy regenerates 1 per 2 simulated minutes. Everyone, you included, pays a small daily living cost, so keep
 some income. **Public works** (dashboard) is a low-paid fallback job funded by the treasury.
 
+**Your life.** You age with the calendar (or faster, if you choose) and can start as a newborn, at 16, 18 or 24.
+The **My Life** screen, in four tabs, covers it all:
+
+- **Family:** date, marry, have or adopt children (pregnancy, parental leave, raising them), brothers and sisters,
+  gifts, pets.
+- **Home and money:** rent, buy (with a mortgage) or sell, a monthly budget by category, loans and credit, and
+  pensions.
+- **Health and learning:** illnesses and clinic visits priced by your country's health system, school and
+  university, hobbies.
+- **Careers:** company jobs, public service (teacher, nurse, doctor, civil servant, engineer, with promotions),
+  the military academy.
+- **Legacy:** a will, heirlooms and the family history. When your character dies, you carry on as your heir.
+
+Advance by a day, a week, a month, to your next birthday or by a whole year, with the world simulated in full. A
+summary afterwards shows what happened. Everyone else lives by the same rules.
+
 **Careers.** None are locked, so mix them freely.
 
 - **Entrepreneur:** found farms/mines/rigs and factories, post wages, buy inputs, sell output (or automate
   it), upgrade, relocate, sell on the Business Market, or build a **holding** and issue shares.
-- **Politician:** join or found a party (level 3), register for the congress list (level 5), seek the
-  presidential nomination (level 8), draft and vote on laws, accept or appoint ministers. Newspaper articles
-  and endorsements build the influence voters care about.
+- **Politician:** join or found a party, register for the congress list, seek the presidential nomination
+  (with age, reputation and a clean record), draft and vote on laws, accept or appoint ministers. Newspaper
+  articles and endorsements build the influence voters care about.
 - **Soldier:** join a military unit, follow its orders, stock weapons and food, fight in battles (surge in
   the final segment), earn hero medals and rank, and claim your combat reserve.
 - **Builder:** work on national construction sites, deliver materials, and climb the builder ranks.
@@ -122,7 +138,7 @@ Northern Ireland (England has none), Chief Ministers in India, Governors in Japa
 so on. Heads are **elected** by residents or **appointed** by the national leader where that is the real system
 (Chinese provinces, Turkish provinces, Saudi emirs, Indian union territories). Each government taxes wages worked
 there (0% in the nine US states with no wage tax) and its residents, receives block grants, and spends on
-welfare, infrastructure (+2% production per level) and business support. Live in a state and reach level 5 to
+welfare, infrastructure (+2% production per level) and business support. Live in a state and build a reputation to
 run for its governorship: register, campaign, vote, then set the tax (the legislature must agree) and the
 budget. As national leader you appoint heads where they are appointed. Country → *States, provinces & regions*
 lists every government; the map's *Governments* view colours regions by the ideology in power.

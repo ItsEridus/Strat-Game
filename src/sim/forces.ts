@@ -63,7 +63,10 @@ export function power(w: World, f: Formation): number {
 /** Naval power a nation (and its allies) has in a sea zone. */
 export function navalPower(w: World, nation: Id, zone: string): number {
   let p = 0;
-  for (const f of Object.values(w.forces)) if (f.branch === 'navy' && f.zone === zone && friendly(w, nation, f.nation)) p += power(w, f) * (KINDS[f.kind].naval ?? 1);
+  for (const id in w.forces) { // (no array allocation: this runs very often in wartime)
+    const f = w.forces[id];
+    if (f.branch === 'navy' && f.zone === zone && friendly(w, nation, f.nation)) p += power(w, f) * (KINDS[f.kind].naval ?? 1);
+  }
   return p;
 }
 

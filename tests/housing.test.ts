@@ -10,6 +10,7 @@ import { census } from '../src/sim/census';
 import { cref, player } from '../src/sim/query';
 import { buyCheck, buyHome, housingCost, priceOf, rentHome, rentOf, sellHome } from '../src/sim/housing';
 import { deserialize, serialize } from '../src/engine/save';
+import { die, heirOf } from '../src/sim/population';
 
 registerSystems();
 const fresh = (seed = 701) => generateWorld(seed, 'Tester', 0, { citizensPerRegion: 3 });
@@ -48,4 +49,21 @@ test('rent, buy and sell: money moves through the ledger; rent is part of living
   assert.ok(p.wallet[code]! > before);
   assert.ok(audit(w).ok, audit(w).problems.join('; '));
   assert.equal(deserialize(serialize(w)).citizens[p.id].dwelling!.kind, 'rent');
+});
+
+test('an owner dies: the home passes to the heir, or is sold into the estate', () => {
+  const w = fresh(703);
+  const npcs = census(w).all.filter((c) => !c.player && !c.gone);
+  const owner = npcs.find((c) => c.dwelling?.kind === 'own' && c.family?.status === 'married' && c.family.partner != null && w.citizens[c.family.partner].home === c.home)!;
+  const spouse = w.citizens[owner.family!.partner!];
+  spouse.dwelling = { kind: 'rent', region: spouse.home, size: 'flat', since: w.time };
+  die(w, owner, 'test');
+  assert.equal(spouse.dwelling!.kind, 'own', 'the widow(er) keeps the home');
+  const lone = census(w).all.find((c) => !c.player && c.dwelling?.kind === 'own' && !c.family?.partner && !(c.family?.children.length))!;
+  const code = w.nations[lone.nation].cur;
+  const heir = heirOf(w, lone);
+  const before = heir ? heir.wallet[code] ?? 0 : 0;
+  die(w, lone, 'test');
+  if (heir) assert.ok((heir.wallet[code] ?? 0) > before, 'the heir inherits the sale');
+  assert.ok(audit(w).ok, audit(w).problems.join('; '));
 });

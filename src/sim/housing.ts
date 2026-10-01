@@ -58,13 +58,43 @@ export function assignHome(w: World, c: Citizen) {
   const size: HomeSize = kind === 'family' ? 'room' : married || (c.family?.kids.length ?? 0) > 0 ? (hash01(c.id, 1313, 2) < 0.6 ? 'house' : 'flat') : hash01(c.id, 1313, 3) < 0.25 ? 'room' : hash01(c.id, 1313, 4) < 0.8 ? 'flat' : 'house';
   c.dwelling = { kind, region: c.home, size, since: w.time, paid: kind === 'own' ? priceOf(w, c.home, size) : undefined };
 }
+/** Set by sim/loans.ts (avoids an import cycle): buying with a mortgage. */
+export const MORTGAGE: { loanCheck?: (w: World, c: Citizen, amount: number) => string | null; borrow?: (w: World, c: Citizen, amount: number, note: string) => boolean } = {};
+
+/** An owner died: the heir moves in if they live there and do not own a home; otherwise the home is sold for the estate. */
+export function settleHome(w: World, c: Citizen, heir: Citizen | null) {
+  const h = c.dwelling;
+  if (h?.kind !== 'own') return;
+  if (heir && heir.home === h.region && heir.dwelling?.kind !== 'own') { heir.dwelling = { ...h, since: w.time }; c.dwelling = undefined; return; }
+  sellTo(w, c, h);
+  c.dwelling = undefined;
+}
+
 export const initHousing = (w: World) => { for (const c of Object.values(w.citizens)) if (!c.gone) assignHome(w, c); };
 
 /** Someone's home region changed (a move, a marriage): owners sell, and everyone finds a place of the same kind. */
 export function rehouse(w: World, c: Citizen) {
   const h = c.dwelling;
   if (!h || h.region === c.home) return;
-  if (h.kind === 'own') sellTo(w, c, h);
+  if (h.kind === 'own') {
+    // Owners swap: they sell and buy at the same time, so only the difference changes hands
+    // (from savings, or a mortgage for the gap; a cheaper place leaves money over). Smaller homes if needed.
+    const nat = controller(w.regions[c.home]);
+    const code = w.nations[nat].cur;
+    const sameMoney = w.nations[controller(w.regions[h.region])].cur === code;
+    const net = Math.floor(priceOf(w, h.region, h.size) * (1 - B.housing.fees));
+    if (sameMoney) {
+      for (const size of [h.size, h.size === 'house' ? 'flat' : 'room', 'room'] as HomeSize[]) {
+        const price = priceOf(w, c.home, size);
+        const diff = Math.round(price * (1 + B.housing.fees)) - net;
+        const done = (paid: boolean) => { if (!paid) return false; c.dwelling = { kind: 'own', region: c.home, size, since: w.time, paid: price }; return true; };
+        if (diff <= 0) { if (done(diff === 0 || pay(w, hhref(nat), cref(c.id), code, -diff, 'Money left over from a home move') || true)) return; }
+        if ((c.wallet[code] ?? 0) >= diff + cur(B.living.comfort) && done(pay(w, cref(c.id), hhref(nat), code, diff, 'Home move: the difference in price'))) return;
+        if (!MORTGAGE.loanCheck?.(w, c, diff) && MORTGAGE.borrow?.(w, c, diff, `the move to ${w.regions[c.home].name}`) && done(pay(w, cref(c.id), hhref(nat), code, diff, 'Home move: the difference in price'))) return;
+      }
+    }
+    sellTo(w, c, h); // moving abroad (or nothing fits): sell and rent
+  }
   c.dwelling = { kind: 'rent', region: c.home, size: h.size, since: w.time };
 }
 

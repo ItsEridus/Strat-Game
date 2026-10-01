@@ -105,8 +105,10 @@ function onsetRates(w: World, c: Citizen, epidemic: boolean): [CondKey, number][
 export function visitCost(w: World, c: Citizen): { total: number; patient: number; code: string; nation: Id } {
   const nation = controller(w.regions[c.loc]);
   const s = sys(w, nation);
-  const total = cur(Math.max(30, s.visit * 2));
-  return { total, patient: cur(s.visit), code: w.nations[nation].cur, nation };
+  // In game money (living costs are about 4 a day): a visit costs a day or two of living; 1.5.0 re-anchors prices.
+  const patient = Math.round(cur(s.visit) / 10);
+  const total = Math.max(cur(4), Math.round(patient * 1.5));
+  return { total, patient, code: w.nations[nation].cur, nation };
 }
 export function clinicCheck(w: World, c: Citizen): string | null {
   if (jailed(w, c)) return 'The prison doctor sees inmates on Mondays.';
@@ -124,7 +126,7 @@ export function visitClinic(w: World, c: Citizen = player(w)): Result {
   const n = w.nations[v.nation];
   if (v.patient) pay(w, cref(c.id), sys(w, v.nation).publicShare >= 1 ? natref(v.nation) : hhref(v.nation), v.code, v.patient, 'Clinic visit');
   const publicPart = Math.round((v.total - v.patient) * sys(w, v.nation).publicShare);
-  if (publicPart > 0 && (n.wallet[n.cur] ?? 0) > publicPart * 10) pay(w, natref(v.nation), hhref(v.nation), n.cur, publicPart, 'Public health care');
+  if (publicPart > 0 && (n.wallet[n.cur] ?? 0) > publicPart * 200) pay(w, natref(v.nation), hhref(v.nation), n.cur, publicPart, 'Public health care');
   const q = (schoolQuality(w, w.regions[c.loc]) + (w.regions[c.loc].staff?.clinic ?? 0.6) * 100) / 200; // care quality 0..1
   const notes: string[] = [];
   for (const x of conditionsOf(c)) {

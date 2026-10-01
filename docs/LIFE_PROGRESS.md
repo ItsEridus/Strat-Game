@@ -40,8 +40,8 @@ stages go out in slices.
 | L4 | Housing (rent/buy/sell); obligations (loans, mortgages, student loans); conditions and treatment; leave; retirement and funded pensions (incl. veterans); living-cost split | Done: housing and the living-cost split 1.3.13; loans, mortgages, student loans, credit 1.3.14; conditions, treatment, sick and parental leave 1.3.15; retirement and pensions 1.3.16 |
 | L5 | Birth start; childhood and parenting; player mortality; wills, trusts, estates, heirlooms | Done: birth start, childhood and parenting 1.3.17; player mortality, wills, trusts, estates, heirlooms 1.3.18 |
 | L6 | Succession to heirs; legacy archive; 8 life chains + 16 standalone encounters; narrative stage 4's five chains; NPC AI parity | Done: succession and legacy archive 1.3.18; eight life chains 1.3.19; sixteen everyday encounters 1.3.20; narrative stage 4's five chains 1.3.21; NPC AI parity for life systems 1.3.22 |
-| UI2 | Every screen restyled; cinematic story, review and succession; map polish; optional UI sound; screenshots | Planned |
-| L7 | Calibration, performance, docs, tests, e2e, release 1.4.0 (with narrative stage 5) | Planned |
+| UI2 | Every screen restyled; cinematic story, review and succession; map polish; optional UI sound; screenshots | Done: 1.3.23 |
+| L7 | Calibration, performance, docs, tests, e2e, release 1.4.0 (with narrative stage 5) | Done: 1.4.0 |
 
 After 1.4.0: the plan continues in `ROADMAP.md`, starting with character creation and customisation (1.4.x), then the
 world (1.5.0 → 2.5.0) and a deeper life simulation (2.6.0 → 3.0.0). Its main thread is a realistic geopolitical
@@ -232,7 +232,24 @@ and employment (1.5), policing, crime careers and prisons (1.7), and weather and
   age at 18, age gates for direct calls and the AI, no double shift pay, chunked vs single advance identical, pace
   change keeps ages.
 
+## Calibration (1.4.0)
+`node tests/run.mjs --script tests/lifecal.ts [days] [seed] [perRegion]` prints the life systems' vital statistics.
+At 2 people per region over 90 days the run stays in these ranges, with a clean ledger audit throughout:
+
+| Measure | Range |
+| --- | --- |
+| Employment | 86–99% |
+| Retired | 7% |
+| Home ownership | 45–51% (newcomers rent) |
+| Ill at any time | 2–4% |
+| Tertiary qualifications | 39% |
+| Public-service staff | about 1 in 8 of the people they serve |
+| Average happiness | 61 |
+| Time per simulated day | 435–530 ms |
+
 ## Known limitations (to address in later stages)
+- National treasuries drift down in some small countries, because older spending (officials' salaries, social
+  transfers, upgrades) outruns revenue. The 1.5.0 public-finance overhaul replaces this.
 - NPC children are compact records until 18; only the player's own family will get full child citizens (L2/L5).
 - Institutions (schools, clinics), housing, obligations, wills and heirs are not built yet (L3–L6).
 - A daily-hook chunk can take one to two seconds on a full-size world, so a long advance is responsive between

@@ -18,7 +18,7 @@ import { census } from './census';
 import { controller, cref, hhref, jailed, player, today } from './query';
 import { ageOf } from './growth';
 import { lifeGate, lifeOf, milestone } from './lifecycle';
-import { SIZES, priceOf, type HomeSize } from './housing';
+import { MORTGAGE, SIZES, priceOf, type HomeSize } from './housing';
 
 export type LoanKind = 'mortgage' | 'student' | 'personal';
 export interface Loan { id: Id; kind: LoanKind; borrower: Id; nation: Id; cur: string; principal: number; balance: number; rate: number; payment: number; start: number; term: number; paid: number; missed: number; note: string }
@@ -197,3 +197,6 @@ function repossess(w: World, c: Citizen, l: Loan) {
   lifeOf(c).stress = Math.min(100, lifeOf(c).stress + 25);
   if (c.player) { notify(w, 'economy', `🏚️ Your home was repossessed for unpaid mortgage payments${left > 0 ? `; ${fmtAmt(l.cur, left)} was left after the sale` : ''}.`, { critical: true, link: 'life' }); milestone(w, c, 'home', 'lost the house to the bank'); }
 }
+
+MORTGAGE.loanCheck = (w, c, amount) => loanCheck(w, c, 'mortgage', amount);
+MORTGAGE.borrow = (w, c, amount, note) => borrow(w, c, 'mortgage', amount, note).ok;

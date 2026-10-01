@@ -5,7 +5,7 @@ import { registerSystems } from '../src/sim/systems';
 import { advance } from '../src/sim/tick';
 import { audit } from '../src/engine/ledger';
 import { DAY } from '../src/engine/clock';
-import { census } from '../src/sim/census';
+import { census, residents } from '../src/sim/census';
 import { player } from '../src/sim/query';
 import { maxGrade, postCheck, serviceShift, servicesDaily, takePost } from '../src/sim/services';
 import { deserialize, serialize } from '../src/engine/save';
@@ -26,6 +26,8 @@ test('the player takes a post, is paid by the state, and builds a work history',
   const w = fresh(602);
   const p = player(w);
   p.edu = { level: 'bachelor', field: 'teaching' };
+  const big = w.regions.filter((r) => r.owner === p.nation).sort((a, b) => residents(w, b.id).length - residents(w, a.id).length)[0];
+  p.home = p.loc = big.id; // small places have no teaching post of their own
   for (const c of census(w).all) if (c.post?.kind === 'teacher' && c.post.region === p.home) delete c.post; // open a vacancy
   assert.equal(postCheck(w, p, 'doctor') !== null, true, 'not a doctor');
   const r = takePost(w, 'teacher');
