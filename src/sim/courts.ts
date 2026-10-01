@@ -26,14 +26,31 @@ import { noteSolved } from './policing';
 /** Share of convictions that come from guilty pleas (approximate: US federal ~97%, England and Wales Crown Court ~70%, Germany's Absprachen ~20%, Japan rare). */
 export const PLEA_RATE: Record<string, number> = { USA: 0.95, CAN: 0.8, MEX: 0.5, BRA: 0.3, ARG: 0.5, GBR: 0.7, DEU: 0.2, RUS: 0.6, TUR: 0.3, SAU: 0.3, ZAF: 0.4, IND: 0.3, CHN: 0.5, JPN: 0.05, KOR: 0.2, AUS: 0.7 };
 export const pleaRate = (n: Nation) => PLEA_RATE[n.iso] ?? 0.5;
+/** Evidence prosecutors want before they charge: Japanese prosecutors indict only near-certain cases (a conviction rate above 99%), Korea's are also cautious. */
+export const CHARGE_BAR: Record<string, number> = { JPN: 85, KOR: 72 };
+export const chargeBar = (n: Nation) => CHARGE_BAR[n.iso] ?? 0;
 
 export interface CourtStats { trials: number; convictions: number; acquittals: number; pleas: number; appeals: number; quashed: number; exonerations: number; wrongful: number }
 export const courtStats = (n: Nation): CourtStats => (n.courts ??= { trials: 0, convictions: 0, acquittals: 0, pleas: 0, appeals: 0, quashed: 0, exonerations: 0, wrongful: 0 });
 
 // ---------- the court ----------
 
-const officials = (w: World, nation: Id, kind: 'judge' | 'prosecutor' | 'defender') =>
-  census(w).all.filter((c) => c.post?.kind === kind && controller(w.regions[c.post.region]) === nation && !jailed(w, c));
+/** Court officials by nation and post (rebuilt once per game hour). */
+let bench: { w: World | null; t: number; by: Map<string, Citizen[]> } = { w: null, t: -1, by: new Map() };
+function officials(w: World, nation: Id, kind: 'judge' | 'prosecutor' | 'defender'): Citizen[] {
+  if (bench.w !== w || bench.t !== w.time) {
+    bench = { w, t: w.time, by: new Map() };
+    for (const c of census(w).all) {
+      const k = c.post?.kind;
+      if ((k === 'judge' || k === 'prosecutor' || k === 'defender') && !jailed(w, c)) {
+        const key = `${controller(w.regions[c.post!.region])}:${k}`;
+        const list = bench.by.get(key);
+        if (list) list.push(c); else bench.by.set(key, [c]);
+      }
+    }
+  }
+  return bench.by.get(`${nation}:${kind}`) ?? [];
+}
 
 /** Who hears a case: officials of the case's region if there are any, else of the country (a stable pick per case). */
 export function benchFor(w: World, k: Case): { judge: Citizen | null; prosecutor: Citizen | null; defender: Citizen | null } {
@@ -56,6 +73,7 @@ export function convictionChance(w: World, k: Case, lawyer: boolean): number {
   p *= 1 + (skill(b.prosecutor) - 0.3) * 0.3;
   if (lawyer) p *= 0.75 - (skill(b.defender) - 0.3) * 0.3;
   if (w.citizens[k.suspect]?.flags.bail === k.id && lawyer) p *= 0.9; // time to prepare a defence
+  if (chargeBar(w.nations[k.nation])) p = 0.75 + p * 0.25; // only strong cases reach court, and confessions are the norm
   return Math.max(0.02, Math.min(0.98, p));
 }
 

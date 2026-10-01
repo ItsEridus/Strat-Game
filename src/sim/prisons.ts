@@ -66,6 +66,7 @@ export interface PrisonSystem {
   lastRiot?: number;
   hist: { t: number; inmates: number; places: number }[]; // monthly
   staffing?: number; // prison officers against posts (0..1)
+  crime0?: number; // average crime when the system was set up
 }
 
 /** The usual police share of revenue, against which prison funding is measured. */
@@ -105,8 +106,9 @@ export function prisonsDaily(w: World) {
     if (n.exile) continue;
     const p = prisonOf(w, n);
     const j = justiceOf(n);
-    // Inmates follow crime (30 is a typical level) at the country's real rate.
-    const want = (popOf(w, n) * j.rate * (0.6 + crimeOf(w, n) / 75)) / 1e5;
+    // Inmates follow the country's real rate, moved by how crime compares with where it started.
+    p.crime0 ??= crimeOf(w, n);
+    const want = (popOf(w, n) * j.rate * (0.6 + 0.4 * crimeOf(w, n) / Math.max(5, p.crime0))) / 1e5;
     p.inmates = Math.max(0, Math.round(p.inmates + (want - p.inmates) * 0.01));
     // Places: built slowly when funding is above the usual level, lost when it is cut.
     const f = funding(n);

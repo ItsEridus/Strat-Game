@@ -40,10 +40,11 @@ export interface Policing {
 export function policingOf(n: Nation): Policing {
   if (n.policing) return n.policing;
   const b = baselineOf(n.iso);
-  n.policing = { trust: Math.round(25 + b.corruption * 45 + b.law * 25), solved: 0, cold: 0, clearance: 0.4, incidents: 0, scandals: 0, investigations: [], hist: [] };
+  n.policing = { trust: Math.round(18 + b.corruption * 35 + b.law * 20), solved: 0, cold: 0, clearance: 0.4, incidents: 0, scandals: 0, investigations: [], hist: [] };
   return n.policing;
 }
-const baseTrust = (n: Nation) => { const b = baselineOf(n.iso); return 25 + b.corruption * 45 + b.law * 25; };
+/** Where trust settles with typical results (about Gallup's confidence in the local police: ~50% US, ~70–80% Germany and Japan, ~30% Mexico). */
+const baseTrust = (n: Nation) => { const b = baselineOf(n.iso); return 18 + b.corruption * 35 + b.law * 20; };
 
 export const noteSolved = (n: Nation) => { policingOf(n).solved++; };
 export const noteCold = (n: Nation) => { policingOf(n).cold++; };
@@ -101,7 +102,7 @@ function internalAffairs(w: World) {
     openCase(w, c, 'corruption', region, 50 + b * 8, 0);
     const p = policingOf(n);
     p.scandals++;
-    p.trust = Math.max(0, p.trust - 3);
+    p.trust = Math.max(0, p.trust - 1.5);
     if (c.player) notify(w, 'personal', '🕵️ Internal affairs has opened a corruption file on you.', { critical: true, link: 'crime' });
     else if (n.id === player(w).nation) record(w, 'justice', `🕵️ Internal affairs is investigating an officer of the ${w.regions[region].name} police for corruption.`, { nation: n.id, region });
   }
@@ -110,10 +111,10 @@ function internalAffairs(w: World) {
 /** On an arrest: occasionally force is used, more often where institutions are weak. */
 export function arrestForce(w: World, suspect: Citizen, nation: Id) {
   const n = w.nations[nation];
-  if (!chance(w, 0.02 + (1 - baselineOf(n.iso).law) * 0.04)) return;
+  if (!chance(w, 0.004 + (1 - baselineOf(n.iso).law) * 0.012)) return;
   const p = policingOf(n);
   p.incidents++;
-  p.trust = Math.max(0, p.trust - 2);
+  p.trust = Math.max(0, p.trust - 1);
   suspect.health = Math.max(5, (suspect.health ?? 90) - 12);
   if (suspect.player) notify(w, 'personal', '🚨 The arrest got rough. You have the bruises to prove it, and a complaint form nobody will read.', { link: 'crime' });
   else if (nation === player(w).nation) record(w, 'justice', `📹 A video of ${suspect.name}'s violent arrest is circulating. Protesters gathered outside the police station.`, { nation });
@@ -173,8 +174,8 @@ export function policingDaily(w: World) {
     const p = policingOf(n);
     investigationsDaily(w, n);
     // Trust drifts towards what the country's institutions and the police's results justify.
-    const target = baseTrust(n) + (p.clearance - 0.4) * 30 - p.investigations.filter((i) => i.kind === 'corruption').length * 3;
-    p.trust += (Math.max(5, Math.min(95, target)) - p.trust) * 0.02;
+    const target = baseTrust(n) + (p.clearance - 0.7) * 30 - p.investigations.filter((i) => i.kind === 'corruption').length * 3;
+    p.trust += (Math.max(15, Math.min(95, target)) - p.trust) * 0.03;
     if (day % 30 === 0) {
       // Clearance: cases brought to court against crimes reported this month.
       const total = Math.max(p.reported ?? 0, p.solved + p.cold);

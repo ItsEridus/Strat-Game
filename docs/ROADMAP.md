@@ -445,6 +445,19 @@ improve or decay, and the power ranking moves for reasons the player can read.
   States. Clearance and re-offending rates come from national statistics.
 - **Done when:** crime, arrest and prison populations settle near national rates, and a prisoner's life can be
   played from sentencing to release.
+- **Progress:**
+  - 1.6.1: prisons.
+  - 1.6.2: courts.
+  - 1.6.3: white-collar crime, laundering and informants.
+  - 1.6.4: policing as an institution.
+  - 1.7.0: calibration.
+  - In a 90-day test of the default world:
+    - incarceration stays within about 20% of each country's real rate;
+    - US convictions are 99% guilty pleas and Japanese ones 6%;
+    - conviction rates are about 95% in Japan and Korea and 75–90% elsewhere.
+    - clearance is 47–67% of reported crimes;
+    - trust in the police runs from about 15–20 in Russia and Mexico to about 60 in the US and western Europe.
+  - Still to do: counter-terrorism waits for 2.1.
 
 ## 1.8.0 — Arsenal (GEO 3: militaries get better)
 

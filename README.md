@@ -148,8 +148,16 @@ organised crime, held down by policing (state police budgets, national police fu
 Syndicates — named in each country's style: mafia families, cartels, bratvas, triads, yakuza clans, bikie gangs —
 hold turf, extort businesses (including yours, through the inbox), recruit the jobless, feud and get raided.
 You can commit street crimes, join an organisation and rise to boss, or join the police and rise to chief.
-Detected crimes open cases; evidence builds; arrests lead to trials (lawyer, or a risky bribe), fines and prison.
-Ministers of the Interior fund the national police and order raids. (Law & Order screen.)
+White-collar crime is there too: embezzlement, tax evasion caught by audits, insider trading and online fraud
+abroad. Crime money is dirty until it is laundered through a business or an organisation.
+Detected crimes open cases, and evidence builds faster where people trust the police. Arrests lead to bail, plea
+deals and trials. Real prosecutors, defence lawyers and judges sit on each case; these are careers you can follow.
+Convictions can be appealed, and the wrongly convicted are sometimes exonerated.
+Prisons hold each country's real share of its people, from about 33 per 100,000 in Japan to over 500 in the
+United States. Crowded, underfunded prisons riot. Inside, you can work, study, receive visits, apply for parole or
+try to escape. A record follows you to job interviews until it is spent.
+Ministers of the Interior fund the police, order raids and open national investigations; internal affairs
+pursues corrupt officers. (Law & Order screen.)
 
 **Intelligence.** Each nation runs its real service (CIA, MI6, BND, SVR, MSS, R&AW…). Budgets build spy networks
 abroad and counter-intelligence at home. Operations gather dossiers, sabotage industry, steal from treasuries,

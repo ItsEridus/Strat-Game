@@ -3,6 +3,28 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.7.0: Law & order
+
+1.7.0 completes Law & order: police, crime, courts and prisons are now careers and institutions. Releases 1.6.1 to
+1.6.4 built it:
+- prisons with real incarceration rates, life inside, parole and re-entry;
+- courts with prosecutors, defenders and judges, bail, plea deals, appeals and wrongful convictions;
+- white-collar crime, laundering and informants;
+- policing with trust, clearance, corruption, internal affairs and national investigations.
+
+This release calibrates them against real statistics. In a 90-day test of the default world:
+
+- **Prison populations** stay within about 20% of each country's real rate. They are now measured against the crime
+  level each country started with.
+- **Pleas and convictions** follow national practice:
+  - about 99% of US convictions come from guilty pleas, and 6% of Japanese ones;
+  - Japanese and Korean prosecutors charge only strong cases, so about 95% of their trials end in conviction;
+  - elsewhere, 75–90% of trials end in conviction.
+- **Clearance** counts crimes reported with no suspect, so 47–67% of reported crimes reach court.
+- **Trust in the police** settles near survey levels: about 60 in the US and western Europe, 15–20 in Russia and
+  Mexico. Use-of-force incidents are rarer, and scandals cost less trust each.
+- **Speed.** Court officials are looked up once per game hour, so the new systems add about 5% to simulation time.
+
 ### New in 1.6.4: policing as an institution
 
 - **Trust in the police.** Each country starts from its real institutions: high in Germany, Britain and Japan, low

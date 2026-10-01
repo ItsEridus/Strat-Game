@@ -28,6 +28,7 @@ import { isAdult, practise } from './growth';
 import { admit, release, reoffendPull, sentenceFactor } from './prisons';
 import { markDirty } from './whitecollar';
 import { arrestForce, bribeRecipient, noteCold, noteReported, witnessFactor } from './policing';
+import { chargeBar } from './courts';
 import { afterVerdict, bailAmount, convictionChance, maybeFrame, payDefence, pleaRate, postBail, settleBail } from './courts';
 
 // ---------- definitions ----------
@@ -172,6 +173,8 @@ function attempt(w: World, c: Citizen, kind: CrimeKind, base: number, heat: numb
   c.sec.heat = Math.min(100, c.sec.heat + heat * (success ? 1 : 1.5));
   c.sec.record.crimes++;
   if (success) c.sec.notoriety += SEVERITY[kind];
+  // Victims of undetected crimes often report them anyway: a crime on the books with no suspect.
+  if (success && !detect && chance(w, 0.8)) noteReported(w.nations[controller(r)]);
   return { ok: success, detected: detect };
 }
 
@@ -627,7 +630,8 @@ export function crimeDaily(w: World) {
     }
     const r = w.regions[k.region];
     k.evidence = Math.min(100, k.evidence + B.police.evidencePerDay * (r.police / 50) * witnessFactor(w.nations[k.nation]) + s.sec.heat / 25 - (k.detective ? 0 : 0.5));
-    if (k.evidence >= B.police.arrestAt) {
+    if (k.evidence >= B.police.arrestAt && k.evidence < chargeBar(w.nations[k.nation]) && w.time - k.opened > B.justice.coldAfterDays * DAY) { k.status = 'closed'; k.outcome = 'not charged: prosecutors judged the evidence too weak'; noteCold(w.nations[k.nation]); continue; }
+    if (k.evidence >= Math.max(B.police.arrestAt, chargeBar(w.nations[k.nation]))) {
       // The arresting officer comes from the region's own force, else the nation's.
       let officers = officersOf(w, k.region).filter((c) => !c.player && !jailed(w, c));
       if (!officers.length) officers = w.regions.filter((x) => x.owner === k.nation).flatMap((x) => officersOf(w, x.id)).filter((c) => !c.player && !jailed(w, c));
