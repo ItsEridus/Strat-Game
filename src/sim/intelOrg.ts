@@ -40,7 +40,7 @@ export const dirStrength = (n: Nation, d: Directorate) => orgOf(n).dirs[d];
 /** The directorate that runs each kind of operation. */
 export const OP_DIR: Record<OpKind, Directorate> = {
   intel: 'analysis', sabotage: 'covert', theft: 'cyber', unrest: 'covert', propaganda: 'covert', scandal: 'covert',
-  recruit: 'humint', counter: 'counter', milintel: 'imagery', milsabotage: 'covert', cyber: 'cyber',
+  recruit: 'humint', counter: 'counter', milintel: 'imagery', milsabotage: 'covert', cyber: 'cyber', election: 'covert',
 };
 
 /** How much a directorate adds to an operation's odds (−0.2 .. +0.2 around an average service). */

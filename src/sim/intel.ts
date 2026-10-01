@@ -25,6 +25,7 @@ import { nationPerm } from './authority';
 import { relation } from './congress';
 import { visible } from './forces';
 import { refresh } from './beliefs';
+import { domesticFallout, favouredParty } from './counterIntel';
 import { MOTIVE_LABEL, coverFactor, motiveFor, placementOf } from './collection';
 import { capsOf } from './strategic';
 import { OP_DIR, dirEdge, dirOfAgent, dirStrength, noteLesson } from './intelOrg';
@@ -40,8 +41,12 @@ export const OPS: Record<OpKind, { name: string; desc: string; needs: 'region' |
   counter: { name: 'Counter-intelligence sweep', desc: 'Hunt foreign agents and assets at home.', needs: null, rank: 1, relation: 0 },
   milintel: { name: 'Military reconnaissance', desc: 'Map their order of battle: every division, fleet and air wing, their strength and orders, for 10 days.', needs: null, rank: 1, relation: -6 },
   cyber: { name: 'Cyber intrusion', desc: 'Break into ministries\' and companies\' networks from afar: a sharper estimate of the country, and technology to copy if it is ahead.', needs: null, rank: 1, relation: -8 },
+  election: { name: 'Election interference', desc: 'Back a friendly party in their coming election: disinformation, leaks and money. Needs an election within 60 days.', needs: null, rank: 2, relation: -15 },
   milsabotage: { name: 'Military sabotage', desc: 'Wreck a formation’s equipment and readiness (a fleet in port, an air base, a division’s depots).', needs: 'formation', rank: 2, relation: -15 },
 };
+/** Covert action (as opposed to collecting intelligence). */
+export const COVERT: OpKind[] = ['sabotage', 'theft', 'unrest', 'propaganda', 'scandal', 'milsabotage', 'election'];
+export const COVERT_NOUN: Partial<Record<OpKind, string>> = { sabotage: 'sabotage campaign', theft: 'raid on the treasury', unrest: 'campaign to stir unrest', propaganda: 'propaganda campaign', scandal: 'smear campaign', milsabotage: 'sabotage of military forces', election: 'interference in the election' };
 export const ARANKS = ['Analyst', 'Case Officer', 'Field Agent', 'Station Chief', 'Deputy Director'];
 
 const active = (w: World, nation: Id) => Object.values(w.ops).filter((o) => o.nation === nation && o.status === 'active');
@@ -78,6 +83,7 @@ export function opCheck(w: World, actor: Id, sponsor: Id, kind: OpKind, target: 
     if (!f || f.nation !== target) return `Pick a ${t.adj} formation.`;
     if (!visible(w, sponsor, f)) return 'You don’t know where that formation is: run reconnaissance first.';
   }
+  if (kind === 'election' && !nextElection(w, target)) return `${t.name} has no election in the next 60 days.`;
   const cost = cur(B.intel.opCost[kind]);
   if ((n.wallet[n.cur] ?? 0) < cost) return `The service needs ${fmtAmt(n.cur, cost)} from the treasury.`;
   return null;
@@ -148,6 +154,9 @@ export function resolveOp(w: World, id: Id) {
       t.agency.caught++;
     } else if (agent) { agent.sec.tradecraft = Math.max(0, agent.sec.tradecraft - 3); caught = ` ${agent.name}'s cover is blown.`; }
     text += ` Exposed by the ${t.agency.name}.${caught}`;
+    if (op.kind === 'election') { delete t.interference; const pid = favouredParty(w, n, t); if (pid != null) w.parties[pid].support = Math.max(0, w.parties[pid].support - 10); } // the backlash hurts the favoured party
+    // Espionage caught is a diplomatic incident; covert action caught can also be a scandal at home.
+    if (COVERT.includes(op.kind)) domesticFallout(w, n, `${COVERT_NOUN[op.kind] ?? 'covert operation'} against ${t.name}`);
     record(w, 'espionage', `🕵️ ${t.name} exposed a ${n.adj} ${OPS[op.kind].name.toLowerCase()} operation.${caught}`, { nation: op.target, important: op.nation === p.nation || op.target === p.nation });
     if (op.target === p.nation) notify(w, 'politics', `🕵️ The ${t.agency.name} exposed ${n.name} running ${OPS[op.kind].name.toLowerCase()} against us.`, { link: 'intel' });
   }
@@ -258,6 +267,13 @@ function applyOp(w: World, op: SpyOp): string {
         if (gap > 0) { mine.tech[d] = Math.round((mine.tech[d] + gap * 0.03) * 100) / 100; stolen.push(d); }
       }
       return `Inside ${t.name}'s networks: the estimate is sharper${stolen.length ? `, and ${stolen.join(' and ')} technology was copied` : ''}.`;
+    }
+    case 'election': {
+      const e = nextElection(w, t.id);
+      const party = favouredParty(w, n, t);
+      if (!e || party == null) return 'There was nothing to interfere in.';
+      t.interference = { by: n.id, party, until: e.at + DAY };
+      return `A campaign is under way for ${w.parties[party].name} in ${t.name}'s election.`;
     }
     case 'milsabotage': {
       const f = w.forces[op.subject!];
@@ -488,6 +504,7 @@ function intelAI(w: World) {
         plans.push(['unrest', t, regions.length ? pick(w, regions).id : null, null], ['propaganda', t, null, null]);
         const pols = [w.nations[t].president, ...Object.values(w.nations[t].cabinet)].filter((id): id is Id => id != null && !!w.citizens[id]).map((id) => w.citizens[id]);
         if (pols.length && chance(w, 0.3)) plans.push(['scandal', t, null, pick(w, pols).id]);
+        if (nextElection(w, t) && !w.nations[t].interference && chance(w, 0.3)) plans.push(['election', t, null, null]);
       }
       plans.push(['intel', t, null, null]);
       if (chance(w, 0.3)) plans.push(['cyber', t, null, null]);
@@ -510,3 +527,8 @@ export const knownDossier = (w: World, nation: Id, target: Id) => {
   return d && w.time - d.t < 10 * DAY ? d : null;
 };
 export const opCost = (kind: OpKind) => cur(B.intel.opCost[kind]);
+
+/** The next election in a country within 60 days (for interference). */
+export function nextElection(w: World, nation: Id) {
+  return Object.values(w.elections).filter((e) => e.nation === nation && !e.done && e.kind !== 'party' && e.at > w.time && e.at - w.time < 60 * DAY).sort((a, b) => a.at - b.at)[0] ?? null;
+}

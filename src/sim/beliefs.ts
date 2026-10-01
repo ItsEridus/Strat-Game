@@ -20,6 +20,7 @@ import { militaryPower } from './war';
 import { dirStrength } from './intelOrg';
 import { leaderProfile } from './relations';
 import { agentQuality } from './collection';
+import { deceive, partnerQuality } from './counterIntel';
 
 export type Measure = 'mil' | 'econ' | 'tech' | 'hostile';
 export const MEASURES: Measure[] = ['mil', 'econ', 'tech', 'hostile'];
@@ -46,20 +47,21 @@ export function truthOf(w: World, observer: Nation, t: Nation): Record<Measure, 
 
 /** How well `n` can see `t` (0..1). */
 export function collectionQuality(w: World, n: Nation, t: Nation): number {
+  // Agents in place see past the counter-intelligence (collection.ts); partners share what they see (counterIntel.ts).
+  return Math.max(0.05, Math.min(0.97, Math.max(rawQuality(w, n, t) + agentQuality(w, n, t), sharedPicture(w, n, t))));
+}
+/** What a service sees of `t` by its own means (no agents, no partners). */
+export function rawQuality(w: World, n: Nation, t: Nation): number {
   const net = (n.agency.network[t.id] ?? 0) / 100;
   const tech = (dirStrength(n, 'sigint') * 0.4 + dirStrength(n, 'imagery') * 0.3 + dirStrength(n, 'cyber') * 0.3) / 100;
   const open = (dirStrength(n, 'osint') / 100) * (0.4 + capsOf(w, t).inst.press * 0.6); // a free press gives a lot away
   const judgement = dirStrength(n, 'analysis') / 100;
   const raw = net * 0.25 + tech * 0.3 + open * 0.25 + judgement * 0.2;
   const shield = 1 - dirStrength(t, 'counter') / 400; // good counter-intelligence hides things
-  const allies = sharedPicture(w, n, t);
-  // Agents in place see past the counter-intelligence (collection.ts).
-  return Math.max(0.05, Math.min(0.97, Math.max(raw * shield + agentQuality(w, n, t), allies)));
+  return Math.max(0, raw * shield);
 }
-/** Allies who share intelligence (Five Eyes and other intelligence-sharing treaties) pool what they see (2.1d). */
-let sharing: ((w: World, n: Nation, t: Nation) => number) | null = null;
-export const setSharing = (f: typeof sharing) => { sharing = f; };
-const sharedPicture = (w: World, n: Nation, t: Nation) => (sharing ? sharing(w, n, t) : 0);
+/** Allies who share intelligence (Five Eyes and other intelligence-sharing treaties) pool what they see. */
+const sharedPicture = (w: World, n: Nation, t: Nation) => partnerQuality(w, n, t);
 
 export function estimateOf(w: World, n: Nation, t: Nation): Estimate {
   const m = (n.beliefs ??= {});
@@ -88,6 +90,7 @@ export function refresh(w: World, n: Nation, t: Nation, boost = 0, first = false
     e.bias[k] = first ? noise * 0.28 : e.bias[k] * keep + noise * (1 - keep);
   }
   e.bias.hostile += (hawk - 0.4) * 3 * (1 - q); // hawks read more menace into what they cannot see clearly
+  deceive(w, n, t, e); // turned agents feed what the other side wants believed (counterIntel.ts)
   e.t = w.time;
 }
 

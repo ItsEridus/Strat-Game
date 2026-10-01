@@ -3,6 +3,28 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.0.4: mole hunts, double agents, oversight and sharing
+
+The fourth part of 2.1 Shadows.
+
+- **Mole hunts.** Every month each counter-intelligence directorate looks for foreign agents in sensitive places:
+  government, congress, the service itself and the officer corps. Those it finds are arrested, which costs the
+  handler its network and relations.
+- **Double agents.** Some of the moles caught are turned instead of arrested. A turned agent stays in place and
+  feeds the handler what the other side wants believed: its forces look stronger and its intentions softer than
+  they are. The handler still trusts the source, so its estimate gets worse while it thinks it is getting better.
+- **Oversight.** In countries with a free press and the rule of law, covert action leaks:
+  - An exposed sabotage, smear, propaganda or unrest campaign abroad can become a scandal at home: approval falls,
+    and the intelligence committee cuts the budget or the director resigns.
+  - Whistle-blowers sometimes reveal operations nobody abroad had caught.
+  - Closed governments pay little at home.
+- **Sharing.** Partners in an intelligence-sharing treaty (Five Eyes) pool what they see: Canada, Australia and
+  Britain see the world nearly as clearly as their best-placed partner.
+- **Election interference,** a new covert operation: in the 60 days before a country's election, back the party
+  closest to your own government with disinformation, leaks and money. If it is exposed, the backlash hurts the
+  party it was meant to help. AI services use it against hostile countries.
+- The Sources panel shows the turned agents your service runs against their handlers.
+
 ### New in 2.0.3: where intelligence comes from
 
 The third part of 2.1 Shadows.

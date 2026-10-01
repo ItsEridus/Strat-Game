@@ -219,6 +219,7 @@ export interface CitizenSec {
   tradecraft: number;
   asset: Id | null; // foreign service secretly paying them (double agent)
   motive?: import('./collection').Motive; // why they work for it (2.1)
+  doubled?: Id; // turned by their own country's counter-intelligence: now feeding the handler what it wants believed
   fame: number; // public profile
   notoriety: number; // criminal reputation
   goal: { kind: string; target?: Id; since: number } | null; // the NPC's current ambition
@@ -254,7 +255,7 @@ export interface Agency {
   opsRun: number; caught: number; exposed: number;
   org?: import('./intelOrg').ServiceOrg; // directorates, budget split and lessons (2.1)
 }
-export type OpKind = 'intel' | 'sabotage' | 'theft' | 'unrest' | 'propaganda' | 'scandal' | 'recruit' | 'counter' | 'milintel' | 'milsabotage' | 'cyber';
+export type OpKind = 'intel' | 'sabotage' | 'theft' | 'unrest' | 'propaganda' | 'scandal' | 'recruit' | 'counter' | 'milintel' | 'milsabotage' | 'cyber' | 'election';
 export interface SpyOp {
   id: Id; nation: Id; target: Id; region: Id | null; kind: OpKind; agent: Id | null; subject?: Id | null;
   start: number; ends: number; status: 'active' | 'success' | 'failed' | 'exposed'; result?: string;
@@ -413,6 +414,7 @@ export interface Nation {
   dip?: import('./diplomacyActions').DipState; // diplomatic capital, recent actions, causes for war (2.0)
   summits?: Record<Id, number>;
   imfRelief?: boolean;
+  interference?: { by: Id; party: Id; until: number }; // a foreign campaign backing a party in the coming election (2.1)
   beliefs?: Record<Id, import('./beliefs').Estimate>; // what the government believes about each other country (2.1)
   alignment?: { towards: Id; choice: 'balance' | 'bandwagon'; since: number }; // facing a far stronger threat (2.0) // under an IMF programme (2.0) // when its leader last met the other's (2.0)
   alliances: Id[];
