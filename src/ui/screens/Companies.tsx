@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import { accounts, corpTaxRate, premisesRent } from '../../sim/companyCosts';
 import { demographyOf } from '../../sim/companyLife';
+import { hhiOf } from '../../sim/mergers';
 import { companiesOf } from '../../sim/census';
 import { fromLocal as fromL, localStep as stepL, toLocal as toL } from '../../engine/money';
 import type { Company, Industry, World } from '../../sim/types';
@@ -67,11 +68,6 @@ export function Companies({ w }: { w: World }) {
   );
 }
 
-/** Herfindahl–Hirschman index of a market (shares in %, squared and summed: 10,000 = a monopoly). */
-export function hhi(sales: number[]): number {
-  const total = sales.reduce((a, b) => a + b, 0);
-  return total > 0 ? Math.round(sales.reduce((t, x) => t + ((x / total) * 100) ** 2, 0)) : 0;
-}
 
 function IndustriesPanel({ w }: { w: World }) {
   const p = player(w);
@@ -84,7 +80,7 @@ function IndustriesPanel({ w }: { w: World }) {
     const xs = cos.filter((co) => co.industry === ind);
     const sales = xs.map((co) => co.hist.slice(-30).reduce((t, h) => t + h.revenue, 0));
     const profit = xs.reduce((t, co) => t + co.hist.slice(-30).reduce((a, h) => a + h.profit, 0), 0);
-    return { ind, firms: xs.length, staff: xs.reduce((t, co) => t + co.workers.length, 0), sales: sales.reduce((a, b) => a + b, 0), profit, hhi: hhi(sales) };
+    return { ind, firms: xs.length, staff: xs.reduce((t, co) => t + co.workers.length, 0), sales: sales.reduce((a, b) => a + b, 0), profit, hhi: hhiOf(sales) };
   }).filter((r) => r.firms > 0);
   return <>
     <p class="small">{n.name}: {cos.length} companies · {born} opened and {died} closed in the last {d.hist.length + 1} months.</p>

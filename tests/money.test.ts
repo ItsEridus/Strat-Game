@@ -256,3 +256,29 @@ test('companies close in the legal order: staff, then the owner', async () => {
   assert.equal(demographyOf(w, w.regions[co.region].owner).died, 1);
   assert.ok(audit(w).ok, audit(w).problems.join('; '));
 });
+
+test('takeovers: valuation, the competition authority, and the deal', async () => {
+  const { valuation, competitionCheck, takeOver } = await import('../src/sim/mergers');
+  const { companiesOf } = await import('../src/sim/census');
+  const { companyCurrency, cref } = await import('../src/sim/query');
+  const { mint, audit } = await import('../src/engine/ledger');
+  const w = generateWorld(1812, 'Deals', 0, { citizensPerRegion: 2 });
+  const nat = w.nations.find((n) => n.iso === 'USA')!.id;
+  const food = companiesOf(w, nat).filter((co) => co.industry === 'food' && co.owner.k === 'cit');
+  assert.ok(food.length >= 2);
+  const [a, b] = food;
+  for (const co of food) co.hist = [{ day: 0, produced: 1, consumed: 0, sold: 1, revenue: 1000, wages: 0, inputCost: 0, profit: 0 }];
+  // One owner with a dominant rival's sales would be blocked.
+  a.hist = [{ day: 0, produced: 1, consumed: 0, sold: 1, revenue: 1000000, wages: 0, inputCost: 0, profit: 0 }];
+  const buyerA = w.citizens[a.owner.id];
+  assert.match(competitionCheck(w, cref(buyerA.id), b) ?? '', /blocked/);
+  // A newcomer buying one small firm is fine.
+  const outsider = Object.values(w.citizens).find((c) => !c.player && c.nation === nat && !food.some((co) => co.owner.id === c.id))!;
+  const code = companyCurrency(w, b);
+  const price = valuation(w, b);
+  assert.ok(price > 0);
+  mint(w, cref(outsider.id), code, price * 2, 'test');
+  assert.equal(takeOver(w, outsider, b, price), null);
+  assert.equal(b.owner.id, outsider.id);
+  assert.ok(audit(w).ok);
+});

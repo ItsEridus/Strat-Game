@@ -12,12 +12,13 @@ import { WORK_CHAINS } from './work';
 import { LIFE_CHAINS } from './life';
 import { LIFE_ENCOUNTERS } from './encounters';
 import { SYSTEM_CHAINS } from './chains';
+import { BUSINESS_STORIES } from './business';
 
 let done = false;
 export function registerAllStories() {
   if (done) return;
   done = true;
-  registerStory(...EVERYDAY, ...ADOPTED, ...WORK_CHAINS, ...LIFE_CHAINS, ...LIFE_ENCOUNTERS, ...SYSTEM_CHAINS);
+  registerStory(...EVERYDAY, ...ADOPTED, ...WORK_CHAINS, ...LIFE_CHAINS, ...LIFE_ENCOUNTERS, ...SYSTEM_CHAINS, ...BUSINESS_STORIES);
 }
 
 /** Scheduled repayments of loans and investments made in stories. */

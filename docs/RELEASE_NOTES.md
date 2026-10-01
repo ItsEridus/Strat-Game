@@ -3,6 +3,24 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.4.15: takeovers, competition policy and stories of working life
+
+- **Takeovers.** Once a month, a successful owner may buy a struggling rival in the same industry and country. The
+  price is based on the plant, six months of profit, cash and stock. The deal appears in the news, and the company's
+  ownership history records the price.
+- **Competition authority.** It blocks deals that would leave one owner with more than 40% of an industry's sales,
+  or that push a market into high concentration (an HHI over 2,500 that rises by more than 200, the rule used in
+  the US and EU).
+- **New stories from working life:**
+  - **The interview.** When you are out of work, a company calls you in. Prepare properly, wing it, or ask for a
+    signing bonus.
+  - **Payroll Friday.** Your company cannot cover the week's wages. Pay from your own pocket, ask the bank for a
+    business loan, let someone go, or pay late and live with it.
+  - **The takeover bid.** Someone offers to buy your profitable company for a third more than it is worth on
+    paper. Accept, hold out for more, or say no.
+  - **Last day at the plant.** Your workplace has closed. Have a last drink with your workmates, keep a memento,
+    or start looking straight away.
+
 ### New in 1.4.14: companies close, and an industry overview
 
 - **Companies can fail.** A company closes when:
