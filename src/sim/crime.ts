@@ -26,6 +26,7 @@ import { controller, coref, cref, hhref, jailed, natref, player, regref, syndref
 import { nationPerm } from './authority';
 import { isAdult, practise } from './growth';
 import { admit, release, reoffendPull, sentenceFactor } from './prisons';
+import { markDirty } from './whitecollar';
 import { afterVerdict, bailAmount, convictionChance, maybeFrame, payDefence, pleaRate, postBail, settleBail } from './courts';
 
 // ---------- definitions ----------
@@ -42,8 +43,8 @@ export const SYND_JOBS: Record<'smuggle' | 'collect' | 'heist', { name: string; 
 };
 export const SRANKS = ['Associate', 'Soldier', 'Capo', 'Underboss', 'Boss'];
 export const PRANKS = ['Officer', 'Sergeant', 'Detective', 'Captain', 'Chief'];
-const SEVERITY: Record<CrimeKind, number> = { pickpocket: 1, burglary: 2, fraud: 3, smuggling: 2, extortion: 2, bribery: 3, assault: 2, corruption: 4, espionage: 5, votebuying: 3, heist: 4, taxevasion: 2, escape: 3 };
-const CRIME_NAME: Record<CrimeKind, string> = { pickpocket: 'pickpocketing', burglary: 'burglary', fraud: 'fraud', smuggling: 'smuggling', extortion: 'extortion', bribery: 'bribery', assault: 'assault', corruption: 'corruption', espionage: 'espionage', votebuying: 'vote buying', heist: 'armed robbery', taxevasion: 'tax evasion', escape: 'escape from custody' };
+const SEVERITY: Record<CrimeKind, number> = { pickpocket: 1, burglary: 2, fraud: 3, smuggling: 2, extortion: 2, bribery: 3, assault: 2, corruption: 4, espionage: 5, votebuying: 3, heist: 4, taxevasion: 2, escape: 3, embezzlement: 3, cybercrime: 3, laundering: 3, insidertrading: 3 };
+const CRIME_NAME: Record<CrimeKind, string> = { pickpocket: 'pickpocketing', burglary: 'burglary', fraud: 'fraud', smuggling: 'smuggling', extortion: 'extortion', bribery: 'bribery', assault: 'assault', corruption: 'corruption', espionage: 'espionage', votebuying: 'vote buying', heist: 'armed robbery', taxevasion: 'tax evasion', escape: 'escape from custody', embezzlement: 'embezzlement', cybercrime: 'online fraud', laundering: 'money laundering', insidertrading: 'insider trading' };
 
 export const policeName = (w: World, rid: Id) => {
   const r = w.regions[rid];
@@ -201,7 +202,7 @@ export function commitCrime(w: World, c: Citizen, kind: keyof typeof CRIMES): Re
   if (res.ok) {
     if (kind === 'pickpocket') {
       loot = Math.min(w.households[nat.id].wallet[nat.cur] ?? 0, cur(rand(w, 3, 12)));
-      if (loot > 0) pay(w, hhref(nat.id), cref(c.id), nat.cur, loot, 'Pickpocketing');
+      if (loot > 0 && pay(w, hhref(nat.id), cref(c.id), nat.cur, loot, 'Pickpocketing')) markDirty(c, nat.cur, loot);
       msg = `You lifted ${fmtAmt(nat.cur, loot)}.`;
     } else if (kind === 'burglary') {
       const co = pick(w, localTargets(w, c.loc));
@@ -212,7 +213,7 @@ export function commitCrime(w: World, c: Citizen, kind: keyof typeof CRIMES): Re
     } else {
       const co = pick(w, localTargets(w, c.loc));
       loot = Math.min(Math.floor((co.wallet[nat.cur] ?? 0) * rand(w, 0.02, 0.05)), cur(150));
-      if (loot > 0) pay(w, coref(co.id), cref(c.id), nat.cur, loot, 'Fraud');
+      if (loot > 0 && pay(w, coref(co.id), cref(c.id), nat.cur, loot, 'Fraud')) markDirty(c, nat.cur, loot);
       msg = loot > 0 ? `You defrauded ${co.name} of ${fmtAmt(nat.cur, loot)}.` : `${co.name} had nothing worth taking.`;
     }
   } else msg = 'It went wrong — you got away with nothing.';
@@ -307,6 +308,7 @@ export function syndicateJob(w: World, c: Citizen, job: keyof typeof SYND_JOBS):
       msg = `Heist on ${co.name}: ${fmtAmt(n.cur, loot)} (${fmtAmt(n.cur, tithe)} to ${s.name}).`;
       record(w, 'crime', `💰 Armed robbery at ${co.name} in ${w.regions[c.loc].name}.`, { region: c.loc, nation: s.nation });
     }
+    markDirty(c, n.cur, loot);
     c.flags.syndRep = (c.flags.syndRep ?? 0) + SEVERITY[kind];
     promote(w, s, c);
   }
@@ -484,14 +486,14 @@ function bribeAttempt(w: World, s: Citizen, k: Case): boolean {
 }
 
 /** Trial: conviction chance follows the evidence and the bench (sim/courts.ts); a lawyer lowers it; a guilty plea is a certain conviction with a lighter sentence. */
-export function trial(w: World, k: Case, lawyer: boolean, plea = false) {
+export function trial(w: World, k: Case, lawyer: boolean, plea = false, verdict?: boolean) {
   const s = w.citizens[k.suspect];
   const n = w.nations[k.nation];
   const code = n.cur;
   if (!settleBail(w, s, k)) { s.flags.pendingTrial = 0; k.evidence = 100; s.sec.heat = Math.min(100, s.sec.heat + 40); return; } // skipped bail: the case waits for an arrest
   if (s.flags.trialLawyer === k.id) { lawyer = true; s.flags.trialLawyer = 0; }
   else if (lawyer && !plea && !payDefence(w, k, s, cur(B.justice.lawyer))) lawyer = false;
-  const p = plea ? 1 : convictionChance(w, k, lawyer);
+  const p = plea ? 1 : verdict != null ? (verdict ? 1 : 0) : convictionChance(w, k, lawyer);
   k.status = 'closed';
   k.closedAt = w.time;
   k.plea = plea;

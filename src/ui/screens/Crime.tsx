@@ -13,6 +13,7 @@ import {
   joinSyndicate, joinSyndicateCheck, leavePolice, leaveSyndicate, orderRaid, patrol, patrolCheck, policeName, raidCheck, setPoliceFunding, syndicateJob,
 } from '../../sim/crime';
 import { appeal, appealChance, appealCheck, appealFee, courtStats, hireForTrial, hireForTrialCheck, pleaRate } from '../../sim/courts';
+import { cultivate, cultivateCheck, cyberCheck, cyberFraud, dirtyOf, embezzle, embezzleCheck, informantsOf, launder, launderCheck, launderOptions, setEvasion } from '../../sim/whitecollar';
 import { escapeChance, escapeCheck, funding, hasLiveRecord, incarcerationRate, insideOf, justiceOf, occupancy, paroleChance, paroleCheck, paroleHearing, prisonClass, prisonClassCheck, prisonOf, prisonWork, prisonWorkCheck, spentAt, tryEscape } from '../../sim/prisons';
 
 export function Crime({ w }: { w: World }) {
@@ -111,6 +112,8 @@ export function Crime({ w }: { w: World }) {
         ))}
       </Panel>
 
+      <WhiteCollar w={w} />
+
       <Panel title="🎩 Organised crime">
         {synd ? (
           <>
@@ -168,6 +171,14 @@ function PolicePanel({ w }: { w: World }) {
         <tr><td>{CRIME_NAME[k.kind]}</td><td><RegionLink w={w} id={k.region} /></td><td>{p.sec.prank >= 2 ? <CitLink w={w} id={k.suspect} /> : <span class="muted">suspect withheld</span>}</td><td>{Math.round(k.evidence)}%</td>
           <td><ActBtn small why={investigateCheck(w, p, k.id)} showWhy={false} run={(w) => investigate(w, p, k.id)}>Investigate</ActBtn></td></tr>
       ))}</tbody></table> : <Empty>No open cases.</Empty>}
+      {p.sec.prank >= 2 && <>
+        <h4>Informants</h4>
+        <table class="table compact small"><tbody>{Object.values(w.syndicates).filter((s) => s.nation === jur).map((s) => (
+          <tr><td>{s.name}</td><td>{informantsOf(w, s.id).filter((c) => c.sec.handler === p.id).length} yours · {informantsOf(w, s.id).length} in all</td>
+            <td><ActBtn small why={cultivateCheck(w, p, s.id)} showWhy={false} run={(w) => cultivate(w, p, s.id)}>Turn a member</ActBtn></td></tr>
+        ))}</tbody></table>
+        <Help>Informants feed evidence on every open case against their organisation until they are found out. Members with open cases against them and little loyalty are easiest to turn.</Help>
+      </>}
       <ActBtn small kind="ghost" confirm="Hand in your badge?" run={(w) => leavePolice(w, p)}>Resign</ActBtn>
     </Panel>
   );
@@ -188,6 +199,39 @@ function InteriorPanel({ w }: { w: World }) {
         <Select value={target} options={synds.map((s) => [s.id, `${s.name} (strength ${Math.round(s.strength)})`])} onChange={setTarget} />
         <ActBtn small why={raidCheck(w, p.id, target)} run={(w) => orderRaid(w, p.id, target)}>Order raid (100)</ActBtn></div>}
       <Help>Funding the {n.name} national police raises policing everywhere (and costs the treasury daily). Raids seize assets, arrest members and weaken organisations.</Help>
+    </Panel>
+  );
+}
+
+/** White-collar crime: embezzlement, online fraud, laundering and the books. */
+function WhiteCollar({ w }: { w: World }) {
+  const p = player(w);
+  const dirty = Object.keys(p.sec.dirty ?? {});
+  const opts = launderOptions(w, p);
+  const [via, setVia] = useState<string>(opts.companies[0] ? String(opts.companies[0].id) : 'synd');
+  return (
+    <Panel title="💼 White-collar crime">
+      <div class="track"><span><b>Embezzle from your employer</b><br /><small class="muted">Pad an expenses claim. The books catch up in time; the bigger the hole, the sooner. −15⚡</small></span>
+        <ActBtn small kind="danger" why={embezzleCheck(w, p)} run={(w) => embezzle(w, p)}>Do it</ActBtn></div>
+      <div class="track"><span><b>Online fraud abroad</b><br /><small class="muted">Phish households in another country. Hard to trace; only their police can pursue it. −25⚡</small></span>
+        <ActBtn small kind="danger" why={cyberCheck(w, p)} run={(w) => cyberFraud(w, p)}>Launch</ActBtn></div>
+      {p.sec.informs != null && <p class="small bad">🐀 You are informing on {w.syndicates[p.sec.informs]?.name} for the police. Every day inside is a risk.</p>}
+      <h4>Dirty money</h4>
+      {dirty.length ? <>
+        {(opts.companies.length > 0 || opts.syndicate) && <Select value={via} onChange={setVia} options={[...opts.companies.map((c) => [String(c.id), `Through ${c.name}`] as [string, string]), ...(opts.syndicate ? [['synd', `Through ${opts.syndicate.name}`] as [string, string]] : [])]} />}
+        {dirty.map((code) => (
+          <div class="track"><span><Amt asset={code} v={dirtyOf(p, code)} /> unexplained</span>
+            <ActBtn small why={launderCheck(w, p, code, via === 'synd' ? 'syndicate' : 'company', via === 'synd' ? undefined : Number(via))} run={(w) => launder(w, p, code, via === 'synd' ? 'syndicate' : 'company', via === 'synd' ? undefined : Number(via))}>Launder</ActBtn></div>
+        ))}
+      </> : <p class="small muted">Your money is all accounted for.</p>}
+      {opts.companies.length > 0 && <>
+        <h4>Your books</h4>
+        {opts.companies.map((co) => (
+          <div class="track"><span>{co.name}: declares {Math.round((1 - (co.evade ?? 0)) * 100)}% of profit{co.evaded ? ' · tax owed but hidden' : ''}</span>
+            <span>{[0, 0.2, 0.5].map((v) => <ActBtn small kind={(co.evade ?? 0) === v ? 'primary' : 'ghost'} run={(w) => setEvasion(w, p, co.id, v)}>{v ? `Hide ${v * 100}%` : 'Honest'}</ActBtn>)}</span></div>
+        ))}
+      </>}
+      <Help>Crime money is dirty until it is laundered: through the tills of a business you own (30% stays to pay the tax on the fake sales) or through your organisation's fronts (they take a quarter). Banks report large dirty balances. Hiding profit cuts your corporate tax until an audit finds it: back taxes, then a tax evasion case. Insiders who buy shares the week before paying a dividend are flagged by the securities regulator.</Help>
     </Panel>
   );
 }

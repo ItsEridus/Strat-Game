@@ -3,6 +3,7 @@
 // pays for energy as it produces, wears out its equipment (depreciation, shown in
 // the accounts) and pays corporate tax on each month's profit at its country's
 // real 2025 rate. Rent and energy go to the local economy; tax to the treasury.
+import { evadeTax } from './whitecollar';
 import type { Company, World } from './types';
 import { pay } from '../engine/ledger';
 import { c as cur } from '../engine/money';
@@ -47,7 +48,7 @@ export function payOverheads(w: World, co: Company) {
   if (amt > 0 && pay(w, coref(co.id), hhref(nat), code, amt, 'Premises and energy')) co.today.overheads = (co.today.overheads ?? 0) + amt;
   if (dateAt(w.time).day === 1) {
     const profit = co.hist.slice(-30).reduce((t, h) => t + h.profit, 0);
-    const tax = Math.min(co.wallet[code] ?? 0, Math.round(Math.max(0, profit) * corpTaxRate(w, co)));
+    const tax = Math.min(co.wallet[code] ?? 0, evadeTax(w, co, Math.round(Math.max(0, profit) * corpTaxRate(w, co))));
     if (tax > 0 && pay(w, coref(co.id), natref(nat), code, tax, 'Corporate tax')) {
       co.today.tax = (co.today.tax ?? 0) + tax;
       const n = w.nations[nat];

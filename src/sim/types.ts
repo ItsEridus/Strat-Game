@@ -223,9 +223,12 @@ export interface CitizenSec {
   last: Record<string, number>; // cooldowns: time of last crime, patrol, op, …
   inside?: import('./prisons').Inside; // life in prison (1.7)
   releasedAt?: number; // when they last left prison (a record follows them until it is spent)
+  dirty?: Record<string, number>; // proceeds of crime not yet laundered, by currency (1.7)
+  informs?: Id; // a police informant inside this organisation
+  handler?: Id; // the officer running them
 }
 
-export type CrimeKind = 'pickpocket' | 'burglary' | 'fraud' | 'smuggling' | 'extortion' | 'bribery' | 'assault' | 'corruption' | 'espionage' | 'votebuying' | 'heist' | 'taxevasion' | 'escape';
+export type CrimeKind = 'pickpocket' | 'burglary' | 'fraud' | 'smuggling' | 'extortion' | 'bribery' | 'assault' | 'corruption' | 'espionage' | 'votebuying' | 'heist' | 'taxevasion' | 'escape' | 'embezzlement' | 'cybercrime' | 'laundering' | 'insidertrading';
 export interface Case {
   id: Id; suspect: Id; kind: CrimeKind; region: Id; nation: Id; evidence: number; opened: number;
   status: 'open' | 'closed'; detective: Id | null; loot: number; outcome?: string; syndicate?: Id | null;
@@ -303,6 +306,8 @@ export interface Company {
   forSale: number | null; // asking price in gold minor units on the company market
   hist: DayRecord[];
   today: DayRecord;
+  evade?: number; // share of corporate tax the owner hides (1.7)
+  evaded?: number; // tax hidden and not yet found
   lifetime: { produced: number; revenue: number; wages: number; profit: number };
   ownerHist: { t: number; owner: AccountRef; price?: number }[];
   shortage: string | null; // reason production last failed
@@ -594,6 +599,7 @@ export interface Holding {
   founded: number;
   votes: { id: Id; kind: 'ceo'; target: Id; votes: Record<Id, 'y' | 'n'>; closes: number; done?: boolean }[];
   divHist: { t: number; total: number }[];
+  insiderBuys?: { cit: Id; t: number; qty: number }[]; // purchases by insiders, reviewed when they move the price (1.7)
   valuation: number;
 }
 

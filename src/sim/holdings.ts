@@ -1,6 +1,7 @@
 // Holdings with a share ledger, roles, treasury and ownership-weighted votes;
 // a stock market for their shares (citizens only — holdings may not buy
 // shares, DOC). Issuance dilutes, dividends pay pro rata, splits scale orders.
+import { insiderReview, noteShareBuy } from './whitecollar';
 import { lifeGate } from './lifecycle';
 import { repNeed, standing } from './growth';
 import type { Citizen, Holding, Id, ShareOrder, World } from './types';
@@ -100,6 +101,7 @@ export function payDividend(w: World, actor: Id, hid: Id, asset: string, amount:
     if (share > 0 && w.citizens[Number(id)] && pay(w, holdRef(hid), cref(Number(id)), asset, share, `Dividend from ${h.name}`)) paid += share;
   }
   h.divHist.push({ t: w.time, total: paid });
+  insiderReview(w, h, amount / Math.max(1, h.total));
   if (holders[w.playerId]) notify(w, 'market', `💸 Dividend from ${h.name}: ${fmtAmt(asset, Math.floor((amount * holders[w.playerId]) / h.total))}.`, { link: 'holdings' });
   return ok(`Paid ${fmtAmt(asset, paid)} in dividends.`);
 }
@@ -185,6 +187,7 @@ export function buyShares(w: World, buyerId: Id, orderId: Id, qty: number): Resu
   o.qty -= qty;
   if (o.qty <= 0) delete w.shareOrders[o.id];
   w.shareTrades.push({ t: w.time, holding: h.id, qty, price: o.price });
+  noteShareBuy(w, h, buyerId, qty);
   if (w.shareTrades.length > 2000) w.shareTrades.splice(0, 500);
   if (buyerId === w.playerId) bump(w, 'buyShares');
   return ok(`Bought ${qty} ${h.name} shares for ${fmtAmt(GOLD, o.price * qty)}.`);

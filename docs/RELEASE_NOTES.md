@@ -3,6 +3,29 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.6.3: white-collar crime, laundering and informants
+
+- **Dirty money.** Money from crime is dirty until you launder it.
+  - Through the tills of a business you own: it shows up as sales, and 30% stays in the business to pay the tax on
+    them.
+  - Through your organisation's fronts: they take a quarter.
+  - Banks report large dirty balances, which can open a money-laundering case.
+- **Tax evasion.** A business owner can hide 20% or 50% of profit from the tax office. The hidden tax builds up in
+  the books. Monthly audits find it, more often the more is hidden and the stronger the country's institutions.
+  An audit means back taxes, then a tax-evasion case. Greedy NPC owners cook their books too.
+- **Embezzlement.** Pad expenses claims at your employer. The books catch up: the bigger the hole, the sooner.
+- **Online fraud.** With technical training or economic skill you can phish households in another country. It is
+  hard to trace, and only that country's police can pursue it.
+- **Insider trading.** Insiders who buy shares in the week before they pay a dividend are flagged by the securities
+  regulator.
+- **Informants.**
+  - Detectives can turn members of an organisation. Informants feed evidence on every case against the
+    organisation until they are found out.
+  - In "The informant" story, the police make you the offer: your charges dropped, a weekly payment, and the risk
+    every day.
+- **Jury service.** In "Twelve good people", you may be called to a jury in countries that use juries or lay judges.
+  Your verdict decides the case.
+
 ### New in 1.6.2: the courts
 
 - **Court careers.** Prosecutors, public defenders and judges are now public careers, listed with the other public

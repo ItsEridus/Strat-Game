@@ -5,6 +5,7 @@ import { registerSystems } from '../src/sim/systems';
 import { advance } from '../src/sim/tick';
 import { audit, mint } from '../src/engine/ledger';
 import { c as cur } from '../src/engine/money';
+import { B } from '../src/data/balance';
 import { DAY } from '../src/engine/clock';
 import { cref, jailed, player } from '../src/sim/query';
 import { openCase, trial } from '../src/sim/crime';
@@ -177,5 +178,90 @@ test('appeals overturn weak convictions; the wrongly convicted can be exonerated
   for (let i = 0; i < 400 && f.outcome !== 'exonerated'; i++) { w.time += 7 * DAY; courtsDaily(w); }
   assert.equal(f.outcome, 'exonerated');
   assert.ok(courtStats(w.nations[f.nation]).exonerations >= 1);
+  assert.ok(audit(w).ok, audit(w).problems.join('; '));
+});
+
+import { cyberFraud, cultivate, dirtyOf, embezzle, evadeTax, insiderReview, launder, markDirty, noteShareBuy, setEvasion, turnInformant, whiteCollarDaily } from '../src/sim/whitecollar';
+import { createCompany } from '../src/sim/company';
+import { commitCrime } from '../src/sim/crime';
+
+test('crime money is dirty until laundered through a business or an organisation', () => {
+  const w = fresh(90);
+  const p = player(w);
+  const code = w.nations[p.nation].cur;
+  for (let i = 0; i < 60 && !dirtyOf(p, code); i++) { p.energy = 100; p.sec.last = {}; commitCrime(w, p, 'pickpocket'); }
+  assert.ok(dirtyOf(p, code) > 0, 'pickpocketing proceeds are dirty');
+  mint(w, cref(p.id), code, cur(500), 'test');
+  const co = createCompany(w, cref(p.id), 'food', 1, p.home, 'Clean Plates');
+  const before = p.wallet[code];
+  const amt = dirtyOf(p, code);
+  assert.ok(launder(w, p, code, 'company', co.id).ok);
+  assert.equal(dirtyOf(p, code), 0);
+  assert.equal(p.wallet[code], before - Math.round(amt * 0.3), '30% stays in the business');
+  assert.ok(co.today.revenue >= amt, 'shows up as sales');
+  assert.ok(audit(w).ok, audit(w).problems.join('; '));
+});
+
+test('hidden profits cut tax until an audit finds them; embezzlers are caught by the books', () => {
+  const w = fresh(91);
+  const p = player(w);
+  const code = w.nations[p.nation].cur;
+  mint(w, cref(p.id), code, cur(500), 'test');
+  const co = createCompany(w, cref(p.id), 'food', 1, p.home, 'Cooked Books');
+  assert.ok(setEvasion(w, p, co.id, 0.5).ok);
+  assert.equal(evadeTax(w, co, 1000), 500);
+  assert.equal(co.evaded, 500);
+  co.evaded = cur(B.justice.lawyer) * 100; // a lot of hidden tax: audited quickly
+  for (let i = 0; i < 40 && co.evaded; i++) { w.time += DAY; if (Math.floor(w.time / DAY) % 30 === 0) whiteCollarDaily(w); }
+  assert.ok(!co.evaded, 'audited');
+  assert.ok(Object.values(w.cases).some((k) => k.kind === 'taxevasion' && k.suspect === p.id));
+  // Embezzlement: an NPC employer's account.
+  const emp = Object.values(w.companies).find((x) => x.owner.k === 'cit' && x.owner.id !== p.id && (x.wallet[code] ?? 0) > cur(100))!;
+  p.job = emp.id; emp.workers.push(p.id); p.energy = 100;
+  const r = embezzle(w, p);
+  assert.ok(r.ok, r.msg);
+  assert.ok(dirtyOf(p, code) > 0 && (p.flags.embezzled ?? 0) > 0);
+  p.flags.embezzled = cur(B.justice.lawyer) * 100;
+  for (let i = 0; i < 40 && p.flags.embezzled; i++) whiteCollarDaily(w);
+  assert.ok(Object.values(w.cases).some((k) => k.kind === 'embezzlement' && k.suspect === p.id));
+  assert.ok(audit(w).ok, audit(w).problems.join('; '));
+});
+
+test('online fraud takes foreign money; insiders are reviewed; informants feed evidence', () => {
+  const w = fresh(92);
+  const p = player(w);
+  p.eco = 40;
+  let hit = false;
+  for (let i = 0; i < 20 && !hit; i++) { p.energy = 100; p.sec.last = {}; hit = cyberFraud(w, p).ok; }
+  assert.ok(hit);
+  assert.ok(Object.entries(p.sec.dirty ?? {}).some(([code, v]) => code !== w.nations[p.nation].cur && v > 0), 'foreign dirty money');
+  // Insider trading review.
+  const h = Object.values(w.holdings)[0];
+  if (h) {
+    noteShareBuy(w, h, h.ceo, 100);
+    let flagged = false;
+    for (let i = 0; i < 30 && !flagged; i++) { noteShareBuy(w, h, h.ceo, 100); insiderReview(w, h, 10); flagged = Object.values(w.cases).some((k) => k.kind === 'insidertrading' && k.suspect === h.ceo); }
+    assert.ok(flagged, 'the regulator flags an insider');
+  }
+  // Informants.
+  const s = Object.values(w.syndicates).find((x) => x.members.length >= 2)!;
+  const member = w.citizens[s.members.find((m) => m !== s.boss)!];
+  const boss = w.citizens[s.boss ?? s.members[0]];
+  const k = openCase(w, boss, 'extortion', boss.loc, 10, 0);
+  k.syndicate = s.id;
+  member.sec.informs = s.id;
+  const ev = k.evidence;
+  whiteCollarDaily(w);
+  assert.ok(k.evidence > ev || !member.sec.informs, 'evidence from the informant (unless exposed at once)');
+  // The player turns informant: charges dropped.
+  p.sec.syndicate = s.id; s.members.push(p.id);
+  const mine = openCase(w, p, 'extortion', p.loc, 30, 0);
+  assert.ok(turnInformant(w, p, null).ok);
+  assert.equal(mine.status, 'closed');
+  // A detective can turn members.
+  const det = Object.values(w.citizens).find((c) => !c.player && !c.gone)!;
+  det.sec.police = boss.loc; det.sec.prank = 2; det.energy = 100;
+  cultivate(w, det, s.id);
+  markDirty(p, 'XXX', 0);
   assert.ok(audit(w).ok, audit(w).problems.join('; '));
 });
