@@ -63,3 +63,38 @@ test('background, talents and quirks have real effects', () => {
   remember(rich, npc, 8, 'was kind', 'private');
   assert.equal((npc.rel[pr.id] ?? 0) - r0, 10, 'charming: +25%');
 });
+
+test('quick starts, character codes and changing your look in play', async () => {
+  const { PRESETS, fromPreset, randomLife, characterCode, readCharacterCode } = await import('../src/ui/presets');
+  for (const p of PRESETS) {
+    const q = fromPreset(p);
+    assert.ok(q.character.birthplace! >= 0, `preset region ${p.region}`);
+    const back = readCharacterCode(characterCode(q))!;
+    assert.deepEqual(back.character, q.character);
+    assert.equal(back.name, q.name);
+  }
+  const r = randomLife();
+  assert.deepEqual(readCharacterCode(characterCode(r))!.character, r.character);
+  assert.equal(readCharacterCode('MR1-garbage'), null);
+  assert.equal(readCharacterCode('hello'), null);
+
+  const { changeLook, changeLookCheck, lookCost } = await import('../src/sim/appearance');
+  const lookCostOf = (w: any, p: any) => lookCost(w, p, 'hair').code;
+  const { audit, mint } = await import('../src/engine/ledger');
+  const { cref } = await import('../src/sim/query');
+  const w = generateWorld(1706, 'Barber Test', 0, { citizensPerRegion: 3 });
+  const p = player(w);
+  const code = lookCostOf(w, p);
+  mint(w, cref(p.id), code, 100000, 'test');
+  const before = p.wallet[code];
+  const next = (lookOf(w, p).hair + 1) % 10;
+  assert.ok(changeLook(w, 'hair', next).ok);
+  assert.equal(lookOf(w, p).hair, next);
+  assert.ok(p.wallet[code] < before, 'a haircut costs money');
+  assert.ok(changeLookCheck(w, p, 'hair', next), 'no change, no charge');
+  assert.ok(changeLook(w, 'mark', 'tattoo').ok);
+  assert.equal(lookOf(w, p).mark, 'tattoo');
+  const w2 = deserialize(serialize(w));
+  assert.equal(lookOf(w2, player(w2)).mark, 'tattoo', 'kept in the save');
+  assert.ok(audit(w).ok, audit(w).problems.join("; "));
+});

@@ -573,3 +573,6 @@ th.sortable.sorted .arrow { opacity: 1; }
 .stepper button:hover { border-color: var(--gold); }
 .stepper-value { flex: 1; display: inline-flex; align-items: center; gap: .35rem; }
 .swatch { width: .9rem; height: .9rem; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .3); display: inline-block; }
+.swatches { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+.swatches .swatch { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--line-3); cursor: pointer; padding: 0; }
+.swatches .swatch.on { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold); }

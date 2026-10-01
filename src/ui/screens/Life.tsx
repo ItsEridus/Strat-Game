@@ -6,6 +6,8 @@ import type { Citizen, World } from '../../sim/types';
 import { ActBtn, Bar, Btn, CitLink, Empty, Help, Panel, RegionLink, Stat, Tabs } from '../common';
 import { store } from '../store';
 import { Avatar } from '../Avatar';
+import { HAIR_COLORS, HAIR_STYLES, lookOf, type Look } from '../../sim/looks';
+import { changeLook, changeLookCheck, lookCost, takeSurname, takeSurnameCheck, type LookChange } from '../../sim/appearance';
 import { B } from '../../data/balance';
 import { fmtDur } from '../../engine/clock';
 import { c as cur, fmtAmt } from '../../engine/money';
@@ -73,6 +75,7 @@ export function Life({ w }: { w: World }) {
           </div>
         </Panel>
         {isMinor(w, p) && <Panel title="Growing up"><ChildhoodPanel w={w} p={p} /></Panel>}
+        <Panel title="Your look" right={<Avatar c={p} size={40} badge={false} w={w} />}><LookPanel w={w} p={p} /></Panel>
         <Panel title="Family & close ones" right={<Btn small kind="ghost" onClick={() => store.go('people')}>People</Btn>}>
           <People w={w} p={p} />
           {partner && (
@@ -119,6 +122,34 @@ export function Life({ w }: { w: World }) {
       </Panel>
     </div>
   );
+}
+
+function LookPanel({ w, p }: { w: World; p: Citizen }) {
+  const look = lookOf(w, p);
+  const [hair, setHair] = useState(look.hair);
+  const [colour, setColour] = useState(look.hairColor);
+  const [mark, setMark] = useState<string>(look.mark ?? '');
+  const price = (k: LookChange) => { const c = lookCost(w, p, k); return c.amount ? ` · ${fmtAmt(c.code, c.amount)}` : ''; };
+  return <>
+    <div class="row wrap">
+      <select value={hair} onChange={(e) => setHair(+(e.target as HTMLSelectElement).value)}>{HAIR_STYLES.map((h, i) => <option value={i}>{h}</option>)}</select>
+      <ActBtn small why={changeLookCheck(w, p, 'hair', hair)} run={(w) => changeLook(w, 'hair', hair)}>💇 Haircut{price('hair')}</ActBtn>
+    </div>
+    <div class="row wrap">
+      <span class="swatches">{HAIR_COLORS.map((c, i) => <button type="button" class={`swatch${i === colour ? ' on' : ''}`} style={{ background: c }} title={`Colour ${i + 1}`} onClick={() => setColour(i)} />)}</span>
+      <ActBtn small why={changeLookCheck(w, p, 'colour', colour)} run={(w) => changeLook(w, 'colour', colour)}>🎨 Dye{price('colour')}</ActBtn>
+    </div>
+    <div class="row wrap">
+      <ActBtn small why={changeLookCheck(w, p, 'glasses', !look.glasses)} run={(w) => changeLook(w, 'glasses', !look.glasses)}>👓 {look.glasses ? 'Switch to contacts' : 'Get glasses'}{price('glasses')}</ActBtn>
+      {look.sex === 'm' && <ActBtn small why={changeLookCheck(w, p, 'beard', look.beard ? 0 : 3)} run={(w) => changeLook(w, 'beard', look.beard ? 0 : 3)}>🧔 {look.beard ? 'Shave' : 'Grow a beard'}</ActBtn>}
+    </div>
+    <div class="row wrap">
+      <select value={mark} onChange={(e) => setMark((e.target as HTMLSelectElement).value)}><option value="">No tattoo or piercing</option><option value="tattoo">Tattoo</option><option value="piercing">Piercing</option></select>
+      <ActBtn small why={changeLookCheck(w, p, 'mark', (mark || null) as Look['mark'])} run={(w) => changeLook(w, 'mark', (mark || null) as Look['mark'])}>🖋️ {mark ? 'Get it done' : 'Have it removed'}{price('mark')}</ActBtn>
+    </div>
+    {!takeSurnameCheck(w, p) && <div class="row"><ActBtn small run={(w) => takeSurname(w)}>💍 Take your spouse's surname</ActBtn></div>}
+    <p class="small muted">New clothes from the market change what you wear.</p>
+  </>;
 }
 
 function LegacyPanel({ w, p }: { w: World; p: Citizen }) {

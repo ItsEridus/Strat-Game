@@ -7,10 +7,11 @@ import { gradeLc, itemName, kindOf, qualityOf } from '../data/items';
 import { fail, ok, type Result } from '../engine/result';
 import { consume } from '../engine/ledger';
 import { c as cur } from '../engine/money';
-import { chance } from '../engine/rng';
+import { chance, hash01 } from '../engine/rng';
 import { census } from './census';
 import { controller, cref, jailed, today } from './query';
 import { lifeOf } from './lifecycle';
+import { lookOf, SHIRTS } from './looks';
 import { buyBest, listingsFor } from './market';
 
 export const USABLE = ['medicine', 'clothing', 'electronics'];
@@ -41,6 +42,7 @@ export function useGood(w: World, c: Citizen, key: string): Result {
   }
   if (kind === 'clothing') {
     (L.goods ??= {}).clothes = { t: w.time, q };
+    if (c.player) { const was = lookOf(w, c).clothes ?? 0; c.look = { ...lookOf(w, c), clothes: (was + 1 + Math.floor(hash01(c.id, today(w), 77) * (SHIRTS.length - 1))) % SHIRTS.length }; }
     return ok(`New ${gradeLc(q)} clothes: you feel good in them (for about a month).`);
   }
   (L.goods ??= {}).gadget = { t: w.time, q };

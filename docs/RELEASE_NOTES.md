@@ -3,6 +3,30 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.4.3: quick starts, and a new look
+
+- **Ready-made lives.** Start in one click as one of eight people:
+  - a factory worker in Detroit;
+  - a student in Seoul;
+  - a farmer's child in Brazil;
+  - an heir in London;
+  - a nurse in Mumbai;
+  - an engineer in Munich;
+  - a rancher in Alberta;
+  - a coder in Shenzhen.
+- **A random life.** One button picks everything at random: country, birthplace, age, background, nature and looks.
+- **Character codes.** Copy a short code for the character you designed and share it. Paste a code to play the same
+  person.
+- **Change your look as you go.** A new "Your look" panel on the Life screen offers:
+  - a haircut;
+  - a new hair colour;
+  - glasses or contact lenses;
+  - a tattoo or piercing (or having one removed);
+  - growing a beard or shaving it.
+  Paid changes cost about what they would in your country.
+- **New clothes show.** New clothes from the market change the shirt you wear in your portrait.
+- **Take your spouse's surname.** After you marry, you can take your spouse's surname at no cost.
+
 ### New in 1.4.2: where you come from, and who you are
 
 - **Family background.** Choose the family you grow up in, or let chance decide with your country's real mix:

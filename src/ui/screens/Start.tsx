@@ -8,6 +8,7 @@ import { EARTH } from '../../data/earth';
 import { SLOTS, slotInfo } from '../../engine/save';
 import { Btn, Num, Select } from '../common';
 import { CharacterDesigner, randomLook, type CharacterChoice } from '../CharacterDesigner';
+import { PRESETS, characterCode, fromPreset, randomLife, readCharacterCode, type QuickStart } from '../presets';
 import type { Settings } from '../../sim/types';
 
 export function StartScreen() {
@@ -26,6 +27,8 @@ export function StartScreen() {
   const [text, setText] = useState('');
   const saves = SLOTS.map((s) => slotInfo(s)).filter(Boolean);
   const onFile = async (f: File | undefined) => { if (f) setText(await f.text()); };
+  const [code, setCode] = useState('');
+  const applyQuick = (q: QuickStart) => { setName(q.name); setNation(q.nation); setStartAge(q.startAge); setCharacter({ traits: character.traits, ...q.character }); };
   const begin = () => { setGenerating(true); setTimeout(() => store.newGame(fixed ? seed : null, name, nation, cpn, difficulty, adv, pace, startAge, { ...character, birthplace: character.birthplace != null && EARTH.regions[character.birthplace]?.nation === nation ? character.birthplace : null }), 60); };
   return (
     <div class="start">
@@ -77,6 +80,15 @@ export function StartScreen() {
         </div>
         <p class="muted small">{NATION_DEFS[nation].name}: led by a {NATION_DEFS[nation].leader.toLowerCase()} with the {NATION_DEFS[nation].legislature} · currency {NATION_DEFS[nation].cur} · {EARTH.regions.filter((r) => r.nation === nation).length} regions. Every country plays by the same rules; starting companies, citizens and politics are generated fresh for every campaign, and the future is never fixed: what happens depends on chance as it unfolds.</p>
         <h4>Your character</h4>
+        <div class="row wrap presets">
+          <Btn small onClick={() => applyQuick(randomLife())}>🎲 Random life</Btn>
+          {PRESETS.map((pr) => <Btn small kind="ghost" title={`${pr.background}, born in ${pr.region}, age ${pr.age}`} onClick={() => applyQuick(fromPreset(pr))}>{pr.icon} {pr.title}</Btn>)}
+        </div>
+        <div class="row wrap small">
+          <Btn small kind="ghost" onClick={() => { const c = characterCode({ name, nation, startAge, character }); setCode(c); try { void navigator.clipboard?.writeText(c); } catch { /* shown below */ } }}>Copy character code</Btn>
+          <input placeholder="Paste a character code (MR1-…)" value={code} onInput={(e) => setCode((e.target as HTMLInputElement).value)} style={{ minWidth: '16rem' }} />
+          <Btn small kind="ghost" why={code && !readCharacterCode(code) ? 'Not a valid code' : !code ? 'Paste a code first' : null} showWhy={false} onClick={() => { const q = readCharacterCode(code); if (q) applyQuick(q); }}>Use code</Btn>
+        </div>
         <CharacterDesigner nation={nation} value={character} onChange={setCharacter} />
         <h4>Optional advanced systems</h4>
         <div class="checks">
