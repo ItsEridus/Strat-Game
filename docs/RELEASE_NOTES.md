@@ -3,6 +3,29 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.6.1: prisons
+
+Prisons are now institutions, the first part of 1.7 Law & Order.
+
+- **Real incarceration rates.** Each country starts with its real prison population: about 33 people per 100,000
+  in Japan, 67 in Germany, 140 in Britain and over 500 in the United States. The prison population then moves with
+  crime.
+- **Places, conditions and riots.** The police budget builds prison places when it is above its usual level and
+  loses them when it is cut. Conditions follow funding, how well the state runs and overcrowding. Crowded,
+  run-down prisons riot; riots make the national chronicle, damage the prisons and let some inmates escape.
+- **Sentences differ by country.** American, Russian and Turkish courts give longer sentences; German courts give
+  shorter ones.
+- **Life inside.** In prison you can work a shift in the workshop for a small state wage, take classes, and apply
+  for parole once you have served part of your sentence (the share depends on the country). Gangs prey on
+  newcomers in crowded prisons; members of an organisation are protected. You can try to escape, but if you are
+  caught you get extra time.
+- **Two new stories:** "The first night inside" and "The parole board".
+- **Re-entry.** A conviction shows on background checks until it is spent: 3 years in Germany, 7 in the United
+  States. Until then, state companies and the medicine, aerospace and electronics industries will not hire you.
+  NPCs leaving prison are more likely to offend again, in line with each country's reoffending rate.
+- **Prisons panel.** The Law & Order screen shows your country's prison system: prisoners, places, conditions,
+  funding, how long sentences are, the reoffending rate, and riots and escapes.
+
 ### New in 1.6.0: the strategic engine
 
 1.6.0 completes the strategic engine: nations visibly change over months and years. Releases 1.5.1 to 1.5.4 built

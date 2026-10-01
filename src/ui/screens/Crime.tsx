@@ -12,6 +12,7 @@ import {
   CRIMES, CRIME_NAME, PRANKS, SRANKS, SYND_JOBS, commitCrime, crimeCheck, crimeLabel, investigate, investigateCheck, jobCheck, joinPolice, joinPoliceCheck,
   joinSyndicate, joinSyndicateCheck, leavePolice, leaveSyndicate, orderRaid, patrol, patrolCheck, policeName, raidCheck, setPoliceFunding, syndicateJob,
 } from '../../sim/crime';
+import { escapeChance, escapeCheck, funding, hasLiveRecord, incarcerationRate, insideOf, justiceOf, occupancy, paroleChance, paroleCheck, paroleHearing, prisonClass, prisonClassCheck, prisonOf, prisonWork, prisonWorkCheck, spentAt, tryEscape } from '../../sim/prisons';
 
 export function Crime({ w }: { w: World }) {
   const p = player(w);
@@ -36,6 +37,48 @@ export function Crime({ w }: { w: World }) {
         {!mine.some((k) => k.status === 'open') && <p class="small muted">No open investigations against you.</p>}
         <Help>Crimes raise heat and notoriety. If someone sees you, police open a case; evidence grows with local policing and your heat. At {B.police.arrestAt}% you are arrested wherever that nation's police reach you, and tried: a lawyer helps; a bribe might work where police are weak. Heat falls {B.justice.heatDecay}/day. Convictions cost fines, prison time (no work, travel, training or fighting), office, and votes.</Help>
       </Panel>
+
+      {jailed(w, p) && (() => {
+        const ins = insideOf(p);
+        return (
+          <Panel title="🔒 Life inside" class="wide">
+            <div class="stats">
+              <div class="stat"><small>Release</small><b>{fmtDay(p.sec.jailUntil)}</b></div>
+              <div class="stat"><small>Conduct</small><Bar v={ins.conduct} max={100} color="#5b8def" label={`${Math.round(ins.conduct)}`} /></div>
+              <div class="stat"><small>Earned inside</small><b><Amt asset={w.nations[p.nation].cur} v={ins.earned} /></b></div>
+              <div class="stat"><small>Parole chance</small><b>{Math.round(paroleChance(w, p) * 100)}%</b></div>
+            </div>
+            <div class="row wrap">
+              <ActBtn kind="primary" why={prisonWorkCheck(w, p)} run={(w) => prisonWork(w, p)}>Work a shift</ActBtn>
+              <ActBtn why={prisonClassCheck(w, p)} run={(w) => prisonClass(w, p)}>Go to class</ActBtn>
+              <ActBtn why={paroleCheck(w, p)} run={(w) => paroleHearing(w, p)}>Apply for parole</ActBtn>
+              <ActBtn kind="danger" why={escapeCheck(w, p)} confirm={`Try to escape? About a ${Math.round(escapeChance(w, p) * 100)}% chance; if caught, extra time and a ruined file.`} run={(w) => tryEscape(w, p)}>Try to escape</ActBtn>
+            </div>
+            <Help>Work and classes build conduct, which the parole board weighs with your record. The board can hear you after {Math.round(justiceOf(w.nations[p.nation]).parole * 100)}% of your sentence. Gangs prey on newcomers in crowded, run-down prisons; members of an organisation are protected.</Help>
+          </Panel>
+        );
+      })()}
+
+      {(() => {
+        const n = w.nations[p.nation];
+        const ps = prisonOf(w, n);
+        const j = justiceOf(n);
+        return (
+          <Panel title={`🏛️ Prisons in ${n.name}`}>
+            <table class="table compact"><tbody>
+              <tr><td>Prisoners</td><td>{ps.inmates.toLocaleString()} · {Math.round(incarcerationRate(w, n))} per 100,000 people</td></tr>
+              <tr><td>Places</td><td>{ps.places.toLocaleString()} · <span class={occupancy(ps) > 1.15 ? 'bad' : ''}>{Math.round(occupancy(ps) * 100)}% full</span></td></tr>
+              <tr><td>Conditions</td><td><Bar v={ps.conditions} max={100} color={ps.conditions < 35 ? '#e0574f' : '#4caf7d'} label={`${Math.round(ps.conditions)}`} /></td></tr>
+              <tr><td>Funding</td><td>{Math.round(funding(n) * 100)}% of the usual level</td></tr>
+              <tr><td>Sentences</td><td>{j.sentence >= 1.2 ? 'harsh' : j.sentence <= 0.85 ? 'lenient' : 'typical'} (×{j.sentence}) · parole after {Math.round(j.parole * 100)}%</td></tr>
+              <tr><td>Reoffending</td><td>about {Math.round(j.reoffend * 100)}% within two years</td></tr>
+              <tr><td>Riots · escapes</td><td>{ps.riots} · {ps.escapes}</td></tr>
+            </tbody></table>
+            {hasLiveRecord(w, p) && <p class="small bad">Your conviction shows on background checks until {fmtDay(spentAt(w, p))}: state companies and the medicine, aerospace and electronics industries will not hire you.</p>}
+            <Help>Incarceration follows each country's real rate (about 33 per 100,000 in Japan, over 500 in the United States) and moves with crime. The police budget builds places and keeps conditions decent; overcrowded, run-down prisons riot. Records are spent after {j.spentYears} years here.</Help>
+          </Panel>
+        );
+      })()}
 
       <Panel title={`📍 ${r.name}: ${policeName(w, r.id)}`}>
         <table class="table compact"><tbody>

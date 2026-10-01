@@ -1,6 +1,7 @@
 // Companies, employment and production chains. A shift consumes energy, inputs
 // and wage funds, and creates goods; it refuses to run (with a reason) when
 // labour, funds, inputs or storage capacity are missing.
+import { recordBars } from './prisons';
 import { hasQuirk } from './nature';
 import { endWork, leavePost, logWork } from './services';
 import { leaveCheck, tooIll } from './health';
@@ -235,7 +236,7 @@ export function applyCheck(w: World, c: Citizen, co: Company | undefined): strin
   if (controller(w.regions[c.loc]) !== controller(w.regions[co.region])) return `You must be located in ${w.nations[controller(w.regions[co.region])].name}.`;
   const cur = companyCurrency(w, co);
   if ((co.wallet[cur] ?? 0) < co.offer.wage) return 'Employer lacks wage funds (offer unavailable).';
-  return null;
+  return recordBars(w, c, co);
 }
 
 export function applyJob(w: World, c: Citizen, coId: Id): Result {

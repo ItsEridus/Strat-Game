@@ -25,6 +25,7 @@ import { chance, pick, rand, randInt, weighted } from '../engine/rng';
 import { controller, coref, cref, hhref, jailed, natref, player, regref, syndref } from './query';
 import { nationPerm } from './authority';
 import { isAdult, practise } from './growth';
+import { admit, release, reoffendPull, sentenceFactor } from './prisons';
 
 // ---------- definitions ----------
 
@@ -40,8 +41,8 @@ export const SYND_JOBS: Record<'smuggle' | 'collect' | 'heist', { name: string; 
 };
 export const SRANKS = ['Associate', 'Soldier', 'Capo', 'Underboss', 'Boss'];
 export const PRANKS = ['Officer', 'Sergeant', 'Detective', 'Captain', 'Chief'];
-const SEVERITY: Record<CrimeKind, number> = { pickpocket: 1, burglary: 2, fraud: 3, smuggling: 2, extortion: 2, bribery: 3, assault: 2, corruption: 4, espionage: 5, votebuying: 3, heist: 4, taxevasion: 2 };
-const CRIME_NAME: Record<CrimeKind, string> = { pickpocket: 'pickpocketing', burglary: 'burglary', fraud: 'fraud', smuggling: 'smuggling', extortion: 'extortion', bribery: 'bribery', assault: 'assault', corruption: 'corruption', espionage: 'espionage', votebuying: 'vote buying', heist: 'armed robbery', taxevasion: 'tax evasion' };
+const SEVERITY: Record<CrimeKind, number> = { pickpocket: 1, burglary: 2, fraud: 3, smuggling: 2, extortion: 2, bribery: 3, assault: 2, corruption: 4, espionage: 5, votebuying: 3, heist: 4, taxevasion: 2, escape: 3 };
+const CRIME_NAME: Record<CrimeKind, string> = { pickpocket: 'pickpocketing', burglary: 'burglary', fraud: 'fraud', smuggling: 'smuggling', extortion: 'extortion', bribery: 'bribery', assault: 'assault', corruption: 'corruption', espionage: 'espionage', votebuying: 'vote buying', heist: 'armed robbery', taxevasion: 'tax evasion', escape: 'escape from custody' };
 
 export const policeName = (w: World, rid: Id) => {
   const r = w.regions[rid];
@@ -494,8 +495,9 @@ export function trial(w: World, k: Case, lawyer: boolean) {
   const paid = Math.min(fine, s.wallet[code] ?? 0);
   const gov = w.govs[k.region];
   if (paid > 0) pay(w, cref(s.id), gov && !w.regions[k.region].occ && gov.cur === code ? regref(k.region) : natref(n.id), code, paid, 'Court fine');
-  const days = Math.ceil(sev * B.justice.jailDaysPerSeverity * (1 + s.sec.record.convictions * 0.3) + (paid < fine ? 1 : 0));
+  const days = Math.ceil(sev * B.justice.jailDaysPerSeverity * sentenceFactor(n) * (1 + s.sec.record.convictions * 0.3) + (paid < fine ? 1 : 0));
   s.sec.jailUntil = w.time + days * DAY;
+  admit(w, s);
   s.sec.record.convictions++;
   s.sec.record.fines += paid;
   s.sec.heat = 0;
@@ -605,10 +607,7 @@ export function crimeDaily(w: World) {
   }
   for (const c of census(w).all) {
     c.sec.heat = Math.max(0, c.sec.heat - B.justice.heatDecay);
-    if (c.sec.jailUntil && c.sec.jailUntil <= w.time) {
-      c.sec.jailUntil = 0;
-      if (c.player) notify(w, 'personal', '🔓 You have been released from prison.', { link: 'crime' });
-    }
+    if (c.sec.jailUntil && c.sec.jailUntil <= w.time) release(w, c, 'served');
   }
   // Tidy closed cases (keep the last 400).
   const closed = Object.values(w.cases).filter((k) => k.status === 'closed').sort((a, b) => a.id - b.id);
@@ -812,7 +811,7 @@ export function crimeHourly(w: World) {
       continue;
     }
     const desperate = c.job == null && (c.wallet[w.nations[c.nation].cur] ?? 0) < cur(20);
-    const propensity = c.traits.greed * 0.5 + c.traits.risk * 0.3 + (desperate ? 0.4 : 0) + (c.mood < -0.3 ? 0.15 : 0) - c.traits.loyalty * 0.3 - (c.persona === 'politician' ? 0.2 : 0);
+    const propensity = c.traits.greed * 0.5 + c.traits.risk * 0.3 + (desperate ? 0.4 : 0) + (c.mood < -0.3 ? 0.15 : 0) - c.traits.loyalty * 0.3 - (c.persona === 'politician' ? 0.2 : 0) + reoffendPull(w, c);
     if (propensity > 0.55 && chance(w, 0.035 + w.regions[c.loc].crime / 2000)) {
       const kind = (['fraud', 'burglary', 'pickpocket'] as const).find((k) => !crimeCheck(w, c, k) && (k !== 'fraud' || c.eco > 5));
       if (kind) commitCrime(w, c, kind);

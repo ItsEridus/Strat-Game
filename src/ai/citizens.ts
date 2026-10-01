@@ -1,5 +1,6 @@
 // AI citizen routines. Personas shape priorities; every action goes through the
 // same validated action functions the player uses.
+import { recordBars } from '../sim/prisons';
 import { ageOf } from '../sim/growth';
 import type { Citizen, Company, World } from '../sim/types';
 import { B } from '../data/balance';
@@ -38,6 +39,7 @@ export function bestOffer(w: World, c: Citizen) {
   for (const co of cands) {
     if (co.owner.k === 'cit' && co.owner.id === c.id) continue;
     if (eco < (co.offer?.minEco ?? 0)) continue;
+    if (recordBars(w, c, co)) continue;
     if ((co.wallet[cur_] ?? 0) < (co.offer?.wage ?? 0) * 2) continue; // avoid employers who can't pay
     const pref = co.region === c.home ? 1 : near.has(co.region) ? 0.9 : 0.75;
     const net = netWage(w, co, c).net * pref;

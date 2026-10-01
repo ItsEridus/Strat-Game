@@ -221,9 +221,11 @@ export interface CitizenSec {
   goal: { kind: string; target?: Id; since: number } | null; // the NPC's current ambition
   rivals: Id[];
   last: Record<string, number>; // cooldowns: time of last crime, patrol, op, …
+  inside?: import('./prisons').Inside; // life in prison (1.7)
+  releasedAt?: number; // when they last left prison (a record follows them until it is spent)
 }
 
-export type CrimeKind = 'pickpocket' | 'burglary' | 'fraud' | 'smuggling' | 'extortion' | 'bribery' | 'assault' | 'corruption' | 'espionage' | 'votebuying' | 'heist' | 'taxevasion';
+export type CrimeKind = 'pickpocket' | 'burglary' | 'fraud' | 'smuggling' | 'extortion' | 'bribery' | 'assault' | 'corruption' | 'espionage' | 'votebuying' | 'heist' | 'taxevasion' | 'escape';
 export interface Case {
   id: Id; suspect: Id; kind: CrimeKind; region: Id; nation: Id; evidence: number; opened: number;
   status: 'open' | 'closed'; detective: Id | null; loot: number; outcome?: string; syndicate?: Id | null;
@@ -382,6 +384,7 @@ export interface Nation {
   infraBonus?: number; healthBonus?: number; // built up by public investment (strategic engine)
   strategy?: { kind: import('./nationalBudget').Strategy; since: number; why: string };
   powerHist?: import('./worldHistory').PowerPoint[]; // power index each month
+  prison?: import('./prisons').PrisonSystem; // the national prison system (1.7)
   chronicle?: { t: number; text: string }[]; // the nation's history (strategy changes and other turning points)
   minWage: number; // minor units
   president: Id | null;
