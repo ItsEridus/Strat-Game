@@ -13,6 +13,8 @@ import { livingStandards } from '../../sim/livingStandards';
 import { BARGAINING, benefitRules } from '../../sim/labour';
 import { inflation, priceChange } from '../../sim/statistics';
 import { capsOf, techAvg } from '../../sim/strategic';
+import { BUDGET_LINES, LINE_LABEL, STRATEGY_INFO, budgetOf, budgetTotal } from '../../sim/nationalBudget';
+import { fmtDay } from '../../engine/calendar';
 import { TECH_DOMAINS, TECH_LABEL } from '../../data/nationBaselines';
 import { policyRateOf } from '../../sim/loans';
 import { depositRate } from '../../sim/banking';
@@ -23,6 +25,21 @@ import { B } from '../../data/balance';
 import { c as cur } from '../../engine/money';
 import { rentOf } from '../../sim/housing';
 import type { Id } from '../../sim/types';
+
+function BudgetPanel({ w, id }: { w: World; id: Id }) {
+  const n = w.nations[id];
+  const b = budgetOf(n);
+  const rev = dailyRevenue(n);
+  const st = n.strategy;
+  return <>
+    {st && <p><b>{STRATEGY_INFO[st.kind].icon} {STRATEGY_INFO[st.kind].label}</b>: {STRATEGY_INFO[st.kind].desc}. <span class="muted">Adopted {fmtDay(st.since)} because {st.why}.</span></p>}
+    <table class="table compact small"><thead><tr><th>Budget line</th><th class="num">Share of revenue</th><th class="num">About a day</th></tr></thead>
+      <tbody>{BUDGET_LINES.map((k) => <tr><td>{LINE_LABEL[k]}</td><td class="num">{(b[k] * 100).toFixed(1)}%</td><td class="num">{fmtAmt(n.cur, Math.round(rev * b[k]))}</td></tr>)}
+        <tr><td><b>Total</b></td><td class="num"><b>{(budgetTotal(b) * 100).toFixed(1)}%</b></td><td /></tr></tbody></table>
+    {(n.chronicle?.length ?? 0) > 0 && <><h4>Chronicle</h4><ul class="small">{n.chronicle!.slice(-8).reverse().map((e) => <li>{fmtDay(e.t)} · {e.text}</li>)}</ul></>}
+    <Help>Budgets pass through congress ("Pass a budget"). Research speeds technology, infrastructure and health build up the country's capabilities over the years, and welfare sets transfers to households. Each January, AI governments review their grand strategy and the budget that goes with it.</Help>
+  </>;
+}
 
 function DevelopmentPanel({ w, id }: { w: World; id: Id }) {
   const n = w.nations[id];
@@ -120,6 +137,7 @@ export function Country({ w }: { w: World }) {
       </Panel>
       <Panel title="Economy" class="wide"><EconomyPanel w={w} id={id} /></Panel>
       <Panel title="National development" class="wide"><DevelopmentPanel w={w} id={id} /></Panel>
+      <Panel title="Budget and strategy" class="wide"><BudgetPanel w={w} id={id} /></Panel>
       <Panel title="Public finances">
         <table class="table compact small"><tbody>
           <tr><td>Revenue (a day, last month)</td><td class="num">{fmtAmt(n.cur, Math.round(dailyRevenue(n)))}</td></tr>

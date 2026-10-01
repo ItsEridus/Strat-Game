@@ -3,6 +3,28 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.5.2: national budgets and grand strategy
+
+- **A national budget.** Each government divides its revenue between eight lines: defence, intelligence, police,
+  education, health, research, infrastructure and welfare.
+  - Defence, intelligence, police and education fund their services as before.
+  - Health, research and infrastructure are paid out every day and build up the country over the years:
+    - research speeds up technology;
+    - infrastructure and health raise its infrastructure and human capital.
+  - Welfare sets the transfers to households.
+- **Budget laws.** Congress can pass a whole budget ("Pass a budget"), line by line. Lawmakers back budgets that fit
+  the country's situation.
+- **Grand strategy.** Every AI government follows a strategy chosen from its situation:
+  - development first;
+  - a military build-up when at war;
+  - regional leadership for the great powers;
+  - reform when the state works poorly;
+  - retrenchment when debt runs high.
+
+  It reviews the strategy each January and changes course when circumstances change, with a budget to match.
+- **A chronicle for each country.** The new Budget and strategy panel shows the strategy and why it was adopted,
+  the budget by line and per day, and a chronicle of the country's turning points.
+
 ### New in 1.5.1: nations develop over time
 
 The first step of the strategic engine (1.6.0).

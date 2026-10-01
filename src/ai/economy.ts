@@ -1,6 +1,7 @@
 // AI business management and background household demand. AI owners use the
 // same market/company actions (and permission checks) as the player.
 import { hasQuirk } from '../sim/nature';
+import { transferRate } from '../sim/nationalBudget';
 import { createCompany } from '../sim/company';
 import { noteBirth } from '../sim/companyLife';
 import { covered, industryPay } from '../sim/labour';
@@ -236,7 +237,7 @@ export function circulation(w: World) {
   }
   for (const n of w.nations) {
     if (n.exile) continue;
-    const t = Math.floor((n.wallet[n.cur] ?? 0) * B.treasury.householdTransfer);
+    const t = Math.floor((n.wallet[n.cur] ?? 0) * transferRate(n));
     if (t > 0 && pay(w, natref(n.id), hhref(n.id), n.cur, t, 'Social transfers')) n.stats.spendToday += t;
   }
 }

@@ -14,6 +14,7 @@ import { rank } from '../data/education';
 import { ageOf } from './growth';
 import { B } from '../data/balance';
 import { TECH_DOMAINS, baselineOf, type TechDomain } from '../data/nationBaselines';
+import { healthFactor, infraFactor, researchFactor } from './nationalBudget';
 
 export interface Capabilities {
   tech: Record<TechDomain, number>; // 0..100+ (the leader near 100 in 2025)
@@ -43,10 +44,10 @@ export const techAvg = (c: Capabilities) => TECH_DOMAINS.reduce((t, d) => t + c.
 function measure(w: World, n: Nation, c: Capabilities) {
   const adults = census(w).all.filter((x) => x.nation === n.id && !x.gone && ageOf(w, x) >= B.life.adultAge);
   const tertiary = adults.length ? adults.filter((x) => rank(x.edu?.level ?? 'school') >= 2).length / adults.length : 0.3;
-  c.human = Math.round(Math.min(100, 30 + tertiary * 110));
+  c.human = Math.round(Math.min(100, 30 + tertiary * 110 + (n.healthBonus ?? 0)));
   const regions = w.regions.filter((r) => r.owner === n.id);
   const lv = regions.length ? regions.reduce((t, r) => t + r.bld.fields + r.bld.industrial + r.bld.hospital + (w.govs[r.id]?.dev ?? 0), 0) / regions.length : 0;
-  c.infra = Math.round(Math.min(100, 45 + lv * 8));
+  c.infra = Math.round(Math.min(100, 45 + lv * 8 + (n.infraBonus ?? 0)));
   const unrest = regions.length ? regions.reduce((t, r) => t + r.unrest, 0) / regions.length : 0;
   c.cohesion = Math.round(n.approval * 0.7 + (100 - unrest) * 0.3);
 }
@@ -55,10 +56,13 @@ function measure(w: World, n: Nation, c: Capabilities) {
 export function strategicMonth(w: World, n: Nation, leaders: Record<TechDomain, number>): number {
   const c = capsOf(w, n);
   const b = baselineOf(n.iso);
+  // Public investment builds up (or runs down) infrastructure and health over the years.
+  n.infraBonus = Math.max(-15, Math.min(25, (n.infraBonus ?? 0) + (infraFactor(n) - 1) * 0.4));
+  n.healthBonus = Math.max(-10, Math.min(15, (n.healthBonus ?? 0) + (healthFactor(n) - 1) * 0.25));
   measure(w, n, c);
   // Technology: R&D adds, with diminishing returns; the leaders' know-how spreads through trade.
   for (const d of TECH_DOMAINS) {
-    const own = (b.rd / 3) * 0.12 * (1 - c.tech[d] / 130);
+    const own = ((b.rd * researchFactor(n)) / 3) * 0.12 * (1 - c.tech[d] / 130);
     const spread = Math.max(0, leaders[d] - c.tech[d]) * 0.004 * (0.5 + c.inst.effectiveness * 0.5);
     c.tech[d] = Math.round((c.tech[d] + own + spread) * 100) / 100;
   }

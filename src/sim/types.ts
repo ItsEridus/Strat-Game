@@ -377,6 +377,11 @@ export interface Nation {
   stats2?: import('./statistics').NationalStats; // official statistics (1.4.10)
   policyRate?: number; // the central bank's policy rate (%)
   caps?: import('./strategic').Capabilities; // capability stocks and growth (1.6)
+  budgetExtra?: { health: number; research: number; infrastructure: number }; // budget lines beyond the existing services (1.6)
+  welfare?: number; // welfare share of revenue (scales transfers to households)
+  infraBonus?: number; healthBonus?: number; // built up by public investment (strategic engine)
+  strategy?: { kind: import('./nationalBudget').Strategy; since: number; why: string };
+  chronicle?: { t: number; text: string }[]; // the nation's history (strategy changes and other turning points)
   minWage: number; // minor units
   president: Id | null;
   cabinet: Partial<Record<Ministry, Id>>;

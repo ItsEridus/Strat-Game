@@ -1,6 +1,7 @@
 // Parameter editors for war, peace and nuclear proposals.
 import type { World } from '../../sim/types';
-import { Select } from '../common';
+import { Num, Select } from '../common';
+import { BUDGET_LINES, LINE_LABEL, budgetOf, budgetTotal, type Budget } from '../../sim/nationalBudget';
 import { player } from '../../sim/query';
 import { B } from '../../data/balance';
 import { activeWars, enemyOf } from '../../sim/war';
@@ -8,6 +9,11 @@ import { activeWars, enemyOf } from '../../sim/war';
 export function ProposalParams({ w, type, params, setParams }: { w: World; type: string; params: Record<string, any>; setParams: (p: Record<string, any>) => void }) {
   const p = player(w);
   const n = w.nations[p.nation];
+  if (type === 'budget') {
+    const b = { ...budgetOf(n), ...params } as Budget;
+    return <>{BUDGET_LINES.map((k) => <label>{LINE_LABEL[k]} (% of revenue) <Num value={Math.round(b[k] * 1000) / 10} step={0.5} min={0} max={50} onInput={(v) => setParams({ ...b, [k]: v / 100 })} /></label>)}
+      <span class="small muted">Total {(budgetTotal(b) * 100).toFixed(1)}% of revenue.</span></>;
+  }
   if (type === 'war') {
     const others = w.nations.filter((x) => x.id !== n.id);
     const target = params.target ?? others[0].id;

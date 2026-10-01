@@ -310,3 +310,23 @@ test('strategic engine: a monthly turn grows productivity and technology from re
   assert.ok(techAvg(capsOf(w, ind)) > t0, 'technology spreads');
   assert.equal(capsOf(w, ind).hist.length, 24);
 });
+
+test('budgets and grand strategy: a strategy per country, spending, and a budget law', async () => {
+  const { budgetDaily, budgetOf, chooseStrategy, strategyBudget, setBudget, researchFactor } = await import('../src/sim/nationalBudget');
+  const { EXTRA_PROPOSALS } = await import('../src/sim/congressExtra');
+  const { audit } = await import('../src/engine/ledger');
+  const w = generateWorld(1815, 'Budget', 0, { citizensPerRegion: 1 });
+  for (const n of w.nations) { n.stats.revHist = Array(30).fill(cur(1000)); }
+  budgetDaily(w);
+  assert.ok(w.nations.every((n) => n.strategy), 'every country has a strategy');
+  const usa = w.nations.find((n) => n.iso === 'USA')!;
+  assert.equal(usa.strategy!.kind, 'regional', 'a superpower leads its region');
+  assert.ok((usa.chronicle ?? []).length >= 1, 'the chronicle records it');
+  const dev = strategyBudget(usa, 'development');
+  assert.ok(dev.research > budgetOf(usa).research * 0.99);
+  setBudget(usa, dev);
+  assert.ok(researchFactor(usa) > 1.3, 'more research than in 2025');
+  assert.equal(EXTRA_PROPOSALS.budget.check(w, usa, w.citizens[w.playerId], {}), 'That is the budget already in force.');
+  assert.ok(chooseStrategy(w, usa).kind);
+  assert.ok(audit(w).ok);
+});
