@@ -9,6 +9,7 @@
 // breaks out) from its situation: development first, a military build-up, regional
 // leadership, reform or retrenchment. It proposes a budget to match, and the
 // country's chronicle records why the strategy changed.
+import { racesOf } from './balanceOfPower';
 import type { Nation, World } from './types';
 import { pay } from '../engine/ledger';
 import { dateAt } from '../engine/calendar';
@@ -91,6 +92,8 @@ export function budgetDaily(w: World) {
 export function chooseStrategy(w: World, n: Nation): { kind: Strategy; why: string } {
   const atWar = Object.values(w.wars).some((x) => x.status === 'active' && (x.att === n.id || x.def === n.id));
   if (atWar) return { kind: 'buildup', why: 'the country is at war' };
+  const race = racesOf(w, n.id)[0];
+  if (race) return { kind: 'buildup', why: `an arms race with ${w.nations[race.a === n.id ? race.b : race.a].name}` };
   const debtYears = (n.debt ?? 0) / Math.max(1, dailyRevenue(n) * 365);
   if (debtYears > 1.5) return { kind: 'retrenchment', why: `public debt has reached ${debtYears.toFixed(1)} years of revenue` };
   const c = capsOf(w, n);

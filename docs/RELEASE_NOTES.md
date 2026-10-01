@@ -3,6 +3,35 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.9.6: crises, arms races and the balance of power
+
+The fourth part of 2.0 The great game.
+
+- **Crises short of war.** Between hostile neighbours and rivals, incidents happen: border clashes, naval standoffs,
+  airspace violations, detained citizens and missile tests. A crisis climbs a ladder: an incident, protests and
+  warnings, forces on alert, an ultimatum, the brink of war.
+- **How a crisis ends.** Every three days each side escalates, holds firm, offers talks or backs down. Its resolve
+  depends on:
+  - the leader's character;
+  - the balance of power, allies included;
+  - what is at stake;
+  - for an unpopular government, the pull of a rally round the flag.
+
+  Talks on both sides settle a crisis. Backing down hands the other side a victory, in approval and in face. Only
+  past the brink does a crisis become war, and between nuclear powers (or against a nuclear power's ally) fear
+  almost always stops the last step. As head of government you choose your country's moves on the Diplomacy screen.
+- **Arms races.** Two rivals who fear each other, with cold relations and no alliance, race. Both governments switch
+  to a military build-up, and without an arms-control treaty two nuclear powers' arsenals grow. The race winds
+  down when the fear or the hostility fades.
+- **Balancing and bandwagoning.** A country facing a far stronger, hostile power looks for partners: it becomes
+  keener on alliances with others who fear the same power. If it is weak, exposed, unallied and led by a dove, it
+  makes its peace with the threat instead.
+- **Polarity.** The world's shares of power are recorded monthly, and the world is called unipolar, bipolar or
+  multipolar.
+- **Sanctions cost growth.** They cost both sides, the target more, in proportion to the trade between them; a
+  country under sanctions from a major partner loses up to a point of growth a year. New trade agreements add a
+  little growth. Both appear in each country's growth breakdown.
+
 ### New in 1.9.5: the United Nations, the G20, the WTO and the IMF
 
 The third part of 2.0 The great game.

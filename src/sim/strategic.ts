@@ -7,6 +7,7 @@
 // infrastructure, institutions, catching up with the leaders, unrest and war. The
 // Pace of history setting speeds the strategic clock. Productivity raises what every
 // company in the country produces.
+import { tradePolicyGrowth } from './balanceOfPower';
 import type { Id, Nation, World } from './types';
 import { dateAt } from '../engine/calendar';
 import { census } from './census';
@@ -83,6 +84,9 @@ export function strategicMonth(w: World, n: Nation, leaders: Record<TechDomain, 
   if (c.cohesion < 45) why.push(['unrest', (c.cohesion - 45) * 0.06]);
   const atWar = Object.values(w.wars).some((x) => x.status === 'active' && (x.att === n.id || x.def === n.id));
   if (atWar) why.push(['war', -1.5]);
+  const tp = tradePolicyGrowth(w, n);
+  if (tp.sanctions) why.push(['sanctions', tp.sanctions]);
+  if (tp.agreements) why.push(['trade agreements', tp.agreements]);
   why.push(['the world economy', w.econ.cycle * 1.2]);
   const g = Math.max(-6, Math.min(10, why.reduce((t, [, v]) => t + v, 0)));
   c.productivity *= Math.pow(1 + g / 100, 1 / 12);

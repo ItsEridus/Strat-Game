@@ -171,7 +171,8 @@ export function willingness(w: World, n: Nation, other: Nation, kind: TreatyKind
       // guard their independence, and no one joins a friend's rival.
       const entangled = other.alliances.some((x) => (n.relations[x]?.score ?? 0) < -20) ? 0.4 : 0;
       const far = farApart(n.iso, other.iso) ? 0.3 : 0;
-      p = -0.25 + rel / 150 + shared / 70 + t.trust / 250 - (lp.nationalism - 0.4) * 0.3 - (NONALIGNED.includes(n.iso) ? 0.35 : 0) - entangled - far;
+      const balancing = n.alignment?.choice === 'balance' && tiesOfPair(w, other, w.nations[n.alignment.towards]).threat > 30 ? 0.1 : 0;
+      p = balancing - 0.25 + rel / 150 + shared / 70 + t.trust / 250 - (lp.nationalism - 0.4) * 0.3 - (NONALIGNED.includes(n.iso) ? 0.35 : 0) - entangled - far;
       why = entangled ? `${other.name} is allied with our rivals` : NONALIGNED.includes(n.iso) ? 'a tradition of non-alignment' : far ? 'too far apart to defend each other' : shared > 25 ? 'a threat they share' : 'no common enemy';
       break;
     }

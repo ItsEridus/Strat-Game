@@ -409,7 +409,8 @@ export interface Nation {
   renounced?: Record<Id, number>; // when this country last renounced a treaty with another (2.0)
   dip?: import('./diplomacyActions').DipState; // diplomatic capital, recent actions, causes for war (2.0)
   summits?: Record<Id, number>;
-  imfRelief?: boolean; // under an IMF programme (2.0) // when its leader last met the other's (2.0)
+  imfRelief?: boolean;
+  alignment?: { towards: Id; choice: 'balance' | 'bandwagon'; since: number }; // facing a far stronger threat (2.0) // under an IMF programme (2.0) // when its leader last met the other's (2.0)
   alliances: Id[];
   embargoes: Id[];
   pacts: Record<Id, number>; // nationId -> non-aggression until time
@@ -789,7 +790,10 @@ export interface World {
   playerId: Id;
   player: PlayerState;
   treaties?: Record<Id, import('./treaties').Treaty>;
-  intl?: import('./intlOrgs').IntlState; // the UN, G20, WTO and IMF (2.0)
+  intl?: import('./intlOrgs').IntlState;
+  standoffs?: import('./crises').Crisis[]; // international crises short of war (2.0)
+  armsRaces?: import('./balanceOfPower').ArmsRace[]; // rival pairs building up against each other (2.0)
+  bop?: import('./balanceOfPower').BopPoint[]; // shares of world power, monthly (2.0) // the UN, G20, WTO and IMF (2.0)
   intlLoans?: import('./diplomacyActions').IntlLoan[]; // loans between governments (2.0) // alliances, pacts, trade and other agreements (2.0)
   opec?: { quota: number; hist: number[] }; // OPEC+ output against normal (1.9)
   warnings?: import('./naturalHazards').Warning[]; // hazards forecast to strike within a day (1.9)

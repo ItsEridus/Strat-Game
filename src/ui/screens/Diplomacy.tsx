@@ -10,6 +10,8 @@ import { DIP_INFO, DEMAND_NAME, dipCheck, dipOf, doDiplomacy, loansOf, type DipA
 import { GOLD, fmtAmt } from '../../engine/money';
 import { RES_INFO, castCheck, castVote, councilMembers, intlOf, permanentIds, tableCheck, tableResolution, voters, type ResKind } from '../../sim/intlOrgs';
 import { fail, ok } from '../../engine/result';
+import { CRISIS_INFO, LEVELS, MOVE_INFO, activeCrises, chooseMove, resolve, type Move } from '../../sim/crises';
+import { racesOf } from '../../sim/balanceOfPower';
 import { DAY, fmtWhen } from '../../engine/clock';
 import { BLOCS } from '../../data/diplomacy';
 import { blocsOf, leaderProfile, prestigeOf, tiesOfPair } from '../../sim/relations';
@@ -45,6 +47,7 @@ export function Diplomacy({ w, id }: { w: World; id: Id }) {
         <Help>A relation is built from trust (what each side has done to the other, remembered and slowly fading), affinity (similar governments, a shared language and blocs), threat (the other side's military power, its closeness and its intentions), trade ties, and grievances (territorial disputes and historical wrongs; lost wars add new ones). The score moves towards that blend day by day.</Help>
       </Panel>
       {player(w).nation === id && n.president === player(w).id && <Actions w={w} id={id} />}
+      <Crises w={w} id={id} />
       <Treaties w={w} id={id} />
       <Organisations w={w} id={id} />
       <Panel title="Blocs and alliances">
@@ -174,6 +177,39 @@ function Organisations({ w, id }: { w: World; id: Id }) {
       </>}
       {imf.length > 0 && <p class="small"><b>IMF:</b> {imf.map((p) => `a programme of ${fmtAmt(GOLD, p.amount)} from ${fmtWhen(w, p.start)} until ${fmtWhen(w, p.until)}`).join('; ')}. Austerity is unpopular, but the markets lend more cheaply.</p>}
       <Help>The United Nations votes on wars of aggression: the Security Council (where the US, China, Russia and Britain hold vetoes) can condemn, demand a ceasefire or impose binding sanctions for a year; when it is blocked, the General Assembly can still condemn. Countries vote on their interests and their friendships. The G20 meets every November. The WTO hears complaints against sanctions the UN never authorised, and the IMF lends to countries whose reserves or credit run out.</Help>
+    </Panel>
+  );
+}
+
+function Crises({ w, id }: { w: World; id: Id }) {
+  const n = w.nations[id];
+  const pl = player(w);
+  const head = pl.nation === id && n.president === pl.id;
+  const live = activeCrises(w, id);
+  const past = (w.standoffs ?? []).filter((c) => c.status !== 'active' && (c.a === id || c.b === id)).slice(-6).reverse();
+  const races = racesOf(w, id);
+  const bop = w.bop?.[w.bop.length - 1];
+  const outcome = (c: NonNullable<World['standoffs']>[number]) => c.status === 'won' ? `${w.nations[c.winner!].name} prevailed` : c.status === 'settled' ? 'settled' : c.status === 'war' ? 'war' : 'faded';
+  return (
+    <Panel title="⚠️ Crises and the balance of power" class="wide">
+      {live.map((c) => {
+        const them = c.a === id ? c.b : c.a;
+        return (
+          <div class="card">
+            <p><b>{CRISIS_INFO[c.kind].name} with <NationChip w={w} id={them} /></b>: now at {LEVELS[c.level]} (step {c.level} of 5). Next move {fmtWhen(w, c.next)}.</p>
+            <p class="small muted">Your resolve: {Math.round(resolve(w, c, id) * 100)}%. Theirs, as far as can be judged: {Math.round(resolve(w, c, them) * 100)}%. Both offering talks settles it; whoever backs down loses face; escalating past the brink means war.</p>
+            {head && <div class="row">{(Object.keys(MOVE_INFO) as Move[]).map((m) => (
+              <ActBtn small kind={c.choice?.[id] === m ? 'primary' : undefined} run={(w) => { chooseMove(w, w.standoffs!.find((x) => x.id === c.id)!, id, m); return ok(`Next move: ${MOVE_INFO[m].toLowerCase()}.`); }}>{MOVE_INFO[m]}</ActBtn>
+            ))}{c.choice?.[id] ? <span class="small">chosen: {MOVE_INFO[c.choice[id]]}</span> : <span class="small muted">(you hold firm unless you choose)</span>}</div>}
+          </div>
+        );
+      })}
+      {!live.length && <p class="small muted">{n.name} is in no crisis now.</p>}
+      {past.length > 0 && <ul class="small">{past.map((c) => <li>{fmtWhen(w, c.started)}: {CRISIS_INFO[c.kind].name.toLowerCase()} with {w.nations[c.a === id ? c.b : c.a].name}, up to {LEVELS[c.level]} — {outcome(c)}</li>)}</ul>}
+      {races.length > 0 && <p class="small">🚀 In an arms race with {races.map((r) => w.nations[r.a === id ? r.b : r.a].name).join(' and ')} since {fmtWhen(w, races[0].since)}: the government is building up its forces{races.some((r) => r.nuclear) ? ', and without arms control both nuclear arsenals grow' : ''}.</p>}
+      {n.alignment && <p class="small">{n.alignment.choice === 'balance' ? `🛡️ Facing a far stronger ${w.nations[n.alignment.towards].name}, ${n.name} is looking for partners.` : `🤝 Too weak to resist ${w.nations[n.alignment.towards].name}, ${n.name} is seeking an accommodation with it.`}</p>}
+      {bop && <p class="small"><b>The world is {bop.polarity}.</b> Shares of world power: {bop.shares.map((s) => `${w.nations[s.id].name} ${Math.round(s.share * 100)}%`).join(', ')}.</p>}
+      <Help>Crises happen between hostile neighbours and rivals: border clashes, naval standoffs, airspace violations, detained citizens and missile tests. Each side's resolve depends on its leader, the balance of power (allies included), what is at stake and, for an unpopular government, the pull of a rally round the flag. Between nuclear powers, fear of escalation weighs heavily. Rivals who fear each other fall into arms races. Sanctions cost both sides growth (the target more), in proportion to the trade between them.</Help>
     </Panel>
   );
 }

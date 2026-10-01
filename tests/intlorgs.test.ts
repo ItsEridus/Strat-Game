@@ -7,6 +7,7 @@ import { DAY } from '../src/engine/clock';
 import { audit, burn } from '../src/engine/ledger';
 import { GOLD } from '../src/engine/money';
 import { natref } from '../src/sim/query';
+import { dateAt } from '../src/engine/calendar';
 import { castVote, councilMembers, intlDaily, intlOf, lean, permanentIds, tableCheck, tableResolution } from '../src/sim/intlOrgs';
 import { declareWar } from '../src/sim/war';
 
@@ -68,10 +69,11 @@ test('the IMF lends to a country whose reserves have run out, with austerity, an
   const w = fresh(954);
   advance(w, DAY, false);
   const ar = by(w, 'ARG');
+  // Run to the last day of the month, empty the reserves, and let the 1st come.
+  while (dateAt(w.time + DAY).day !== 1) advance(w, DAY, false);
   burn(w, natref(ar.id), GOLD, ar.wallet[GOLD], 'test: reserves gone');
   const a0 = ar.approval;
-  // Run to the first of the next month.
-  advance(w, 35 * DAY, false);
+  advance(w, DAY, false);
   const st = intlOf(w);
   const p = st.imf.find((x) => x.nation === ar.id);
   assert.ok(p, 'a programme was agreed');
