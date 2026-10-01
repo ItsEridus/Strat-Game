@@ -3,6 +3,35 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.1.0: Shadows
+
+2.1 is complete. Over 2.0.1 to 2.0.4, intelligence became something governments live by:
+- services are organisations of eight directorates that grow and learn;
+- every government acts on estimates with ranges rather than on the truth, so surprise attacks and miscalculation
+  happen;
+- agents have motives and placements, and officials defect;
+- moles are hunted and turned into double agents who deceive their handlers;
+- covert action exposed abroad becomes a scandal at home, and Five Eyes partners share what they see;
+- elections can be interfered with.
+
+This release adds three stories for intelligence officers, and calibration.
+
+- **The walk-in.** An official of a rival country appears at your station with a folder. You can run them as an
+  agent in place (if they are a plant, the material will be almost too good), bring them over as a defector, or
+  turn them away.
+- **Burned.** Your name is in the other side's files. You can lie low for a month, ask to be brought home, or
+  carry on and hope.
+- **The estimate.** The Director wants the service's judgement on a rival. You can write what the evidence says
+  (the estimate sharpens), write what the government wants to hear (it drifts towards their fears or their
+  hopes), or hedge every sentence.
+- **Calibration.** In three-year test runs, the best-placed services make the smallest errors. The US and British
+  services misjudge rivals' military power by about 10%, the smallest services by 20–30%. Governments that
+  misjudge a rival make the mistakes that follow: wars against neighbours believed weaker than they were, and
+  attacks that come as a surprise.
+- The roadmap and README now cover 2.1. What 2.1 left for later (support to insurgents, assassination and regime
+  change, built satellites and signals stations, a network map) is listed in the roadmap with where it now
+  belongs.
+
 ### New in 2.0.4: mole hunts, double agents, oversight and sharing
 
 The fourth part of 2.1 Shadows.

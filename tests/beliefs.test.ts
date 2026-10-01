@@ -50,3 +50,18 @@ test("an attack the defender did not expect is a surprise, and the attacker's es
   assert.ok(believed(w, ar, br, 'hostile') < 40);
   assert.ok(audit(w).ok);
 });
+
+test('over three years, the best-placed services make the smallest errors (2.1.0 calibration)', async () => {
+  const { statisticalSkip } = await import('../src/sim/statYear');
+  const w = fresh(1210);
+  advance(w, 2 * DAY, false);
+  statisticalSkip(w, w.time + 3 * 365 * DAY);
+  const rows = w.nations.map((n: any) => {
+    const es = w.nations.filter((t: any) => t.id !== n.id).map((t: any) => estimateOf(w, n, t));
+    return { q: es.reduce((s: number, e: any) => s + e.quality, 0) / es.length, err: es.reduce((s: number, e: any) => s + Math.abs(e.bias.mil), 0) / es.length };
+  }).sort((a: any, b: any) => b.q - a.q);
+  const top = rows.slice(0, 5), bottom = rows.slice(-5);
+  const avg = (xs: any[]) => xs.reduce((s, x) => s + x.err, 0) / xs.length;
+  assert.ok(avg(top) < avg(bottom) * 0.75, `top services ${avg(top).toFixed(3)} vs bottom ${avg(bottom).toFixed(3)}`);
+  assert.ok(audit(w).ok);
+});

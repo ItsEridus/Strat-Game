@@ -14,7 +14,7 @@ a **deeper life simulation** after the geopolitical thread (2.6.0 → 3.0.0, "Li
 
 Parts marked **GEO** are the geopolitical simulation. Every version ships as a series of playable patch
 releases (every push is a release); the minor version marks its theme complete. The parts of a theme ship as patches of the
-version before it (2.0's parts were 1.9.3 to 1.9.7, and 2.0.0 marked it complete), so 2.1's parts are 2.0.x.
+version before it (2.0's parts were 1.9.3 to 1.9.7, and 2.0.0 marked it complete), so 2.1's parts were 2.0.1 to 2.0.4 and 2.2's are 2.1.x.
 
 ## At a glance
 
@@ -27,8 +27,8 @@ version before it (2.0's parts were 1.9.3 to 1.9.7, and 2.0.0 marked it complete
 | 1.8.0 | **Arsenal** (GEO 3: militaries get better) | Defence budgets, R&D programmes, equipment generations, procurement from real defence firms, arms trade, doctrine that learns | ✅ done |
 | 1.9.0 | **Sky & ground** | Real weather and climate zones, natural hazards by real geography, resources and energy | ✅ done |
 | 2.0.0 | **The great game** (GEO 4: diplomacy and the international order) | Treaties, alliances, sanctions, a Security Council, blocs and summits; leaders whose character shapes policy | ✅ done |
-| 2.1.0 | **Shadows** (GEO 5: intelligence gets better) | Services that grow and learn; governments act on estimates, so surprise and miscalculation happen | ▶ next |
-| 2.2.0 | **War & peace** (GEO 6: realistic wars) | Wars with causes, escalation, fronts, mobilisation, exhaustion, negotiated endings and long aftermaths | planned |
+| 2.1.0 | **Shadows** (GEO 5: intelligence gets better) | Services that grow and learn; governments act on estimates, so surprise and miscalculation happen | ✅ done |
+| 2.2.0 | **War & peace** (GEO 6: realistic wars) | Wars with causes, escalation, fronts, mobilisation, exhaustion, negotiated endings and long aftermaths | ▶ next |
 | 2.3.0 | **Rise & fall** (GEO 7: regimes, secession, new nations) | Coups, revolutions, democratisation and backsliding, secession, civil wars, new and vanished states | planned |
 | 2.4.0 | **Frontiers** (GEO 8: technology, cyber and space) | A near-future technology race that changes economies, armies and spying | planned |
 | 2.5.0 | **A world of consequences** (GEO 9: world economy, climate, soft power) | Debt crises, central banks, climate over decades, soft power; the decades-long campaign and the World Almanac | planned |
@@ -676,6 +676,15 @@ improve or decay, and the power ranking moves for reasons the player can read.
   - after-action reviews that show what was really true.
 - **Done when:** better-funded services produce measurably more accurate estimates, and governments that
   misjudge rivals make the mistakes that follow from it.
+
+- **Progress:** 2.0.1 services as organisations (eight directorates from the real services, moved by money,
+  technology, people and lessons from failure); 2.0.2 beliefs (estimates with ranges that every war, crisis and
+  alliance decision uses, surprise attacks); 2.0.3 collection (agents with motives and placements, defectors,
+  diplomatic cover, cyber intrusions); 2.0.4 mole hunts, double agents and deception, oversight and scandals at
+  home, Five Eyes sharing, election interference; 2.1.0 the three stories and calibration (the best-placed services
+  make the smallest errors). **Complete in 2.1.0.**
+- **Not yet built, carried forward:** support to insurgents (→ 2.2), assassination and regime change (→ 2.3),
+  satellites and signals stations as built assets (→ 2.4), a network map.
 
 ## 2.2.0 — War & peace (GEO 6: realistic wars)
 

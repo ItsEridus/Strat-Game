@@ -164,6 +164,12 @@ abroad and counter-intelligence at home. Operations gather dossiers, sabotage in
 incite unrest, spread propaganda, plant scandals, recruit assets or sweep for spies; exposed ones cause
 diplomatic incidents and arrests. Join as an analyst and climb to deputy director, direct the service as
 Director of Intelligence — or accept a foreign service's offer and become a double agent. (Intelligence screen.)
+Each service has eight directorates (human, signals, imagery, open sources, cyber, analysis, covert action,
+counter-intelligence) that grow with money, technology, people and lessons from failure. Governments act on
+estimates, not the truth: every war, crisis and alliance decision rests on what their service believes, so
+surprise attacks and miscalculation happen. Agents have motives and placements, officials defect, moles are
+hunted and turned into double agents, Five Eyes partners share what they see, and covert action exposed abroad
+becomes a scandal at home.
 
 **Diplomacy.** Countries see each other through trust, shared values and language, fear, trade ties and old
 grievances. The game starts from the real world of 2025:
