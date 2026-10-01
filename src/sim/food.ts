@@ -47,7 +47,9 @@ function foodMonth(w: World) {
     const worldPrice = 1 / Math.max(0.3, (w.econ.commodity.grain ?? 1) * (w.econ.harvest ?? 1));
     // Imports cover the gap, less of it when grain is dear and the country is poor; embargoes by exporters bite.
     const embargoed = w.nations.filter((x) => EXPORTERS.includes(x.iso) && x.embargoes.includes(n.id)).length;
-    const cover = Math.min(1, buyingPower(n) * 1.3 / worldPrice) * (1 - embargoed * 0.12);
+    // Rich countries buy what they need at any price; poorer ones are priced out when grain is dear.
+    const bp = buyingPower(n);
+    const cover = Math.min(1, (bp * 1.2) / Math.pow(Math.max(1, worldPrice), 1.5 * (1 - bp))) * (1 - embargoed * 0.08);
     f.imports = Math.round(gap * Math.max(0, cover) * 1000) / 1000;
     f.supply = Math.round(Math.min(1.2, own + f.imports) * 1000) / 1000;
     f.hunger = Math.max(0, Math.round((1 - f.supply) * 1000) / 1000);

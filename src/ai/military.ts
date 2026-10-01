@@ -1,6 +1,7 @@
 // AI soldiers, commanders, defense ministries and diplomacy. Soldiers fight with
 // their own energy, food and weapons (bought on the market); commanders and
 // ministries plan battles, supply units and seek peace.
+import { lod } from '../sim/tick';
 import type { Battle, Citizen, Id, Nation, World } from '../sim/types';
 import { census, representation } from '../sim/census';
 import { B } from '../data/balance';
@@ -39,6 +40,9 @@ export function soldiersTick(w: World) {
   for (const b of battles) battleTick(w, b);
   const live = battles.filter((b) => !b.done);
   if (!live.length) return;
+  // At top speed, citizens fight every other tick with twice the hits per turn (the same fighting, half the bookkeeping).
+  const every = lod.local ? 2 : 1;
+  if (every > 1 && (w.time / 10) % every !== 0) return;
   // Who is interested in which battle.
   const byNation: Record<Id, Battle[]> = {};
   for (const b of live) {
@@ -87,7 +91,7 @@ export function soldiersTick(w: World) {
       if ((c.inv['sp:steroids'] ?? 0) > 0 && !c.buffs.some((x) => x.type === 'steroids')) useSpecial(w, c, 'steroids');
     }
     const weapon = bestWeapon(c, target);
-    const hits = Math.min(Math.floor(c.energy / B.cost.hit), seg === 3 ? 4 : 2);
+    const hits = Math.min(Math.floor(c.energy / B.cost.hit), (seg === 3 ? 4 : 2) * every);
     for (let i = 0; i < hits; i++) if (!hit(w, c, target.id, side, weapon && (c.inv[`${weapon.kind}:${weapon.q}`] ?? 0) > 0 ? weapon : bestWeapon(c, target)).ok) break;
   }
 }

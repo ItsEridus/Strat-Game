@@ -539,6 +539,20 @@ improve or decay, and the power ranking moves for reasons the player can read.
 - **Realism.** Hazard frequencies follow EM-DAT base rates, energy mixes follow the IEA, and crop sensitivity
   follows agronomy data.
 
+- **Progress:**
+  - 1.8.1: weather and climate.
+  - 1.8.2: natural hazards.
+  - 1.8.3: energy and resources.
+  - 1.8.4: food security, careers and stories.
+  - 1.9.0: calibration (`tests/naturecal.ts`). In a simulated year:
+    - about 90 natural disasters strike the 16 countries, most of them minor, with a few thousand deaths;
+    - blackouts are frequent where grids are weak (India, Russia, Turkey, South Africa) and rare in Germany and
+      Britain;
+    - OPEC+ trims output when oil is cheap;
+    - the audit passes.
+  - Still to do: national harvests vary by only a few per cent a year (real yields vary more), and terrain has no
+    elevation, so highland cities run warm.
+
 ## 2.0.0 — The great game (GEO 4: diplomacy and the international order)
 
 - **Relations 2.0.** Relations are made of:

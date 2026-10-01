@@ -31,8 +31,8 @@ registerSystems();
 
 /** Simulated minutes per real second at each speed. */
 // World minutes per real second at each speed: at 1× a day lasts 24 real minutes.
-export const SPEEDS = [0, 1, 5, 30, 180];
-export const SPEED_LABELS = ['Paused', '1× — a minute each second', '2× — 5 minutes a second', '3× — half an hour a second', '4× — 3 hours a second'];
+export const SPEEDS = [0, 1, 5, 30, 1440];
+export const SPEED_LABELS = ['Paused', '1× — a minute each second', '2× — 5 minutes a second', '3× — half an hour a second', '4× — a day each second'];
 
 type Toast = { id: number; text: string; ok: boolean };
 /** A place in the interface: a screen with its selection (the person shown, the sub-tab…) and how far down it was scrolled. */
@@ -317,6 +317,8 @@ class Store {
     const w = this.w;
     if (!w || this.paused || this.advRunning) return;
     this.acc += (SPEEDS[w.settings.speed] * dtMs) / 1000;
+    // Never fall behind: if the computer cannot keep up, run as fast as it can instead of piling up a backlog.
+    this.acc = Math.min(this.acc, SPEEDS[w.settings.speed] * 0.3);
     const whole = Math.floor(this.acc / 10) * 10;
     if (whole <= 0) {
       // The world moves in ten-minute steps; the clock shows the minutes in between.
@@ -325,7 +327,10 @@ class Store {
     }
     this.acc -= whole;
     stir(w);
-    const r = advance(w, whole, true);
+    // At top speed (a day a second), distant parts of the world are simulated coarsely, as in long skips.
+    lod.coarse = lod.local = w.settings.speed === SPEEDS.length - 1;
+    let r: ReturnType<typeof advance>;
+    try { r = advance(w, whole, true); } finally { lod.coarse = lod.local = false; }
     if (r.stopped) { this.acc = 0; this.afterAdvance(true); return; }
     this.maybeAutosave();
     const now = Date.now();

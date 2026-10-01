@@ -38,18 +38,20 @@ function tick10(w: World) {
  * daily step, and are only visited in the hours when they act (work, training, project work, shopping, savings).
  * What they do is the same; only the bookkeeping is coarser. The player's own country is always simulated in full.
  */
-export const lod = { coarse: false };
+export const lod = { coarse: false, local: false }; // local: at top speed, only the player's own region is simulated in full
 const acts = (c: { workHour: number; trainHour: number }, h: number) => h === c.workHour || h === c.trainHour || h === (c.trainHour + 2) % 24 || h === 18 || h === 20;
 
 function hourly(w: World) {
   const h = hourOf(w.time);
-  const home = lod.coarse ? player(w)?.nation : -1;
+  const p0 = player(w);
+  const home = lod.coarse ? p0?.nation : -1;
+  const full = (c: { nation: number; loc: number }) => !lod.coarse || (lod.local ? c.loc === p0?.loc : c.nation === home);
   for (const c of census(w).all) {
     if (c.player) continue;
-    if (lod.coarse && c.nation !== home) { if (h === 0) regenTick(w, c, 144); }
+    if (!full(c)) { if (h === 0) regenTick(w, c, 144); }
     else regenTick(w, c, 6);
   }
-  for (const c of census(w).all) if (w.citizens[c.id] && !c.player && (!lod.coarse || c.nation === home || acts(c, h))) citizenHourly(w, c);
+  for (const c of census(w).all) if (w.citizens[c.id] && !c.player && (full(c) || acts(c, h))) citizenHourly(w, c);
   if (h === 5) for (const co of Object.values(w.companies).sort((a, b) => a.id - b.id)) manageCompany(w, co);
   if (h === 12 || h === 19) householdsDaily(w, h === 12 ? 0 : 1);
   if (h === 7) entrepreneurship(w);

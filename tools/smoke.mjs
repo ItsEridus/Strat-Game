@@ -191,6 +191,7 @@ try {
   await page.waitForTimeout(4000);
   const t2 = await page.evaluate(() => { const s = window.meridian; s.setSpeed(0); return s.w.time; });
   check(t2 > t1, 'new campaign: the clock did not run');
+  log(`new campaign: top speed ran ${((t2 - t1) / 60).toFixed(1)} game hours in 4 seconds`);
   // A long advance (+1 day) the way the advance menu runs it, in chunks.
   await page.evaluate(() => { const s = window.meridian; s.jump(1440, 'a day'); });
   for (let i = 0; i < 30; i++) {

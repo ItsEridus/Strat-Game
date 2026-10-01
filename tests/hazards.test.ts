@@ -27,8 +27,8 @@ test('preparedness saves lives: the same quake kills more where buildings are we
   const rj = w.regions.filter((r) => r.owner === jp.id).sort((a, b) => b.pop - a.pop)[0];
   const ri = w.regions.filter((r) => r.owner === ind.id).sort((a, b) => b.pop - a.pop)[0];
   const pj = rj.pop, pi = ri.pop;
-  strike(w, 'earthquake', 'Earthquake', [rj.id], 3, 4, 0);
-  strike(w, 'earthquake', 'Earthquake', [ri.id], 3, 4, 0);
+  strike(w, 'earthquake', 'Earthquake', [rj.id], 2, 2.5, 0);
+  strike(w, 'earthquake', 'Earthquake', [ri.id], 2, 2.5, 0);
   assert.ok((pi - ri.pop) / pi > ((pj - rj.pop) / pj) * 1.3, 'higher death rate where less prepared');
   assert.ok(audit(w).ok, audit(w).problems.join('; '));
 });

@@ -99,7 +99,7 @@ export function strike(w: World, kind: CrisisKind, label: string, regions: Id[],
     if (kind !== 'drought' && kind !== 'heatwave') r.disrupted = Math.max(r.disrupted, w.time + Math.round(level * vuln) * DAY);
     const lethal = LETHALITY[kind] ?? 0.5;
     // Even the worst events kill a few per cent of a region (the 2023 Turkey earthquake: about 1% of the worst-hit provinces).
-    const lost = Math.round(r.pop * Math.min(0.03, 0.0004 * Math.pow(size, 2.2) * lethal * vuln * (1 - warned) * (army ? 0.85 : 1)));
+    const lost = Math.round(r.pop * Math.min(0.03, 0.0012 * Math.pow(size, 2.2) * lethal * vuln * (1 - warned) * (army ? 0.85 : 1)));
     if (lost > 0) { r.pop = Math.max(2000, r.pop - lost); deaths += lost; }
     r.unrest = Math.min(100, r.unrest + 3 * level * vuln);
     if (kind !== 'drought' && kind !== 'heatwave') r.crime = Math.min(100, r.crime + 2 * level);

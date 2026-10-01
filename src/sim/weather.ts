@@ -183,7 +183,8 @@ export function weatherDaily(w: World) {
       if (rainRatio > 1.8) score -= (rainRatio - 1.8) * 0.1; // waterlogging
       if (x.t >= 35) score -= 0.25; // heat stress
       if (x.t <= 0) score -= 0.3; // frost
-      if (rainRatio >= 0.8 && rainRatio <= 1.3 && x.t > 10 && x.t < 30) score += 0.12;
+      if (rainRatio < 0.8) score -= 0.05; // a dry spell
+      if (rainRatio >= 0.8 && rainRatio <= 1.3 && x.t > 10 && x.t < 30) score += 0.04;
     }
     s.grow[r.id] = Math.max(0.7, Math.min(1.15, Math.round(((s.grow[r.id] ?? 1) * 0.95 + score * 0.05) * 1000) / 1000));
   }

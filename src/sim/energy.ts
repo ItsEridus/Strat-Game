@@ -26,6 +26,7 @@ export interface EnergyState {
   share: Partial<Record<Mineral, number>>;
   grid: number;
   blackouts: number; // region-days without power this year
+  lastYear?: number; // and last year
   finds: number;
 }
 export function energyOf(n: Nation): EnergyState {
@@ -149,7 +150,7 @@ export const opecOutput = (w: World, n: Nation) => (OPEC_PLUS.includes(n.iso) ? 
 export function energyDaily(w: World) {
   blackoutsDaily(w);
   if (dateAt(w.time).day === 1) for (let k = 0; k < historyPace(w); k++) energyMonth(w);
-  if (dateAt(w.time).day === 1 && dateAt(w.time).month === 0) for (const n of w.nations) if (n.energy) n.energy.blackouts = 0;
+  if (dateAt(w.time).day === 1 && dateAt(w.time).month === 0) for (const n of w.nations) if (n.energy) { n.energy.lastYear = n.energy.blackouts; n.energy.blackouts = 0; }
 }
 
 export const hasEnergyData = (iso: string) => iso in ENERGY;

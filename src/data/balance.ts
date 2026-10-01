@@ -273,7 +273,7 @@ export const BALANCE = {
     cycleVol: 0.06, // SOLO daily volatility of the world business cycle
     cycleRevert: 0.03, // SOLO mean reversion
     hhSpendSwing: 0.3, // SOLO household spending ±30% across the cycle
-    disasterChance: 0.9, // SOLO scale on seasonal hazard odds
+    disasterChance: 3.6, // calibrated (1.9): about 90 natural disasters a year across the 16 countries, most of them minor, near EM-DAT's count for them
     epidemicEveryDays: 70, // SOLO average days between outbreaks
     strikeBelowAvg: 0.8, // SOLO companies paying below 80% of the national average wage risk strikes
     protestAt: 55, // SOLO unrest for protests

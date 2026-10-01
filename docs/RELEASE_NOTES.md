@@ -3,6 +3,36 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.9.0: Sky & ground
+
+1.9.0 completes Sky & ground: weather, hazards, energy and food. Releases 1.8.1 to 1.8.4 built it:
+- weather and climate;
+- natural hazards;
+- energy and resources;
+- food security, careers and stories.
+
+This release calibrates them over a simulated year (`tests/naturecal.ts`):
+
+- **Disasters at real rates.** About 90 natural disasters a year strike the 16 countries, near EM-DAT's count for
+  them (it was about 20). Most are minor. Deaths are about three times higher per event than before, a few
+  thousand a year in all.
+- **Harvests are centred on normal.** The growing season no longer leans towards good years, and dry spells count
+  against it.
+- **Food imports.** Rich importers such as Japan and Korea now buy all the food they need, whatever the price, while
+  poorer countries are priced out when grain is dear. Each grain exporter's embargo cuts imports by 8% (it was 12%).
+- **Blackouts** for the previous year are kept for reporting.
+
+### Changed in 1.9.0
+
+- **The fastest speed (4×) now runs a day each second** (it was 3 hours a second).
+  - At that speed, distant parts of the world are simulated in the same cheaper way as long time skips.
+  - If your computer cannot keep up, the game runs as fast as it can rather than freezing to catch up.
+  - Only the people in your own region are simulated hour by hour; elsewhere people act at their usual times and
+    recover energy in daily steps.
+  - Citizens' fighting is booked every other tick, with twice the hits.
+  - Small worlds (about 2,000 people) reach a day a second. The default large world (about 12,700 people) currently manages
+    about a third of that on a typical computer; a performance pass is next.
+
 ### New in 1.8.4: food security, emergency careers and disaster stories
 
 - **Food security.**
