@@ -3,6 +3,18 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.4.16: power index 2.0
+
+- **A truer world ranking.** The power index now combines:
+  - economic mass: each country's real 2025 share of world GDP;
+  - military capability: the size of its forces × the quality of its military technology × readiness;
+  - technology in six domains (industrial, military, information, medical, energy and space), at real 2025
+    levels;
+  - stability, intelligence and population.
+- **Tiers.** Every country is ranked as a superpower, great power, middle power, regional power or minor power.
+  The United States and China start as superpowers.
+- **The README** describes the new economy.
+
 ### New in 1.4.15: takeovers, competition policy and stories of working life
 
 - **Takeovers.** Once a month, a successful owner may buy a struggling rival in the same industry and country. The

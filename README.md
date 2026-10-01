@@ -157,6 +157,21 @@ incite unrest, spread propaganda, plant scandals, recruit assets or sweep for sp
 diplomatic incidents and arrests. Join as an analyst and climb to deputy director, direct the service as
 Director of Intelligence — or accept a foreign service's offer and become a double agent. (Intelligence screen.)
 
+**The economy.** Money is real:
+- Every country uses its own currency at real early-2025 exchange rates. Pay follows each country's real median
+  wage and minimum wage, so a typical day's pay is about $200 in the United States and ₹780 in India, and prices
+  follow what people earn.
+- Taxes start at real 2025 rates: progressive income tax, VAT or sales tax, tariffs and corporate tax. Governments
+  borrow when their treasuries run short and pay interest on the debt. Central banks set interest rates by a rule
+  like the ones real central banks follow. Savings earn interest.
+- Companies pay rent, energy and tax, keep accounts, take business loans, export surplus stock, buy struggling
+  rivals (if the competition authority allows it) and go bust. People who lose their jobs get redundancy pay and,
+  where the country has it, unemployment benefit.
+- You can work for an employer, in public service or for yourself: a trades business, tutoring, a taxi, a café,
+  a restaurant, a shop, a practice or a law firm.
+- Each country publishes monthly statistics: GDP, prices and inflation, unemployment, pay, trade, inequality and
+  poverty, and public finances. World commodity prices move with real volatility.
+
 **A living world.** The world economy moves through booms and recessions; commodity shocks change output;
 hurricanes, typhoons, earthquakes, floods, wildfires, blizzards and droughts strike their real hazard zones in
 season; epidemics spread along borders until lockdowns stop them; underpaid workers strike; unrest turns into

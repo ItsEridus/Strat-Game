@@ -6,7 +6,7 @@ import { useSort } from '../sort';
 import type { Citizen, World } from '../../sim/types';
 import { Bar, CitLink, Help, NationChip, Panel } from '../common';
 import { player } from '../../sim/query';
-import { nationScores } from '../../sim/forces';
+import { TIER_LABEL, nationScores } from '../../sim/forces';
 import { BRANCH_ICON } from '../../data/military';
 import { GOLD, fmtAmt } from '../../engine/money';
 
@@ -42,9 +42,9 @@ export function Rankings({ w }: { w: World }) {
     <div class="grid">
       <Panel title="🌍 World power ranking" class="wide">
         <div class="scroll-x"><table class="table compact small">
-          <thead><tr>{sort.th('rank', '#')}{sort.th('nation', 'Nation')}{sort.th('total', 'Power index')}{sort.th('army', '🪖 Army')}{sort.th('navy', '⚓ Navy')}{sort.th('air', '✈️ Air')}{sort.th('economy', 'Economy')}{sort.th('stability', 'Stability')}{sort.th('intel', 'Intelligence')}</tr></thead>
+          <thead><tr>{sort.th('rank', '#')}{sort.th('nation', 'Nation')}{sort.th('total', 'Power index')}<th>Tier</th>{sort.th('army', '🪖 Army')}{sort.th('navy', '⚓ Navy')}{sort.th('air', '✈️ Air')}{sort.th('economy', 'Economy')}{sort.th('stability', 'Stability')}{sort.th('intel', 'Intelligence')}</tr></thead>
           <tbody>{sort.rows.map((s) => (
-            <tr class={s.id === p.nation ? 'me' : ''}><td>{s.rank}</td><td><NationChip w={w} id={s.id} /></td><td><Bar v={s.total} max={100} color="#e0a526" label={`${s.total}`} /></td>
+            <tr class={s.id === p.nation ? 'me' : ''}><td>{s.rank}</td><td><NationChip w={w} id={s.id} /></td><td><Bar v={s.total} max={100} color="#e0a526" label={`${s.total}`} /></td><td class="small">{TIER_LABEL[s.tier]}</td>
               <td><Bar v={s.army} max={maxOf('army')} color="#46b873" label={`${Math.round(s.army)}`} /></td>
               <td><Bar v={s.navy} max={maxOf('navy')} color="#5b8def" label={`${Math.round(s.navy)}`} /></td>
               <td><Bar v={s.air} max={maxOf('air')} color="#8a63d2" label={`${Math.round(s.air)}`} /></td>
@@ -52,7 +52,7 @@ export function Rankings({ w }: { w: World }) {
               <td>{Math.round(s.stability)}</td><td>{Math.round(s.intel)}</td></tr>
           ))}</tbody>
         </table></div>
-        <Help>The power index weighs military strength (40%: formations and citizen soldiers), economy (25%: production and reserves), stability (15%: approval against crime and unrest), intelligence (10%) and population (10%). It moves as wars, crises and policies play out.</Help>
+        <Help>Power index 2.0 weighs economic mass (30%: the real 2025 share of world GDP, grown by productivity since), military capability (30%: formations and citizen soldiers × the quality of military technology × readiness), technology (15%), stability (10%), intelligence (8%) and population (7%). Tiers: superpower (80+), great power (58+), middle power (45+), regional power (35+) and minor power. It moves as wars, crises and policies play out.</Help>
       </Panel>
       <Panel title="🏆 Leaderboards" class="wide" right={<span class="row small">{(['military', 'damage', 'wealth', 'influence', 'fame'] as Board[]).map((b) => <button class={`btn sm ${board === b ? 'primary' : 'ghost'}`} onClick={() => setBoard(b)}>{b}</button>)}</span>}>
         <table class="table compact small"><tbody>

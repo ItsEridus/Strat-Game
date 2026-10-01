@@ -282,3 +282,14 @@ test('takeovers: valuation, the competition authority, and the deal', async () =
   assert.equal(b.owner.id, outsider.id);
   assert.ok(audit(w).ok);
 });
+
+test('power index 2.0: tiers from economy, military quality and technology', async () => {
+  const { nationScores } = await import('../src/sim/forces');
+  const w = generateWorld(1813, 'Power', 0, { citizensPerRegion: 1 });
+  const s = nationScores(w);
+  const iso = (i: number) => w.nations[s[i].id].iso;
+  assert.equal(iso(0), 'USA');
+  assert.equal(s[0].tier, 'superpower');
+  assert.ok(s.some((x) => w.nations[x.id].iso === 'CHN' && x.tier === 'superpower'));
+  assert.ok(s.every((x) => x.total >= 0 && x.total <= 100));
+});

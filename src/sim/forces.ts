@@ -13,6 +13,8 @@
 // through real rank ladders to command formations; the most senior officer
 // becomes chief of staff. AI defence ministries raise, supply, deploy and order
 // forces by the same rules the player's government uses.
+import { capsOf, techAvg } from './strategic';
+import { baselineOf } from '../data/nationBaselines';
 import { recordPay } from './wages';
 import { wound } from './health';
 import { hash01 } from '../engine/rng';
@@ -838,7 +840,11 @@ function militaryCareersAI(w: World) {
 
 // ---------- rankings ----------
 
-export interface NationScore { id: Id; military: number; army: number; navy: number; air: number; economy: number; stability: number; intel: number; population: number; total: number }
+export interface NationScore { id: Id; military: number; army: number; navy: number; air: number; economy: number; stability: number; intel: number; population: number; tech: number; total: number; tier: Tier }
+export type Tier = 'superpower' | 'great' | 'middle' | 'regional' | 'minor';
+export const TIER_LABEL: Record<Tier, string> = { superpower: 'Superpower', great: 'Great power', middle: 'Middle power', regional: 'Regional power', minor: 'Minor power' };
+/** Tiers by power index (0–100). */
+export const tierOf = (total: number): Tier => (total >= 80 ? 'superpower' : total >= 58 ? 'great' : total >= 45 ? 'middle' : total >= 35 ? 'regional' : 'minor');
 
 export function nationScores(w: World): NationScore[] {
   const rows = w.nations.map((n) => {
@@ -847,18 +853,24 @@ export function nationScores(w: World): NationScore[] {
     // Citizen soldiers count relative to the society they come from (see referenceSociety).
     const people = nationals(w, n.id);
     const soldiers = people.reduce((s, c) => s + (c.persona === 'soldier' || c.mil.branch ? 1 + c.power / 50 : 0.1), 0) * (referenceSociety(n.id) / Math.max(1, people.length));
-    const army = sum('army') + soldiers, navy = sum('navy'), air = sum('air');
-    const production = census(w).companies.filter((co) => controller(w.regions[co.region]) === n.id).reduce((s, co) => s + (co.hist[co.hist.length - 1]?.produced ?? 0), 0);
-    const economy = production / 10 + (n.wallet.GOLD ?? 0) / 20000 + (n.wallet[n.cur] ?? 0) / 20000;
+    // Military capability: quantity × quality (military technology) × readiness.
+    const caps = capsOf(w, n);
+    const quality = caps.tech.military / 100;
+    const ready = fs.length ? fs.reduce((t, f) => t + f.readiness, 0) / fs.length / 100 : 0.6;
+    const army = (sum('army') + soldiers) * quality * (0.5 + ready / 2), navy = sum('navy') * quality * (0.5 + ready / 2), air = sum('air') * quality * (0.5 + ready / 2);
+    // Economic mass: the real 2025 share of world GDP, grown by productivity since.
+    const economy = baselineOf(n.iso).gdpShare * caps.productivity;
+    const tech = techAvg(caps);
     const own = w.regions.filter((r) => controller(r) === n.id);
     const stability = own.length ? n.approval - own.reduce((s, r) => s + r.unrest + r.crime / 2, 0) / own.length : 0;
     const nets = Object.values(n.agency.network);
     const intel = n.agency.counter / 2 + (nets.length ? nets.reduce((a, b) => a + b, 0) / nets.length : 0);
     const population = w.households[n.id]?.pop ?? 0;
-    return { id: n.id, military: army + navy + air, army, navy, air, economy, stability, intel, population, total: 0 };
+    return { id: n.id, military: army + navy + air, army, navy, air, economy, stability, intel, population, tech, total: 0, tier: 'minor' as Tier };
   });
   const max = (k: keyof NationScore) => Math.max(1e-9, ...rows.map((r) => r[k] as number));
-  for (const r of rows) r.total = Math.round(40 * r.military / max('military') + 25 * r.economy / max('economy') + 15 * Math.max(0, r.stability) / max('stability') + 10 * r.intel / max('intel') + 10 * r.population / max('population'));
+  // Power index 2.0: economic mass and military capability count most; then technology, intelligence, cohesion and people.
+  for (const r of rows) { r.total = Math.round(30 * Math.sqrt(r.economy / max('economy')) + 30 * r.military / max('military') + 15 * r.tech / max('tech') + 8 * r.intel / max('intel') + 10 * Math.max(0, r.stability) / max('stability') + 7 * Math.sqrt(r.population / max('population'))); r.tier = tierOf(r.total); }
   return rows.sort((a, b) => b.total - a.total);
 }
 

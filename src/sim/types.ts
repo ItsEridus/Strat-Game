@@ -376,6 +376,7 @@ export interface Nation {
   trade?: { exp: number; imp: number; hist: { exp: number; imp: number }[] }; // exports and imports today and the last 30 days (gold minor)
   stats2?: import('./statistics').NationalStats; // official statistics (1.4.10)
   policyRate?: number; // the central bank's policy rate (%)
+  caps?: import('./strategic').Capabilities; // capability stocks and growth (1.6)
   minWage: number; // minor units
   president: Id | null;
   cabinet: Partial<Record<Ministry, Id>>;
@@ -673,6 +674,7 @@ export interface Settings {
   playerMortality?: boolean; // the player can die (and play continues as their heir); off for saves from before 1.3.18
   startAge?: number;
   character?: { look: import('./looks').Look; birthplace: Id | null; ideology: Ideology | null; nature?: import('./nature').Nature; background?: import('./nature').Background; traits?: Citizen['traits'] }; // designed at the start (ui/CharacterDesigner.tsx) // the player's age at the start (0 = born into the world; default 24)
+  historyPace?: number; // strategic months per calendar month (1 = real time; 1.6)
   lifeYearDays?: number; // pace of life: world days per year of age (undefined = 365, for older saves)
   fixedFate?: boolean; // reproducible: never mix outside randomness into the world's dice (see ui/store.ts)
 }
