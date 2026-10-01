@@ -3,6 +3,19 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.9.1: skip a year
+
+- **Skip a year.** The ⏭ Advance menu has a new ⏩ Skip a year option. It runs straight to a year from now:
+  - it does not stop for notifications;
+  - everyone outside your own region is simulated at the coarser level used for long advances;
+  - it ends with the summary of your year;
+  - you can stop or cancel it at any time.
+
+  The existing "+1 year" still lives the year in full and stops for important events.
+- **Time left.** While time is advancing, the banner estimates how long it will take in real time.
+- **Faster bookkeeping.** At coarse detail, the simulation now visits only the people who act in each hour,
+  instead of everyone, and no longer re-sorts the population every hour.
+
 ### New in 1.9.0: Sky & ground
 
 1.9.0 completes Sky & ground: weather, hazards, energy and food. Releases 1.8.1 to 1.8.4 built it:

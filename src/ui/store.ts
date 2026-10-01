@@ -230,11 +230,11 @@ class Store {
   advStopped = '';
   private advCancel = false;
 
-  startAdvance(target: number, label: string) {
+  startAdvance(target: number, label: string, skip = false) {
     const w = this.w;
     if (!w || target <= w.time) return;
     w.settings.paused = true;
-    w.life.advance = { target, from: w.time, label, start: target - w.time >= 7 * DAY ? periodStart(w) : undefined };
+    w.life.advance = { target, from: w.time, label, start: target - w.time >= 7 * DAY ? periodStart(w) : undefined, skip: skip || undefined };
     this.advStopped = '';
     this.runAdvance();
   }
@@ -257,9 +257,21 @@ class Store {
     this.emit();
   }
 
+  /** When the current run started (real ms and game minutes), for the time-left estimate. */
+  advClock = { real: 0, game: 0 };
+  /** Estimated real seconds left in a running advance (null until there is a rate to go on). */
+  advEta(): number | null {
+    const w = this.w, a = w?.life.advance;
+    if (!w || !a || !this.advRunning) return null;
+    const dt = (Date.now() - this.advClock.real) / 1000, dg = w.time - this.advClock.game;
+    if (dt < 2 || dg <= 0) return null;
+    return ((a.target - w.time) / dg) * dt;
+  }
+
   private runAdvance() {
     if (this.advRunning) return;
     this.advRunning = true;
+    if (this.w) this.advClock = { real: Date.now(), game: this.w.time };
     this.emit();
     const step = () => {
       const w = this.w;
@@ -269,15 +281,17 @@ class Store {
       let stopped = false;
       // Long advances run in the background in bigger slices (the screen redraws a few times a second).
       const budget = a.target - a.from >= 30 * DAY ? 220 : 60;
-      // A week or more at once runs other countries at a coarser level of detail (sim/tick.ts).
+      // A week or more at once runs other countries at a coarser level of detail (sim/tick.ts); skipping a year
+      // runs everyone outside your own region that way, and does not stop for notifications.
       lod.coarse = a.target - a.from >= 7 * DAY;
+      lod.local = !!a.skip;
       try {
         while (w.time < a.target && Date.now() - t0 < budget) {
           stir(w);
-          const r = advance(w, Math.min(60, a.target - w.time), true);
+          const r = advance(w, Math.min(60, a.target - w.time), !a.skip);
           if (r.stopped) { stopped = true; break; }
         }
-      } finally { lod.coarse = false; }
+      } finally { lod.coarse = lod.local = false; }
       if (w.time >= a.target) {
         if (a.start) w.life.period = periodSummary(w, a.start, a.label);
         w.life.advance = null;

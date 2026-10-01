@@ -41,7 +41,7 @@ export function census(w: World): Census {
     push(c.byNation, x.nation, x);
     if (x.sec.police != null) push(c.police, x.sec.police, x);
   }
-  c.all.sort((a, b) => a.id - b.id);
+  // Integer keys iterate in ascending order, so `all` is already sorted by id.
   for (const id in w.companies) {
     const co = w.companies[id];
     c.companies.push(co);
@@ -49,7 +49,6 @@ export function census(w: World): Census {
     const r = w.regions[co.region];
     push(c.coByNation, r.occ ? r.occ.nation : r.owner, co);
   }
-  c.companies.sort((a, b) => a.id - b.id);
   CACHE.set(w, { hour, c });
   return c;
 }

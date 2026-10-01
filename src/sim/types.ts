@@ -175,7 +175,7 @@ export interface Routine { work: boolean; train: boolean; family: boolean; rest:
 /** The life simulation's saved state (versioned with the world). */
 export interface LifeState {
   reviews: AnnualReview[];
-  advance: { target: number; from: number; label: string; start?: import('./periodReview').PeriodStart } | null;
+  advance: { target: number; from: number; label: string; start?: import('./periodReview').PeriodStart; skip?: boolean } | null; // skip: fast and without stopping (skip a year)
   period?: import('./periodReview').PeriodSummary; // what happened during the last long advance (shown once) // a long time advance in progress (resumable)
   pregnancies: { id: Id; parents: Id[]; due: number; home: Id; name?: string }[]; // scheduled births (each resolves once)
   adoptions: { id: Id; parents: Id[]; ready: number; fee: number; cur: string }[]; // applications in progress

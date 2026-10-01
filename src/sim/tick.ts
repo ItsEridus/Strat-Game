@@ -38,20 +38,41 @@ function tick10(w: World) {
  * daily step, and are only visited in the hours when they act (work, training, project work, shopping, savings).
  * What they do is the same; only the bookkeeping is coarser. The player's own country is always simulated in full.
  */
-export const lod = { coarse: false, local: false }; // local: at top speed, only the player's own region is simulated in full
+/** coarse: long advances; local: only the player's own region in full (top speed and skipping a year). */
+export const lod = { coarse: false, local: false };
 const acts = (c: { workHour: number; trainHour: number }, h: number) => h === c.workHour || h === c.trainHour || h === (c.trainHour + 2) % 24 || h === 18 || h === 20;
+
+/** Who acts in each hour of the day (rebuilt daily): their work, training, project and evening hours. */
+const ACT = new WeakMap<World, { day: number; byHour: import('./types').Citizen[][] }>();
+function actingAt(w: World, h: number) {
+  const d = dayOf(w.time);
+  let x = ACT.get(w);
+  if (!x || x.day !== d) {
+    x = { day: d, byHour: Array.from({ length: 24 }, () => []) };
+    for (const c of census(w).all) { if (c.player) continue; for (let k = 0; k < 24; k++) if (acts(c, k)) x.byHour[k].push(c); }
+    ACT.set(w, x);
+  }
+  return x.byHour[h];
+}
 
 function hourly(w: World) {
   const h = hourOf(w.time);
   const p0 = player(w);
   const home = lod.coarse ? p0?.nation : -1;
   const full = (c: { nation: number; loc: number }) => !lod.coarse || (lod.local ? c.loc === p0?.loc : c.nation === home);
-  for (const c of census(w).all) {
-    if (c.player) continue;
-    if (!full(c)) { if (h === 0) regenTick(w, c, 144); }
-    else regenTick(w, c, 6);
+  if (!lod.coarse) {
+    for (const c of census(w).all) if (!c.player) regenTick(w, c, 6);
+    for (const c of census(w).all) if (w.citizens[c.id] && !c.player) citizenHourly(w, c);
+  } else {
+    // Coarse: people outside full detail recover in one daily step and are visited only in the hours they act.
+    const cs = census(w);
+    const near = (lod.local ? cs.byLoc.get(p0?.loc ?? -1) : cs.byNation.get(home ?? -1)) ?? [];
+    if (h === 0) for (const c of cs.all) if (!c.player && !full(c)) regenTick(w, c, 144);
+    for (const c of near) if (!c.player) regenTick(w, c, 6);
+    const due = actingAt(w, h).filter((c) => !full(c));
+    const todo = [...near.filter((c) => !c.player), ...due].sort((a, b) => a.id - b.id);
+    for (const c of todo) if (w.citizens[c.id] && !c.gone) citizenHourly(w, c);
   }
-  for (const c of census(w).all) if (w.citizens[c.id] && !c.player && (full(c) || acts(c, h))) citizenHourly(w, c);
   if (h === 5) for (const co of Object.values(w.companies).sort((a, b) => a.id - b.id)) manageCompany(w, co);
   if (h === 12 || h === 19) householdsDaily(w, h === 12 ? 0 : 1);
   if (h === 7) entrepreneurship(w);

@@ -56,8 +56,11 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
                   <button onClick={() => { setOpen(false); store.jump(DAY, 'tomorrow'); }}>+1 day</button>
                   <button onClick={() => { setOpen(false); store.jump(7 * DAY, 'a week from now'); }}>+1 week</button>
                   <button onClick={() => { setOpen(false); store.jump(30 * DAY, 'a month from now'); }}>+30 days</button>
-                  <button onClick={() => { setOpen(false); store.startAdvance(oneYearOn(w.time), 'a year from now'); }} title="Live a whole year: the world is simulated in full, in the background">+1 year</button>
+                  <button onClick={() => { setOpen(false); store.startAdvance(oneYearOn(w.time), 'a year from now'); }} title="Live a whole year: the world is simulated in full, in the background, and stops for important events">+1 year</button>
                 </div>
+                <button class="strong" onClick={() => { setOpen(false); store.startAdvance(oneYearOn(w.time), 'a year from now', true); }} title="Skip straight to a year from now without stopping. Everyone outside your region is simulated at a coarser level of detail; you get a summary of the year at the end.">
+                  <span>⏩ Skip a year</span><small>no stops · summary at the end</small>
+                </button>
                 {ups.slice(0, 14).map((u) => (
                   <button onClick={() => { setOpen(false); store.jumpTo(u.t, u.label); }}>
                     <span>{u.label}</span><small>in {fmtDur(u.t - w.time)}</small>

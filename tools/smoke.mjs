@@ -202,6 +202,13 @@ try {
   check(await page.evaluate(() => !window.meridian.w.life.advance), 'new campaign: the long advance never finished');
   check(await liveDays(page, 2), 'new campaign: time did not advance two days');
   log('new campaign: lived three days');
+  // Skip a year: runs without stopping in the background; cancel after a few seconds.
+  const s0 = await page.evaluate(() => { const s = window.meridian; s.startAdvance(s.w.time + 365 * 1440, 'a year from now', true); return s.w.time; });
+  await page.waitForTimeout(3000);
+  const skip = await page.evaluate(() => { const s = window.meridian; const a = s.w.life.advance; const r = { t: s.w.time, skip: !!a?.skip, banner: !!document.querySelector('.advance-banner') }; s.cancelAdvance(); return r; });
+  check(skip.skip && skip.banner && skip.t > s0, `new campaign: skipping a year did not run (${JSON.stringify(skip)})`);
+  log(`new campaign: skip a year ran ${((skip.t - s0) / 1440).toFixed(1)} days in 3 seconds, then cancelled`);
+  await page.waitForFunction(() => !window.meridian.advRunning, null, { timeout: 30_000 });
   await everyScreen(page, 'new campaign');
   // Story windows would cover the page from here on.
   await page.evaluate(() => { const s = window.meridian; s.w.story.settings.frequency = 'off'; for (const i of Object.values(s.w.story.instances)) if (i.status === 'offered' || i.status === 'active') i.status = 'declined'; s.emit(); });

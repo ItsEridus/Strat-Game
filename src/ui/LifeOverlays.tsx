@@ -22,7 +22,7 @@ export function AdvanceBanner() {
     <div class={`advance-banner ${s.advRunning ? 'running' : 'stopped'}`} role="status" aria-live="polite">
       <div class="advance-text">
         {s.advRunning
-          ? <span>⏩ Advancing to <b>{a.label}</b> — {fmtClock(w)} · {fmtDur(a.target - w.time)} to go</span>
+          ? <span>⏩ {a.skip ? 'Skipping' : 'Advancing'} to <b>{a.label}</b> — {fmtClock(w)} · {fmtDur(a.target - w.time)} to go{(() => { const e = store.advEta(); return e == null ? '' : ` · about ${e < 90 ? `${Math.max(1, Math.round(e))} s` : `${Math.round(e / 60)} min`} left`; })()}</span>
           : <span>⏸ Stopped at <b>{fmtClock(w)}</b>{s.advStopped ? <>: {s.advStopped}</> : null}. Still {fmtDur(a.target - w.time)} to <b>{a.label}</b>.</span>}
       </div>
       <div class="advance-bar"><i style={{ width: `${pct}%` }} /></div>
