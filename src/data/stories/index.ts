@@ -9,12 +9,13 @@ import { cref } from '../../sim/query';
 import { EVERYDAY } from './everyday';
 import { ADOPTED } from './adopted';
 import { WORK_CHAINS } from './work';
+import { LIFE_CHAINS } from './life';
 
 let done = false;
 export function registerAllStories() {
   if (done) return;
   done = true;
-  registerStory(...EVERYDAY, ...ADOPTED, ...WORK_CHAINS);
+  registerStory(...EVERYDAY, ...ADOPTED, ...WORK_CHAINS, ...LIFE_CHAINS);
 }
 
 /** Scheduled repayments of loans and investments made in stories. */

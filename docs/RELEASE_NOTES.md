@@ -3,6 +3,24 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.3.19: the stories of a life
+
+Eight new story chains follow the big moments of a life. Each starts from your real situation, plays out over days
+or weeks, and acts through the game's systems:
+
+- **A baby on the way:** get the nursery ready, go to antenatal classes, or save money; then, once the baby comes,
+  take parental leave or call in the grandparents.
+- **Time to move out?** A grown-up still living with family is asked about a place of their own: a room, a flat, or
+  a few more months of saving.
+- **The diagnosis:** cancer, heart disease or diabetes. Start treatment or get a second opinion, then decide whom to
+  tell.
+- **An empty nest:** your last child sets out on their own.
+- **Turning 40, 50 or 60:** a trip, a party, or a promise to learn something new.
+- **A parent needs care:** weekly visits, a paid carer, or a trip to the clinic.
+- **Graduation day:** the last push before your final exams, and a celebration afterwards.
+- **Dividing the inheritance:** share a parent's estate with your brothers and sisters, keep it, or fund a memorial
+  bench.
+
 ### New in 1.3.18: wills, heirlooms and succession
 
 - **Your character can die.** In new campaigns, illness and old age can end your life. When that happens, you carry
