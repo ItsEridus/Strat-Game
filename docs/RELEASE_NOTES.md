@@ -3,6 +3,19 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.3.21: five stories from the wider world
+
+- **A protection racket.** A gang whose turf covers your business demands a daily fee. Pay, go to the police (a
+  real case against the enforcer), or refuse, and see whether they come back at night.
+- **The call-up.** When your country goes to war, the recruiting posters go up: enlist, serve on the home front, or
+  speak out against the war.
+- **The scoop.** Newspaper owners get tips about public figures under police investigation. Dig for the truth, then
+  run it on the front page or call them for a comment first (they may make you an offer).
+- **Election season.** Party members are asked to help: stand as a candidate, knock on doors or donate, then rally
+  on the campaign trail.
+- **A double life.** If you work for a foreign intelligence service, your handler wants deliveries. When
+  counter-intelligence starts asking questions, get out, confess, or hold your nerve.
+
 ### New in 1.3.20: sixteen everyday moments
 
 New situations from ordinary days, each with real people and real consequences:

@@ -10,6 +10,7 @@ import { chooseStory, STORIES, triggerStory, viewStage } from '../src/sim/story'
 import { conceive } from '../src/sim/kinship';
 import { census } from '../src/sim/census';
 import type { World } from '../src/sim/types';
+import { declareWar } from '../src/sim/war';
 
 registerSystems();
 const fresh = (seed = 1301) => generateWorld(seed, 'Tester', 0, { citizensPerRegion: 3 });
@@ -74,4 +75,24 @@ test('sixteen everyday encounters: each renders and every choice can be made whe
     ran++;
   }
   assert.ok(ran >= 8, `only ${ran} encounters could be played`);
+});
+
+test('the five system chains: call-up, racket, asset, scoop and campaign start from the world and play', () => {
+  for (const id of ['chain.racket', 'chain.callup', 'chain.scoop', 'chain.campaign', 'chain.asset']) assert.ok(STORIES[id], id);
+  const w = fresh(1501);
+  const p = player(w);
+  mint(w, cref(p.id), w.nations[p.nation].cur, cur(500), 'test');
+  // Call-up: a war involving the player's country.
+  const foe = w.nations.find((n) => n.id !== p.nation)!;
+  declareWar(w, foe, { target: p.nation, days: 8, goals: [] });
+  p.born = bornYearsAgo(w, 25, 1);
+  assert.ok(triggerStory(w, 'chain.callup').ok);
+  const r = chooseStory(w, inst(w, 'chain.callup').id, 'army');
+  assert.ok(r.ok, r.msg);
+  assert.equal(p.mil.branch, 'army');
+  // Double life: the player works for a foreign service.
+  p.sec.asset = foe.id;
+  assert.ok(triggerStory(w, 'chain.asset').ok);
+  assert.ok(chooseStory(w, inst(w, 'chain.asset').id, 'stall').ok);
+  assert.ok(audit(w).ok, audit(w).problems.join('; '));
 });

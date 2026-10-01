@@ -39,7 +39,7 @@ stages go out in slices.
 | L3 | Schools, universities, clinics and offices as funded institutions; education ladder; qualifications; service careers (teaching, clinical care, administration, technical); work history; promotions; military academy | Done: schools, universities, education ladder 1.3.10; public-service careers, promotions, work history 1.3.11; military academy and commissions 1.3.12 |
 | L4 | Housing (rent/buy/sell); obligations (loans, mortgages, student loans); conditions and treatment; leave; retirement and funded pensions (incl. veterans); living-cost split | Done: housing and the living-cost split 1.3.13; loans, mortgages, student loans, credit 1.3.14; conditions, treatment, sick and parental leave 1.3.15; retirement and pensions 1.3.16 |
 | L5 | Birth start; childhood and parenting; player mortality; wills, trusts, estates, heirlooms | Done: birth start, childhood and parenting 1.3.17; player mortality, wills, trusts, estates, heirlooms 1.3.18 |
-| L6 | Succession to heirs; legacy archive; 8 life chains + 16 standalone encounters; narrative stage 4's five chains; NPC AI parity | In progress: succession and legacy archive 1.3.18; eight life chains 1.3.19; sixteen everyday encounters 1.3.20 |
+| L6 | Succession to heirs; legacy archive; 8 life chains + 16 standalone encounters; narrative stage 4's five chains; NPC AI parity | In progress: succession and legacy archive 1.3.18; eight life chains 1.3.19; sixteen everyday encounters 1.3.20; narrative stage 4's five chains 1.3.21 |
 | UI2 | Every screen restyled; cinematic story, review and succession; map polish; optional UI sound; screenshots | Planned |
 | L7 | Calibration, performance, docs, tests, e2e, release 1.4.0 (with narrative stage 5) | Planned |
 
