@@ -406,6 +406,9 @@ export interface Nation {
   relations: Record<Id, Relation>;
   ties?: Record<Id, import('./relations').Ties>; // what the relation is made of (2.0)
   relInit?: boolean;
+  renounced?: Record<Id, number>; // when this country last renounced a treaty with another (2.0)
+  dip?: import('./diplomacyActions').DipState; // diplomatic capital, recent actions, causes for war (2.0)
+  summits?: Record<Id, number>; // when its leader last met the other's (2.0)
   alliances: Id[];
   embargoes: Id[];
   pacts: Record<Id, number>; // nationId -> non-aggression until time
@@ -784,6 +787,8 @@ export interface World {
   settings: Settings;
   playerId: Id;
   player: PlayerState;
+  treaties?: Record<Id, import('./treaties').Treaty>;
+  intlLoans?: import('./diplomacyActions').IntlLoan[]; // loans between governments (2.0) // alliances, pacts, trade and other agreements (2.0)
   opec?: { quota: number; hist: number[] }; // OPEC+ output against normal (1.9)
   warnings?: import('./naturalHazards').Warning[]; // hazards forecast to strike within a day (1.9)
   weather?: import('./weather').WeatherState; // today's and tomorrow's weather by region (1.9)

@@ -2,6 +2,7 @@
 // change the simulation (taxes affect subsequent wages and sales, minimum wage
 // constrains job offers, printing mints currency, embargoes block trade…).
 import { noteTrust } from './relations';
+import { activeTreaties, offerTreaty, renounce, syncAlliances } from './treaties';
 import { lifeGate } from './lifecycle';
 import type { Citizen, Id, Nation, Proposal, ProposalType, World } from './types';
 import { B } from '../data/balance';
@@ -252,18 +253,15 @@ function enact(w: World, n: Nation, p: Proposal): string {
     case 'liftEmbargo': n.embargoes = n.embargoes.filter((x) => x !== p.params.target); relation(w, n.id, p.params.target, 5, 'embargo lifted'); return 'Embargo lifted.';
     case 'alliance': {
       const t = w.nations[p.params.target];
-      const accept = (t.relations[n.id]?.score ?? 0) > 15 && !t.exile;
-      if (!accept) { relation(w, n.id, t.id, -2, 'alliance offer refused'); return `${t.name} declined the alliance (relations too cool).`; }
-      if (!n.alliances.includes(t.id)) n.alliances.push(t.id);
-      if (!t.alliances.includes(n.id)) t.alliances.push(n.id);
-      relation(w, n.id, t.id, 10, 'alliance formed');
-      return `Alliance formed with ${t.name}.`;
+      const r = offerTreaty(w, n, t, 'defence');
+      return r.ok ? `Alliance formed with ${t.name}: ${r.msg}` : `${t.name} declined the alliance: ${r.msg}`;
     }
     case 'breakAlliance': {
       const t = w.nations[p.params.target];
-      n.alliances = n.alliances.filter((x) => x !== t.id);
-      t.alliances = t.alliances.filter((x) => x !== n.id);
-      relation(w, n.id, t.id, -10, 'alliance ended');
+      for (const tr of activeTreaties(w, n.id)) if ((tr.kind === 'defence' || tr.kind === 'guarantee') && tr.parties.includes(t.id)) {
+        if (tr.parties.length > 2) { tr.parties = tr.parties.filter((x) => x !== n.id); syncAlliances(w); relation(w, n.id, t.id, -10, `left the ${tr.name}`); }
+        else renounce(w, n, tr, 'by vote of congress');
+      }
       return `Alliance with ${t.name} ended.`;
     }
     case 'impeach': {

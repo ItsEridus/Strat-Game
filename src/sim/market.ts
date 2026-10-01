@@ -2,6 +2,7 @@
 // escrow (so they cannot be sold twice); buying transfers money and goods
 // atomically and routes VAT/import tax to the market nation's treasury.
 import { noteTrade } from './trade';
+import { freeTrade } from './treaties';
 import type { AccountRef, Id, ItemKey, Listing, World } from './types';
 import { B } from '../data/balance';
 import { itemName } from '../data/items';
@@ -53,6 +54,7 @@ export function saleTaxes(w: World, market: Id, seller: AccountRef, buyer?: Acco
   if (sellerNat !== market) {
     imp = Math.max(n.taxes.import, (shares.communism ?? 0) * IDEOLOGIES.communism.fx.importTaxFloor);
     // Exile relief: hosts holding an exiled nation's cores waive import tax on its citizens' goods.
+    if (sellerNat != null && freeTrade(w, market, sellerNat)) imp = 0; // trade agreements (sim/treaties.ts)
     if (sellerNat != null && w.nations[sellerNat]?.exile && w.regions.some((r) => r.core === sellerNat && r.owner === market)) imp = 0;
   }
   return { vat, imp };

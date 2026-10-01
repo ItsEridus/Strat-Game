@@ -39,3 +39,37 @@ const TRUST: Record<string, number> = Object.fromEntries(Object.entries({
   'RUS-USA': -50, 'CHN-USA': -30, 'RUS-GBR': -45, 'RUS-DEU': -35, 'CHN-JPN': -25, 'CHN-IND': -25, 'JPN-KOR': 10, 'RUS-CAN': -35, 'RUS-AUS': -30, 'RUS-JPN': -30, 'CHN-AUS': -15, 'CHN-GBR': -15, 'CHN-CAN': -15, 'ARG-GBR': -20,
 }).map(([k, v]) => { const [a, b] = k.split('-'); return [pair(a, b), v]; }));
 export const startTrust = (a: string, b: string) => TRUST[pair(a, b)] ?? 0;
+
+/** Trade agreements in force at the start of 2025 (beyond the blocs above). */
+export const TRADE_AGREEMENTS: { name: string; members: string[]; year: number }[] = [
+  { name: 'CPTPP', members: ['JPN', 'CAN', 'MEX', 'AUS', 'GBR'], year: 2018 },
+  { name: 'RCEP', members: ['CHN', 'JPN', 'KOR', 'AUS'], year: 2022 },
+  { name: 'KORUS', members: ['USA', 'KOR'], year: 2012 },
+  { name: 'US–Australia FTA', members: ['USA', 'AUS'], year: 2005 },
+  { name: 'China–Korea FTA', members: ['CHN', 'KOR'], year: 2015 },
+  { name: 'China–Australia FTA', members: ['CHN', 'AUS'], year: 2015 },
+  { name: 'Korea–Australia FTA', members: ['KOR', 'AUS'], year: 2014 },
+  { name: 'Canada–Korea FTA', members: ['CAN', 'KOR'], year: 2015 },
+  { name: 'EU–Japan EPA', members: ['DEU', 'JPN'], year: 2019 },
+  { name: 'EU–Korea FTA', members: ['DEU', 'KOR'], year: 2011 },
+  { name: 'EU–Canada CETA', members: ['DEU', 'CAN'], year: 2017 },
+  { name: 'EU–Mexico agreement', members: ['DEU', 'MEX'], year: 2000 },
+  { name: 'EU–South Africa partnership', members: ['DEU', 'ZAF'], year: 2016 },
+  { name: 'EU–Turkey customs union', members: ['DEU', 'TUR'], year: 1995 },
+  { name: 'UK–Japan CEPA', members: ['GBR', 'JPN'], year: 2021 },
+  { name: 'UK–Korea FTA', members: ['GBR', 'KOR'], year: 2021 },
+  { name: 'UK–Turkey FTA', members: ['GBR', 'TUR'], year: 2021 },
+  { name: 'India–Australia ECTA', members: ['IND', 'AUS'], year: 2022 },
+  { name: 'India–Japan CEPA', members: ['IND', 'JPN'], year: 2011 },
+  { name: 'India–Korea CEPA', members: ['IND', 'KOR'], year: 2010 },
+  { name: 'Japan–Mexico EPA', members: ['JPN', 'MEX'], year: 2005 },
+  { name: 'Turkey–Korea FTA', members: ['TUR', 'KOR'], year: 2013 },
+];
+
+/** Broad regions, for who can credibly defend whom. Global powers project force anywhere. */
+export const WORLD_REGION: Record<string, string[]> = {
+  USA: ['americas', 'pacific'], CAN: ['americas'], MEX: ['americas'], BRA: ['americas'], ARG: ['americas'],
+  GBR: ['europe'], DEU: ['europe'], TUR: ['europe', 'mideast'], RUS: ['europe', 'asia'], SAU: ['mideast'], ZAF: ['africa'],
+  IND: ['asia'], CHN: ['asia', 'pacific'], JPN: ['asia', 'pacific'], KOR: ['asia', 'pacific'], AUS: ['pacific', 'asia'],
+};
+export const GLOBAL_POWERS = ['USA', 'GBR'];

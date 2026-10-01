@@ -83,6 +83,7 @@ test('navies: superiority enables amphibious landings and blockades; sea lanes n
   const w = fresh(83);
   const us = 0, jp = nat(w, 'Japan');
   const target = region(w, 'Hokkaidō', jp);
+  w.treaties = {}; // no alliances: the only way in is by sea
   const war = declareWar(w, w.nations[us], { target: jp, days: 8, goals: [target.id] });
   // No navy nearby: an assault on Hokkaidō from the US is air-only.
   const first = launchBattle(w, us, war.id, target.id);

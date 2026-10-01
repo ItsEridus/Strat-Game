@@ -4,6 +4,8 @@
 //  - Holding the quota of occupations settles the war: held goals transfer, other
 //    occupations return, retained regions lose one building level, a 7-day pact follows.
 //  - Deadlines and peace terms (armistice, surrender, demand, trade) also settle wars.
+import { alliedPower, onWarDeclared } from './treaties';
+import { casusBelli } from './diplomacyActions';
 import { addGrievance } from './relations';
 import { afterActionReview } from './forceStructure';
 import type { Battle, Id, Nation, PeaceOffer, Proposal, War, World } from './types';
@@ -130,7 +132,7 @@ export function declareWar(w: World, n: Nation, params: Record<string, any>, p?:
   warDeclared(w, war, cause);
   schedule(w, war.deadline, 'warDeadline', { war: war.id });
   relation(w, n.id, t.id, -25, 'war declared');
-  for (const other of w.nations) if (other.id !== n.id && other.id !== t.id && other.alliances.includes(t.id)) relation(w, other.id, n.id, -10, `attacked our ally ${t.name}`);
+  onWarDeclared(w, war); // allies decide whether to stand by the victim (sim/treaties.ts)
   record(w, 'war', `🔥 ${n.name} declared war on ${t.name}${goals.length ? `, claiming ${goals.map((g) => w.regions[g].name).join(' and ')}` : ''} (${params.days} days, ${war.quota} occupations to win).`, { nation: n.id, important: true });
   const pl = player(w);
   if (t.id === pl.nation) notify(w, 'warHome', `🔥 ${n.name} declared war on ${t.name}! Goals: ${goals.map((g) => w.regions[g].name).join(', ') || 'none'}.`, { link: 'wars', critical: true });
@@ -150,10 +152,10 @@ export const WAR_PROPOSAL: ExtraProposal = {
   support(w, n, d, p) {
     const party = partyOf(w, d);
     const hawk = IDEOLOGIES[party?.ideo ?? d.ideo].hawk;
-    const ratio = militaryPower(w, n.id) / Math.max(1, militaryPower(w, p.target));
+    const ratio = militaryPower(w, n.id) / Math.max(1, militaryPower(w, p.target) + alliedPower(w, p.target));
     const rel = n.relations[p.target]?.score ?? 0;
     const busy = activeWars(w).filter((x) => x.att === n.id || x.def === n.id).length;
-    return (hawk - 0.55) * 0.8 + Math.max(-0.4, Math.min(0.3, (ratio - 1) * 0.3)) - rel / 150 - busy * 0.2 + n.warMood * 0.05;
+    return (casusBelli(w, n, p.target) ? 0.2 : 0) + (hawk - 0.55) * 0.8 + Math.max(-0.4, Math.min(0.3, (ratio - 1) * 0.3)) - rel / 150 - busy * 0.2 + n.warMood * 0.05;
   },
   enact(w, n, p) {
     const why = warCheck(w, n, p.params);
@@ -168,12 +170,13 @@ export const WAR_PROPOSAL: ExtraProposal = {
     const targets = neighborNations(w, n.id).filter((t) => !warCheck(w, n, { target: t, days: 14, goals: [] }));
     const out: { params: Record<string, any>; weight: number }[] = [];
     for (const t of targets) {
-      const ratio = militaryPower(w, n.id) / Math.max(1, militaryPower(w, t));
+      const ratio = militaryPower(w, n.id) / Math.max(1, militaryPower(w, t) + alliedPower(w, t)); // its allies deter
       const rel = n.relations[t]?.score ?? 0;
-      if (ratio < 1.1 || rel > 0) continue;
+      const cb = casusBelli(w, n, t);
+      if (ratio < 1.1 || (rel > 0 && !cb)) continue;
       const border = w.regions.filter((r) => r.owner === t && r.links.some((l) => controller(w.regions[l]) === n.id));
       const goal = border.sort((x, y) => resourceValue(y) - resourceValue(x) || x.id - y.id)[0];
-      out.push({ params: { target: t, days: ratio > 1.6 ? 21 : 14, goals: goal ? [goal.id] : [] }, weight: (hawk - 0.4) * (ratio - 1) * (1 - rel / 50) });
+      out.push({ params: { target: t, days: ratio > 1.6 ? 21 : 14, goals: goal ? [goal.id] : [] }, weight: (hawk - 0.4) * (ratio - 1) * (1 - rel / 50) * (cb ? 2 : 1) });
     }
     return out;
   },

@@ -3,6 +3,43 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 1.9.4: treaties and diplomacy
+
+The second part of 2.0 The great game.
+
+- **Treaties are real agreements.** Each has parties, terms, a start, an end date (or none) and a record of whether
+  it was kept. There are eight kinds:
+  - defence alliances and one-sided security guarantees;
+  - non-aggression pacts and border agreements;
+  - trade agreements: no import tariffs between the parties, and trade ties grow;
+  - basing rights, intelligence sharing and arms control between nuclear powers.
+- **The world of 2025.** The game starts with the treaties actually in force:
+  - NATO, the US alliances with Japan, Korea and Australia, and the Five Eyes;
+  - USMCA, Mercosur, CPTPP, RCEP, KORUS, the EU's agreements and about twenty other trade deals;
+  - US bases abroad, New START (due to expire in February 2026), and the Sino-Russian border and friendship treaties.
+- **Alliances mean something.**
+  - Allies cannot be attacked, and they deter aggressors: a would-be attacker reckons with its target's allies.
+  - When a member is attacked, its partners decide whether to stand by it. Those who do sanction the aggressor.
+    Those who don't lose their ally's trust, and the alliance's credibility suffers.
+  - Renouncing a treaty costs trust. Attacking a country within a year of tearing up a treaty with it is
+    remembered by everyone as a betrayal.
+- **Treaties run out.** At the end date they are renewed only if every party still wants them.
+- **Diplomatic actions.** A government spends diplomatic capital, which builds up faster for countries with
+  standing. The actions are:
+  - praise and condemnation, and summits (treaties come easier for two months afterwards);
+  - aid grants and loans between treasuries, repaid monthly (a default leaves a grievance);
+  - sanctions and their lifting, and expelling diplomats (which hurts the other side's spy networks);
+  - treaty offers and renunciations;
+  - ultimatums (if refused, they give a cause for war for 90 days);
+  - mediation of other countries' wars.
+- **Other governments decide on the merits.** Alliances need a common threat, close relations and trust.
+  Non-aligned countries such as India, Brazil and South Africa guard their independence. Nobody allies with a
+  friend's rival, or with a country too far away to defend. AI governments use the same actions on the same terms.
+- **Diplomacy screen.** It has a treaty browser and, for heads of government, a panel for conducting foreign
+  policy. The panel shows how keen the other side is on each kind of treaty.
+- Congress's alliance votes now create and end real treaties. Skipping a year statistically now runs diplomacy
+  as well.
+
 ### New in 1.9.3: relations 2.0
 
 The first part of 2.0 The great game.

@@ -33,6 +33,9 @@ import { energyDaily } from './energy';
 import { foodDaily } from './food';
 import { powerMonthly } from './worldHistory';
 import { budgetDaily } from './nationalBudget';
+import { treatiesDaily } from './treaties';
+import { relationsDaily } from './relations';
+import { diplomacyActionsDaily } from './diplomacyActions';
 
 const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 
@@ -126,6 +129,7 @@ export function skipMonth(w: World, target: number) {
     runQueue(w); // elections, war deadlines and anything else scheduled in the month, in order
     peopleMonth(w, days);
     // The monthly national turn (these run on the first of the month).
+    treatiesDaily(w); relationsDaily(w, days); diplomacyActionsDaily(w, days);
     strategicDaily(w); arsenalDaily(w); energyDaily(w); foodDaily(w); powerMonthly(w); budgetDaily(w);
     for (const c of census(w).all) { c.energy = Math.max(c.energy, 50); c.lastWorkDay = Math.floor(w.time / DAY) - 1; }
   }

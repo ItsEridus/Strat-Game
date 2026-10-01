@@ -14,6 +14,7 @@ import { IDEOLOGIES } from '../data/ideologies';
 import { controller, seatShare } from './query';
 import { nationScores } from './forces';
 import { activeWars, enemyOf } from './war';
+import { activeTreaties, hasTreaty, securityPartners } from './treaties';
 
 export interface Ties { trust: number; affinity: number; threat: number; interdep: number; grievance: number }
 export const blocsOf = (n: Nation): Bloc[] => BLOCS.filter((b) => b.members.includes(n.iso));
@@ -62,17 +63,19 @@ function assess(w: World, a: Nation, b: Nation, mil: Map<Id, number>, t: Ties) {
   const sa = seatShare(w, a), sb = seatShare(w, b);
   let sim = 0;
   for (const k of Object.keys(IDEOLOGIES)) sim += Math.min(sa[k] ?? 0, sb[k] ?? 0);
-  const blocs = sharedBlocs(a, b);
-  t.affinity = Math.round(Math.min(100, sim * 60 + (LANGUAGE[a.iso] === LANGUAGE[b.iso] ? 20 : 0) + blocs.length * 12 + (a.alliances.includes(b.id) ? 15 : 0)));
+  const blocs = sharedBlocs(a, b).filter((x) => x.kind === 'political');
+  const shared = activeTreaties(w, a.id).filter((x) => x.parties.includes(b.id)).length;
+  t.affinity = Math.round(Math.min(100, sim * 60 + (LANGUAGE[a.iso] === LANGUAGE[b.iso] ? 20 : 0) + blocs.length * 10 + shared * 8 + (a.alliances.includes(b.id) ? 10 : 0)));
   // Threat: their power against ours, how close they are, and their intentions (hostility, their leader, their wars on our friends).
   const ratio = (mil.get(b.id) ?? 0) / Math.max(0.05, mil.get(a.id) ?? 0.05);
   const near = borders(w, a.id, b.id) ? 1 : 0.45;
   const hostile = Math.max(0, -(b.relations[a.id]?.score ?? 0)) / 100;
   const lb = leaderProfile(w, b);
   const warsOnFriends = activeWars(w).some((x) => (x.att === b.id || x.def === b.id) && (a.alliances.includes(enemyOf(x, b.id)) || enemyOf(x, b.id) === a.id)) ? 0.4 : 0;
-  const allied = a.alliances.includes(b.id) || blocs.some((x) => x.kind === 'defence');
+  const allied = securityPartners(w, a.id, b.id);
   const la = leaderProfile(w, a);
-  t.threat = Math.round(Math.min(100, Math.min(3, ratio) * 25 * near * (0.3 + hostile + lb.hawk * 0.4 + warsOnFriends) * (allied ? 0.2 : 1) * (0.8 + la.hawk * 0.4)));
+  const limits = hasTreaty(w, a.id, b.id, 'armscontrol') ? 0.75 : 1;
+  t.threat = Math.round(Math.min(100, Math.min(3, ratio) * 25 * near * (0.3 + hostile + lb.hawk * 0.4 + warsOnFriends) * (allied ? 0.2 : 1) * limits * (0.8 + la.hawk * 0.4)));
 }
 
 /** The blended view (−100..100) that the relation score moves towards. */
@@ -101,7 +104,8 @@ export function addGrievance(w: World, victim: Id, against: Id, amount: number) 
 }
 
 /** Daily: reassess everyone, drift trust and grievances, and move relation scores towards the blend. */
-export function relationsDaily(w: World) {
+export function relationsDaily(w: World, days = 1) {
+  const k = (rate: number) => 1 - Math.pow(1 - rate, days);
   const mil = militaryWeights(w);
   buildBorders(w);
   for (const a of w.nations) {
@@ -111,14 +115,18 @@ export function relationsDaily(w: World) {
       const t = tiesOfPair(w, a, b);
       assess(w, a, b, mil, t);
       // Trust fades towards a baseline (allies keep a store of it); grievances fade over decades.
-      const base = sharedBlocs(a, b).some((x) => x.kind === 'defence' || x.kind === 'intel') ? 30 : 0;
-      t.trust += (base - t.trust) * 0.002;
-      t.grievance = Math.max(grievanceOf(a.iso, b.iso) * 0.5, t.grievance - 0.01);
+      const base = a.alliances.includes(b.id) || hasTreaty(w, a.id, b.id, 'intel') ? 30 : 0;
+      t.trust += (base - t.trust) * k(0.002);
+      t.grievance = Math.max(grievanceOf(a.iso, b.iso) * (hasTreaty(w, a.id, b.id, 'border') ? 0.25 : 0.5), t.grievance - 0.01 * days);
+      // Trade ties grow under a trade agreement and wither under an embargo.
+      const tieBase = tiesOf(a.iso, b.iso);
+      const tieTarget = a.embargoes.includes(b.id) || b.embargoes.includes(a.id) ? tieBase * 0.3 : hasTreaty(w, a.id, b.id, 'trade') ? Math.min(100, tieBase + 15) : tieBase;
+      t.interdep += (tieTarget - t.interdep) * k(0.005);
       const r = a.relations[b.id];
       if (!r) continue;
       const target = composite(w, a, b);
       if (!a.relInit) r.score = target; // the first day starts from the real picture
-      else r.score += (target - r.score) * 0.03;
+      else r.score += (target - r.score) * k(0.03);
     }
     a.relInit = true;
   }
