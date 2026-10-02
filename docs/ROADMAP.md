@@ -14,7 +14,7 @@ a **deeper life simulation** after the geopolitical thread (2.6.0 → 3.0.0, "Li
 
 Parts marked **GEO** are the geopolitical simulation. Every version ships as a series of playable patch
 releases (every push is a release); the minor version marks its theme complete. The parts of a theme ship as patches of the
-version before it (2.0's parts were 1.9.3 to 1.9.7, and 2.0.0 marked it complete), so 2.1's parts were 2.0.1 to 2.0.4, 2.2's were 2.1.1 to 2.1.3, 2.3's were 2.2.1 to 2.2.5, and 2.4's are 2.3.x.
+version before it (2.0's parts were 1.9.3 to 1.9.7, and 2.0.0 marked it complete), so 2.1's parts were 2.0.1 to 2.0.4, 2.2's were 2.1.1 to 2.1.3, 2.3's were 2.2.1 to 2.2.5, 2.4's were 2.3.1 to 2.3.5, and 2.5's are 2.4.x.
 
 ## At a glance
 
@@ -30,8 +30,8 @@ version before it (2.0's parts were 1.9.3 to 1.9.7, and 2.0.0 marked it complete
 | 2.1.0 | **Shadows** (GEO 5: intelligence gets better) | Services that grow and learn; governments act on estimates, so surprise and miscalculation happen | ✅ done |
 | 2.2.0 | **War & peace** (GEO 6: realistic wars) | Wars with causes, escalation, fronts, mobilisation, exhaustion, negotiated endings and long aftermaths | ✅ done |
 | 2.3.0 | **Rise & fall** (GEO 7: regimes, secession, new nations) | Coups, revolutions, democratisation and backsliding, secession, civil wars, new and vanished states | ✅ done |
-| 2.4.0 | **Frontiers** (GEO 8: technology, cyber and space) | A near-future technology race that changes economies, armies and spying | ▶ in progress: the technology tree (2.3.1), the innovation system (2.3.2), cyber commands (2.3.3), space (2.3.4), automation and society (2.3.5) |
-| 2.5.0 | **A world of consequences** (GEO 9: world economy, climate, soft power) | Debt crises, central banks, climate over decades, soft power; the decades-long campaign and the World Almanac | planned |
+| 2.4.0 | **Frontiers** (GEO 8: technology, cyber and space) | A near-future technology race that changes economies, armies and spying | ✅ done |
+| 2.5.0 | **A world of consequences** (GEO 9: world economy, climate, soft power) | Debt crises, central banks, climate over decades, soft power; the decades-long campaign and the World Almanac | ▶ next |
 | 2.6.0 | **Life 2.0: the mind** | Personality that grows from experience, values, mental health in depth, habits and addictions, therapy | planned |
 | 2.7.0 | **Life 2.0: the social fabric** | Friend circles, rivals, communities, relationships under each country's laws, custody and blended families, family gatherings | planned |
 | 2.8.0 | **Life 2.0: the everyday** | A day planner, commuting and cars, cooking, sleep, fitness and the body, shopping, chores | planned |
@@ -847,6 +847,24 @@ improve or decay, and the power ranking moves for reasons the player can read.
 - **Stories:** "The breakthrough", "Zero-day", "Launch window".
 - **Done when:** technology leadership shifts with investment over decades, and a technology lead shows in the
   economy, armed forces and intelligence.
+- **Progress:**
+  - 2.3.1: the technology tree (26 technologies, breakthroughs, diffusion and export controls, effects on growth,
+    forces, intelligence, health and energy).
+  - 2.3.2: the innovation system (government research as a career, the research workforce, patents and
+    royalties, technology partnerships, stolen designs).
+  - 2.3.3: cyber commands (grids, ransomware, hack and leak, uncertain attribution).
+  - 2.3.4: space (agencies, constellations and their effects, launchers, anti-satellite weapons and debris,
+    prestige missions).
+  - 2.3.5: automation and society (machines replace routine jobs, displaced workers, backlash and robot taxes).
+  - 2.4.0: the astronaut corps and crews, the stories, the technology race table, and calibration. A country
+    that triples its research spending overtakes the leaders within thirty years, makes most of the world's
+    breakthroughs, and grows faster.
+  - **Complete in 2.4.0.**
+- **Not yet built, carried forward:**
+  - a "Zero-day" story (replaced by "The machines are coming"); hackers remain intelligence officers in the
+    cyber directorate;
+  - tech founders beyond founding firms in electronics and medicine;
+  - semiconductor chokepoints as a supply chain of their own (→ 2.5, with the world economy).
 
 ## 2.5.0 — A world of consequences (GEO 9: world economy, climate, soft power; the decades campaign)
 

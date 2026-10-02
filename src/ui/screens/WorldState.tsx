@@ -9,6 +9,11 @@ import { STRATEGY_INFO } from '../../sim/nationalBudget';
 import type { World } from '../../sim/types';
 import { ActBtn, Empty, Help, NationChip, Num, Panel, RegionLink, Sparkline } from '../common';
 import { player } from '../../sim/query';
+import { researchMass, techStanding } from '../../sim/technology';
+import { capsOf, techAvg } from '../../sim/strategic';
+import { cyberOffence } from '../../sim/cyber';
+import { spaceCapability } from '../../sim/space';
+import { TECH } from '../../data/techTree';
 import { fmtAmt } from '../../engine/money';
 import { HAZARDS } from '../../data/hazards';
 import { KIND_ICON, activeCrises, donate, joinProtest, joinProtestCheck, lockdownCheck, monthOf, reliefCheck, toggleLockdown, volunteer } from '../../sim/dynamics';
@@ -61,12 +66,29 @@ export function WorldState({ w }: { w: World }) {
         }) : <Empty>Nothing major is happening right now.</Empty>}
       </Panel>
 
+      <Panel title="🔬 The technology race" class="wide"><TechRace w={w} /></Panel>
       <Panel title="🏛️ Rise & fall" class="wide"><RiseFall w={w} /></Panel>
 
       <Panel title="🗓️ Recent history">
         {past.length ? <ul class="small">{past.map((c) => <li>{KIND_ICON[c.kind]} {c.name} ({fmtDay(c.start)} – {fmtDay(c.end)}){c.deaths ? `, ${c.deaths.toLocaleString()} dead` : ''}</li>)}</ul> : <Empty>No past events yet.</Empty>}
       </Panel>
     </div>
+  );
+}
+
+/** The technology race: research effort, technologies, world firsts, cyber and space, country by country. */
+function TechRace({ w }: { w: World }) {
+  const rows = w.nations.filter((n) => !n.exile).map((n) => ({ n, st: techStanding(w, n), mass: researchMass(n, w), avg: techAvg(capsOf(w, n)), cyb: cyberOffence(w, n), sp: spaceCapability(w, n) }))
+    .sort((a, b) => b.avg - a.avg || a.n.id - b.n.id);
+  const recent = Object.entries(w.techFirsts ?? {}).sort((a, b) => b[1].t - a[1].t).slice(0, 6);
+  return (
+    <>
+      <table class="table compact small"><thead><tr><th>Country</th><th>Technology</th><th>Research effort</th><th>Frontier tech</th><th>World firsts</th><th>Cyber offence</th><th>Space</th></tr></thead><tbody>
+        {rows.map((r) => <tr><td><NationChip w={w} id={r.n.id} /></td><td>{r.avg.toFixed(1)}</td><td>{r.mass.toFixed(1)}</td><td>{r.st.held}</td><td>{r.st.firsts}</td><td>{Math.round(r.cyb)}</td><td>{Math.round(r.sp)}</td></tr>)}
+      </tbody></table>
+      {recent.length > 0 && <ul class="small">{recent.map(([id, f]) => <li><span class="muted">{fmtDay(f.t)}</span> {TECH[id]?.icon} {TECH[id]?.name}: first achieved by {w.nations[f.nation].name}</li>)}</ul>}
+      <Help>Technology is the average of the six domains (100 = the 2025 leader in each). Research effort is R&D spending times the size of the economy times the research workforce: spending more on research moves a country up the table over the decades, and a lead shows in growth, armed forces, intelligence and space.</Help>
+    </>
   );
 }
 

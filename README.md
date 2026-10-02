@@ -208,6 +208,14 @@ legitimacy follows how they perform:
 None of it is scripted: it comes from how countries are governed and how they fare. (State of the World → Rise &
 fall; Country screen → regime.)
 
+**Frontiers.** A near-future technology tree runs from 2025 to 2075: AI agents, quantum computers, drone swarms,
+gene therapy, small reactors, fusion, reusable rockets and a Moon base. Countries race for the breakthroughs with
+their research spending, national laboratories and firms' scientists; others adopt them, buy the patents or steal
+the designs. Cyber commands black out grids and leak stolen material before elections, and nobody is quite sure
+who did it. Space agencies fly satellites that sharpen spying and armies, shoot them down in wartime, and send
+astronauts (perhaps you) to the Moon. Machines take over routine jobs, and the public pushes back. (Country screen
+→ Technology and Space; Intelligence → Cyber command; State of the World → The technology race.)
+
 **The economy.** Money is real:
 - Every country uses its own currency at real early-2025 exchange rates. Pay follows each country's real median
   wage and minimum wage, so a typical day's pay is about $200 in the United States and ₹780 in India, and prices

@@ -64,8 +64,10 @@ export function strategicMonth(w: World, n: Nation, leaders: Record<TechDomain, 
   n.healthBonus = Math.max(-10, Math.min(15, (n.healthBonus ?? 0) + (healthFactor(n) - 1) * 0.25));
   measure(w, n, c);
   // Technology: R&D adds, with diminishing returns; the leaders' know-how spreads through trade.
+  let extra = 0; // technology gained by research above (or below) the country's usual effort
   for (const d of TECH_DOMAINS) {
     const own = ((b.rd * researchFactor(n)) / 3) * 0.12 * (1 - c.tech[d] / 130);
+    extra += ((b.rd * (researchFactor(n) - 1)) / 3) * 0.12 * (1 - c.tech[d] / 130) / TECH_DOMAINS.length;
     const spread = Math.max(0, leaders[d] - c.tech[d]) * 0.004 * (0.5 + c.inst.effectiveness * 0.5);
     c.tech[d] = Math.round((c.tech[d] + own + spread) * 100) / 100;
   }
@@ -82,6 +84,8 @@ export function strategicMonth(w: World, n: Nation, leaders: Record<TechDomain, 
   const gap = Math.max(0, 1 - techAvg(c) / lead);
   if (!base.gap) base.gap = gap || 1e-6;
   why.push(['catching up', (gap - base.gap) * 6]);
+  // Innovation: research beyond the usual effort is growth of its own (catching up only counts imitation).
+  if (Math.abs(extra) > 1e-4) why.push(['research', extra * 12 * 1.5]);
   if (c.cohesion < 45) why.push(['unrest', (c.cohesion - 45) * 0.06]);
   const atWar = Object.values(w.wars).some((x) => x.status === 'active' && (x.att === n.id || x.def === n.id));
   if (atWar) why.push(['war', -1.5]);

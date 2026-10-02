@@ -3,6 +3,33 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.4.0: Frontiers
+
+2.4 is complete. The near future arrives:
+- the technology tree (2.3.1);
+- the innovation system (2.3.2);
+- cyber commands (2.3.3);
+- space (2.3.4);
+- automation and society (2.3.5).
+
+This release adds:
+
+- **The astronaut corps,** a new public service with a career from astronaut candidate to chief of the astronaut
+  office, in countries that launch their own crews. Astronauts fly the crewed prestige missions, and the crew
+  becomes famous.
+- **Three stories:**
+  - *The breakthrough* (for researchers): publish openly, patent it and take a grant, or give it to the defence
+    ministry.
+  - *The machines are coming* (for workers in routine jobs once automation arrives): retrain, organise with your
+    colleagues, or keep your head down.
+  - *Launch window* (for astronauts): go, call a hold, or give your seat to a colleague.
+- **The technology race** on the State of the World screen: every country's technology level, research effort,
+  frontier technologies, world firsts, cyber offence and space capability, with the latest breakthroughs.
+- **Research pays.** Research spending above a country's usual effort now adds to growth directly. Before, a
+  country that pulled ahead through its own research lost "catching up" growth and gained nothing for it. In a
+  30-year test, Japan tripling its research spending overtakes the United States in technology, makes eight of
+  the world's breakthroughs, and ends with 24% more output per worker.
+
 ### New in 2.3.5: automation and society
 
 The fifth part of 2.4 Frontiers.

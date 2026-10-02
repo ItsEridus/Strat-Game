@@ -3,6 +3,7 @@
 // salary from the national treasury (with work tax, like any wage). Each post
 // has a ladder of grades; promotions come with service, good work and the
 // qualifications for the grade. Staffing feeds back into the service itself.
+import { spaceOf } from './space';
 import { scoped } from './scope';
 import { hasQuirk } from './nature';
 import type { Citizen, Id, World } from './types';
@@ -24,7 +25,7 @@ import { leaveCheck } from './health';
 import { contribute } from './pensions';
 import { recordPay } from './wages';
 
-export type Service = 'teacher' | 'nurse' | 'doctor' | 'clerk' | 'engineer' | 'prosecutor' | 'defender' | 'judge' | 'warden' | 'procurement' | 'emergency' | 'meteorology' | 'diplomat' | 'tradeneg' | 'intlcivil' | 'research';
+export type Service = 'teacher' | 'nurse' | 'doctor' | 'clerk' | 'engineer' | 'prosecutor' | 'defender' | 'judge' | 'warden' | 'procurement' | 'emergency' | 'meteorology' | 'diplomat' | 'tradeneg' | 'intlcivil' | 'research' | 'astronaut';
 export interface Post { kind: Service; region: Id; grade: number; since: number; promoted: number; shifts: number; lastDay: number }
 
 interface ServiceDef { label: string; icon: string; place: string; ladder: string[]; pay: number[]; needs: { level: EduLevel; field?: Field[] }[]; per: number; skill: 'lead' | 'end' | 'eco' | 'cons' | 'acc' }
@@ -76,6 +77,10 @@ export const SERVICES: Record<Service, ServiceDef> = {
   research: { label: 'Government research', icon: '🔬', place: 'national laboratory', per: 250, skill: 'acc',
     ladder: ['Research assistant', 'Researcher', 'Senior researcher', 'Principal investigator', 'Laboratory director'], pay: [1.5, 2.1, 2.8, 3.6, 4.6],
     needs: [{ level: 'bachelor', field: ['science', 'engineering', 'medicine'] }, { level: 'master', field: ['science', 'engineering', 'medicine'] }, { level: 'doctorate', field: ['science', 'engineering', 'medicine'] }, { level: 'doctorate', field: ['science', 'engineering', 'medicine'] }, { level: 'doctorate', field: ['science', 'engineering', 'medicine'] }] },
+  // The astronaut corps (2.4): only countries that launch on their own rockets keep one; astronauts fly crewed missions.
+  astronaut: { label: 'Astronaut corps', icon: '👩‍🚀', place: 'space agency', per: 3000, skill: 'end',
+    ladder: ['Astronaut candidate', 'Astronaut', 'Senior astronaut', 'Mission commander', 'Chief of the astronaut office'], pay: [2.2, 2.8, 3.4, 4.2, 5.0],
+    needs: [{ level: 'bachelor', field: ['science', 'engineering', 'medicine'] }, { level: 'bachelor', field: ['science', 'engineering', 'medicine'] }, { level: 'master', field: ['science', 'engineering', 'medicine'] }, { level: 'master', field: ['science', 'engineering', 'medicine'] }, { level: 'master', field: ['science', 'engineering', 'medicine'] }] },
   diplomat: { label: 'Foreign service', icon: '🌐', place: 'foreign ministry', per: 400, skill: 'lead',
     ladder: ['Attaché', 'Third secretary', 'First secretary', 'Counsellor', 'Ambassador'], pay: [1.6, 2.1, 2.8, 3.6, 4.8],
     needs: [{ level: 'bachelor' }, { level: 'bachelor' }, { level: 'master' }, { level: 'master' }, { level: 'master' }] },
@@ -98,11 +103,12 @@ export function maxGrade(c: Citizen, kind: Service): number {
 }
 /** Posts in a region: one per `per` residents (about 13% of people work in these services, as in OECD countries); small places share a teacher, a nurse and a clerk. */
 /** Courts sit in the larger places: the smallest number of residents for each court post. */
-const COURT_MIN: Partial<Record<Service, number>> = { prosecutor: 30, defender: 30, judge: 30, warden: 30, procurement: 40, emergency: 20, meteorology: 40, diplomat: 50, tradeneg: 60, intlcivil: 60, research: 50 };
+const COURT_MIN: Partial<Record<Service, number>> = { prosecutor: 30, defender: 30, judge: 30, warden: 30, procurement: 40, emergency: 20, meteorology: 40, diplomat: 50, tradeneg: 60, intlcivil: 60, research: 50, astronaut: 120 };
 export function postsIn(w: World, region: Id, kind: Service): number {
   const n = residents(w, region).length;
   const core = kind === 'teacher' || kind === 'nurse' || kind === 'clerk';
   const court = COURT_MIN[kind];
+  if (kind === 'astronaut' && !spaceOf(w.nations[w.regions[region].owner]).launcher) return 0; // only countries that launch their own crews
   if (court != null) return n >= court ? Math.max(1, Math.round(n / SERVICES[kind].per)) : 0;
   return Math.max(core && n >= 6 ? 1 : 0, Math.round(n / SERVICES[kind].per));
 }

@@ -11,7 +11,7 @@
 //   Kessler syndrome). Debris falls out of orbit slowly.
 // - Prestige missions (a space station, an asteroid sample, astronauts on the Moon, a
 //   probe to the outer planets) lift approval at home and standing abroad; some fail.
-import type { Id, Nation, World } from './types';
+import type { Citizen, Id, Nation, World } from './types';
 import { dateAt } from '../engine/calendar';
 import { DAY } from '../engine/clock';
 import { notify, record } from '../engine/events';
@@ -127,6 +127,11 @@ function asat(w: World) {
   }
 }
 
+/** A mission's crew: the country's astronauts, most senior first (up to three). */
+export function crewFor(w: World, n: Nation): Citizen[] {
+  return Object.values(w.citizens).filter((c) => !c.gone && c.nation === n.id && c.post?.kind === 'astronaut').sort((a, b) => (b.post!.grade - a.post!.grade) || a.id - b.id).slice(0, 3);
+}
+
 /** Prestige missions. */
 function missions(w: World) {
   for (const n of w.nations) {
@@ -153,9 +158,15 @@ export function flyMission(w: World, n: Nation, m: Mission): boolean {
   }
   s.missions[m.id] = w.time;
   n.approval = Math.min(100, n.approval + 3);
+  const crew = m.crewed ? crewFor(w, n) : [];
+  for (const c of crew) {
+    c.sec.fame += 8; c.influence += 15;
+    c.flags.spaceflights = (c.flags.spaceflights ?? 0) + 1;
+    if (c.player) notify(w, 'personal', `${m.icon} You flew on ${n.adj} ${m.name.toLowerCase()}. The world watched.`, { critical: true });
+  }
   const first = !w.nations.some((o) => o.id !== n.id && o.space?.missions[m.id] != null);
   for (const o of w.nations) { const rel = o.relations[n.id]; if (o.id !== n.id && !o.exile && rel) rel.score = Math.min(100, rel.score + (first ? 3 : 1)); }
-  const text = `${m.icon} ${n.name} achieved ${m.name.toLowerCase()}${first ? ', a first for any country' + (m.id === 'moon' ? ' since Apollo' : '') : ''}.`;
+  const text = `${m.icon} ${n.name} achieved ${m.name.toLowerCase()}${first ? ', a first for any country' + (m.id === 'moon' ? ' since Apollo' : '') : ''}.${crew.length ? ` The crew: ${crew.map((c) => c.name).join(', ')}.` : ''}`;
   record(w, 'politics', text, { nation: n.id, important: true });
   (n.chronicle ??= []).push({ t: w.time, text });
   if (pl.nation === n.id) notify(w, 'politics', text, { critical: first });
