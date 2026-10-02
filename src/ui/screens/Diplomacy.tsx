@@ -96,7 +96,7 @@ function Treaties({ w, id }: { w: World; id: Id }) {
   );
 }
 
-const ACTIONS: DipAction[] = ['praise', 'condemn', 'summit', 'aid', 'loan', 'sanction', 'liftSanctions', 'expel', 'treaty', 'renounce', 'ultimatum', 'mediate', 'arm'];
+const ACTIONS: DipAction[] = ['praise', 'condemn', 'summit', 'aid', 'loan', 'sanction', 'liftSanctions', 'expel', 'treaty', 'renounce', 'ultimatum', 'mediate', 'arm', 'recognise', 'unrecognise'];
 
 function Actions({ w, id }: { w: World; id: Id }) {
   const n = w.nations[id];

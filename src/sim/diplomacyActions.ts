@@ -22,11 +22,11 @@ import { natref, player } from './query';
 import { nationalStaffing } from './services';
 import { relation } from './congress';
 import { addGrievance, leaderProfile, noteTrust, prestigeOf, tiesOfPair } from './relations';
-import { TREATY_INFO, activeTreaties, alliedPower, allTreaties, offerTreaty, proposeTreatyCheck, willingness, renounce, treatyBetween, type TreatyKind } from './treaties';
-import { activeWars, militaryPower, peaceAppetite, settle, warBetween } from './war';
+import { TREATY_INFO, activeTreaties, alliedPower, allTreaties, offerTreaty, proposeTreatyCheck, recognises, sharedEnemy, willingness, renounce, treatyBetween, type TreatyKind } from './treaties';
+import { activeWars, militaryPower, neighborNations, peaceAppetite, settle, warBetween } from './war';
 import { makeFormation } from './forces';
 
-export type DipAction = 'praise' | 'condemn' | 'summit' | 'aid' | 'loan' | 'sanction' | 'liftSanctions' | 'expel' | 'treaty' | 'renounce' | 'ultimatum' | 'mediate' | 'arm';
+export type DipAction = 'praise' | 'condemn' | 'summit' | 'aid' | 'loan' | 'sanction' | 'liftSanctions' | 'expel' | 'treaty' | 'renounce' | 'ultimatum' | 'mediate' | 'arm' | 'recognise' | 'unrecognise';
 export type Demand = 'liftSanctions' | 'endWar' | 'leaveAlliance';
 export interface DipParams { target: Id; kind?: TreatyKind; treaty?: Id; demand?: Demand; war?: Id; other?: Id }
 export interface IntlLoan { id: Id; from: Id; to: Id; left: number; monthly: number; defaulted?: boolean; imf?: boolean; reparations?: boolean }
@@ -45,6 +45,8 @@ export const DIP_INFO: Record<DipAction, { name: string; capital: number; cooldo
   renounce: { name: 'Renounce a treaty', capital: 10, cooldown: 0, desc: 'Walk away from an agreement: partners trust you less, and attacking them within a year is a betrayal.' },
   ultimatum: { name: 'Issue an ultimatum', capital: 30, cooldown: 180, desc: 'A demand backed by force: they give in if weaker and cautious; refusal gives you a cause for war for 90 days.' },
   mediate: { name: 'Mediate a war', capital: 30, cooldown: 30, desc: 'Offer to broker a ceasefire between two countries at war; success raises your standing.' },
+  recognise: { name: 'Recognise as a state', capital: 15, cooldown: 30, desc: 'Recognise a breakaway state: treaties with it become possible, it is grateful, and the country it broke from is angered.' },
+  unrecognise: { name: 'Withdraw recognition', capital: 10, cooldown: 365, desc: 'No longer recognise a breakaway state: its treaties with you lapse; the country it broke from is pleased.' },
   arm: { name: 'Arm the rebels', capital: 20, cooldown: 60, desc: 'Send weapons and money (3% of the treasury\'s gold) to rebels or a breakaway state fighting its government: their forces grow stronger, and the government becomes your enemy.' },
 };
 export const DEMAND_NAME: Record<Demand, string> = { liftSanctions: 'lift their sanctions on us', endWar: 'end the war they started', leaveAlliance: 'leave their alliance with our rival' };
@@ -89,6 +91,8 @@ export function dipCheck(w: World, n: Nation, a: DipAction, p: DipParams): strin
       if ((n.wallet[GOLD] ?? 0) < 20000) return 'The treasury has too little gold.';
       return null;
     }
+    case 'recognise': return t.parent == null ? `${t.name} is not a breakaway state: every country recognises it.` : recognises(n, t) ? `You already recognise ${t.name}.` : null;
+    case 'unrecognise': return t.parent == null ? `${t.name} is not a breakaway state.` : !recognises(n, t) ? `You do not recognise ${t.name}.` : t.parent === n.id && (t.recognisedBy ?? []).includes(n.id) ? 'You agreed to its independence: you cannot take that back.' : null;
     case 'sanction': return n.embargoes.includes(t.id) ? 'Sanctions are already in force.' : null;
     case 'liftSanctions': return n.embargoes.includes(t.id) ? null : 'No sanctions to lift.';
     case 'treaty': return p.kind ? proposeTreatyCheck(w, n, t, p.kind) : 'Pick a kind of treaty.';
@@ -124,6 +128,23 @@ export function doDiplomacy(w: World, n: Nation, a: DipAction, p: DipParams): Re
   spend(w, n, a, p.target);
   const t = w.nations[p.target];
   switch (a) {
+    case 'recognise': {
+      (t.recognisedBy ??= []).push(n.id);
+      relation(w, t.id, n.id, 12, 'recognised us');
+      const parent = w.nations[t.parent!];
+      if (parent && !parent.exile) relation(w, parent.id, n.id, -10, `recognised ${t.name}`);
+      note(w, n, `🏳️ ${n.name} recognised ${t.name} as an independent state (${t.recognisedBy.length} countries now do).`, true, t.id);
+      return ok(`${t.name} is a state in your eyes now. ${parent && !parent.exile ? `${parent.name} protested.` : ''}`.trim());
+    }
+    case 'unrecognise': {
+      t.recognisedBy = (t.recognisedBy ?? []).filter((x) => x !== n.id);
+      for (const tr of activeTreaties(w, n.id)) if (tr.parties.includes(t.id)) renounce(w, n, tr, 'recognition withdrawn');
+      relation(w, t.id, n.id, -20, 'withdrew recognition');
+      const parent = w.nations[t.parent!];
+      if (parent && !parent.exile) relation(w, parent.id, n.id, 6, `withdrew recognition of ${t.name}`);
+      note(w, n, `🏳️ ${n.name} withdrew its recognition of ${t.name}.`, true, t.id);
+      return ok(`You no longer recognise ${t.name}.`);
+    }
     case 'praise': relation(w, n.id, t.id, 3, 'praised us'); note(w, n, `💬 ${n.name} praised ${t.name}.`, false, t.id); return ok(`${t.name} welcomed the words.`);
     case 'condemn': {
       relation(w, n.id, t.id, -6, 'condemned us');
@@ -300,16 +321,28 @@ export function aiChoice(w: World, n: Nation): [DipAction, DipParams] | null {
     // Allies of victims sanction the aggressor.
     if (!n.embargoes.includes(t.id) && activeWars(w).some((x) => x.att === t.id && n.alliances.includes(x.def))) opts.push(['sanction', { target: t.id }, 2]);
     // Treaties: alliances against a shared threat, trade deals with partners, pacts with the feared.
-    for (const kind of ['defence', 'trade', 'nonaggression', 'intel', 'armscontrol', 'border', 'tech'] as TreatyKind[]) {
+    for (const kind of ['defence', 'trade', 'nonaggression', 'intel', 'armscontrol', 'border', 'tech', 'offensive', 'access'] as TreatyKind[]) {
       if (proposeTreatyCheck(w, n, t, kind)) continue;
       // Only offer what it wants itself and the other might accept.
       if (recentTreaty) break; // a government concludes at most one new treaty a year
       if (willingness(w, n, t, kind).p < 0.55) continue; // only what it wants itself
       const p = kind === 'defence' ? 0.8 : kind === 'trade' ? (ties.interdep > 40 ? 0.4 : 0) : kind === 'nonaggression' ? (ties.threat > 35 ? 0.4 : 0)
-        : kind === 'intel' ? (n.alliances.includes(t.id) ? 0.2 : 0) : kind === 'armscontrol' ? (ties.threat > 30 ? 0.3 : 0) : kind === 'tech' ? (rel > 40 ? 0.15 : 0) : (ties.grievance > 10 ? 0.2 : 0);
+        : kind === 'intel' ? (n.alliances.includes(t.id) ? 0.2 : 0) : kind === 'armscontrol' ? (ties.threat > 30 ? 0.3 : 0) : kind === 'tech' ? (rel > 40 ? 0.15 : 0)
+        : kind === 'offensive' ? (lp.hawk > 0.55 && sharedEnemy(w, n, t).depth > 40 ? 0.25 : 0) : kind === 'access' ? (n.alliances.includes(t.id) && neighborNations(w, t.id).some((x) => x !== n.id && (n.relations[x]?.score ?? 0) < -40 && !neighborNations(w, n.id).includes(x)) ? 0.15 : 0) : (ties.grievance > 10 ? 0.2 : 0);
       if (p > 0) opts.push(['treaty', { target: t.id, kind }, p]);
     }
     if (ties.trust < -40 && rel < -50) opts.push(['expel', { target: t.id }, 0.02]);
+    // Breakaway states: recognised over the years by more and more countries (sooner by the parent's rivals,
+    // and by everyone once the parent itself has accepted it); withdrawn when it becomes an enemy.
+    if (t.parent != null && t.parent !== n.id) {
+      const parent = w.nations[t.parent];
+      const years = (w.time - (t.founded ?? w.time)) / (365 * DAY);
+      const relP = parent && !parent.exile ? n.relations[parent.id]?.score ?? 0 : -60;
+      if (!recognises(n, t)) { const pr = 0.01 + Math.min(10, years) * 0.02 + (rel - relP) / 300 + (parent && recognises(parent, t) ? 0.6 : 0); if (pr > 0.03) opts.push(['recognise', { target: t.id }, pr]); }
+      else if (rel < -60 && !(parent && recognises(parent, t))) opts.push(['unrecognise', { target: t.id }, 0.03]);
+    }
+    // The country it broke from accepts it in the end, after years without fighting.
+    if (t.parent === n.id && !recognises(n, t) && !warBetween(w, n.id, t.id) && w.time - (t.founded ?? w.time) > 5 * 365 * DAY) opts.push(['recognise', { target: t.id }, Math.max(0, 0.02 + rel / 400)]);
     if (lp.hawk > 0.6 && t.embargoes.includes(n.id) && militaryPower(w, n.id) > believedPower(w, n.id, t.id) * 1.5) opts.push(['ultimatum', { target: t.id, demand: 'liftSanctions' }, 0.05]);
   }
   // Proxy wars: arm rebels fighting a rival's government.

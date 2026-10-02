@@ -3,6 +3,24 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 3.0.1: alliances and recognition
+
+The first part of 3.1 Diplomacy completed: what 2.0 left for later.
+
+- **Offensive alliances.** A pact to go to war together, made between governments that share a deep enemy (hawks
+  sign them; free countries with a free press rarely do).
+  - When one party starts a war, its partners are called on. One that can reach the enemy joins the war; one that
+    cannot cuts off the enemy's trade.
+  - A partner that refuses loses its ally's trust, and the alliance counts for less next time.
+  - Governments weighing a war count on their partners.
+- **Military access.** A host can let another country's armies cross its territory, so they can reach a country
+  they do not border. Basing agreements give the same right.
+- **Recognition.** A breakaway state is a state only to the countries that recognise it:
+  - you cannot sign treaties with a state you do not recognise;
+  - two new diplomatic actions, **Recognise as a state** and **Withdraw recognition**;
+  - AI governments recognise new states over the years, sooner when they dislike the country it broke away from,
+    and all at once if that country accepts it. A parent country may accept it after five years without fighting.
+
 ### New in 3.0.0: Life 2.0, generations
 
 3.0 is complete: play a family across a century. Its parts:

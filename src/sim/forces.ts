@@ -48,6 +48,7 @@ import { kmBetween } from './travel';
 import { buyBest } from './market';
 import { refValue } from '../data/items';
 import { AUTH_ANY, withAuthority } from './worldgen';
+import { hasAccess } from './treaties';
 
 // ---------- geography helpers ----------
 
@@ -251,7 +252,7 @@ export function armyPath(w: World, f: Formation, to: Id): Id[] {
   const q = [f.loc];
   const passable = (from: Id, id: Id) => {
     const ctl = controller(w.regions[id]);
-    const ok_ = friendly(w, f.nation, ctl) || (id === to && !!warBetween(w, f.nation, ctl));
+    const ok_ = friendly(w, f.nation, ctl) || hasAccess(w, f.nation, ctl) || (id === to && !!warBetween(w, f.nation, ctl)); // (military access, 3.0.1)
     if (!ok_) return false;
     if (isRoute(from, id)) { const zones = [...new Set([...seasOf(from), ...seasOf(id)])]; return zones.some((z) => navalPower(w, f.nation, z) > 0 && !activeWars(w).some((x) => (x.att === f.nation || x.def === f.nation) && superiority(w, enemyOf(x, f.nation), f.nation, z))); }
     return true;

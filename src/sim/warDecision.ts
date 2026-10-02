@@ -16,7 +16,7 @@ import { chance } from '../engine/rng';
 import { controller } from './query';
 import { believed, believedPower } from './beliefs';
 import { leaderProfile, tiesOfPair } from './relations';
-import { alliedPower } from './treaties';
+import { alliedPower, offensivePower } from './treaties';
 import { capsOf, historyPace } from './strategic';
 import { strategicOf } from './forceStructure';
 import { activeWars, declareWar, militaryPower, neighborNations, warCheck } from './war';
@@ -29,7 +29,7 @@ const resourceValue = (r: { res: Record<string, number | undefined>; pop: number
 
 /** The case for war on `t`, as `n`'s government sees it. */
 export function warCase(w: World, n: Nation, t: Nation): WarCase {
-  const mine = militaryPower(w, n.id) + alliedPower(w, n.id) * 0.5;
+  const mine = militaryPower(w, n.id) + alliedPower(w, n.id) * 0.5 + offensivePower(w, n.id, t.id); // partners in an offensive alliance (3.0.1)
   const theirs = believedPower(w, n.id, t.id) + alliedPower(w, t.id, n.id);
   const ratio = mine / Math.max(1, theirs);
   const pWin = 1 / (1 + Math.exp(-3 * Math.log(Math.max(0.05, ratio))));

@@ -627,6 +627,7 @@ export interface War {
   extensions?: number; // times the deadline passed with both sides still fighting (2.2)
   frozen?: number; // when it froze along the front line (2.2)
   peacekeepers?: { until: number; by: Id[] }; // a UN force holding the line (2.3)
+  joined?: Id; // a war joined under an offensive alliance: the partner's war it joined (3.0.1)
   civilDone?: boolean; // a civil war whose outcome (crushed, rebel victory, partition) has been settled (2.3)
   log?: { t: number; text: string }[]; // escalations and reviews (2.2)
   reparations?: { from: Id; to: Id; amount: number }; // (2.2)

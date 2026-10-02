@@ -19,18 +19,19 @@ import { DAY } from '../engine/clock';
 import { timeOfDate } from '../engine/calendar';
 import { nid, notify, record } from '../engine/events';
 import { chance } from '../engine/rng';
-import { player } from './query';
+import { controller, player } from './query';
 import { relation } from './congress';
 import { leaderProfile, noteTrust, tiesOfPair } from './relations';
-import { militaryPower } from './war';
+import { declareWar, militaryPower, warBetween, warCheck } from './war';
 import { strategicOf } from './forceStructure';
+import { capsOf } from './strategic';
 import { nationalStaffing } from './services';
 
-export type TreatyKind = 'defence' | 'guarantee' | 'nonaggression' | 'trade' | 'basing' | 'intel' | 'armscontrol' | 'border' | 'tech' | 'climate';
+export type TreatyKind = 'defence' | 'guarantee' | 'nonaggression' | 'trade' | 'basing' | 'intel' | 'armscontrol' | 'border' | 'tech' | 'climate' | 'offensive' | 'access';
 export interface Treaty {
   id: Id; kind: TreatyKind; name: string; parties: Id[];
   guarantor?: Id; // guarantee: the country giving it
-  host?: Id; // basing: the country hosting the bases
+  host?: Id; // basing and military access: the country hosting the bases or opening its territory
   signed: number; until: number | null;
   status: 'active' | 'lapsed' | 'ended' | 'broken';
   ended?: number; endedBy?: Id; why?: string;
@@ -50,6 +51,8 @@ export const TREATY_INFO: Record<TreatyKind, { name: string; icon: string; years
   border: { name: 'Border agreement', icon: '📍', years: null, effect: 'A settled border: old territorial grievances between the parties are halved.' },
   climate: { name: 'Climate agreement', icon: '🌡️', years: null, effect: 'Members cut the fossil share of their energy faster, as far as their leaders mean it.' },
   tech: { name: 'Technology partnership', icon: '🔬', years: 10, effect: 'Joint research: partners adopt each other\'s technologies faster and never keep them from each other.' },
+  offensive: { name: 'Offensive alliance', icon: '⚔️', years: 5, effect: 'A pact to go to war together: when one party starts a war, the others are asked to join it (or to cut off the enemy), and a party that refuses loses its partner\'s trust. Governments count on their partners when weighing a war.' },
+  access: { name: 'Military access', icon: '🛤️', years: 5, effect: 'The host lets the guest\'s armies cross its territory, so the guest can reach countries it does not border.' },
 };
 
 /** Countries with a tradition of non-alignment (no formal military alliances). */
@@ -172,6 +175,17 @@ export function seedTreaties(w: World) {
 
 // ---------- will they sign? ----------
 
+/** The country two governments both dislike most (and how much: the lesser of their two hostilities). */
+export function sharedEnemy(w: World, a: Nation, b: Nation): { id: Id | null; depth: number } {
+  let best: { id: Id | null; depth: number } = { id: null, depth: 0 };
+  for (const x of w.nations) {
+    if (x.id === a.id || x.id === b.id || x.exile) continue;
+    const d = Math.min(-(a.relations[x.id]?.score ?? 0), -(b.relations[x.id]?.score ?? 0));
+    if (d > best.depth) best = { id: x.id, depth: d };
+  }
+  return best;
+}
+
 /** How keen `n` is on a treaty of this kind with `other` (above 0.5 it signs). */
 export function willingness(w: World, n: Nation, other: Nation, kind: TreatyKind): { p: number; why: string } {
   const rel = n.relations[other.id]?.score ?? 0;
@@ -225,6 +239,18 @@ export function willingness(w: World, n: Nation, other: Nation, kind: TreatyKind
       p = 0.05 + rel / 120 + t.trust / 300 - t.threat / 200;
       why = t.threat > 30 ? 'they would use what we share against us' : 'shared research';
       break;
+    case 'offensive': {
+      // Going to war together needs an enemy both of them hate, hawks in charge, and few free voices at home.
+      const enemy = sharedEnemy(w, n, other);
+      p = -0.6 + enemy.depth / 50 + rel / 250 + lp.hawk * 0.35 - capsOf(w, n).inst.press * 0.3 - (NONALIGNED.includes(n.iso) ? 0.3 : 0) - (farApart(n.iso, other.iso) ? 0.3 : 0);
+      why = enemy.depth > 30 ? `a common enemy in ${w.nations[enemy.id!]?.name ?? 'a rival'}` : 'no enemy worth a war together';
+      break;
+    }
+    case 'access':
+      // Opening the borders to another country's armies: friends and allies only.
+      p = -0.1 + rel / 110 + shared / 120 + (n.alliances.includes(other.id) ? 0.3 : 0) - lp.nationalism * 0.3;
+      why = n.alliances.includes(other.id) ? 'an ally' : rel > 40 ? 'a close friend' : 'sovereignty concerns';
+      break;
   }
   return { p: Math.max(0, Math.min(1, p + summit)), why };
 }
@@ -232,6 +258,8 @@ export function willingness(w: World, n: Nation, other: Nation, kind: TreatyKind
 export function proposeTreatyCheck(w: World, n: Nation, other: Nation | undefined, kind: TreatyKind): string | null {
   if (!other || other.id === n.id) return 'Pick another country.';
   if (other.exile || n.exile) return 'A government in exile cannot sign treaties.';
+  if (!recognises(n, other)) return `You do not recognise ${other.name} as a state.`;
+  if (!recognises(other, n)) return `${other.name} does not recognise you as a state.`;
   if (kind !== 'basing' && kind !== 'guarantee' && treatyBetween(w, n.id, other.id, kind)) return 'A treaty of this kind is already in force.';
   if (kind === 'defence' && n.alliances.includes(other.id)) return 'You are already allied.';
   if (kind === 'armscontrol' && (!(strategicOf(n)?.warheads) || !(strategicOf(other)?.warheads))) return 'Arms control is between nuclear powers.';
@@ -250,7 +278,7 @@ export function offerTreaty(w: World, n: Nation, other: Nation, kind: TreatyKind
     relation(w, n.id, other.id, -1, `${TREATY_INFO[kind].name.toLowerCase()} declined`);
     return { ok: false, msg: `${other.name} declined (${v.why}).` };
   }
-  const t = signTreaty(w, kind, [n.id, other.id], kind === 'guarantee' ? { ...opts, guarantor: n.id } : kind === 'basing' ? { ...opts, host: other.id } : opts);
+  const t = signTreaty(w, kind, [n.id, other.id], kind === 'guarantee' ? { ...opts, guarantor: n.id } : kind === 'basing' || kind === 'access' ? { ...opts, host: other.id } : opts);
   return { ok: true, msg: `${other.name} agreed (${v.why}).`, treaty: t };
 }
 
@@ -262,6 +290,24 @@ export const freeTrade = (w: World, a: Id, b: Id) => !!w.treaties && hasTreaty(w
 /** Allied for threat purposes: allies, guarantees and basing. */
 export const securityPartners = (w: World, a: Id, b: Id) =>
   w.nations[a].alliances.includes(b) || hasTreaty(w, a, b, 'basing');
+
+/** Whether `a` recognises `b` as a state: a breakaway state is a state only to those that recognise it (2.3, 3.0.1). */
+export const recognises = (a: Nation, b: Nation) => b.parent == null || a.id === b.id || (b.recognisedBy ?? []).includes(a.id);
+
+/** Whether `guest`'s armies may cross `host`'s territory (military access, or bases there). */
+export const hasAccess = (w: World, guest: Id, host: Id) =>
+  !!w.treaties && inForce(w).some((t) => (t.kind === 'access' || t.kind === 'basing') && t.host === host && t.parties.includes(guest));
+
+/** Offensive-alliance partners a government can count on against `target` (their power, weighed by how
+ *  reliably they have joined before, and whether they dislike the target themselves). */
+export function offensivePower(w: World, n: Id, target: Id): number {
+  let s = 0;
+  for (const t of activeTreaties(w, n, 'offensive')) {
+    const cred = (t.honoured + 1) / (t.honoured + t.failed + 2);
+    for (const p of t.parties) if (p !== n && p !== target && !w.nations[p].exile && (w.nations[p].relations[target]?.score ?? 0) < 0) s += militaryPower(w, p) * cred * 0.4;
+  }
+  return s;
+}
 
 /** The deterrent weight of a country's allies (what an attacker must reckon with). */
 export function alliedPower(w: World, target: Id, observer?: Id): number {
@@ -289,6 +335,7 @@ export function onWarDeclared(w: World, war: War) {
     record(w, 'diplomacy', text, { nation: att.id, important: true });
     (att.chronicle ??= []).push({ t: w.time, text });
   }
+  if (!joining) callOffensivePartners(w, war);
   for (const t of activeTreaties(w, def.id)) {
     if (t.kind !== 'defence' && !(t.kind === 'guarantee' && t.guarantor !== def.id)) continue;
     for (const p of t.parties) {
@@ -310,6 +357,50 @@ export function onWarDeclared(w: World, war: War) {
         const text = `🫥 ${ally.name} did not stand by its ally ${def.name} against ${att.name}. The ${t.name} looks weaker for it.`;
         record(w, 'diplomacy', text, { nation: p, important: true });
         (ally.chronicle ??= []).push({ t: w.time, text });
+      }
+    }
+  }
+}
+
+/** An offensive alliance at work: when a party starts a war, its partners decide whether to join it.
+ *  A partner that borders the enemy (or has military access to a country that does) declares war too;
+ *  one that cannot reach it cuts off the enemy's trade instead. Refusing costs the partner's trust. */
+let joining = false;
+function callOffensivePartners(w: World, war: War) {
+  const att = w.nations[war.att], def = w.nations[war.def];
+  if (war.kind === 'civil' || war.kind === 'secession') return;
+  for (const t of activeTreaties(w, att.id, 'offensive')) {
+    for (const p of t.parties) {
+      if (p === att.id || p === def.id) continue;
+      const ally = w.nations[p];
+      if (ally.exile || warBetween(w, p, def.id)) continue;
+      const lp = leaderProfile(w, ally);
+      const rel = ally.relations[def.id]?.score ?? 0;
+      const fear = believedPower(w, p, def.id) / Math.max(1, militaryPower(w, p));
+      const go = 0.35 - rel / 150 + lp.hawk * 0.3 - Math.max(0, fear - 1) * 0.2 + (t.honoured - t.failed) * 0.05 - (ally.alliances.includes(def.id) ? 1 : 0);
+      if (!chance(w, Math.max(0.03, Math.min(0.95, go)))) {
+        t.failed++;
+        relation(w, att.id, p, -12, `would not join our war on ${def.name}`);
+        noteTrust(w, att.id, p, -10);
+        record(w, 'diplomacy', `🫥 ${ally.name} would not join ${att.name}'s war on ${def.name}, whatever the ${t.name} says.`, { nation: p });
+        continue;
+      }
+      t.honoured++;
+      const reach = w.regions.some((r) => controller(r) === def.id && r.links.some((l) => { const c = controller(w.regions[l]); return c === p || hasAccess(w, p, c) || ally.alliances.includes(c); }));
+      const why = reach ? warCheck(w, ally, { target: def.id, days: 30, goals: [] }) : 'out of reach';
+      if (!why) {
+        joining = true;
+        try {
+          const days = Math.max(21, Math.round((war.deadline - w.time) / DAY));
+          const joined = declareWar(w, ally, { target: def.id, days, goals: [] });
+          joined.kind = 'limited';
+          joined.joined = war.id;
+        } finally { joining = false; }
+        record(w, 'war', `⚔️ ${ally.name} joined ${att.name}'s war on ${def.name}, as the ${t.name} required.`, { nation: p, important: true });
+      } else {
+        if (!ally.embargoes.includes(def.id)) ally.embargoes.push(def.id);
+        relation(w, p, def.id, -10, `backed ${att.name}'s war on us`);
+        record(w, 'diplomacy', `⚔️ ${ally.name} backed its partner ${att.name} against ${def.name}: it cannot send armies, so it cut off ${def.name}'s trade.`, { nation: p });
       }
     }
   }

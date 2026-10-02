@@ -37,6 +37,7 @@ version before it (2.0's parts were 1.9.3 to 1.9.7, and 2.0.0 marked it complete
 | 2.8.0 | **Life 2.0: the everyday** | A day planner, commuting and cars, cooking, sleep, fitness and the body, shopping, chores | ✅ done |
 | 2.9.0 | **Life 2.0: culture and belonging** | Faith, festivals, languages, migration and integration, identity | ✅ done |
 | 3.0.0 | **Life 2.0: generations** | Dynasties over centuries: family trees, inherited looks and traits, the family name, ancestral homes and businesses, a family chronicle | ✅ done |
+| 3.1.0 | **Diplomacy completed** (what 2.0 left for later) | Offensive alliances, military access, recognition, customs unions, tariffs and quotas by partner, sectoral and secondary sanctions, smuggling, a Secretary-General and organisation budgets, resolutions authorising force, spheres of influence, a foreign minister, a relations map and briefings | ▶ in progress: offensive alliances, military access and recognition (3.0.1) |
 
 **Why this order.** Each part builds on the ones before it:
 - A realistic economy comes first: money, prices, wages and costs underpin every later part.
@@ -982,6 +983,20 @@ paid through the ledger, explainable, saved and tested.
 - **Complete in 3.0.0:** 2.9.1 the family tree and chronicle; 2.9.2 inherited looks and traits; 2.9.3 the family
   name; 2.9.4 ancestral places; 3.0.0 stories of generations, lives and births in skipped years, and the
   hundred-year calibration (about six minutes for a century).
+
+## 3.0.x → 3.1.0 — Diplomacy completed (requested 2 October 2026)
+
+What 2.0 listed but did not build, finished as patches of 3.0:
+- **3.0.1 — Alliances and recognition.** Offensive alliances (partners are called to join a war, or cut the enemy
+  off; governments count on them when weighing war); military access (armies cross the host's territory);
+  recognition of breakaway states by each country over the years, as diplomatic actions for player and AI.
+- **3.0.2 — Trade policy.** Customs unions with a common outer tariff; tariffs and quotas set for each partner;
+  sectoral sanctions (energy, finance, technology, arms) and secondary sanctions on those who trade with the
+  sanctioned; smuggling to get round them.
+- **3.0.3 — Organisations.** An elected Secretary-General; budgets paid as members' dues; Security Council
+  resolutions authorising force.
+- **3.0.4 — Spheres and the foreign ministry.** Spheres of influence and hedging between powers; a foreign minister
+  in the cabinet; a relations map and briefings before decisions on the Diplomacy screen.
 
 ## In every version
 
