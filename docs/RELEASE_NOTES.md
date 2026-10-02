@@ -3,6 +3,30 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.8.0: Life 2.0, the everyday
+
+2.8 is complete: the texture of ordinary days. Its parts:
+
+- a day planner, sleep and the commute (2.7.1);
+- cars (2.7.2);
+- the body (2.7.3);
+- home life (2.7.4).
+
+This release adds:
+
+- **Stories of the everyday:**
+  - **The car will not start:** repair it, sell it as it is, or take the bus for a while.
+  - **Running on empty:** too little sleep catches up with you at work. Go to bed earlier, or drink more coffee.
+  - **A word from the doctor** about your weight or fitness: start exercising every morning, start cooking at
+    home, or change nothing.
+  - **A builder with a gap in his diary** offers a new kitchen at a fifth off. Most builders are honest; not all.
+- **Calibration across twenty years:**
+  - car ownership holds steady;
+  - obesity drifts up slowly;
+  - the new costs of everyday life (bills, fares, cars, meals out) are paid through the books without breaking
+    them;
+  - average health is a little lower than before, now that short nights, weight and sitting still count.
+
 ### New in 2.7.4: home life
 
 The fourth part of 2.8 Life 2.0: the everyday.
