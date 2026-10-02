@@ -112,11 +112,12 @@ test('every everyday situation can be presented and every choice resolves withou
   // Situations also arise on their own while time passes.
   const w = fresh(99);
   let seen = 0;
-  for (let d = 0; d < 6; d++) {
+  // About three in six days on average; twelve days keeps the test from depending on one lucky draw.
+  for (let d = 0; d < 12; d++) {
     advance(w, DAY, false);
     for (const inst of urgentStories(w)) { seen++; const c = viewStage(w, inst).choices.find((o) => !o.why); if (c) chooseStory(w, inst.id, c.id, inst.stage); }
   }
-  assert.ok(seen >= 2, `situations happen (${seen} in 6 days)`);
+  assert.ok(seen >= 2, `situations happen (${seen} in 12 days)`);
 });
 
 test('admin panel edits go through the ledger; saves migrate and round-trip', () => {

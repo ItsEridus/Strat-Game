@@ -3,6 +3,33 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.5.1: values, and personality that grows
+
+The first part of 2.6 Life 2.0: the mind.
+
+- **Values.** Everyone values five things to different degrees: family, career, faith, community and freedom. They
+  come from:
+  - their country: faith matters to about a fifth of people in Japan and China and to most in Saudi Arabia and
+    India (Pew and the World Values Survey);
+  - their age: older people put family, faith and community higher, younger ones career and freedom;
+  - their politics, and their own nature.
+- **Values shape lives:**
+  - people who value family get engaged and have children sooner;
+  - shared values draw people together, and clashing values strain a couple;
+  - voters lean towards parties whose outlook fits what they value.
+- **Personality that grows.** The five traits (ambition, appetite for risk, loyalty, love of money and energy)
+  now change with experience, and each change is recorded with its cause:
+  - a war makes veterans more cautious and more loyal;
+  - losing a job to a machine dents ambition, and redundancy makes people hold on to money;
+  - a promotion or public office breeds ambition;
+  - prison breeds distrust;
+  - grief saps energy;
+  - going bust teaches caution;
+  - marriage and parenthood turn people towards family.
+- **Profiles** (yours and everyone's) show what a person values, their traits, and how life has shaped them.
+- Values are computed from a person's circumstances and stored only once experience has changed someone, so saves
+  stay small.
+
 ### New in 2.5.0: A world of consequences
 
 2.5 is complete:

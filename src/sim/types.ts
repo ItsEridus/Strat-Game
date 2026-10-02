@@ -44,6 +44,7 @@ export interface Citizen {
   life?: LifeProfile; // personal life: wellbeing, milestones, hobbies, goals (sim/lifecycle.ts, sim/wellbeing.ts)
   family?: Family; // partner, parents, children (sim/family.ts)
   look?: import('./looks').Look;
+  mind?: import('./mind').Mind; // values, and how experience has shaped them (2.6)
   nature?: import('./nature').Nature; // talent, weakness, quirks (designed for the player; otherwise from a hash)
   background?: import('./nature').Background; // the family a life started in // a designed or changed appearance (otherwise generated: sim/looks.ts)
   dwelling?: import('./housing').Home;

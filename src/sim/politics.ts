@@ -2,6 +2,7 @@
 //  - Elections run on the in-game calendar without player intervention.
 //  - Voters are individual AI citizens plus aggregated background blocs.
 //  - Every result stores turnout, tallies, seats and a readable explanation.
+import { ideologyFit } from './mind';
 import { managedBonus, termLimited } from './regimes';
 import { interferenceBonus } from './counterIntel';
 import { fmtDay } from '../engine/calendar';
@@ -332,6 +333,7 @@ function candidateUtility(w: World, voter: Citizen | null, voterIdeo: Citizen['i
   parts.influence = cand.influence / 4;
   parts.party = (cp?.support ?? 0) / 6;
   if (voter) parts.relationship = (voter.rel[cand.id] ?? 0) / 4;
+  if (voter) parts.values = (ideologyFit(w, voter, ideo) - 0.65) * 30; // a party whose outlook fits what they value (mind.ts)
   if (voter && voter.flags.pledge === cand.id && dayOf(w.time) - (voter.flags.pledgeDay ?? -99) <= 30) parts.pledge = 25; // promised in person
   const foreign = interferenceBonus(w, n, cp?.id);
   if (foreign) parts.foreign = foreign; // a foreign service's campaign
@@ -354,6 +356,7 @@ function partyUtility(w: World, voter: Citizen | null, voterIdeo: Citizen['ideo'
   const top = p.list.slice(0, 3).map((id) => w.citizens[id]).filter(Boolean);
   parts.candidates = top.reduce((s, c) => s + c.influence, 0) / 12;
   if (voter) parts.relationship = top.reduce((s, c) => s + (voter.rel[c.id] ?? 0), 0) / 8;
+  if (voter) parts.values = (ideologyFit(w, voter, p.ideo) - 0.65) * 30;
   const foreign = interferenceBonus(w, n, p.id);
   if (foreign) parts.foreign = foreign;
   const managed = managedBonus(w, n, null, p.id);

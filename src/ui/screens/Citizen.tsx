@@ -18,6 +18,8 @@ import { Avatar } from '../Avatar';
 import { ActBtn } from '../common';
 import { familyRegard, memoriesOf } from '../../sim/story';
 import { levelLabel } from '../../sim/education';
+import { TRAIT_LABEL, VALUES, VALUE_LABEL, valuesOf, type Value } from '../../sim/mind';
+import { Bar } from '../common';
 import { postTitle } from '../../sim/services';
 import { BACKGROUNDS, QUIRKS, TALENTS, backgroundOf, natureOf } from '../../sim/nature';
 import { startTalk, talkCheck } from '../../sim/interact';
@@ -70,6 +72,13 @@ export function CitizenProfile({ w }: { w: World }) {
         {!c.player && !c.gone && p.family?.partner !== c.id && <ActBtn small why={romanceCheck(w, p, c, 'ask')} run={(w) => askOut(w, c.id)}>💕 Ask out</ActBtn>}
         {!c.player && !c.gone && <Gifts w={w} p={p} c={c} />}
       </Panel>}
+      <Panel title={c.player ? '🧠 Who you are' : `🧠 What ${c.name.split(' ')[0]} values`}>
+        <table class="table compact small"><tbody>
+          {VALUES.map((v) => <tr><td>{VALUE_LABEL[v]}</td><td><Bar v={valuesOf(w, c)[v] * 100} max={100} color="#8a63d2" label={`${Math.round(valuesOf(w, c)[v] * 100)}`} /></td></tr>)}
+        </tbody></table>
+        <p class="small muted">Ambition {Math.round(c.traits.ambition * 100)} · appetite for risk {Math.round(c.traits.risk * 100)} · loyalty {Math.round(c.traits.loyalty * 100)} · love of money {Math.round(c.traits.greed * 100)} · energy {Math.round(c.traits.activity * 100)}</p>
+        {(c.mind?.log.length ?? 0) > 0 && <><h4>How life has shaped {c.player ? 'you' : 'them'}</h4><ul class="small">{[...c.mind!.log].reverse().slice(0, 8).map((l) => <li>{fmtDate(l.t, 'medium')}: {l.why} — {(VALUES as string[]).includes(l.trait) ? `${VALUE_LABEL[l.trait as Value].toLowerCase()} matters ${l.delta > 0 ? 'more' : 'less'}` : `${TRAIT_LABEL[l.trait as keyof typeof TRAIT_LABEL]} ${l.delta > 0 ? 'up' : 'down'}`}</li>)}</ul></>}
+      </Panel>
       {(c.life?.work?.length ?? 0) > 0 && <Panel title="Work history">
         <table class="table compact small"><tbody>{[...c.life!.work!].reverse().map((x) => <tr><td>{x.what}</td><td class="muted">{x.where}</td><td>{fmtDate(x.from, 'short')} – {x.to ? fmtDate(x.to, 'short') : 'now'}</td><td class="muted">{x.why ?? ''}</td></tr>)}</tbody></table>
       </Panel>}

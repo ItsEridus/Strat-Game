@@ -26,6 +26,7 @@ export function noteBirth(w: World, co: Company) { demo(w, controller(w.regions[
 /** Close a company and settle its books. Returns false if it cannot close now (held by an open contract). */
 export function closeCompany(w: World, co: Company, why: 'insolvent' | 'wound up' | 'closed by its owner'): boolean {
   if (co.locked || !w.companies[co.id]) return false;
+  if (why === 'insolvent' && co.owner.k === 'cit' && w.citizens[co.owner.id]) w.citizens[co.owner.id].flags.bankrupt = w.time; // going bust shapes the owner (mind.ts)
   const nat = controller(w.regions[co.region]);
   const ref = coref(co.id);
   // Withdraw everything it has on offer.

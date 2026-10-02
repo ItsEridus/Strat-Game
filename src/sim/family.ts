@@ -23,6 +23,7 @@ import { adjustRel } from './social';
 import { newResident, regionTarget } from './population';
 import { bump } from './progress';
 import { conceive } from './kinship';
+import { valueDistance, valueOf } from './mind';
 import { milestone } from './lifecycle';
 import { comeOfAgeFrom } from './childhood';
 import { blendLook } from './looks';
@@ -48,7 +49,7 @@ function compatible(w: World, a: Citizen, b: Citizen): number {
   const ages = [ageOf(w, a), ageOf(w, b)];
   const gap = Math.abs(ages[0] - ages[1]);
   if (gap > Math.max(6, Math.min(...ages) * 0.3)) return 0;
-  return Math.max(0, 1 - gap / 20 - ideoDistance(a.ideo, b.ideo) * 0.35);
+  return Math.max(0, 1 - gap / 20 - ideoDistance(a.ideo, b.ideo) * 0.25 - valueDistance(w, a, b) * 0.6); // shared values draw people together (mind.ts)
 }
 
 function pair(w: World, a: Citizen, b: Citizen, status: Family['status'], since = w.time) {
@@ -151,11 +152,11 @@ export function familyDaily(w: World) {
     if (b.player || a.id > b.id) continue; // each couple once; the player decides for themselves
     const rel = Math.min(a.rel[b.id] ?? 0, b.rel[a.id] ?? 0);
     const days = (w.time - f.since) / DAY;
-    const drift = rand(w, -1.2, 1.8) * (1 - ideoDistance(a.ideo, b.ideo) * 0.5) - (a.mood < -3 || b.mood < -3 ? 0.8 : 0);
+    const drift = rand(w, -1.2, 1.8) * (1 - ideoDistance(a.ideo, b.ideo) * 0.5) - (a.mood < -3 || b.mood < -3 ? 0.8 : 0) - Math.max(0, valueDistance(w, a, b) - 0.15) * 2; // clashing values strain a couple
     bumpRel(a, b, drift);
     if (f.status === 'dating') {
       if (rel < 10 && chance(w, 0.1)) { split(w, a, b); localNews(w, a.home, `💔 ${a.name} and ${b.name} have split up.`); continue; }
-      if (rel >= 60 && days >= 30 && chance(w, 0.02)) { fam(a).status = fam(b).status = 'engaged'; fam(a).since = fam(b).since = w.time; localNews(w, a.home, `💍 ${a.name} and ${b.name} are engaged!`); }
+      if (rel >= 60 && days >= 30 && chance(w, 0.02 * (0.5 + (valueOf(w, a, 'family') + valueOf(w, b, 'family')) / 2))) { fam(a).status = fam(b).status = 'engaged'; fam(a).since = fam(b).since = w.time; localNews(w, a.home, `💍 ${a.name} and ${b.name} are engaged!`); }
     } else if (f.status === 'engaged') {
       if (rel < 10 && chance(w, 0.1)) { split(w, a, b); localNews(w, a.home, `💔 ${a.name} and ${b.name} called off their engagement.`); continue; }
       if (days >= 20 && chance(w, 0.06)) wed(w, a, b);
@@ -163,7 +164,7 @@ export function familyDaily(w: World) {
       if (rel < 0 && chance(w, 0.02)) { split(w, a, b); localNews(w, a.home, `📄 ${a.name} and ${b.name} are divorcing.`); continue; }
       const young = Math.min(ageOf(w, a), ageOf(w, b)), older = Math.max(ageOf(w, a), ageOf(w, b));
       const kids = fam(a).kids.length + fam(b).kids.length + fam(a).children.length;
-      if (young >= 20 && older <= 46 && kids < 4 && chance(w, (0.3 * fertilityFactor(w, a)) / (w.settings.lifeYearDays ?? 365) / (1 + kids))) haveBaby(w, a, b);
+      if (young >= 20 && older <= 46 && kids < 4 && chance(w, (0.3 * fertilityFactor(w, a) * (0.4 + (valueOf(w, a, 'family') + valueOf(w, b, 'family')) * 0.6)) / (w.settings.lifeYearDays ?? 365) / (1 + kids))) haveBaby(w, a, b);
     }
   }
   // New couples: neighbours, colleagues, friends of friends.
