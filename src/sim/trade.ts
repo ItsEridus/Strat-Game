@@ -17,6 +17,8 @@ import { embargoed, list, listingsFor, refPrice } from './market';
 import { buyGold, sellGold } from './fx';
 import { operatorOf } from '../ai/economy';
 import { outputKey } from '../data/items';
+import { blocked, importRate, quotaShare } from './tradePolicy';
+import { freeTrade } from './treaties';
 
 /** Annual volatility of world prices (roughly the 2015–2024 record). */
 const VOL: Record<string, number> = { oil: 0.35, grain: 0.25, iron: 0.28, copper: 0.24, titanium: 0.2, timber: 0.22, cotton: 0.24 };
@@ -91,12 +93,12 @@ export function tradeDaily(w: World) {
     if (!homePrice) continue;
     let best: { market: Id; price: number; gain: number } | null = null;
     for (const m of w.nations) {
-      if (m.id === home || m.exile || embargoed(w, home, m.id)) continue;
+      if (m.id === home || m.exile || embargoed(w, home, m.id) || blocked(w, home, m.id, key) || (quotaShare(w, m.id, home) < 1 && next(w) > quotaShare(w, m.id, home))) continue; // sanctions and quotas (tradePolicy.ts)
       const ask = listingsFor(w, m.id, key)[0]?.price ?? refPrice(w, m.id, key);
       if (!ask) continue;
       const price = Math.max(1, Math.round(ask * 0.97)); // just under the local sellers
       const inHome = (price * w.nations[home].fxAnchor) / Math.max(1, m.fxAnchor);
-      const net = inHome * (1 - FREIGHT - (m.taxes.import + m.taxes.vat) / 100);
+      const net = inHome * (1 - FREIGHT - (importRate(w, m.id, home, freeTrade(w, m.id, home) ? 0 : m.taxes.import, freeTrade(w, m.id, home)) + m.taxes.vat) / 100);
       const gain = net / homePrice;
       if (gain > 1.15 && (!best || gain > best.gain)) best = { market: m.id, price, gain };
     }

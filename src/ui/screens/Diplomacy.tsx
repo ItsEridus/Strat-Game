@@ -1,7 +1,7 @@
 // Diplomacy: how a country sees every other (and why), its blocs and alliances, and
 // the outlook of its head of government.
 import { useState } from 'preact/hooks';
-import type { Id, World } from '../../sim/types';
+import type { Id, Nation, World } from '../../sim/types';
 import { ActBtn, Bar, CitLink, Help, NationChip, Panel, Select } from '../common';
 import { player } from '../../sim/query';
 import { activeWars } from '../../sim/war';
@@ -15,6 +15,7 @@ import { racesOf } from '../../sim/balanceOfPower';
 import { DAY, fmtWhen } from '../../engine/clock';
 import { BLOCS } from '../../data/diplomacy';
 import { blocsOf, leaderProfile, prestigeOf, tiesOfPair } from '../../sim/relations';
+import { SECTORS, SECTOR_INFO, commonTariff, customsUnionOf, leak, tariffOn, type Sector } from '../../sim/tradePolicy';
 
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
@@ -96,7 +97,7 @@ function Treaties({ w, id }: { w: World; id: Id }) {
   );
 }
 
-const ACTIONS: DipAction[] = ['praise', 'condemn', 'summit', 'aid', 'loan', 'sanction', 'liftSanctions', 'expel', 'treaty', 'renounce', 'ultimatum', 'mediate', 'arm', 'recognise', 'unrecognise'];
+const ACTIONS: DipAction[] = ['praise', 'condemn', 'summit', 'aid', 'loan', 'sanction', 'liftSanctions', 'expel', 'treaty', 'renounce', 'ultimatum', 'mediate', 'arm', 'recognise', 'unrecognise', 'tariff', 'quota', 'sectoral', 'secondary', 'easeTrade'];
 
 function Actions({ w, id }: { w: World; id: Id }) {
   const n = w.nations[id];
@@ -104,11 +105,12 @@ function Actions({ w, id }: { w: World; id: Id }) {
   const [target, setTarget] = useState<Id>(others[0]?.id ?? 0);
   const [kind, setKind] = useState<TreatyKind>('trade');
   const [demand, setDemand] = useState<Demand>('liftSanctions');
+  const [sector, setSector] = useState<Sector>('tech');
   const t = w.nations[target];
   const d = dipOf(n);
   const mine = activeTreaties(w, id).filter((x) => x.parties.includes(target));
   const wars = activeWars(w).filter((x) => x.att !== id && x.def !== id);
-  const params = (a: DipAction) => ({ target, kind, demand, treaty: mine[0]?.id, war: wars[0]?.id, other: t?.alliances[0] });
+  const params = (a: DipAction) => ({ target, kind, demand, treaty: mine[0]?.id, war: wars[0]?.id, other: t?.alliances[0], sector });
   const v = t ? willingness(w, t, n, kind) : null;
   return (
     <Panel title="🌐 Conduct foreign policy" class="wide">
@@ -117,7 +119,9 @@ function Actions({ w, id }: { w: World; id: Id }) {
         <span>Towards</span><Select value={target} options={others.map((x) => [x.id, x.name] as [Id, string])} onChange={setTarget} />
         <span>Treaty</span><Select value={kind} options={(Object.keys(TREATY_INFO) as TreatyKind[]).map((k) => [k, TREATY_INFO[k].name] as [TreatyKind, string])} onChange={setKind} />
         <span>Demand</span><Select value={demand} options={(Object.keys(DEMAND_NAME) as Demand[]).map((k) => [k, DEMAND_NAME[k]] as [Demand, string])} onChange={setDemand} />
+        <span>Sector</span><Select value={sector} options={SECTORS.map((k) => [k, `${SECTOR_INFO[k].icon} ${SECTOR_INFO[k].name}`] as [Sector, string])} onChange={setSector} />
       </div>
+      {t && <TradeMeasures w={w} a={n} b={t} />}
       {v && <p class="small muted">{t.name}'s appetite for a {TREATY_INFO[kind].name.toLowerCase()}: {Math.round(v.p * 100)}% ({v.why}).</p>}
       <table class="table compact small"><tbody>{ACTIONS.map((a) => (
         <tr><td><b>{DIP_INFO[a].name}</b><br /><small class="muted">{DIP_INFO[a].desc}{a === 'renounce' && mine[0] ? ` (${mine[0].name})` : ''}{a === 'mediate' && wars[0] ? ` (${w.nations[wars[0].att].name} against ${w.nations[wars[0].def].name})` : ''}</small></td>
@@ -127,6 +131,23 @@ function Actions({ w, id }: { w: World; id: Id }) {
       <Help>As head of government you conduct the country's foreign policy. Other governments decide on the merits: their trust in you, their fears, their leader's outlook and how they see your power and your allies.</Help>
     </Panel>
   );
+}
+
+/** Trade measures between two countries, both ways (3.0.2). */
+function TradeMeasures({ w, a, b }: { w: World; a: Nation; b: Nation }) {
+  const line = (x: Nation, y: Nation) => {
+    const parts: string[] = [];
+    if (x.embargoes.includes(y.id)) parts.push('a full embargo');
+    const tr = tariffOn(w, x.id, y.id); if (tr) parts.push(`a ${tr}% tariff`);
+    const q = x.tp?.quotas[y.id]; if (q != null) parts.push(`a quota (${Math.round(q * 100)}% of usual imports)`);
+    const sec = x.tp?.sectoral[y.id] ?? []; if (sec.length) parts.push(`sanctions on ${sec.map((s) => SECTOR_INFO[s].name.toLowerCase()).join(', ')}`);
+    if (x.tp?.secondary.includes(y.id)) parts.push('secondary sanctions');
+    return parts.length ? `${x.name} → ${y.name}: ${parts.join('; ')}.` : null;
+  };
+  const u = customsUnionOf(w, a.id);
+  const lines = [line(a, b), line(b, a)].filter(Boolean);
+  const lk = a.embargoes.includes(b.id) || (a.tp?.sectoral[b.id] ?? []).length ? leak(w, a.id, b.id) : 0;
+  return <p class="small muted">{lines.length ? lines.join(' ') : `No trade measures between ${a.name} and ${b.name}.`}{lk > 0.05 ? ` Smugglers get round about ${Math.round(lk * 100)}% of your sanctions.` : ''}{u ? ` ${a.name} is in the ${u.name} (common tariff ${commonTariff(w, a.id)}%).` : ''}</p>;
 }
 
 const VOTE_NAME = { y: 'for', n: 'against', a: 'abstained' } as const;

@@ -25,10 +25,11 @@ import { addGrievance, leaderProfile, noteTrust, prestigeOf, tiesOfPair } from '
 import { TREATY_INFO, activeTreaties, alliedPower, allTreaties, offerTreaty, proposeTreatyCheck, recognises, sharedEnemy, willingness, renounce, treatyBetween, type TreatyKind } from './treaties';
 import { activeWars, militaryPower, neighborNations, peaceAppetite, settle, warBetween } from './war';
 import { makeFormation } from './forces';
+import { SECTOR_INFO, sectorCut, setTariff, tariffOn, tpOf, type Sector } from './tradePolicy';
 
-export type DipAction = 'praise' | 'condemn' | 'summit' | 'aid' | 'loan' | 'sanction' | 'liftSanctions' | 'expel' | 'treaty' | 'renounce' | 'ultimatum' | 'mediate' | 'arm' | 'recognise' | 'unrecognise';
+export type DipAction = 'praise' | 'condemn' | 'summit' | 'aid' | 'loan' | 'sanction' | 'liftSanctions' | 'expel' | 'treaty' | 'renounce' | 'ultimatum' | 'mediate' | 'arm' | 'recognise' | 'unrecognise' | 'tariff' | 'quota' | 'sectoral' | 'secondary' | 'easeTrade';
 export type Demand = 'liftSanctions' | 'endWar' | 'leaveAlliance';
-export interface DipParams { target: Id; kind?: TreatyKind; treaty?: Id; demand?: Demand; war?: Id; other?: Id }
+export interface DipParams { target: Id; kind?: TreatyKind; treaty?: Id; demand?: Demand; war?: Id; other?: Id; sector?: Sector }
 export interface IntlLoan { id: Id; from: Id; to: Id; left: number; monthly: number; defaulted?: boolean; imf?: boolean; reparations?: boolean }
 export interface DipState { capital: number; last: Record<string, number>; casusBelli?: Record<Id, number> }
 
@@ -47,6 +48,11 @@ export const DIP_INFO: Record<DipAction, { name: string; capital: number; cooldo
   mediate: { name: 'Mediate a war', capital: 30, cooldown: 30, desc: 'Offer to broker a ceasefire between two countries at war; success raises your standing.' },
   recognise: { name: 'Recognise as a state', capital: 15, cooldown: 30, desc: 'Recognise a breakaway state: treaties with it become possible, it is grateful, and the country it broke from is angered.' },
   unrecognise: { name: 'Withdraw recognition', capital: 10, cooldown: 365, desc: 'No longer recognise a breakaway state: its treaties with you lapse; the country it broke from is pleased.' },
+  tariff: { name: 'Raise tariffs', capital: 10, cooldown: 30, desc: 'Add 25% (up to 100%) to the import tax on their goods: their exporters lose sales here, and they may answer in kind. A tariff on a free-trade partner breaks the agreement.' },
+  quota: { name: 'Set an import quota', capital: 10, cooldown: 60, desc: 'Let in only half the usual trade from them.' },
+  sectoral: { name: 'Sanction a sector', capital: 15, cooldown: 30, desc: 'Cut off one sector (energy, metals, technology, arms or finance) and leave the rest of trade open.' },
+  secondary: { name: 'Secondary sanctions', capital: 30, cooldown: 365, desc: 'Press third countries to stop trading with a country you embargo: those who comply join your sanctions, those who refuse face your tariffs.' },
+  easeTrade: { name: 'Ease trade measures', capital: 5, cooldown: 30, desc: 'Lift your tariffs, quotas and sectoral and secondary sanctions on them.' },
   arm: { name: 'Arm the rebels', capital: 20, cooldown: 60, desc: 'Send weapons and money (3% of the treasury\'s gold) to rebels or a breakaway state fighting its government: their forces grow stronger, and the government becomes your enemy.' },
 };
 export const DEMAND_NAME: Record<Demand, string> = { liftSanctions: 'lift their sanctions on us', endWar: 'end the war they started', leaveAlliance: 'leave their alliance with our rival' };
@@ -82,6 +88,7 @@ export function dipCheck(w: World, n: Nation, a: DipAction, p: DipParams): strin
     case 'aid': case 'loan':
       if ((n.wallet[GOLD] ?? 0) < 20000) return 'The treasury has too little gold.';
       if (warBetween(w, n.id, t.id)) return 'You are at war with them.';
+      if (a === 'loan' && sectorCut(w, n.id, t.id, 'finance')) return 'Financial sanctions are in force.';
       if (a === 'loan' && (w.intlLoans ?? []).some((l) => l.from === n.id && l.to === t.id && l.left > 0)) return 'They are still repaying a loan from you.';
       return null;
     case 'arm': {
@@ -94,6 +101,11 @@ export function dipCheck(w: World, n: Nation, a: DipAction, p: DipParams): strin
     case 'recognise': return t.parent == null ? `${t.name} is not a breakaway state: every country recognises it.` : recognises(n, t) ? `You already recognise ${t.name}.` : null;
     case 'unrecognise': return t.parent == null ? `${t.name} is not a breakaway state.` : !recognises(n, t) ? `You do not recognise ${t.name}.` : t.parent === n.id && (t.recognisedBy ?? []).includes(n.id) ? 'You agreed to its independence: you cannot take that back.' : null;
     case 'sanction': return n.embargoes.includes(t.id) ? 'Sanctions are already in force.' : null;
+    case 'tariff': return tariffOn(w, n.id, t.id) >= 100 ? 'The tariff is already 100%.' : n.embargoes.includes(t.id) ? 'An embargo already stops their goods.' : null;
+    case 'quota': return n.tp?.quotas[t.id] != null ? 'A quota is already in force.' : n.embargoes.includes(t.id) ? 'An embargo already stops their goods.' : null;
+    case 'sectoral': return !p.sector ? 'Choose a sector.' : n.embargoes.includes(t.id) ? 'A full embargo is already in force.' : n.tp?.sectoral[t.id]?.includes(p.sector) ? 'That sector is already sanctioned.' : null;
+    case 'secondary': return !n.embargoes.includes(t.id) ? 'Embargo them first.' : n.tp?.secondary.includes(t.id) ? 'Secondary sanctions are already in force.' : null;
+    case 'easeTrade': return !tariffOn(w, n.id, t.id) && n.tp?.quotas[t.id] == null && !(n.tp?.sectoral[t.id] ?? []).length && !n.tp?.secondary.includes(t.id) ? 'You have no trade measures against them.' : null;
     case 'liftSanctions': return n.embargoes.includes(t.id) ? null : 'No sanctions to lift.';
     case 'treaty': return p.kind ? proposeTreatyCheck(w, n, t, p.kind) : 'Pick a kind of treaty.';
     case 'renounce': { const tr = w.treaties?.[p.treaty!]; return !tr || tr.status !== 'active' || !tr.parties.includes(n.id) ? 'Pick a treaty in force.' : null; }
@@ -128,6 +140,23 @@ export function doDiplomacy(w: World, n: Nation, a: DipAction, p: DipParams): Re
   spend(w, n, a, p.target);
   const t = w.nations[p.target];
   switch (a) {
+    case 'tariff': setTariff(w, n, t, tariffOn(w, n.id, t.id) + 25); return ok(`A ${tariffOn(w, n.id, t.id)}% tariff on goods from ${t.name}.`);
+    case 'quota': tpOf(n).quotas[t.id] = 0.5; relation(w, n.id, t.id, -4, 'an import quota'); note(w, n, `🚧 ${n.name} capped imports from ${t.name} at half their usual level.`, false, t.id); return ok(`Imports from ${t.name} capped at half.`);
+    case 'sectoral': {
+      const tp = tpOf(n);
+      tp.sectoral[t.id] = [...(tp.sectoral[t.id] ?? []), p.sector!];
+      relation(w, n.id, t.id, -6, 'sectoral sanctions');
+      note(w, n, `🎯 ${n.name} imposed sanctions on ${t.name}'s ${SECTOR_INFO[p.sector!].name.toLowerCase()} sector (${SECTOR_INFO[p.sector!].desc}).`, true, t.id);
+      return ok(`${SECTOR_INFO[p.sector!].name} cut off from ${t.name}.`);
+    }
+    case 'secondary': tpOf(n).secondary.push(t.id); note(w, n, `🏦 ${n.name} announced secondary sanctions: anyone still trading with ${t.name} risks its own markets.`, true, t.id); return ok('Third countries will be pressed to choose.');
+    case 'easeTrade': {
+      const tp = tpOf(n);
+      delete tp.tariffs[t.id]; delete tp.quotas[t.id]; delete tp.sectoral[t.id]; tp.secondary = tp.secondary.filter((x) => x !== t.id);
+      relation(w, n.id, t.id, 4, 'eased trade measures');
+      note(w, n, `🤝 ${n.name} lifted its tariffs and sectoral sanctions on ${t.name}.`, false, t.id);
+      return ok(`Trade with ${t.name} is open again (short of any embargo).`);
+    }
     case 'recognise': {
       (t.recognisedBy ??= []).push(n.id);
       relation(w, t.id, n.id, 12, 'recognised us');
@@ -321,14 +350,14 @@ export function aiChoice(w: World, n: Nation): [DipAction, DipParams] | null {
     // Allies of victims sanction the aggressor.
     if (!n.embargoes.includes(t.id) && activeWars(w).some((x) => x.att === t.id && n.alliances.includes(x.def))) opts.push(['sanction', { target: t.id }, 2]);
     // Treaties: alliances against a shared threat, trade deals with partners, pacts with the feared.
-    for (const kind of ['defence', 'trade', 'nonaggression', 'intel', 'armscontrol', 'border', 'tech', 'offensive', 'access'] as TreatyKind[]) {
+    for (const kind of ['defence', 'trade', 'nonaggression', 'intel', 'armscontrol', 'border', 'tech', 'offensive', 'access', 'customs'] as TreatyKind[]) {
       if (proposeTreatyCheck(w, n, t, kind)) continue;
       // Only offer what it wants itself and the other might accept.
       if (recentTreaty) break; // a government concludes at most one new treaty a year
       if (willingness(w, n, t, kind).p < 0.55) continue; // only what it wants itself
       const p = kind === 'defence' ? 0.8 : kind === 'trade' ? (ties.interdep > 40 ? 0.4 : 0) : kind === 'nonaggression' ? (ties.threat > 35 ? 0.4 : 0)
         : kind === 'intel' ? (n.alliances.includes(t.id) ? 0.2 : 0) : kind === 'armscontrol' ? (ties.threat > 30 ? 0.3 : 0) : kind === 'tech' ? (rel > 40 ? 0.15 : 0)
-        : kind === 'offensive' ? (lp.hawk > 0.55 && sharedEnemy(w, n, t).depth > 40 ? 0.25 : 0) : kind === 'access' ? (n.alliances.includes(t.id) && neighborNations(w, t.id).some((x) => x !== n.id && (n.relations[x]?.score ?? 0) < -40 && !neighborNations(w, n.id).includes(x)) ? 0.15 : 0) : (ties.grievance > 10 ? 0.2 : 0);
+        : kind === 'customs' ? (ties.interdep > 60 ? 0.1 : 0) : kind === 'offensive' ? (lp.hawk > 0.55 && sharedEnemy(w, n, t).depth > 40 ? 0.25 : 0) : kind === 'access' ? (n.alliances.includes(t.id) && neighborNations(w, t.id).some((x) => x !== n.id && (n.relations[x]?.score ?? 0) < -40 && !neighborNations(w, n.id).includes(x)) ? 0.15 : 0) : (ties.grievance > 10 ? 0.2 : 0);
       if (p > 0) opts.push(['treaty', { target: t.id, kind }, p]);
     }
     if (ties.trust < -40 && rel < -50) opts.push(['expel', { target: t.id }, 0.02]);

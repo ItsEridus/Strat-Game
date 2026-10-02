@@ -3,6 +3,7 @@
 // atomically and routes VAT/import tax to the market nation's treasury.
 import { noteTrade } from './trade';
 import { freeTrade } from './treaties';
+import { blocked, importRate } from './tradePolicy';
 import type { AccountRef, Id, ItemKey, Listing, World } from './types';
 import { B } from '../data/balance';
 import { itemName } from '../data/items';
@@ -55,6 +56,7 @@ export function saleTaxes(w: World, market: Id, seller: AccountRef, buyer?: Acco
     imp = Math.max(n.taxes.import, (shares.communism ?? 0) * IDEOLOGIES.communism.fx.importTaxFloor);
     // Exile relief: hosts holding an exiled nation's cores waive import tax on its citizens' goods.
     if (sellerNat != null && freeTrade(w, market, sellerNat)) imp = 0; // trade agreements (sim/treaties.ts)
+    if (sellerNat != null) imp = importRate(w, market, sellerNat, imp, freeTrade(w, market, sellerNat)); // customs unions and partner tariffs (tradePolicy.ts)
     if (sellerNat != null && w.nations[sellerNat]?.exile && w.regions.some((r) => r.core === sellerNat && r.owner === market)) imp = 0;
   }
   return { vat, imp };
@@ -136,6 +138,7 @@ export function listCheck(w: World, actor: Id, seller: AccountRef, market: Id, i
   if (seller.k === 'cit' && w.citizens[seller.id].mining) return 'Market trading is blocked while mining.';
   if (w.nations[market].exile) return 'This nation has no territory and no market.';
   if (embargoed(w, accountNation(w, seller), market)) return 'Trade is blocked by an embargo.';
+  if (blocked(w, accountNation(w, seller), market, item)) return 'Trade in this sector is blocked by sanctions.';
   if (listingCount(w, seller, market) >= B.market.maxListings) return `Listing limit reached (${B.market.maxListings}).`;
   return null;
 }
@@ -217,6 +220,7 @@ export function buyCheck(w: World, actor: Id, buyer: AccountRef, l: Listing | un
   if (accountLocNation(w, buyer) !== l.market) return `You must be located in ${w.nations[l.market].name} to buy on its market.`;
   if (buyer.k === 'cit' && w.citizens[buyer.id].mining) return 'Market trading is blocked while mining.';
   if (embargoed(w, accountNation(w, buyer), l.market)) return 'Trade is blocked by an embargo.';
+  if (blocked(w, accountNation(w, buyer), l.market, l.item)) return 'Trade in this sector is blocked by sanctions.';
   const cur = w.nations[l.market].cur;
   const total = l.price * n;
   const have = acct(w, buyer)?.wallet[cur] ?? 0;

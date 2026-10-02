@@ -3,6 +3,38 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 3.0.2: trade policy
+
+The second part of 3.1 Diplomacy completed: the tools between free trade and a full embargo.
+
+- **Tariffs by partner.** Raise the import tax on one country's goods, 25% at a time up to 100%.
+  - Its exporters sell less in your country, and it may answer in kind.
+  - A tariff on a free-trade partner breaks the agreement.
+- **Import quotas.** Let in only half the usual trade from a country.
+- **Customs unions.** Free trade inside the union, and one common tariff (the members' average) on goods from
+  outside it.
+  - Mercosur (Brazil and Argentina) and the EU–Turkey customs union are in force from the start.
+  - Countries can propose new customs unions as treaties; a country can belong to only one.
+- **Sectoral sanctions.** Cut off one sector and leave the rest of trade open:
+  - energy (oil);
+  - metals (iron, titanium and copper);
+  - technology (electronics, and technology denial);
+  - arms (weapons sales and licences);
+  - finance (loans between governments).
+- **Secondary sanctions.** A country that embargoes another can press everyone else to stop trading with it:
+  - those that comply join its sanctions on finance, technology and arms;
+  - friends that refuse face a stern word, others face its tariffs.
+- **Smuggling.** Sanctions leak across land borders, more where the law is weak on either side. The smugglers are
+  the local syndicates, who grow richer and stronger on it. Sanctions hurt growth and trade ties less for what
+  leaks.
+- **The AI uses the same tools:**
+  - protectionist governments put tariffs on rivals' goods, and partners retaliate;
+  - quarrels bring sectoral sanctions before a full embargo, and measures are lifted when relations improve;
+  - the great powers enforce their embargoes with secondary sanctions.
+- **On screen:** the Diplomacy screen shows the trade measures between you and each country, how much of your
+  sanctions smugglers get round, and your customs union. It also has five new actions: raise tariffs, set an
+  import quota, sanction a sector, secondary sanctions, and ease trade measures.
+
 ### New in 3.0.1: alliances and recognition
 
 The first part of 3.1 Diplomacy completed: what 2.0 left for later.

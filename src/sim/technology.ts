@@ -34,6 +34,7 @@ import { studentPull } from './softPower';
 import { pay } from '../engine/ledger';
 import { GOLD } from '../engine/money';
 import type { Id } from './types';
+import { sectorCut } from './tradePolicy';
 
 export interface TechFirst { nation: number; t: number }
 const YEAR = 365 * DAY;
@@ -125,7 +126,7 @@ export function gain(w: World, n: Nation, d: TechDef, how: 'discovered' | 'adopt
 /** Do all the holders of a technology who dislike `n` keep it from them? */
 export function controlled(w: World, n: Nation, id: string): boolean {
   const holders = w.nations.filter((o) => o.id !== n.id && !o.exile && hasTech(o, id));
-  return holders.length > 0 && holders.every((o) => !partners(w, o, n) && ((o.relations[n.id]?.score ?? 0) < -20 || o.embargoes.includes(n.id)));
+  return holders.length > 0 && holders.every((o) => !partners(w, o, n) && ((o.relations[n.id]?.score ?? 0) < -20 || o.embargoes.includes(n.id) || sectorCut(w, o.id, n.id, 'tech')));
 }
 
 export function techMonth(w: World) {

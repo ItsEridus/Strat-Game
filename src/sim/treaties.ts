@@ -27,7 +27,7 @@ import { strategicOf } from './forceStructure';
 import { capsOf } from './strategic';
 import { nationalStaffing } from './services';
 
-export type TreatyKind = 'defence' | 'guarantee' | 'nonaggression' | 'trade' | 'basing' | 'intel' | 'armscontrol' | 'border' | 'tech' | 'climate' | 'offensive' | 'access';
+export type TreatyKind = 'defence' | 'guarantee' | 'nonaggression' | 'trade' | 'basing' | 'intel' | 'armscontrol' | 'border' | 'tech' | 'climate' | 'offensive' | 'access' | 'customs';
 export interface Treaty {
   id: Id; kind: TreatyKind; name: string; parties: Id[];
   guarantor?: Id; // guarantee: the country giving it
@@ -52,6 +52,7 @@ export const TREATY_INFO: Record<TreatyKind, { name: string; icon: string; years
   climate: { name: 'Climate agreement', icon: '🌡️', years: null, effect: 'Members cut the fossil share of their energy faster, as far as their leaders mean it.' },
   tech: { name: 'Technology partnership', icon: '🔬', years: 10, effect: 'Joint research: partners adopt each other\'s technologies faster and never keep them from each other.' },
   offensive: { name: 'Offensive alliance', icon: '⚔️', years: 5, effect: 'A pact to go to war together: when one party starts a war, the others are asked to join it (or to cut off the enemy), and a party that refuses loses its partner\'s trust. Governments count on their partners when weighing a war.' },
+  customs: { name: 'Customs union', icon: '🛃', years: null, effect: 'Free trade inside, and one common tariff on goods from outside (the average of the members\' import taxes).' },
   access: { name: 'Military access', icon: '🛤️', years: 5, effect: 'The host lets the guest\'s armies cross its territory, so the guest can reach countries it does not border.' },
 };
 
@@ -246,6 +247,11 @@ export function willingness(w: World, n: Nation, other: Nation, kind: TreatyKind
       why = enemy.depth > 30 ? `a common enemy in ${w.nations[enemy.id!]?.name ?? 'a rival'}` : 'no enemy worth a war together';
       break;
     }
+    case 'customs':
+      // A customs union gives up control of the tariff: only close economic partners agree.
+      p = -0.15 + t.interdep / 110 + rel / 150 - lp.nationalism * 0.4;
+      why = t.interdep > 50 ? 'deep trade ties' : 'not close enough to share a tariff';
+      break;
     case 'access':
       // Opening the borders to another country's armies: friends and allies only.
       p = -0.1 + rel / 110 + shared / 120 + (n.alliances.includes(other.id) ? 0.3 : 0) - lp.nationalism * 0.3;
@@ -262,6 +268,7 @@ export function proposeTreatyCheck(w: World, n: Nation, other: Nation | undefine
   if (!recognises(other, n)) return `${other.name} does not recognise you as a state.`;
   if (kind !== 'basing' && kind !== 'guarantee' && treatyBetween(w, n.id, other.id, kind)) return 'A treaty of this kind is already in force.';
   if (kind === 'defence' && n.alliances.includes(other.id)) return 'You are already allied.';
+  if (kind === 'customs' && (activeTreaties(w, n.id, 'customs').length || activeTreaties(w, other.id, 'customs').length)) return 'A country can be in only one customs union.';
   if (kind === 'armscontrol' && (!(strategicOf(n)?.warheads) || !(strategicOf(other)?.warheads))) return 'Arms control is between nuclear powers.';
   if (Object.values(w.wars).some((x) => x.status === 'active' && ((x.att === n.id && x.def === other.id) || (x.att === other.id && x.def === n.id)))) return 'You are at war with them.';
   return null;
@@ -285,7 +292,7 @@ export function offerTreaty(w: World, n: Nation, other: Nation, kind: TreatyKind
 // ---------- effects ----------
 
 /** Trade partners waive import tariffs (read by market.saleTaxes). */
-export const freeTrade = (w: World, a: Id, b: Id) => !!w.treaties && hasTreaty(w, a, b, 'trade');
+export const freeTrade = (w: World, a: Id, b: Id) => !!w.treaties && (hasTreaty(w, a, b, 'trade') || hasTreaty(w, a, b, 'customs'));
 
 /** Allied for threat purposes: allies, guarantees and basing. */
 export const securityPartners = (w: World, a: Id, b: Id) =>

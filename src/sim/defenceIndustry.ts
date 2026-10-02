@@ -24,6 +24,7 @@ import { dailyRevenue } from './publicFinance';
 import { nationPerm } from './authority';
 import { warBetween } from './war';
 import { arsenalOf, contractorOf, defenceNorm } from './arsenal';
+import { sectorCut } from './tradePolicy';
 
 export interface Programme {
   id: Id; name: string; cls: EquipClass; target: number; // the generation it will deliver
@@ -160,6 +161,7 @@ export function exportLicence(w: World, seller: Nation, buyer: Nation): string |
   if (seller.id === buyer.id) return 'Cannot buy from yourself.';
   if (warBetween(w, seller.id, buyer.id)) return `${seller.name} is at war with ${buyer.name}.`;
   if (seller.embargoes.includes(buyer.id) || buyer.embargoes.includes(seller.id)) return 'An embargo is in force.';
+  if (sectorCut(w, seller.id, buyer.id, 'arms')) return 'Sanctions on the arms trade are in force.';
   // Licences go to allies and friends; rival great powers do not arm each other.
   if (!seller.alliances.includes(buyer.id) && (seller.relations[buyer.id]?.score ?? 0) < 15) return `${seller.name} licenses weapons only to allies and friendly countries.`;
   const big = (x: Nation) => x.iso === 'USA' || x.iso === 'CHN' || x.iso === 'RUS';

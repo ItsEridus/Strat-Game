@@ -40,7 +40,7 @@ test('treaties are offered on their merits; renouncing one costs trust, and atta
   for (const [a, b] of [[br, ar], [ar, br]]) { a.relations[b.id].score = 80; tiesOfPair(w, a, b).trust = 70; }
   const ok = offerTreaty(w, br, ar, 'nonaggression');
   assert.ok(ok.ok || /declined/.test(ok.msg));
-  const tr = treatyBetween(w, br.id, ar.id, 'trade')!; // Mercosur
+  const tr = treatyBetween(w, br.id, ar.id, 'customs')!; // Mercosur (a customs union, 3.0.2)
   assert.ok(tr);
   const t0 = tiesOfPair(w, ar, br).trust;
   renounce(w, br, tr);

@@ -483,6 +483,7 @@ export interface Nation {
   alignment?: { towards: Id; choice: 'balance' | 'bandwagon'; since: number }; // facing a far stronger threat (2.0) // under an IMF programme (2.0) // when its leader last met the other's (2.0)
   alliances: Id[];
   embargoes: Id[];
+  tp?: import('./tradePolicy').TradePolicy; // tariffs and quotas by partner, sectoral and secondary sanctions (3.0.2)
   pacts: Record<Id, number>; // nationId -> non-aggression until time
   exile: boolean;
   approval: number; // 0..100 government approval
@@ -901,6 +902,7 @@ export interface World {
   regions: Region[];
   govs: (StateGov | null)[]; // indexed by region id; null where there is no regional government
   syndicates: Record<Id, Syndicate>;
+  customsSeeded?: boolean; // (3.0.2)
   cases: Record<Id, Case>;
   ops: Record<Id, SpyOp>;
   crises: Record<Id, Crisis>;

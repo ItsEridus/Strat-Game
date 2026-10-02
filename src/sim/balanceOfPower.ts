@@ -21,6 +21,7 @@ import { activeTreaties, alliedPower, hasTreaty } from './treaties';
 import { militaryPower } from './war';
 import { strategicOf } from './forceStructure';
 import { reviewStrategy } from './nationalBudget';
+import { leak, tariffOn } from './tradePolicy';
 
 export interface ArmsRace { a: Id; b: Id; since: number; ended?: number; nuclear: boolean }
 export interface BopPoint { key: string; shares: { id: Id; share: number }[]; polarity: 'unipolar' | 'bipolar' | 'multipolar' }
@@ -106,7 +107,8 @@ export function tradePolicyGrowth(w: World, n: Nation): { sanctions: number; agr
   for (const o of w.nations) {
     if (o.id === n.id) continue;
     const t = tiesOf(n.iso, o.iso) / 100;
-    if (o.embargoes.includes(n.id)) s -= t * 1.0; // sanctioned: markets and finance closed
+    if (o.embargoes.includes(n.id)) s -= t * 1.0 * (1 - leak(w, o.id, n.id)); // sanctioned: markets and finance closed (less what is smuggled in)
+    else { const k = o.tp?.sectoral[n.id]?.length ?? 0; s -= (k ? t * 0.2 * k * (1 - leak(w, o.id, n.id)) : 0) + t * tariffOn(w, o.id, n.id) / 250; } // sectoral sanctions and tariffs (3.0.2)
     if (n.embargoes.includes(o.id)) s -= t * 0.4; // sanctioning: lost exports and dearer imports
   }
   let a = 0;

@@ -16,6 +16,7 @@ import { controller, seatShare } from './query';
 import { nationScores } from './forces';
 import { activeWars, enemyOf } from './war';
 import { activeTreaties, hasTreaty, securityPartners } from './treaties';
+import { leak, tariffOn } from './tradePolicy';
 
 export interface Ties { trust: number; affinity: number; threat: number; interdep: number; grievance: number; base?: number } // base: the historical level trust returns to
 export const blocsOf = (n: Nation): Bloc[] => BLOCS.filter((b) => b.members.includes(n.iso));
@@ -130,7 +131,7 @@ export function relationsDaily(w: World, days = 1) {
       t.grievance = Math.max(grievanceOf(a.iso, b.iso) * (hasTreaty(w, a.id, b.id, 'border') ? 0.5 : 1), t.grievance - 0.01 * days);
       // Trade ties grow under a trade agreement and wither under an embargo.
       const tieBase = tiesOf(a.iso, b.iso);
-      const tieTarget = a.embargoes.includes(b.id) || b.embargoes.includes(a.id) ? tieBase * 0.3 : hasTreaty(w, a.id, b.id, 'trade') ? Math.min(100, tieBase + 15) : tieBase;
+      const tieTarget = a.embargoes.includes(b.id) || b.embargoes.includes(a.id) ? tieBase * (0.3 + leak(w, a.embargoes.includes(b.id) ? a.id : b.id, a.embargoes.includes(b.id) ? b.id : a.id)) : hasTreaty(w, a.id, b.id, 'trade') || hasTreaty(w, a.id, b.id, 'customs') ? Math.min(100, tieBase + 15) : tieBase * (1 - (tariffOn(w, a.id, b.id) + tariffOn(w, b.id, a.id)) / 400);
       t.interdep += (tieTarget - t.interdep) * k(0.005);
       const r = a.relations[b.id];
       if (!r) continue;
