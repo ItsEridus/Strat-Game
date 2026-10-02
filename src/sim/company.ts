@@ -1,6 +1,7 @@
 // Companies, employment and production chains. A shift consumes energy, inputs
 // and wage funds, and creates goods; it refuses to run (with a reason) when
 // labour, funds, inputs or storage capacity are missing.
+import { machineFactor } from './automation';
 import { energyFactors, opecOutput } from './energy';
 import { weatherFactor } from './weather';
 import { recordBars } from './prisons';
@@ -150,7 +151,7 @@ export function productionBlock(w: World, co: Company, units: number): string | 
 
 /** Run production for a shift; returns units actually produced. */
 function runProduction(w: World, co: Company, unitsF: number, why: string): number {
-  let total = unitsF + co.frac;
+  let total = unitsF * machineFactor(co) + co.frac; // machines do part of the work (automation.ts)
   let units = Math.floor(total);
   const ik = inputKey(co);
   if (ik) {

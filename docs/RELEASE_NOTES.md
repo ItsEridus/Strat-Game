@@ -3,6 +3,28 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.3.5: automation and society
+
+The fifth part of 2.4 Frontiers.
+
+- **Machines take over routine work** as robotics, AI agents, humanoid robots and (one day) human-level AI arrive.
+  Each month some firms replace a worker in a routine job with a machine. The firm pays for it (or its owner
+  does) and keeps its output with fewer people: wages fall, profits rise.
+- **How exposed a job is** depends on its kind (after Frey & Osborne and the OECD's estimates): office, transport,
+  factory and retail work most; care, trades, teaching and science least. Adoption follows the technology over
+  years. In a test, a country with robotics, AI agents and humanoid robots replaced about a tenth of its jobs in
+  three years.
+- **Displaced workers** get redundancy pay and unemployment benefit, and they are unhappier and more stressed. Firms
+  in electronics and medicine take on more people as automation spreads.
+- **The public reacts.** When many lose their jobs, approval suffers. A government under pressure may tax
+  automation, which doubles the cost of machines (half goes to the treasury) and slows adoption; it may repeal
+  the tax years later.
+- **Your own firms** automate only when you choose: the Companies screen has an Automate a position button. It
+  needs the technology and a worker in a routine job, and a machine needs people to run it (at most two per
+  worker).
+- The Technology panel shows how much routine work machines do, how many workers have been replaced, the public
+  mood and any robot tax.
+
 ### New in 2.3.4: space
 
 The fourth part of 2.4 Frontiers.

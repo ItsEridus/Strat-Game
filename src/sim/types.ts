@@ -322,6 +322,7 @@ export interface Company {
   auto: { sell: boolean; buyInputs: boolean; hire: boolean }; // owner automation (AI owners enable all)
   state?: boolean; // state-owned (socialism)
   halt?: { until: number; why: string }; // production stopped (strike, vandalism, sabotage)
+  machines?: number; // machines doing workers' share of the output (automation, 2.4)
   locked?: Id; // held in escrow by an open contract
 }
 
@@ -430,6 +431,10 @@ export interface Nation {
   techs?: Record<string, number>; // technologies it has, and when it got them (2.4)
   cyberLast?: number; // when its cyber command last attacked (2.4)
   space?: import('./space').SpaceState; // its space agency and satellites (2.4)
+  automated?: number; // the share of routine work machines do so far (2.4)
+  displaced?: number; // workers replaced by machines, in total (2.4)
+  backlash?: number; // public anger at job losses to automation, 0..100 (2.4)
+  robotTax?: number; // since when automation is taxed (2.4)
   lastCoup?: { t: number; ok: boolean; leader: Id }; // the latest coup attempt (2.3)
   armedBy?: Record<Id, number>; // foreign sponsors that sent it arms, and how often (2.3)
   overlord?: Id; // the power it answers to, if it is a puppet state (2.3)

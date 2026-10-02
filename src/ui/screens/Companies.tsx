@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { automate, automateCheck, machineCost, machineFactor } from '../../sim/automation';
 import { accounts, corpTaxRate, premisesRent } from '../../sim/companyCosts';
 import { demographyOf } from '../../sim/companyLife';
 import { hhiOf } from '../../sim/mergers';
@@ -168,6 +169,7 @@ function CompanyDetail({ w, co }: { w: World; co: Company }) {
           <ActBtn run={(w) => setOffer(w, p.id, co.id, fromL(c, wage), slots, minEco)}>Post offer</ActBtn>
         </div>
         <p class="small muted">Minimum wage {fmtAmt(n.cur, n.minWage)}. Max {B.company.maxWorkers[co.q - 1]} employees at {gradeLc(co.q)} grade. Workers switch employers for ≥15% better net pay; unfilled vacancies mean your wage is uncompetitive.</p>
+        <div class="row small">🤖 Machines: {co.machines ?? 0} (output ×{machineFactor(co).toFixed(2)}). <ActBtn small why={automateCheck(w, p.id, co.id)} run={(w) => automate(w, p.id, co.id)} confirm="Replace a worker with a machine? They will be made redundant.">Automate a position ({fmtAmt(c, machineCost(w, co))})</ActBtn></div>
         {co.workers.length > 0 && <StaffTable w={w} co={co} />}
         {!co.workers.length && <Empty>No employees.</Empty>}
       </Panel>
