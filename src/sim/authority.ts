@@ -32,6 +32,7 @@ export const MINISTRY_PERMS: Record<Ministry, Perm[]> = {
   recruitment: ['recruit'],
   interior: ['police'],
   intelligence: ['intel'],
+  foreign: ['diplomacy'],
 };
 
 export const MINISTRY_INFO: Record<Ministry, { name: string; desc: string }> = {
@@ -44,6 +45,7 @@ export const MINISTRY_INFO: Record<Ministry, { name: string; desc: string }> = {
   recruitment: { name: 'Minister of Recruitment', desc: 'Immigration and citizenship approvals' },
   interior: { name: 'Minister of the Interior', desc: 'National police: funding, raids on organised crime, federal investigations' },
   intelligence: { name: 'Director of Intelligence', desc: 'Runs the intelligence service: budget, operations, counter-intelligence' },
+  foreign: { name: 'Foreign Minister', desc: 'Conducts foreign policy: treaties, sanctions, summits and statements; a skilled one builds diplomatic capital faster and briefs the government better' },
 };
 
 export function nationPerm(w: World, actor: Id, nation: Id, perm: Perm): boolean {

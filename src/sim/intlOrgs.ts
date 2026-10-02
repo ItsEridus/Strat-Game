@@ -31,6 +31,7 @@ import { debtLimit, dailySpending } from './publicFinance';
 import { B } from '../data/balance';
 import { nationalStaffing } from './services';
 import { enactForce, forceCase, loses19 } from './unSystem';
+import { patronOf } from './spheres';
 
 export const PERMANENT = ['USA', 'CHN', 'RUS', 'GBR'];
 export type ResKind = 'condemn' | 'ceasefire' | 'sanctions' | 'peacekeeping' | 'force';
@@ -106,6 +107,9 @@ export function lean(w: World, v: Nation, r: Pick<Resolution, 'kind' | 'target' 
   if (r.kind === 'sanctions') y -= 0.3 + Math.min(0.2, (v.ties?.[t.id]?.interdep ?? 0) / 300); // sanctions cost the sanctioner too
   if (r.kind === 'ceasefire') y += 0.15;
   if (r.kind === 'force') y -= 0.25; // war is a grave step, even against an aggressor
+  const patron = patronOf(w, v.id); // a sphere member sides with its patron (3.0.4)
+  if (patron != null && patron === r.target) y -= 0.35;
+  else if (patron != null && patron === r.sponsor) y += 0.15;
   if (r.kind === 'peacekeeping') y += 0.25 - (war && war.def !== v.id && (v.relations[war.def]?.score ?? 0) < -40 ? 0.3 : 0); // a cheap way to stop the killing, unless you want the rebels beaten
   if (activeWars(w).some((x) => x.att === v.id)) y -= 0.15; // those waging wars dislike precedents
   y += (nationalStaffing(w, r.sponsor, 'intl') - 0.6) * 0.15; // a sponsor well represented in the UN system lobbies better

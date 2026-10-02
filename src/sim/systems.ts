@@ -126,6 +126,7 @@ import { pensionsDaily } from './pensions';
 import { childhoodDaily } from './childhood';
 import { lifeAIDaily } from './lifeai';
 import { adoptionsDaily, petsDaily, pregnanciesHourly } from './kinship';
+import { spheresDaily } from './spheres';
 
 let done = false;
 export function registerSystems() {
@@ -159,7 +160,7 @@ export function registerSystems() {
   HANDLERS.warDeadline = (w, p) => onWarDeadline(w, p.war);
   tickHooks.push(soldiersTick);
   hourlyHooks.push((w: World) => { if (!lod.coarse || hourOf(w.time) % 2 === 0) militaryHourly(w); peaceHousekeeping(w); });
-  dailyHooks.push((w: World) => { regimesDaily(w); uprisingsDaily(w); secessionDaily(w); warCourseDaily(w); civilWarDaily(w); technologyDaily(w); cyberDaily(w); spaceDaily(w); automationDaily(w); sovereignDaily(w); marketsDaily(w); climateDaily(w); softPowerDaily(w); demographyDaily(w); almanacDaily(w); mindDaily(w); mentalHealthDaily(w); habitsDaily(w); tiesDaily(w); circlesDaily(w); gossipDaily(w); partnershipDaily(w); familyLifeDaily(w); everydayDaily(w); carsDaily(w); bodyDaily(w); homeDaily(w); languagesDaily(w); migrationDaily(w); identityDaily(w); faithDaily(w); dynastyDaily(w); warHomeDaily(w); withScope(() => { beliefsDaily(w); treatiesDaily(w); diplomacyDaily(w); diplomacyActionsDaily(w); tradePolicyDaily(w); intlDaily(w); unSystemDaily(w); balanceOfPowerDaily(w); crisesDaily(w); }); defenseBudget(w); aiClaimReserves(w); updateExile(w); computeSupply(w); });
+  dailyHooks.push((w: World) => { regimesDaily(w); uprisingsDaily(w); secessionDaily(w); warCourseDaily(w); civilWarDaily(w); technologyDaily(w); cyberDaily(w); spaceDaily(w); automationDaily(w); sovereignDaily(w); marketsDaily(w); climateDaily(w); softPowerDaily(w); demographyDaily(w); almanacDaily(w); mindDaily(w); mentalHealthDaily(w); habitsDaily(w); tiesDaily(w); circlesDaily(w); gossipDaily(w); partnershipDaily(w); familyLifeDaily(w); everydayDaily(w); carsDaily(w); bodyDaily(w); homeDaily(w); languagesDaily(w); migrationDaily(w); identityDaily(w); faithDaily(w); dynastyDaily(w); warHomeDaily(w); withScope(() => { beliefsDaily(w); treatiesDaily(w); diplomacyDaily(w); diplomacyActionsDaily(w); tradePolicyDaily(w); intlDaily(w); unSystemDaily(w); spheresDaily(w); balanceOfPowerDaily(w); crisesDaily(w); }); defenseBudget(w); aiClaimReserves(w); updateExile(w); computeSupply(w); });
 
   // Stage 4: finance & progression
   HANDLERS.auctionEnd = (w, p) => onAuctionEnd(w, p.id);

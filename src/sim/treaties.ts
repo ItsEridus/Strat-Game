@@ -26,6 +26,7 @@ import { declareWar, militaryPower, warBetween, warCheck } from './war';
 import { strategicOf } from './forceStructure';
 import { capsOf } from './strategic';
 import { nationalStaffing } from './services';
+import { hedging } from './spheres';
 
 export type TreatyKind = 'defence' | 'guarantee' | 'nonaggression' | 'trade' | 'basing' | 'intel' | 'armscontrol' | 'border' | 'tech' | 'climate' | 'offensive' | 'access' | 'customs';
 export interface Treaty {
@@ -204,8 +205,9 @@ export function willingness(w: World, n: Nation, other: Nation, kind: TreatyKind
       const entangled = other.alliances.some((x) => (n.relations[x]?.score ?? 0) < -20) ? 0.4 : 0;
       const far = farApart(n.iso, other.iso) ? 0.3 : 0;
       const balancing = n.alignment?.choice === 'balance' && tiesOfPair(w, other, w.nations[n.alignment.towards]).threat > 30 ? 0.1 : 0;
-      p = balancing - 0.25 + rel / 150 + shared / 70 + t.trust / 250 - (lp.nationalism - 0.4) * 0.3 - (NONALIGNED.includes(n.iso) ? 0.35 : 0) - entangled - far;
-      why = entangled ? `${other.name} is allied with our rivals` : NONALIGNED.includes(n.iso) ? 'a tradition of non-alignment' : far ? 'too far apart to defend each other' : shared > 25 ? 'a threat they share' : 'no common enemy';
+      const hedge = hedging(w, n.id)?.includes(other.id) ? 0.3 : 0; // hedgers keep out of either power's alliance
+      p = balancing - hedge - 0.25 + rel / 150 + shared / 70 + t.trust / 250 - (lp.nationalism - 0.4) * 0.3 - (NONALIGNED.includes(n.iso) ? 0.35 : 0) - entangled - far;
+      why = hedge ? 'it keeps on good terms with both powers' : entangled ? `${other.name} is allied with our rivals` : NONALIGNED.includes(n.iso) ? 'a tradition of non-alignment' : far ? 'too far apart to defend each other' : shared > 25 ? 'a threat they share' : 'no common enemy';
       break;
     }
     case 'nonaggression':

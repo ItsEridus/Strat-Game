@@ -3,6 +3,36 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 3.0.4: spheres of influence and the foreign ministry
+
+The fourth part of 3.1 Diplomacy completed.
+
+- **Spheres of influence.** The great powers (the US, China, Russia, and any country with an eighth of world power)
+  pull on every other country. The pull comes from alliances and bases, trade ties, closeness of relations, the
+  same part of the world, and a weaker country making its peace with them.
+  - A country pulled clearly hardest by one power is in its sphere. At the start, the US sphere is Canada, Mexico,
+    Britain, Germany, Turkey, Japan, Korea and Australia.
+  - Spheres are redrawn every month, and a country drifting from one to another is news.
+- **Hedging.** A country pulled almost equally by two powers hedges: at the start, India between Russia and the US,
+  and Brazil between China and the US. Hedgers keep on good terms with both powers and stay out of either side's
+  alliances.
+- **Rivals in a sphere.** A power resents a rival's move into its sphere. An alliance, bases, military access, an
+  offensive pact or intelligence sharing between a member and a rival power costs relations with both. Sphere
+  members side with their patron at the UN.
+- **The Foreign Minister.** A new post in every cabinet:
+  - the foreign minister conducts foreign policy alongside the head of government;
+  - a skilled one (standing, and a career in the diplomatic service) builds diplomatic capital faster and gives
+    better briefings;
+  - AI presidents appoint one, and can offer you the post.
+- **Briefings before decisions.** The foreign-policy panel briefs you on the country you have chosen, from what your
+  government believes rather than the truth:
+  - its strength against yours, its intentions, and your relationship with it;
+  - its commitments, its sphere, and trade measures between you;
+  - what it would sign, with a confidence that rises with your intelligence, your diplomats and your foreign
+    minister.
+- **The relations map.** The Diplomacy screen draws the world's countries in a ring, joined by alliances,
+  friendships, enmities and wars, with each power's sphere in its colour and hedgers dashed.
+
 ### New in 3.0.3: the UN as an organisation
 
 The third part of 3.1 Diplomacy completed.

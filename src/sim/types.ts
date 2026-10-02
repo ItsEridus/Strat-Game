@@ -17,7 +17,7 @@ export type Ideology = 'capitalism' | 'nationalism' | 'centralism' | 'socialism'
 export type BuildingType = 'hospital' | 'fields' | 'industrial' | 'base';
 export type Persona = 'worker' | 'merchant' | 'politician' | 'soldier' | 'industrialist' | 'builder' | 'journalist' | 'investor';
 export type Attr = 'str' | 'acc' | 'luck' | 'end' | 'lead' | 'eco' | 'cons';
-export type Ministry = 'vp' | 'development' | 'defense' | 'economy' | 'labor' | 'pr' | 'recruitment' | 'interior' | 'intelligence';
+export type Ministry = 'vp' | 'development' | 'defense' | 'economy' | 'labor' | 'pr' | 'recruitment' | 'interior' | 'intelligence' | 'foreign';
 export type GearSlot = 'helmet' | 'vest' | 'elbows' | 'gloves' | 'pants' | 'boots';
 export type GearFamily = 'combat' | 'construction' | 'mining' | 'plains' | 'mountains' | 'forest' | 'desert';
 
@@ -905,6 +905,7 @@ export interface World {
   govs: (StateGov | null)[]; // indexed by region id; null where there is no regional government
   syndicates: Record<Id, Syndicate>;
   customsSeeded?: boolean; // (3.0.2)
+  spheres?: import('./spheres').Spheres; // spheres of influence, redrawn monthly (3.0.4)
   cases: Record<Id, Case>;
   ops: Record<Id, SpyOp>;
   crises: Record<Id, Crisis>;

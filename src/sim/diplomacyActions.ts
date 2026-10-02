@@ -71,8 +71,16 @@ export function dipOf(n: Nation): DipState {
 }
 const key = (a: DipAction, t: Id) => `${a}:${t}`;
 
-/** Who conducts foreign policy: the head of government. */
+/** Who conducts foreign policy: the head of government (with the foreign minister). */
 export const foreignActor = (n: Nation) => n.president;
+/** Whether a citizen conducts a country's foreign policy (head of government or foreign minister, 3.0.4). */
+export const conductsDiplomacy = (n: Nation, id: Id) => n.president === id || n.cabinet.foreign === id;
+/** How good the foreign minister is (0..1): standing, and a career in the diplomatic service. */
+export function ministerSkill(w: World, n: Nation): number {
+  const fm = n.cabinet.foreign != null ? w.citizens[n.cabinet.foreign] : null;
+  if (!fm || fm.gone) return 0;
+  return Math.min(1, fm.influence / 150 + (fm.post?.kind === 'diplomat' ? 0.2 + fm.post.grade * 0.08 : 0));
+}
 
 export function dipCheck(w: World, n: Nation, a: DipAction, p: DipParams): string | null {
   const d = dipOf(n);
@@ -316,14 +324,14 @@ export function diplomacyActionsDaily(w: World, days = 1) {
   for (const n of w.nations) {
     if (n.exile) continue;
     const d = dipOf(n);
-    d.capital = Math.min(100, d.capital + (0.5 + prestigeOf(w, n) / 100 + nationalStaffing(w, n.id, 'diplomacy') * 0.5) * days); // diplomats build it up
+    d.capital = Math.min(100, d.capital + (0.5 + prestigeOf(w, n) / 100 + nationalStaffing(w, n.id, 'diplomacy') * 0.5 + ministerSkill(w, n) * 0.4) * days); // diplomats, and a skilled foreign minister, build it up
   }
   if (dateAt(w.time).day === 1) loansMonth(w);
   const pl = player(w);
   for (const n of w.nations) {
     if (n.exile) continue;
     const head = foreignActor(n);
-    if (head != null && head === pl.id) continue; // the player conducts their own country's diplomacy
+    if ((head != null && head === pl.id) || n.cabinet.foreign === pl.id) continue; // the player conducts their own country's diplomacy (as head of government or foreign minister)
     if (!chance(w, 1 - Math.pow(0.96, days))) continue;
     const opt = aiChoice(w, n);
     if (opt) doDiplomacy(w, n, opt[0], opt[1]);

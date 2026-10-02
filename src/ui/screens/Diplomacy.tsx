@@ -6,7 +6,7 @@ import { ActBtn, Bar, CitLink, Help, NationChip, Panel, Select } from '../common
 import { player } from '../../sim/query';
 import { activeWars } from '../../sim/war';
 import { TREATY_INFO, activeTreaties, allTreaties, willingness, type Treaty, type TreatyKind } from '../../sim/treaties';
-import { DIP_INFO, DEMAND_NAME, dipCheck, dipOf, doDiplomacy, loansOf, type DipAction, type Demand } from '../../sim/diplomacyActions';
+import { DIP_INFO, DEMAND_NAME, conductsDiplomacy, dipCheck, dipOf, doDiplomacy, loansOf, type DipAction, type Demand } from '../../sim/diplomacyActions';
 import { GOLD, fmtAmt } from '../../engine/money';
 import { RES_INFO, castCheck, castVote, councilMembers, intlOf, permanentIds, tableCheck, tableResolution, voters, type ResKind } from '../../sim/intlOrgs';
 import { fail, ok } from '../../engine/result';
@@ -17,6 +17,8 @@ import { BLOCS } from '../../data/diplomacy';
 import { blocsOf, leaderProfile, prestigeOf, tiesOfPair } from '../../sim/relations';
 import { SECTORS, SECTOR_INFO, commonTariff, customsUnionOf, leak, tariffOn, type Sector } from '../../sim/tradePolicy';
 import { PK_MONTHLY, appealCheck, arrearsOf, duesOf, loses19, secGen, sgAppeal, standCheck, standForSg, unFund } from '../../sim/unSystem';
+import { briefing } from '../../sim/briefing';
+import { spheresOf } from '../../sim/spheres';
 
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
@@ -48,7 +50,8 @@ export function Diplomacy({ w, id }: { w: World; id: Id }) {
         </table></div>
         <Help>A relation is built from trust (what each side has done to the other, remembered and slowly fading), affinity (similar governments, a shared language and blocs), threat (the other side's military power, its closeness and its intentions), trade ties, and grievances (territorial disputes and historical wrongs; lost wars add new ones). The score moves towards that blend day by day.</Help>
       </Panel>
-      {player(w).nation === id && n.president === player(w).id && <Actions w={w} id={id} />}
+      <RelationsMap w={w} id={id} />
+      {player(w).nation === id && conductsDiplomacy(n, player(w).id) && <Actions w={w} id={id} />}
       <Crises w={w} id={id} />
       <Treaties w={w} id={id} />
       <Organisations w={w} id={id} />
@@ -123,6 +126,7 @@ function Actions({ w, id }: { w: World; id: Id }) {
         <span>Sector</span><Select value={sector} options={SECTORS.map((k) => [k, `${SECTOR_INFO[k].icon} ${SECTOR_INFO[k].name}`] as [Sector, string])} onChange={setSector} />
       </div>
       {t && <TradeMeasures w={w} a={n} b={t} />}
+      {t && <BriefingNote w={w} a={n} b={t} />}
       {v && <p class="small muted">{t.name}'s appetite for a {TREATY_INFO[kind].name.toLowerCase()}: {Math.round(v.p * 100)}% ({v.why}).</p>}
       <table class="table compact small"><tbody>{ACTIONS.map((a) => (
         <tr><td><b>{DIP_INFO[a].name}</b><br /><small class="muted">{DIP_INFO[a].desc}{a === 'renounce' && mine[0] ? ` (${mine[0].name})` : ''}{a === 'mediate' && wars[0] ? ` (${w.nations[wars[0].att].name} against ${w.nations[wars[0].def].name})` : ''}</small></td>
@@ -130,6 +134,44 @@ function Actions({ w, id }: { w: World; id: Id }) {
           <td><ActBtn small why={dipCheck(w, n, a, params(a))} run={(w) => doDiplomacy(w, w.nations[id], a, params(a))}>Do it</ActBtn></td></tr>
       ))}</tbody></table>
       <Help>As head of government you conduct the country's foreign policy. Other governments decide on the merits: their trust in you, their fears, their leader's outlook and how they see your power and your allies.</Help>
+    </Panel>
+  );
+}
+
+/** The briefing before a decision (3.0.4). */
+function BriefingNote({ w, a, b }: { w: World; a: Nation; b: Nation }) {
+  const br = briefing(w, a, b);
+  return <details class="small"><summary>📋 Briefing on {b.name} (confidence {Math.round(br.quality * 100)}%)</summary>
+    <ul>{br.lines.map((l) => <li><b>{l.head}:</b> {l.text}</li>)}</ul></details>;
+}
+
+/** The relations map (3.0.4): the countries in a ring, joined by their friendships, alliances and enmities; the
+ *  great powers' spheres of influence by colour, hedgers dashed. */
+function RelationsMap({ w, id }: { w: World; id: Id }) {
+  const ns = w.nations.filter((x) => !x.exile);
+  const sp = spheresOf(w);
+  const R = 150, C = 180;
+  const pos = new Map(ns.map((x, i) => [x.id, { x: C + R * Math.cos((2 * Math.PI * i) / ns.length - Math.PI / 2), y: C + R * Math.sin((2 * Math.PI * i) / ns.length - Math.PI / 2) }]));
+  const hue = (p: Id | undefined) => (p == null ? 'var(--muted, #888)' : ['#3b82f6', '#ef4444', '#f59e0b', '#10b981', '#a855f7'][sp.powers.indexOf(p) % 5]);
+  const edges: { a: Id; b: Id; kind: 'ally' | 'friend' | 'foe' | 'war' }[] = [];
+  for (const a of ns) for (const b of ns) {
+    if (a.id >= b.id) continue;
+    const rel = Math.min(a.relations[b.id]?.score ?? 0, b.relations[a.id]?.score ?? 0);
+    const war = activeWars(w).some((x) => (x.att === a.id && x.def === b.id) || (x.att === b.id && x.def === a.id));
+    const kind = war ? 'war' : a.alliances.includes(b.id) ? 'ally' : rel > 45 ? 'friend' : rel < -40 ? 'foe' : null;
+    if (kind) edges.push({ a: a.id, b: b.id, kind });
+  }
+  const stroke = { ally: '#3b82f6', friend: '#10b981', foe: '#ef4444', war: '#b91c1c' } as const;
+  return (
+    <Panel title="🕸️ Relations map">
+      <svg viewBox="0 0 360 360" style={{ width: '100%', maxWidth: '420px' }} role="img" aria-label="Relations between countries">
+        {edges.map((e) => { const p = pos.get(e.a)!, q = pos.get(e.b)!; return <line x1={p.x} y1={p.y} x2={q.x} y2={q.y} stroke={stroke[e.kind]} stroke-width={e.kind === 'war' ? 3 : e.kind === 'ally' ? 2 : 1} stroke-dasharray={e.kind === 'foe' ? '4 3' : undefined} opacity={e.a === id || e.b === id ? 0.95 : 0.35} />; })}
+        {ns.map((x) => { const p = pos.get(x.id)!; const big = sp.powers.includes(x.id); return <g>
+          <circle cx={p.x} cy={p.y} r={big ? 11 : 8} fill={big ? hue(x.id) : 'var(--panel, #fff)'} stroke={hue(big ? x.id : sp.of[x.id])} stroke-width={x.id === id ? 3.5 : 2} stroke-dasharray={sp.hedging[x.id] ? '3 2' : undefined} />
+          <text x={p.x} y={p.y + (p.y < C ? -14 : 22)} text-anchor="middle" font-size="10" fill="currentColor">{x.iso}</text></g>; })}
+      </svg>
+      <p class="small muted">Lines: <span style={{ color: stroke.ally }}>allies</span>, <span style={{ color: stroke.friend }}>close friends</span>, <span style={{ color: stroke.foe }}>enemies</span> (dashed), <span style={{ color: stroke.war }}>at war</span>. Filled circles are the great powers; a ring in a power's colour marks its sphere of influence, a dashed ring a country hedging between two.
+        {' '}{sp.powers.map((p) => `${w.nations[p].name}: ${Object.entries(sp.of).filter(([, v]) => v === p).map(([k]) => w.nations[+k].iso).join(', ') || 'no sphere'}`).join('. ')}.{Object.keys(sp.hedging).length ? ` Hedging: ${Object.keys(sp.hedging).map((k) => w.nations[+k].iso).join(', ')}.` : ''}</p>
     </Panel>
   );
 }
@@ -179,7 +221,7 @@ function Organisations({ w, id }: { w: World; id: Id }) {
   const st = intlOf(w);
   const n = w.nations[id];
   const pl = player(w);
-  const head = pl.nation === id && n.president === pl.id;
+  const head = pl.nation === id && conductsDiplomacy(n, pl.id);
   const perm = permanentIds(w);
   const council = councilMembers(w);
   const open = st.resolutions.filter((r) => r.status === 'open');
