@@ -3,6 +3,20 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.9.3: the family name
+
+The third part of 3.0 Life 2.0: generations.
+
+- **Political dynasties.** A candidate whose family has given the country heads of government before carries the
+  name into the campaign: voters remember it, and those on the left a little less fondly.
+- **Old money and new money.** Wealth inherited across generations (a large inheritance, or a family firm) is old
+  money: it helps with voters on the right and is resented on the left. Wealth made in one life is new money.
+- **Family firms.** A company handed down from parent to child stays a family firm and counts its generations:
+  "a Morgan family firm, generation 3". A firm sold, or left to someone outside the family, stops being one.
+- **What a name is worth:** the influence and fame of the family's living members, and the offices its members
+  have held.
+- **On screen:** the family name, old or new money, and your family firms appear with the family tree.
+
 ### New in 2.9.2: what children inherit
 
 The second part of 3.0 Life 2.0: generations.

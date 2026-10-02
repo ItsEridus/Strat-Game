@@ -8,6 +8,7 @@
 // Leaving the world is done properly: a death hands the estate to the family
 // (or the state), offices fall vacant and are refilled, commands pass on, and
 // the person stays on record so history can still name them.
+import { handDown } from './familyName';
 import { noteDeath } from './dynasty';
 import { funeral } from './familyLife';
 import { marriageBar, orientationOf } from './partnership';
@@ -202,12 +203,13 @@ export function releaseRoles(w: World, c: Citizen, why: string) {
 
 /** Pass everything someone owns to their heir, or to the state. */
 export function settleEstate(w: World, c: Citizen, heir: Citizen | null) {
+  if (heir) heir.flags.inherited = (heir.flags.inherited ?? 0) + (c.wallet[w.nations[c.nation]?.cur] ?? 0); // (old money: familyName.ts)
   settleWill(w, c, heir); // inheritance tax, bequests, trusts for children, heirlooms
   const to = heir ? cref(heir.id) : natref(controller(w.regions[c.home]));
   const from = cref(c.id);
   for (const [asset, amt] of Object.entries(c.wallet)) if (amt > 0) pay(w, from, to, asset, amt, heir ? `Inheritance from ${c.name}` : `Estate of ${c.name}`);
   for (const [key, n] of Object.entries(c.inv)) if (n > 0) moveItems(w, from, to, key, n);
-  for (const co of Object.values(w.companies)) if (co.owner.k === 'cit' && co.owner.id === c.id) transferCompany(w, co, to);
+  for (const co of Object.values(w.companies)) if (co.owner.k === 'cit' && co.owner.id === c.id) { handDown(w, co, c, heir); transferCompany(w, co, to); }
   for (const p of Object.values(w.papers)) if (p.owner.k === 'cit' && p.owner.id === c.id) p.owner = to;
   for (const gear of Object.values(w.gear)) if (gear.owner?.k === 'cit' && gear.owner.id === c.id) gear.owner = heir ? cref(heir.id) : null;
   for (const h of Object.values(w.holdings)) {

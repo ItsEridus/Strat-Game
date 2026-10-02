@@ -2,6 +2,7 @@
 //  - Elections run on the in-game calendar without player intervention.
 //  - Voters are individual AI citizens plus aggregated background blocs.
 //  - Every result stores turnout, tallies, seats and a readable explanation.
+import { dynastyVote, moneyVote } from './familyName';
 import { identityVote } from './identity';
 import { lostTo, tieBias } from './ties';
 import { ideologyFit } from './mind';
@@ -338,6 +339,7 @@ function candidateUtility(w: World, voter: Citizen | null, voterIdeo: Citizen['i
   if (voter) parts.values = (ideologyFit(w, voter, ideo) - 0.65) * 30; // a party whose outlook fits what they value (mind.ts)
   if (voter?.ties) { const m = tieBias(voter, cand.id); if (m) parts.memory = m; } // grudges and gratitude (ties.ts)
   if (voter) { const id = identityVote(w, voter, ideo); if (id) parts.identity = id; } // pride in the country (identity.ts)
+  { const dyn = dynastyVote(w, cand, voterIdeo); if (dyn) parts.dynasty = dyn; const om = moneyVote(w, cand, voterIdeo); if (om) parts.money = om; } // the family name (familyName.ts)
   if (voter && voter.flags.pledge === cand.id && dayOf(w.time) - (voter.flags.pledgeDay ?? -99) <= 30) parts.pledge = 25; // promised in person
   const foreign = interferenceBonus(w, n, cp?.id);
   if (foreign) parts.foreign = foreign; // a foreign service's campaign

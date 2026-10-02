@@ -333,6 +333,7 @@ export interface Company {
   evaded?: number; // tax hidden and not yet found
   lifetime: { produced: number; revenue: number; wages: number; profit: number };
   ownerHist: { t: number; owner: AccountRef; price?: number }[];
+  family?: { name: string; gen: number; since: number }; // a family firm handed down (3.0)
   shortage: string | null; // reason production last failed
   auto: { sell: boolean; buyInputs: boolean; hire: boolean }; // owner automation (AI owners enable all)
   state?: boolean; // state-owned (socialism)
