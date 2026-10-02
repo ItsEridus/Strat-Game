@@ -37,6 +37,7 @@ import { CONDITIONS, clinicCheck, conditionsOf, treated, visitClinic, type CondK
 import { loansOf } from './loans';
 import { dailyRevenue } from './publicFinance';
 import { historyPace } from './strategic';
+import { active } from './habits';
 
 export const isMental = (k: CondKey) => k === 'depression' || k === 'anxiety' || k === 'burnout';
 export const SEVERITY = ['', 'mild', 'moderate', 'severe'];
@@ -180,9 +181,11 @@ export function mentalRisks(w: World, c: Citizen, sup = supported(w, c)): Record
   const arrears = loansOf(w, c).some((l) => l.missed > 0);
   const depression = 0.026 * vulnerability(c, 2611) * past * st * (fem ? 1.4 : 0.75) * (sup ? 1 : 1.5) * (jobless ? 1.6 : 1) * (grief > 8 ? 2 : 1) * ((c.health ?? 90) < 50 ? 1.5 : 1) * (prison ? 2 : 1) * (war ? 1.5 : 1);
   const anxiety = 0.026 * vulnerability(c, 2612) * past * st * (fem ? 1.5 : 0.75) * (hasQuirk(c, 'worrier') ? 2.5 : 1) * (age < 30 ? 1.3 : age > 60 ? 0.7 : 1) * (arrears ? 1.5 : 1) * (war ? 1.8 : 1) * (prison ? 1.5 : 1);
+  const drink = active(c, 'drinking'), gamble = active(c, 'gambling');
+  const habitsK = 1 + (drink >= 50 ? 0.6 : 0) + (gamble >= 50 ? 0.5 : 0) + (active(c, 'gaming') >= 50 ? 0.3 : 0); // addiction and depression feed each other
   const working = c.job != null || !!c.post || !!c.business;
   const burnout = working && !prison ? (0.015 + (Math.max(0, stress - 30) / 20) * 0.08) * (hasQuirk(c, 'workaholic') ? 2 : 1) * (isOfficial(w.nations[c.nation], c.id) ? 1.5 : 1) * vulnerability(c, 2614) : 0;
-  return { depression, anxiety, burnout };
+  return { depression: depression * habitsK, anxiety: anxiety * (gamble >= 50 ? 1.4 : 1), burnout };
 }
 
 function onset(w: World, c: Citizen, key: CondKey, sev: number) {

@@ -46,6 +46,8 @@ export interface Citizen {
   look?: import('./looks').Look;
   mind?: import('./mind').Mind; // values, and how experience has shaped them (2.6)
   mh?: import('./mentalHealth').MentalHealth; // past episodes, losses being grieved, therapy (2.6)
+  habits?: Partial<Record<import('./habits').Habit, import('./habits').HabitState>>; // smoking, drinking, gambling, gaming (2.6)
+  habitDay?: Partial<Record<import('./habits').Habit, number>>; betsToday?: { day: number; n: number }; // the player's daily limits
   nature?: import('./nature').Nature; // talent, weakness, quirks (designed for the player; otherwise from a hash)
   background?: import('./nature').Background; // the family a life started in // a designed or changed appearance (otherwise generated: sim/looks.ts)
   dwelling?: import('./housing').Home;
@@ -451,6 +453,7 @@ export interface Nation {
   soft?: number; // soft power, 0..100 (2.5)
   demo?: import('./demography').Demography; // fertility, ageing, migration and population (2.5)
   mh?: import('./mentalHealth').NationMH; // mental health care: access, stigma, a national programme (2.6)
+  tobacco?: number; // tobacco duty against 2025 (2.6)
   hosted?: number; // Olympics and World Expos hosted (2.5)
   lastCoup?: { t: number; ok: boolean; leader: Id }; // the latest coup attempt (2.3)
   armedBy?: Record<Id, number>; // foreign sponsors that sent it arms, and how often (2.3)
@@ -864,6 +867,7 @@ export interface World {
   almanac?: import('./almanac').Almanac; // the record of the campaign: leaders and yearly statistics (2.5)
   scenarioApplied?: boolean; // the start scenario has been applied (2.5)
   mhSeeded?: boolean; // mental health as it stands at the start has been set (2.6)
+  habitsSeeded?: number; // citizens below this id have been given the habits of people like them (2.6)
   games?: import('./softPower').GamesEvent[]; // Olympics and World Expos, held and planned (2.5)
   climate?: import('./climate').ClimateState; // global temperature, emissions and sea level (2.5)
   cyber?: import('./cyber').CyberIncident[]; // recent cyber attacks, as their victims understand them (2.4)

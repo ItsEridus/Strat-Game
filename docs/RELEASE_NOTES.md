@@ -3,6 +3,39 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.5.3: habits and addictions
+
+The third part of 2.6 Life 2.0: the mind.
+
+- **Smoking, drinking, gambling and gaming**, for everyone, as in their country in 2025:
+  - daily smoking runs from about one man in eight in Britain, Brazil and the United States to nearly half of men
+    in China and Korea (WHO);
+  - alcohol dependence runs from almost none in Saudi Arabia, where drink and gambling are illegal, to about one
+    adult in eleven in Russia;
+  - problem gambling is around 1% (more in Australia and Japan), and gaming disorder affects a few per cent of the
+    young (more in Korea and China);
+  - men smoke, drink and gamble more, faith keeps people from drink and gambling, and most habits are taken up
+    before 25.
+- **Habits grow and become addictions** (at strength 50). They drift towards each person's own pull, pushed up by
+  stress, depression, grief and an appetite for risk.
+- **What they cost:**
+  - **Money every month:** a pack costs from about $2 in India to $35 in Australia, and much of what people spend
+    goes to the state in duty.
+  - **Health:** smoking multiplies the risk of cancer and heart disease; heavy drinking harms the liver and the
+    heart.
+  - **Jobs and families:** heavy drinkers lose jobs, gamblers lose their savings, and both strain their families.
+  - **Mental health:** addiction and depression feed each other.
+- **Quitting:**
+  - smokers try about once every four years, and most relapse within months;
+  - help from a doctor about doubles the chance that quitting lasts;
+  - the first weeks bring cravings, and after a year without it the habit is behind you.
+- **Tobacco duty** rises over the years, so fewer people start and more quit. As head of government you can raise
+  it too.
+- **On screen:**
+  - a Habits panel in Life: a pack, a night out drinking, an evening of games, a bet at the bookmaker's, and
+    quitting with or without help;
+  - a habits panel on each country page.
+
 ### New in 2.5.2: mental health in depth
 
 The second part of 2.6 Life 2.0: the mind.

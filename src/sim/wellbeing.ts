@@ -18,6 +18,7 @@ import { SIZES } from './housing';
 import { incomeOf, loansOf } from './loans';
 import { hasQuirk } from './nature';
 import { griefOf } from './mentalHealth';
+import { habitParts } from './habits';
 
 type Part = [string, number];
 
@@ -85,6 +86,8 @@ function parts(w: World, c: Citizen, friends: number): { happy: Part[]; stress: 
   if (g?.gadget && w.time - g.gadget.t < B.goods.gadgetDays * DAY) happy.push(['a new gadget', B.goods.gadget[g.gadget.q - 1]]);
   const hobbies = L.lastHobby != null && d - L.lastHobby <= 7 ? Object.values(L.hobbies).filter((v) => v >= 10).length : 0; // kept up this week
   if (hobbies) { happy.push(['hobbies', Math.min(6, hobbies * 2)]); stress.push(['hobbies', -Math.min(9, hobbies * 3)]); }
+  const hp = habitParts(w, c);
+  happy.push(...hp.happy); stress.push(...hp.stress);
   return { happy, stress };
 }
 
