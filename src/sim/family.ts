@@ -151,6 +151,14 @@ export function kidComesOfAge(w: World, parent: Citizen, kid: Kid) {
 
 // ---------- the NPC love life ----------
 
+/** The chance a married couple has a baby on a given day (fewer once there are children already). */
+function birthOdds(w: World, a: Citizen, b: Citizen) {
+  const young = Math.min(ageOf(w, a), ageOf(w, b)), older = Math.max(ageOf(w, a), ageOf(w, b));
+  const kids = fam(a).kids.length + fam(b).kids.length + fam(a).children.length;
+  if (young < 20 || older > 46 || kids >= 4) return 0;
+  return ((sameSex(w, a, b) ? 0.25 : 1) * 0.3 * fertilityFactor(w, a) * (0.4 + (valueOf(w, a, 'family') + valueOf(w, b, 'family')) * 0.6)) / (w.settings.lifeYearDays ?? 365) / (1 + kids);
+}
+
 export function familyDaily(w: World) {
   const d = today(w);
   const all = census(w).all;
@@ -173,9 +181,7 @@ export function familyDaily(w: World) {
       if (days >= 20 && chance(w, 0.06)) wed(w, a, b);
     } else if (f.status === 'married') {
       if (rel < 0 && chance(w, 0.02)) { divorce(w, a, b, w.nations[a.nation]); split(w, a, b); localNews(w, a.home, `📄 ${a.name} and ${b.name} are divorcing.`); continue; }
-      const young = Math.min(ageOf(w, a), ageOf(w, b)), older = Math.max(ageOf(w, a), ageOf(w, b));
-      const kids = fam(a).kids.length + fam(b).kids.length + fam(a).children.length;
-      if (young >= 20 && older <= 46 && kids < 4 && chance(w, ((sameSex(w, a, b) ? 0.25 : 1) * 0.3 * fertilityFactor(w, a) * (0.4 + (valueOf(w, a, 'family') + valueOf(w, b, 'family')) * 0.6)) / (w.settings.lifeYearDays ?? 365) / (1 + kids))) haveBaby(w, a, b);
+      if (chance(w, birthOdds(w, a, b))) haveBaby(w, a, b);
     }
   }
   // New couples: neighbours, colleagues, friends of friends.
@@ -247,7 +253,10 @@ export function familySkipMonth(w: World) {
       if (rel >= 60 && days >= 30 && !marriageBar(w, a, b, w.nations[a.nation]) && chance(w, 0.4 * (0.5 + (valueOf(w, a, 'family') + valueOf(w, b, 'family')) / 2))) { fam(a).status = fam(b).status = 'engaged'; fam(a).since = fam(b).since = w.time; }
     } else if (f.status === 'engaged') {
       if (days >= 20 && chance(w, 0.8)) wed(w, a, b);
-    } else if (f.status === 'married' && rel < 0 && chance(w, 0.45)) { divorce(w, a, b, w.nations[a.nation]); split(w, a, b); }
+    } else if (f.status === 'married') {
+      if (rel < 0 && chance(w, 0.45)) { divorce(w, a, b, w.nations[a.nation]); split(w, a, b); continue; }
+      if (chance(w, 1 - Math.pow(1 - birthOdds(w, a, b), 30))) haveBaby(w, a, b); // (3.0: no babies were born in skipped months)
+    }
   }
   // New couples: a month of meeting neighbours and workmates.
   for (const r of w.regions) {
@@ -259,6 +268,30 @@ export function familySkipMonth(w: World) {
       if (kk > 0 && chance(w, kk * 0.3)) { pair(w, a, b, 'dating'); bumpRel(a, b, 25); }
     }
   }
+  playerSkipMonth(w);
+}
+
+/** The player's own love life in skipped years (3.0): left to chance, as everyone else's is, so that a family
+ *  line can carry on across decades. Meeting someone, marrying and children; breaking up stays the player's call. */
+function playerSkipMonth(w: World) {
+  const p = player(w);
+  if (!p || p.gone || !isAdult(w, p) || jailed(w, p)) return;
+  const f = fam(p);
+  const b = alive(w, f.partner);
+  if (!b) {
+    if (ageOf(w, p) >= 60 || !chance(w, 0.04 + valueOf(w, p, 'family') * 0.06)) return;
+    const best = census(w).all.filter((c) => c.nation === p.nation && !c.gone && !c.player && c.family?.partner == null && isAdult(w, c) && ageOf(w, c) < 70 && !jailed(w, c))
+      .map((c) => ({ c, k: compatible(w, p, c) })).filter((x) => x.k > 0.2).sort((x, y) => y.k - x.k)[0];
+    if (best) { pair(w, p, best.c, 'dating'); bumpRel(p, best.c, 40); }
+    return;
+  }
+  bumpRel(p, b, rand(w, 0, 6));
+  const days = (w.time - f.since) / DAY;
+  if (f.status === 'dating') {
+    if (days >= 90 && !marriageBar(w, p, b, w.nations[p.nation]) && chance(w, 0.12 * (0.5 + valueOf(w, p, 'family')))) { f.status = fam(b).status = 'engaged'; f.since = fam(b).since = w.time; }
+  } else if (f.status === 'engaged') {
+    if (days >= 60 && chance(w, 0.5)) wed(w, p, b);
+  } else if (f.status === 'married' && chance(w, 1 - Math.pow(1 - birthOdds(w, p, b), 30))) haveBaby(w, p, b);
 }
 
 /** Genesis: couples, children growing up at home, and grown-up children living nearby. */

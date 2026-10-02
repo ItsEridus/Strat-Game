@@ -77,9 +77,20 @@ function moleHunt(w: World) {
 }
 
 /** Deception through double agents: the handler's picture of the country is pushed where the country wants it. */
+const doubledMemo = new WeakMap<World, { t: number; m: Map<string, number> }>();
+/** Turned agents by handler and target (counted once per tick: the census is long). */
+function doubledAgents(w: World, handler: Id, target: Id): number {
+  let hit = doubledMemo.get(w);
+  if (!hit || hit.t !== w.time) {
+    const m = new Map<string, number>();
+    for (const c of census(w).all) if (c.sec.asset != null && c.sec.doubled != null && c.sec.doubled === c.nation) { const k = `${c.sec.asset}:${c.nation}`; m.set(k, (m.get(k) ?? 0) + 1); }
+    hit = { t: w.time, m };
+    doubledMemo.set(w, hit);
+  }
+  return hit.m.get(`${handler}:${target}`) ?? 0;
+}
 export function deceive(w: World, handler: Nation, t: Nation, e: Estimate) {
-  let doubled = 0;
-  for (const c of census(w).all) if (c.sec.asset === handler.id && c.sec.doubled === t.id && c.nation === t.id) doubled++;
+  const doubled = doubledAgents(w, handler.id, t.id);
   if (!doubled) return;
   const k = Math.min(3, doubled);
   e.bias.mil += 0.08 * k; // look stronger than we are (deterrence)

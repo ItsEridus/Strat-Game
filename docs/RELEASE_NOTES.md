@@ -3,6 +3,40 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 3.0.0: Life 2.0, generations
+
+3.0 is complete: play a family across a century. Its parts:
+
+- the family tree and chronicle (2.9.1);
+- what children inherit (2.9.2);
+- the family name (2.9.3);
+- ancestral places (2.9.4).
+
+This release adds:
+
+- **Stories of generations:**
+  - **Something to pass on:** a grown child asks where an heirloom came from. Tell the story and give it to them,
+    or keep it for now.
+  - **An offer for the family home:** a developer offers a quarter above its value. Sell, and the family will not
+    be pleased, or refuse.
+  - **A box of old letters:** an ancestor's letters in the attic. Write the family history, or read them and put
+    them back.
+  - **So like you:** a grown child who takes after you. Take them under your wing, or let them find their own way.
+- **Lives go on in skipped years.** When you skip ahead, your own life now carries on as everyone else's does:
+  - you may meet someone from anywhere in your country, marry, and have children;
+  - breaking up stays your decision;
+  - you can die of age or illness (if player mortality is on), and the line passes to your heir.
+  - Before this, a skip of decades left you single and alive.
+- **Babies in skipped years.** Couples elsewhere now have children during skips too. Before this, no babies were
+  born in skipped months, so families thinned out over decades.
+- **A hundred years, measured:**
+  - a hundred-year skip takes about six minutes, at about 45 seconds a decade with no slowing down;
+  - before this, later decades took four times as long as the first;
+  - three things were scanned again and again as history grew longer: the treaties in force, turned agents, and
+    regions hit by disasters. They are now worked out once.
+  - In the test run, the line passed through four lives over two generations. The ledger balanced throughout, and
+    the save grew to about 22 MB.
+
 ### New in 2.9.4: ancestral places
 
 The fourth part of 3.0 Life 2.0: generations.

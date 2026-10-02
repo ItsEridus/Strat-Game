@@ -86,6 +86,19 @@ export function mortality(w: World, c: Citizen): number {
 
 // ---------- targets: how many people a region can hold ----------
 
+/** Regions hit by a disaster, an epidemic or a riot (once per tick). */
+const strickenMemo = new WeakMap<World, { t: number; set: Set<Id> }>();
+function stricken(w: World): Set<Id> {
+  let hit = strickenMemo.get(w);
+  if (!hit || hit.t !== w.time) {
+    const set = new Set<Id>();
+    for (const k of activeCrises(w)) if (['hurricane', 'earthquake', 'flood', 'wildfire', 'epidemic', 'riot'].includes(k.kind)) for (const r of k.regions) set.add(r);
+    hit = { t: w.time, set };
+    strickenMemo.set(w, hit);
+  }
+  return hit.set;
+}
+
 function attractiveness(w: World, r: Region): number {
   const s = w.govs[r.id];
   const people = residents(w, r.id).filter((c) => !c.player);
@@ -97,7 +110,7 @@ function attractiveness(w: World, r: Region): number {
   a += ((s?.dev ?? 1) - 1) * 0.08 + ((s?.approval ?? 50) - 50) / 150;
   if (r.occ) a -= 0.6;
   if (r.disrupted > w.time) a -= 0.3;
-  if (activeCrises(w).some((k) => k.regions.includes(r.id) && ['hurricane', 'earthquake', 'flood', 'wildfire', 'epidemic', 'riot'].includes(k.kind))) a -= 0.3;
+  if (stricken(w).has(r.id)) a -= 0.3;
   a -= Math.max(0, r.pollution - 50) * 0.005;
   if (r.pop0) a += Math.max(-0.3, Math.min(0.3, (r.pop / r.pop0 - 1) * 1.5)); // the background population moves too
   return Math.max(-1, Math.min(1, a));

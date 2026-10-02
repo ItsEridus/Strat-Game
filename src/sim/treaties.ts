@@ -58,10 +58,21 @@ export const NONALIGNED = ['IND', 'BRA', 'ZAF', 'MEX', 'SAU', 'ARG'];
 const farApart = (a: string, b: string) => !GLOBAL_POWERS.includes(a) && !GLOBAL_POWERS.includes(b) && !(WORLD_REGION[a] ?? []).some((r) => (WORLD_REGION[b] ?? []).includes(r));
 const isoId = (w: World, iso: string) => w.nations.find((n) => n.iso === iso)?.id;
 export const allTreaties = (w: World): Treaty[] => Object.values(w.treaties ?? {});
+/** Treaties in force, kept as an index (rebuilt whenever one is signed or ends): over decades the record of
+ *  every treaty ever signed grows long, and the AI asks about treaties many times a day. */
+let rev = 0;
+const activeIdx = new WeakMap<World, { rev: number; store: object | undefined; list: Treaty[] }>();
+function inForce(w: World): Treaty[] {
+  const hit = activeIdx.get(w);
+  if (hit && hit.rev === rev && hit.store === w.treaties) return hit.list;
+  const list = allTreaties(w).filter((t) => t.status === 'active');
+  activeIdx.set(w, { rev, store: w.treaties, list });
+  return list;
+}
 export const activeTreaties = (w: World, nation?: Id, kind?: TreatyKind) =>
-  allTreaties(w).filter((t) => t.status === 'active' && (nation == null || t.parties.includes(nation)) && (kind == null || t.kind === kind));
+  inForce(w).filter((t) => (nation == null || t.parties.includes(nation)) && (kind == null || t.kind === kind));
 export const treatyBetween = (w: World, a: Id, b: Id, kind?: TreatyKind) =>
-  allTreaties(w).find((t) => t.status === 'active' && t.parties.includes(a) && t.parties.includes(b) && (kind == null || t.kind === kind));
+  inForce(w).find((t) => t.status === 'active' && t.parties.includes(a) && t.parties.includes(b) && (kind == null || t.kind === kind));
 export const hasTreaty = (w: World, a: Id, b: Id, kind: TreatyKind) => !!treatyBetween(w, a, b, kind);
 
 /** Alliances (what the battle and war rules read) follow the defence treaties and guarantees in force. */
@@ -86,6 +97,7 @@ export function signTreaty(w: World, kind: TreatyKind, parties: Id[], o: SignOpt
     status: 'active', honoured: 0, failed: 0,
   };
   (w.treaties ??= {})[t.id] = t;
+  rev++;
   if (kind === 'nonaggression' && t.until != null) for (const a of parties) for (const b of parties) if (a !== b) w.nations[a].pacts[b] = Math.max(w.nations[a].pacts[b] ?? 0, t.until);
   syncAlliances(w);
   if (!o.quiet) {
@@ -101,6 +113,7 @@ export function signTreaty(w: World, kind: TreatyKind, parties: Id[], o: SignOpt
 export function endTreaty(w: World, t: Treaty, how: 'lapsed' | 'ended' | 'broken', by?: Id, why?: string) {
   if (t.status !== 'active') return;
   t.status = how; t.ended = w.time; t.endedBy = by; t.why = why;
+  rev++;
   if (t.kind === 'nonaggression') for (const a of t.parties) for (const b of t.parties) if (a !== b && (w.nations[a].pacts[b] ?? 0) > w.time) w.nations[a].pacts[b] = w.time;
   syncAlliances(w);
   const verb = how === 'lapsed' ? 'lapsed' : how === 'broken' ? `was broken by ${w.nations[by!]?.name}` : `was renounced by ${w.nations[by!]?.name ?? 'its members'}`;

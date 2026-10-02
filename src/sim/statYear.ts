@@ -32,7 +32,9 @@ import { companyCurrency, coref, cref, hhref, natref, player } from './query';
 import { runQueue } from './tick';
 import { activeBattles, finishBattle } from './battle';
 import { engaged, power } from './forces';
-import { die, mortality, populationDaily } from './population';
+import { die, mortality, populationDaily, releaseRoles, settleEstate } from './population';
+import { playerDies } from './legacy';
+import { bereave } from './family';
 import { dailyRevenue, dailySpending, publicFinanceDaily } from './publicFinance';
 import { strategicDaily } from './strategic';
 import { arsenalDaily } from './arsenal';
@@ -205,6 +207,12 @@ function peopleMonth(w: World, days: number) {
   populationDaily(w); // one day's churn and the region top-up
   invalidateCensus(w);
   if (p.gone) return;
+  // The player ages too: across a skip of decades, the family line passes from generation to generation (3.0).
+  if (w.settings.playerMortality && chance(w, 1 - Math.pow(1 - mortality(w, p), days - 1))) { // (populationDaily counted one day)
+    const cause = (p.health ?? 90) < 40 ? 'after an illness' : ageOf(w, p) >= 75 ? 'of old age' : 'suddenly';
+    playerDies(w, cause, { releaseRoles, settleEstate, bereave });
+    invalidateCensus(w);
+  }
 }
 
 /** Battles under way are settled by the strength of the two sides. */
