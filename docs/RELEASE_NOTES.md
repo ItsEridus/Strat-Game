@@ -3,6 +3,28 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.4.6: the decades campaign and the World Almanac
+
+The sixth part of 2.5 A world of consequences.
+
+- **Starting worlds.** A new game can start from three worlds:
+  - **the present day:** the world as it is in 2025;
+  - **a new cold war:** the United States and its allies against China and Russia, with deep distrust, sanctions
+    and decoupled trade between the blocs, a Sino-Russian alliance, a Western technology partnership, and an arms
+    race;
+  - **a multipolar world:** American weight is smaller; China, India and the middle powers are larger; the dollar
+    holds less of the world's reserves; and America's alliances are strained.
+- **The World Almanac** is a new screen (Society → World Almanac) with the record of the campaign:
+  - every country's statistics each 1 January (economy, population, output per worker, technology, soft power and
+    credit rating), with the world's temperature;
+  - every head of government, with their party and time in office;
+  - every war and its outcome, and every treaty;
+  - the largest companies, and the most famous people (living and dead).
+- **Fix: long skips keep people in work.** Statistical skips now run a simple job market: working-age adults out of
+  work join firms in their country, and firms take on more people while there are job seekers. Before, new adults
+  never found work during skips, and income inequality drifted to implausible levels over the decades (an income
+  Gini of about 0.8 after 50 years). It now holds at about 0.2–0.3.
+
 ### New in 2.4.5: demography, migration and long-run growth
 
 The fifth part of 2.5 A world of consequences.

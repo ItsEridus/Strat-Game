@@ -40,6 +40,7 @@ import { Events } from './Events';
 import { Crime } from './Crime';
 import { Intel } from './Intel';
 import { WorldState } from './WorldState';
+import { Almanac } from './Almanac';
 import { People } from './People';
 import { Forces } from './Forces';
 import { Rankings } from './Rankings';
@@ -80,6 +81,7 @@ export const SCREENS: ScreenDef[] = [
   { id: 'crime', label: 'Law & Order', icon: '⚖️', group: 'Society', comp: Crime, badge: (w) => Object.values(w.cases).filter((k) => k.status === 'open' && k.suspect === w.playerId).length },
   { id: 'intel', label: 'Intelligence', icon: '🕵️', group: 'Society', comp: Intel },
   { id: 'world', label: 'World Situation', icon: '🌐', group: 'Society', comp: WorldState, badge: (w) => Object.values(w.crises).filter((c) => c.status === 'active' && c.nation === w.citizens[w.playerId].nation && c.kind !== 'strike').length },
+  { id: 'almanac', label: 'World Almanac', icon: '📚', group: 'Society', comp: Almanac },
   { id: 'map', label: 'World Map', icon: '🗺️', group: 'World', comp: MapScreen },
   { id: 'country', label: 'Country', icon: '🏛️', group: 'World', comp: Country },
   { id: 'press', label: 'Newspapers', icon: '🗞️', group: 'World', comp: Press },

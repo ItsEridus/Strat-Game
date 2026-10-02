@@ -62,8 +62,8 @@ class Store {
 
   get paused() { return !this.w || this.w.settings.paused || this.w.settings.speed === 0; }
 
-  newGame(seed: number | null, name: string, nation: number, citizensPerRegion: number, difficulty: World['settings']['difficulty'], advanced: World['settings']['advanced'], lifeYearDays = 365, startAge = 24, character?: World['settings']['character']) {
-    this.w = generateWorld(seed ?? entropy() % 1e9, name, nation, { citizensPerRegion, difficulty, advanced, fixedFate: seed != null, lifeYearDays, startAge, character });
+  newGame(seed: number | null, name: string, nation: number, citizensPerRegion: number, difficulty: World['settings']['difficulty'], advanced: World['settings']['advanced'], lifeYearDays = 365, startAge = 24, character?: World['settings']['character'], scenario: World['settings']['scenario'] = 'present') {
+    this.w = generateWorld(seed ?? entropy() % 1e9, name, nation, { citizensPerRegion, difficulty, advanced, fixedFate: seed != null, lifeYearDays, startAge, character, scenario });
     this.resetView();
     this.save('autosave');
     this.emit();

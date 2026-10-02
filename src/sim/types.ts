@@ -774,6 +774,7 @@ export interface Settings {
   character?: { look: import('./looks').Look; birthplace: Id | null; ideology: Ideology | null; nature?: import('./nature').Nature; background?: import('./nature').Background; traits?: Citizen['traits'] }; // designed at the start (ui/CharacterDesigner.tsx) // the player's age at the start (0 = born into the world; default 24)
   historyPace?: number; // strategic months per calendar month (1 = real time; 1.6)
   lifeYearDays?: number; // pace of life: world days per year of age (undefined = 365, for older saves)
+  scenario?: import('./almanac').Scenario; // the starting world (2.5)
   fixedFate?: boolean; // reproducible: never mix outside randomness into the world's dice (see ui/store.ts)
 }
 
@@ -857,6 +858,8 @@ export interface World {
   intl?: import('./intlOrgs').IntlState;
   newStates?: import('./secession').NewState[]; // states born in play (2.3)
   orbit?: { debris: number; cascades: number }; // debris in low orbit, 0..100 (2.4)
+  almanac?: import('./almanac').Almanac; // the record of the campaign: leaders and yearly statistics (2.5)
+  scenarioApplied?: boolean; // the start scenario has been applied (2.5)
   games?: import('./softPower').GamesEvent[]; // Olympics and World Expos, held and planned (2.5)
   climate?: import('./climate').ClimateState; // global temperature, emissions and sea level (2.5)
   cyber?: import('./cyber').CyberIncident[]; // recent cyber attacks, as their victims understand them (2.4)

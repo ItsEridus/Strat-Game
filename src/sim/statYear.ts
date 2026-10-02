@@ -22,6 +22,7 @@ import { c as cur } from '../engine/money';
 import { chance } from '../engine/rng';
 import { B } from '../data/balance';
 import { census, invalidateCensus } from './census';
+import { ageOf } from './growth';
 import { companyCurrency, coref, cref, hhref, natref, player } from './query';
 import { runQueue } from './tick';
 import { activeBattles, finishBattle } from './battle';
@@ -54,6 +55,7 @@ import { marketsDaily } from './markets';
 import { climateDaily } from './climate';
 import { softPowerDaily } from './softPower';
 import { demographyDaily } from './demography';
+import { almanacDaily } from './almanac';
 import { treatiesDaily } from './treaties';
 import { relationsDaily } from './relations';
 import { diplomacyActionsDaily } from './diplomacyActions';
@@ -68,6 +70,34 @@ function nextMonth(t: number): number {
   let x = t - (t % DAY) + DAY;
   while (dateAt(x).day !== 1) x += DAY;
   return x;
+}
+
+/** A month of hiring: working-age adults out of work join firms in their country, which take on
+ * more people while there are job seekers (2.5: without this, new adults never found work in skips). */
+function hiringMonth(w: World) {
+  const seekers = new Map<number, Citizen[]>();
+  for (const c of census(w).all) {
+    if (c.gone || c.player || c.job != null || c.post || c.business || c.retired || c.edu?.enrolled) continue;
+    if (c.persona === 'industrialist' || c.persona === 'investor' || (c.mil?.branch && !c.mil.reserve)) continue;
+    const age = ageOf(w, c);
+    if (age < B.life.adultAge || age >= 66) continue;
+    (seekers.get(c.nation) ?? seekers.set(c.nation, []).get(c.nation)!).push(c);
+  }
+  for (const co of Object.values(w.companies)) {
+    const list = seekers.get(w.regions[co.region].owner);
+    if (!list?.length || !co.offer) continue;
+    const max = B.company.maxWorkers[co.q - 1];
+    if (co.workers.length >= co.offer.slots && co.offer.slots < max && list.length > 2) co.offer.slots++;
+    while (co.workers.length < co.offer.slots && list.length) {
+      const c = list.pop()!;
+      co.workers.push(c.id);
+      c.job = co.id;
+      c.jobSince = w.time;
+      c.incomeAvg = Math.round(co.offer.wage * 5 / 7);
+    }
+  }
+  // Those still out of work have no earnings.
+  for (const list of seekers.values()) for (const c of list) c.incomeAvg = 0;
 }
 
 /** A month of companies trading at their recent averages. */
@@ -146,6 +176,7 @@ export function skipMonth(w: World, target: number) {
   {
     const next = Math.min(target, nextMonth(w.time));
     const days = Math.max(1, Math.round((next - w.time) / DAY));
+    hiringMonth(w);
     companiesMonth(w, days);
     householdsAndStatesMonth(w, days);
     settleBattles(w);
@@ -153,7 +184,7 @@ export function skipMonth(w: World, target: number) {
     runQueue(w); // elections, war deadlines and anything else scheduled in the month, in order
     peopleMonth(w, days);
     // The monthly national turn (these run on the first of the month).
-    regimesDaily(w); uprisingsDaily(w); secessionDaily(w); warCourseDaily(w); civilWarDaily(w); technologyDaily(w); cyberDaily(w); spaceDaily(w); automationDaily(w); sovereignDaily(w); marketsDaily(w); climateDaily(w); softPowerDaily(w); demographyDaily(w); warHomeDaily(w, days);
+    regimesDaily(w); uprisingsDaily(w); secessionDaily(w); warCourseDaily(w); civilWarDaily(w); technologyDaily(w); cyberDaily(w); spaceDaily(w); automationDaily(w); sovereignDaily(w); marketsDaily(w); climateDaily(w); softPowerDaily(w); demographyDaily(w); almanacDaily(w); warHomeDaily(w, days);
     withScope(() => { warDecisionDaily(w, days); beliefsDaily(w, days); treatiesDaily(w); relationsDaily(w, days); diplomacyActionsDaily(w, days); intlDaily(w, days); balanceOfPowerDaily(w); crisesDaily(w, days); });
     intelOrgDaily(w); collectionDaily(w); counterIntelDaily(w);
     strategicDaily(w); arsenalDaily(w); energyDaily(w); foodDaily(w); powerMonthly(w); budgetDaily(w);

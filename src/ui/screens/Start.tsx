@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { SCENARIOS, type Scenario } from '../../sim/almanac';
 import { Emblem } from '../icons';
 import { GAME_VERSION } from '../Updates';
 import { showWhatsNew } from '../WhatsNew';
@@ -21,6 +22,7 @@ export function StartScreen() {
   const [startAge, setStartAge] = useState(24);
   const [character, setCharacter] = useState<CharacterChoice>(() => ({ look: randomLook(), birthplace: null, ideology: null, nature: { talent: 'numbers', weakness: 'hands', quirks: [] }, traits: { ambition: 0.7, risk: 0.5, loyalty: 0.5, greed: 0.5, activity: 0.8 } }));
   const [difficulty, setDifficulty] = useState<Settings['difficulty']>('normal');
+  const [scenario, setScenario] = useState<Scenario>('present');
   const [adv, setAdv] = useState({ nuclear: true, pirates: true, terrainEvents: false, tournaments: true });
   const [importing, setImporting] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -29,7 +31,7 @@ export function StartScreen() {
   const onFile = async (f: File | undefined) => { if (f) setText(await f.text()); };
   const [code, setCode] = useState('');
   const applyQuick = (q: QuickStart) => { setName(q.name); setNation(q.nation); setStartAge(q.startAge); setCharacter({ traits: character.traits, ...q.character }); };
-  const begin = () => { setGenerating(true); setTimeout(() => store.newGame(fixed ? seed : null, name, nation, cpn, difficulty, adv, pace, startAge, { ...character, birthplace: character.birthplace != null && EARTH.regions[character.birthplace]?.nation === nation ? character.birthplace : null }), 60); };
+  const begin = () => { setGenerating(true); setTimeout(() => store.newGame(fixed ? seed : null, name, nation, cpn, difficulty, adv, pace, startAge, { ...character, birthplace: character.birthplace != null && EARTH.regions[character.birthplace]?.nation === nation ? character.birthplace : null }, scenario), 60); };
   return (
     <div class="start">
       <TitleBackdrop />
@@ -57,6 +59,8 @@ export function StartScreen() {
         <header><h3>New campaign</h3></header>
         <div class="form">
           <label>Your name <input value={name} maxLength={28} onInput={(e) => setName((e.target as HTMLInputElement).value)} /></label>
+          <label>Starting world <Select value={scenario} options={(Object.keys(SCENARIOS) as Scenario[]).map((k) => [k, SCENARIOS[k].label] as [Scenario, string])} onChange={setScenario} /></label>
+          <p class="small muted">{SCENARIOS[scenario].desc}</p>
           <label>Difficulty <Select value={difficulty} options={[['easy', 'Easy — more starting funds'], ['normal', 'Normal'], ['hard', 'Hard — leaner start']]} onChange={setDifficulty} /></label>
           <label>AI citizens per region <Select value={cpn} options={[[8, '8 (≈4,000 people · fastest)'], [16, '16 (≈8,000 people)'], [24, '24 (≈12,500 people · default)'], [32, '32 (≈16,500 people · slowest)']]} onChange={setCpn} /></label>
           <label>Start your life <Select value={startAge} options={[[24, 'As a young adult, 24 (default)'], [18, 'At 18, just out of school'], [16, 'At 16, still at school'], [0, 'As a newborn: grow up in a family']]} onChange={setStartAge} /></label>
