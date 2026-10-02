@@ -5,6 +5,8 @@
 // and wages), then the owner gets what remains; stock goes to the owner (or is sold
 // for scrap if there is no room), listings and currency orders are withdrawn. Births
 // and deaths are counted per country, as statistics offices do.
+import { replaceFirm } from '../ai/economy';
+import { chance } from '../engine/rng';
 import type { Company, Id, World } from './types';
 import { burn, consume, moveItems, pay } from '../engine/ledger';
 import { notify, record } from '../engine/events';
@@ -79,5 +81,29 @@ export function companyLifeDaily(w: World) {
       if (d.hist.length > 12) d.hist.shift();
       d.born = 0; d.died = 0;
     }
+  }
+}
+
+/** A statistical month of firm turnover (skips): about 7–8% of private firms close in a year (more if short of
+ * cash), as in OECD business demography, and local entrepreneurs replace most of them. */
+export function turnoverMonth(w: World) {
+  const closed: { nation: Id; kind: string }[] = [];
+  for (const co of Object.values(w.companies)) {
+    if (co.locked) continue;
+    const owner = co.owner.k === 'cit' ? w.citizens[co.owner.id] : null;
+    if (owner?.player || co.owner.k === 'nat' || co.state) continue;
+    const code = companyCurrency(w, co);
+    const short = (co.wallet[code] ?? 0) < (co.offer?.wage ?? 0) * 5;
+    if (!chance(w, 0.006 + (short ? 0.006 : 0))) continue;
+    const nat = controller(w.regions[co.region]);
+    const kind = co.industry;
+    if (closeCompany(w, co, short ? 'insolvent' : 'wound up')) closed.push({ nation: nat, kind });
+  }
+  for (const c of closed) if (!replaceFirm(w, c.nation, c.kind) && chance(w, 0.5)) replaceFirm(w, c.nation, c.kind); // a second try if the first founder falls through
+  for (const n of w.nations) {
+    const d = demo(w, n.id);
+    d.hist.push({ born: d.born, died: d.died });
+    if (d.hist.length > 12) d.hist.shift();
+    d.born = 0; d.died = 0;
   }
 }

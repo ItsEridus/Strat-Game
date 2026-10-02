@@ -301,6 +301,27 @@ export function stateFound(w: World, nation: Id, kind: string): boolean {
   return true;
 }
 
+/** Someone founds a firm to replace one that closed (statistical skips): a local entrepreneur with the means. */
+export function replaceFirm(w: World, nation: Id, kind: string): boolean {
+  const n = w.nations[nation];
+  const f = nationals(w, nation).filter((c) => !c.player && !c.gone && (c.persona === 'industrialist' || c.persona === 'investor' || c.persona === 'merchant') && (c.wallet.GOLD ?? 0) > g(B.company.foundCost[0]) * goldScale(w, nation) * 1.5 && (c.wallet[n.cur] ?? 0) > cur(200) && controller(w.regions[c.loc]) === nation).sort((a, b) => b.traits.ambition - a.traits.ambition || a.id - b.id)[0];
+  const before = Object.keys(w.companies).length;
+  if (f) foundForDemand(w, f.id, kind, nation);
+  if (Object.keys(w.companies).length > before) return true;
+  // Otherwise a local with savings starts a small firm (no gold needed: the founding is financed at home).
+  const local = nationals(w, nation).filter((c) => !c.player && !c.gone && (c.wallet[n.cur] ?? 0) > cur(400) && controller(w.regions[c.loc]) === nation).sort((a, b) => (b.wallet[n.cur] ?? 0) - (a.wallet[n.cur] ?? 0) || a.id - b.id)[0];
+  if (!local) return false;
+  const region = w.regions.find((r) => r.id === local.loc) ?? w.regions.find((r) => controller(r) === nation);
+  if (!region) return false;
+  const co = createCompany(w, cref(local.id), kind as any, 1, region.id);
+  noteBirth(w, co);
+  co.auto = { sell: true, buyInputs: true, hire: true };
+  const seed = Math.floor((local.wallet[n.cur] ?? 0) * 0.5);
+  pay(w, cref(local.id), coref(co.id), n.cur, seed, `Funding ${co.name}`);
+  co.offer = { wage: Math.max(n.minWage, Math.round(cur(B.wages.start) * (0.5 + industryPay(co.industry) * 0.5))), slots: 2, minEco: 0 };
+  return true;
+}
+
 function foundForDemand(w: World, founderId: Id, kind: string, nation: Id) {
   const f = w.citizens[founderId];
   const regions = w.regions.filter((r) => controller(r) === nation);

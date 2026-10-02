@@ -44,7 +44,7 @@ test('technologies make growth faster, forces stronger, intelligence sharper, li
   const old = census(w).all.find((c) => c.nation === us.id && !c.player)!;
   const m0 = mortality(w, old);
   us.techs = { swarms: w.time, aiagents: w.time, smr: w.time, mrna: w.time, quantum: w.time, genetherapy: w.time };
-  assert.ok(techGrowth(w, us) > 0.5);
+  assert.ok(techGrowth(w, us) > 0.3);
   assert.ok(power(w, f) > p0);
   assert.ok(energyPrice(w, us) < e0);
   assert.ok(collectionQuality(w, us, cn) > q0 || q0 >= 0.97);

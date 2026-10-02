@@ -63,7 +63,7 @@ export function techFx(n: Nation): Required<TechEffects> {
 export function techGrowth(w: World, n: Nation): number {
   let g = 0;
   for (const [id, t] of Object.entries(techsOf(n))) if (w.time - t < 10 * YEAR) g += TECH[id]?.fx.productivity ?? 0;
-  return g;
+  return g * 0.5; // potential growth already includes ordinary technical progress: only half is extra
 }
 /** The size of a country's research effort (relative: the US is about 10). */
 export function researchMass(n: Nation, w?: World): number {

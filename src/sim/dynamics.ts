@@ -78,12 +78,12 @@ export function addCrisis(w: World, kind: CrisisKind, name: string, regions: Id[
 
 // ---------- natural disasters ----------
 
-function disastersDaily(w: World) {
+function disastersDaily(w: World, days = 1) {
   const m = monthOf(w);
   for (const h of HAZARDS) {
     if (h.months.length && !h.months.includes(m)) continue;
     const perDay = (h.weight / (h.months.length ? h.months.length * 30.4 : 365)) * B.dynamics.disasterChance * hazardFactor(w, h.kind); // more often in a warmer world
-    if (!chance(w, perDay)) continue;
+    if (!chance(w, 1 - Math.pow(1 - perDay, days))) continue;
     const keys = h.regions.filter((k) => regionKey.has(k));
     if (!keys.length) continue;
     const origin = regionKey.get(pick(w, keys))!;
@@ -410,3 +410,6 @@ export function dynamicsDaily(w: World) {
   for (const c of over.slice(0, Math.max(0, over.length - 150))) delete w.crises[c.id];
 }
 
+
+/** A statistical month of natural disasters (skips): the same odds as day to day, over the month. */
+export const disastersMonth = (w: World, days: number) => disastersDaily(w, days);

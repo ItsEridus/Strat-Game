@@ -216,6 +216,18 @@ who did it. Space agencies fly satellites that sharpen spying and armies, shoot 
 astronauts (perhaps you) to the Moon. Machines take over routine jobs, and the public pushes back. (Country screen
 → Technology and Space; Intelligence → Cyber command; State of the World → The technology race.)
 
+**A world of consequences.** Over the decades the world keeps score:
+- central banks bend or hold under political pressure;
+- credit ratings rise and fall, and governments that borrow too much default;
+- stock markets bubble and crash, and the panic spreads;
+- emerging-market currencies collapse when money flees;
+- the climate warms with every tonne emitted, bringing more storms, poorer harvests in the tropics, flooded coasts
+  and people on the move, while a free-riding Paris Agreement tries to slow it;
+- soft power, the Olympics and World Expos shape how countries see each other;
+- populations age, shrink or grow, and migration follows politics and war.
+
+Start in the present day, a new cold war or a multipolar world, and follow it all in the World Almanac.
+
 **The economy.** Money is real:
 - Every country uses its own currency at real early-2025 exchange rates. Pay follows each country's real median
   wage and minimum wage, so a typical day's pay is about $200 in the United States and ₹780 in India, and prices

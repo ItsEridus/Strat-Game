@@ -111,7 +111,9 @@ jobs:
           # A second launch must hand over to the open window and exit.
           $second = Start-Process -FilePath .\MeridianReach.exe -PassThru
           if (-not $second.WaitForExit(10000)) { throw "a second launch did not exit" }
-          if ((Get-Process -Name MeridianReach).Count -ne 1) { throw "more than one game process" }
+          # The exiting process can linger in the process list for a moment: give it up to five seconds.
+          $n = 0; for ($i = 0; $i -lt 10; $i++) { $n = @(Get-Process -Name MeridianReach -ErrorAction SilentlyContinue).Count; if ($n -eq 1) { break }; Start-Sleep -Milliseconds 500 }
+          if ($n -ne 1) { throw "more than one game process ($n)" }
           $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
           $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
           [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)

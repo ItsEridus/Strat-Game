@@ -3,6 +3,34 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.5.0: A world of consequences
+
+2.5 is complete:
+- central banks, credit ratings and defaults (2.4.1);
+- markets, currencies and commodity cycles (2.4.2);
+- climate over decades (2.4.3);
+- soft power and prestige events (2.4.4);
+- demography and long-run growth (2.4.5);
+- the decades campaign and the World Almanac (2.4.6).
+
+This release calibrates the long run.
+
+- **Statistical skips now model more of the world**, so long campaigns stay realistic:
+  - natural disasters strike at the same rates as in normal play;
+  - firms are born and die: about 5% of private firms close each year, more if they are short of cash, and local
+    entrepreneurs (or locals with savings) start replacements;
+  - working-age adults find jobs (since 2.4.6).
+- **Technology's growth bonus is halved,** because potential growth already includes ordinary technical progress.
+- **40-year headless runs, against history** (four seeds, statistical skips):
+  - median growth of output per worker is 2.1–2.4% a year;
+  - 0–2 wars between the sixteen countries (they have fought almost none directly since 1985);
+  - 0–4 coup attempts (the real record: Turkey 2016) and 1–12 regime changes (about ten in 1985–2025);
+  - firm births and deaths of about 5% a year each;
+  - about 48 notable natural disasters a year across the sixteen countries;
+  - about 2°C of warming by the 2060s.
+- **Fix:** the Windows smoke test in the release pipeline waits briefly for the handed-over process to exit before
+  counting game processes; it could fail at random before.
+
 ### New in 2.4.6: the decades campaign and the World Almanac
 
 The sixth part of 2.5 A world of consequences.

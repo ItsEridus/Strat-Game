@@ -23,6 +23,8 @@ import { chance } from '../engine/rng';
 import { B } from '../data/balance';
 import { census, invalidateCensus } from './census';
 import { ageOf } from './growth';
+import { turnoverMonth } from './companyLife';
+import { disastersMonth } from './dynamics';
 import { companyCurrency, coref, cref, hhref, natref, player } from './query';
 import { runQueue } from './tick';
 import { activeBattles, finishBattle } from './battle';
@@ -178,6 +180,8 @@ export function skipMonth(w: World, target: number) {
     const days = Math.max(1, Math.round((next - w.time) / DAY));
     hiringMonth(w);
     companiesMonth(w, days);
+    turnoverMonth(w);
+    disastersMonth(w, days);
     householdsAndStatesMonth(w, days);
     settleBattles(w);
     w.time = next;
