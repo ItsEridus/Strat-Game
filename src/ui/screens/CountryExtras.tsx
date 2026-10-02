@@ -24,6 +24,8 @@ import { controlled, hasTech, researchMass, researchWorkforce, techFx, threshold
 import { capsOf } from '../../sim/strategic';
 import { CONST_LABEL, orbitOf, reconBonus, satBonus, spaceCapability, spaceOf, type Constellation } from '../../sim/space';
 import { MISSIONS } from '../../data/space';
+import { creditSummary } from '../../sim/sovereign';
+import { bondRate } from '../../sim/publicFinance';
 
 export function CountryExtras({ w, id }: { w: World; id: Id }) {
   const p = player(w);
@@ -33,6 +35,7 @@ export function CountryExtras({ w, id }: { w: World; id: Id }) {
   return (
     <>
       <RegimePanel w={w} id={id} />
+      <CreditPanel w={w} id={id} />
       <TechPanel w={w} id={id} />
       <SpacePanel w={w} id={id} />
       {mine && n.president === p.id && <Cabinet w={w} />}
@@ -118,6 +121,23 @@ function Applications({ w }: { w: World }) {
           <ActBtn small run={(w) => decideCitizenship(w, p.id, n.id, r.cit, true)}>Approve</ActBtn>
           <ActBtn small kind="danger" run={(w) => decideCitizenship(w, p.id, n.id, r.cit, false)}>Deny</ActBtn></div>
       )) : <Empty>No pending applications.</Empty>}
+    </Panel>
+  );
+}
+
+function CreditPanel({ w, id }: { w: World; id: Id }) {
+  const n = w.nations[id];
+  const c = creditSummary(w, n);
+  return (
+    <Panel title={`💳 Credit rating: ${c.rating}`}>
+      <table class="table compact small"><tbody>
+        <tr><td>Outlook</td><td>{c.outlook}</td></tr>
+        <tr><td>Public debt</td><td>{c.debtYears.toFixed(2)} years of revenue</td></tr>
+        <tr><td>Bond rate</td><td>{bondRate(n).toFixed(2)}% ({c.spread.toFixed(2)} points over the policy rate for the rating)</td></tr>
+        <tr><td>Central bank</td><td>policy rate {(n.policyRate ?? 0).toFixed(2)}%; independence {Math.round(c.independence * 100)}%</td></tr>
+        {c.defaults > 0 && <tr><td>Defaults</td><td>{c.defaults}{n.defaultedAt != null ? `, the last ${fmtWhen(w, n.defaultedAt)}` : ''}</td></tr>}
+      </tbody></table>
+      <Help>Ratings start from 2025 and move a notch at a time with the debt the government runs up, growth, inflation, institutions, war and past defaults; the rating sets the premium on its bonds. A government that borrows to its limit and cannot pay defaults: bondholders take a loss, the currency falls and growth suffers for two years. An independent central bank follows its rule; a dependent one is leaned on to cut rates before elections, which feeds inflation.</Help>
     </Panel>
   );
 }

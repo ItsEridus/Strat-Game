@@ -14,6 +14,7 @@ import { nid } from '../engine/events';
 import { census } from './census';
 import { companyCurrency, controller, coref, cref, hhref } from './query';
 import { inflation } from './statistics';
+import { ratePressure } from './sovereign';
 import { KIND, POLICY_RATE, annuity, creditOf, loansOf, policyRateOf, type Loan } from './loans';
 
 /** Inflation targets (%), from each central bank's mandate (2025). */
@@ -41,7 +42,8 @@ export function bankingDaily(w: World) {
   for (const n of w.nations) {
     n.policyRate ??= POLICY_RATE[n.iso] ?? 4;
     const t = taylorRate(w, n.id);
-    if (t != null) n.policyRate = Math.round((n.policyRate + Math.max(-0.5, Math.min(0.5, t - n.policyRate))) * 4) / 4;
+    // A dependent central bank is leaned on to cut rates (sovereign.ts).
+    if (t != null) { const goal = Math.max(0, t - ratePressure(w, n)); n.policyRate = Math.round((n.policyRate + Math.max(-0.5, Math.min(0.5, goal - n.policyRate))) * 4) / 4; }
   }
   // A month's interest on savings (cash in the home currency), paid by the banks while they can.
   for (const c of census(w).all) {

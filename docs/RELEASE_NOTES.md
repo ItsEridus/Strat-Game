@@ -3,6 +3,35 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.4.1: central banks, credit ratings and defaults
+
+The first part of 2.5 A world of consequences.
+
+- **Central bank independence.** Each central bank has an independence score from 2025: high for the Bundesbank
+  (via the ECB), the Bank of Canada and the Bank of England; low for Turkey's and China's. An independent bank
+  follows its rule. A dependent one is leaned on to cut rates before elections and when the government is
+  unpopular, which feeds inflation. Independence erodes under autocracy and recovers in democracies.
+- **Credit ratings,** from AAA to D, start from the 2025 ratings (Germany, Canada and Australia AAA; the United
+  States AA+; Argentina CCC). They move a notch at a time (at most once a quarter, monthly in a crisis) with:
+  - the debt the government runs up;
+  - growth and inflation;
+  - its institutions;
+  - war, a failed state, and past defaults.
+  An outlook shows which way a rating is heading.
+- **The rating sets the bond rate:** the policy rate plus a premium that grows as the rating falls (none for AAA,
+  about 1.7 points at BBB, 6 points at CCC). An IMF programme halves it. This replaces the earlier premium on
+  debt alone.
+- **Sovereign default.** A government that has borrowed to its limit, cannot pay its bills and has no IMF rescue
+  defaults:
+  - bondholders take a 30–50% loss in the restructuring;
+  - the rating falls to D and recovers slowly;
+  - capital flees and the currency weakens;
+  - growth suffers for two years, and voters punish the government.
+- **The Country screen** has a Credit rating panel: outlook, public debt, bond rate, the central bank's policy rate
+  and independence, and any defaults.
+- Statistical skips keep public finances roughly steady (the bond market runs in normal play), so over skipped
+  years ratings move with growth, institutions, wars and defaults.
+
 ### New in 2.4.0: Frontiers
 
 2.4 is complete. The near future arrives:
