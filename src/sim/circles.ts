@@ -8,6 +8,7 @@
 // - Standing at work counts towards promotion in public service.
 // - The player can do something with each circle once a week: have friends round, drinks after
 //   work, help a neighbour, a club night, attend services.
+import { startRumour } from './gossip';
 import type { Citizen, Id, World } from './types';
 import { DAY, dayOf } from '../engine/clock';
 import { dateAt } from '../engine/calendar';
@@ -169,7 +170,7 @@ export function circleAct(w: World, kind: CircleKind, c: Citizen = player(w)): R
   const L = lifeOf(c);
   const came = circle.members.slice(0, kind === 'neighbours' ? 1 : 8);
   for (const x of came) adjustRel(x, c.id, kind === 'neighbours' ? 6 : 3);
-  if (kind === 'neighbours') for (const x of circle.members.slice(1)) adjustRel(x, c.id, 1); // word gets round
+  if (kind === 'neighbours') startRumour(w, c, 'kindness', `${c.name} spent an evening helping ${came[0]?.name ?? 'a neighbour'}`, 1, 4, true, came[0]); // word gets round
   L.happiness = Math.min(100, L.happiness + 2);
   L.stress = Math.max(0, L.stress - (kind === 'faith' ? 5 : 3));
   if (kind === 'club') { const pt = pastimeOf(c); if (pt) L.hobbies[pt] = Math.min(100, (L.hobbies[pt] ?? 0) + 1); L.lastHobby = dayOf(w.time); }

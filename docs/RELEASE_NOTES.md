@@ -3,6 +3,29 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.6.2: gossip, rumours and feuds
+
+The second part of 2.7 Life 2.0: the social fabric.
+
+- **Rumours.** People talk about what they see: a drinker, a gambler in debt, someone in prison, a deserved
+  promotion, a kindness to a neighbour. People who bear a grudge talk too, and not always truthfully.
+- **How rumours spread:**
+  - through the circles of the person they are about (workmates, neighbours, club, congregation, friends), a few
+    more people each month;
+  - everyone who hears one thinks a little better or worse of that person;
+  - people believe those they like;
+  - after half a year a rumour is old news.
+- **Feuds.** Two people with grudges against each other feud: they talk each other down and their families take
+  sides. Most make peace in time, sooner if they value community, and are grateful afterwards.
+- **You:**
+  - a friend tells you what is being said about you;
+  - you can set the record straight on a false rumour (which works if people think well of you, and turns them
+    against whoever started it) or own up to a true one, which takes the sting out;
+  - you can tell what you know about a rival, or invent a story; an invention may be traced back to you, and then
+    it costs you.
+- **On screen:** a "What people are saying" panel in Life, with rumours about you, your rivals and feuds, and
+  stories of your own.
+
 ### New in 2.6.1: circles
 
 The first part of 2.7 Life 2.0: the social fabric.

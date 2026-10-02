@@ -868,6 +868,7 @@ export interface World {
   almanac?: import('./almanac').Almanac; // the record of the campaign: leaders and yearly statistics (2.5)
   scenarioApplied?: boolean; // the start scenario has been applied (2.5)
   mhSeeded?: boolean; // mental health as it stands at the start has been set (2.6)
+  rumours?: import('./gossip').Rumour[]; nextRumour?: number; // what people are saying about each other (2.7)
   habitsSeeded?: number; // citizens below this id have been given the habits of people like them (2.6)
   games?: import('./softPower').GamesEvent[]; // Olympics and World Expos, held and planned (2.5)
   climate?: import('./climate').ClimateState; // global temperature, emissions and sea level (2.5)
