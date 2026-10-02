@@ -16,6 +16,7 @@ import { DAY, fmtWhen } from '../../engine/clock';
 import { BLOCS } from '../../data/diplomacy';
 import { blocsOf, leaderProfile, prestigeOf, tiesOfPair } from '../../sim/relations';
 import { SECTORS, SECTOR_INFO, commonTariff, customsUnionOf, leak, tariffOn, type Sector } from '../../sim/tradePolicy';
+import { PK_MONTHLY, appealCheck, arrearsOf, duesOf, loses19, secGen, sgAppeal, standCheck, standForSg, unFund } from '../../sim/unSystem';
 
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
@@ -150,6 +151,28 @@ function TradeMeasures({ w, a, b }: { w: World; a: Nation; b: Nation }) {
   return <p class="small muted">{lines.length ? lines.join(' ') : `No trade measures between ${a.name} and ${b.name}.`}{lk > 0.05 ? ` Smugglers get round about ${Math.round(lk * 100)}% of your sanctions.` : ''}{u ? ` ${a.name} is in the ${u.name} (common tariff ${commonTariff(w, a.id)}%).` : ''}</p>;
 }
 
+/** The UN as an organisation: its Secretary-General, its budget and the country's dues (3.0.3). */
+function UnOffice({ w, id, head }: { w: World; id: Id; head: boolean }) {
+  const n = w.nations[id];
+  const pl = player(w);
+  const sg = secGen(w);
+  const fund = unFund(w).wallet[GOLD] ?? 0;
+  const owe = arrearsOf(w, id);
+  const missions = Object.values(w.wars).filter((x) => x.status !== 'ended' && (x.peacekeepers?.until ?? 0) > w.time).length;
+  const wars = activeWars(w).filter((x) => x.kind !== 'civil' && x.kind !== 'secession');
+  const iAmSg = sg.cit === pl.id && sg.since <= w.time;
+  return <>
+    <p class="small"><b>Secretary-General:</b> {sg.name}{sg.nation != null ? ` (${w.nations[sg.nation]?.name})` : sg.from ? ` (${sg.from})` : ''}, until {fmtWhen(w, sg.until)}; authority {Math.round(sg.authority)}/100.
+      {' '}<b>UN budget:</b> {fmtAmt(GOLD, fund)} in hand, {missions} peacekeeping mission{missions === 1 ? '' : 's'} at {fmtAmt(GOLD, PK_MONTHLY)} a month each.
+      {' '}<b>{n.name}'s dues:</b> {fmtAmt(GOLD, duesOf(w, n))} a year{owe > 0 ? `; ${fmtAmt(GOLD, owe)} in arrears${loses19(w, n) ? ' (no vote in the General Assembly)' : ''}` : ', paid up'}.</p>
+    <div class="row">
+      {head && <ActBtn small why={null} run={(w) => { const x = w.nations[id]; x.unWithhold = !x.unWithhold; return ok(x.unWithhold ? 'From next January, half the UN dues will be held back.' : 'The UN dues will be paid in full.'); }}>{n.unWithhold ? 'Pay our UN dues in full' : 'Hold back half our UN dues'}</ActBtn>}
+      {!iAmSg && <ActBtn small why={standCheck(w, pl)} run={(w) => standForSg(w)}>Stand for Secretary-General</ActBtn>}
+      {iAmSg && wars.slice(0, 3).map((x) => <ActBtn small why={appealCheck(w, pl, x)} run={(w) => sgAppeal(w, w.wars[x.id], player(w))}>Appeal for a ceasefire: {w.nations[x.att].name}–{w.nations[x.def].name}</ActBtn>)}
+    </div>
+  </>;
+}
+
 const VOTE_NAME = { y: 'for', n: 'against', a: 'abstained' } as const;
 
 function Organisations({ w, id }: { w: World; id: Id }) {
@@ -191,6 +214,7 @@ function Organisations({ w, id }: { w: World; id: Id }) {
         <h4>Recent votes</h4>
         <ul class="small">{recent.map((r) => <li>{fmtWhen(w, r.closes)}: {r.result} {r.votes[id] ? <span class="muted">({n.name} voted {VOTE_NAME[r.votes[id]]}.)</span> : null}</li>)}</ul>
       </>}
+      <UnOffice w={w} id={id} head={head} />
       {st.g20.length > 0 && <p class="small"><b>G20:</b> {st.g20[st.g20.length - 1].text}</p>}
       {disputes.length > 0 && <>
         <h4>Trade disputes at the WTO</h4>

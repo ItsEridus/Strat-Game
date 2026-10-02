@@ -30,9 +30,10 @@ import { nationScores } from './forces';
 import { debtLimit, dailySpending } from './publicFinance';
 import { B } from '../data/balance';
 import { nationalStaffing } from './services';
+import { enactForce, forceCase, loses19 } from './unSystem';
 
 export const PERMANENT = ['USA', 'CHN', 'RUS', 'GBR'];
-export type ResKind = 'condemn' | 'ceasefire' | 'sanctions' | 'peacekeeping';
+export type ResKind = 'condemn' | 'ceasefire' | 'sanctions' | 'peacekeeping' | 'force';
 export type Vote = 'y' | 'n' | 'a';
 export interface Resolution {
   id: Id; body: 'sc' | 'ga'; kind: ResKind; target: Id; war?: Id; sponsor: Id;
@@ -49,12 +50,17 @@ export interface IntlState {
   g20: { year: number; host: Id; text: string }[];
   disputes: Dispute[];
   imf: ImfProgramme[];
+  fund?: { wallet: import('./types').Wallet; inv: import('./types').Inventory }; // the UN budget (3.0.3)
+  arrears?: Record<Id, number>; // unpaid dues, in gold (3.0.3)
+  sg?: import('./unSystem').SecGen; // the Secretary-General (3.0.3)
+  sgCandidates?: Id[]; // declared candidates for the next election (3.0.3)
 }
 
 export const RES_INFO: Record<ResKind, { name: string; desc: string }> = {
   condemn: { name: 'Condemn the aggression', desc: 'A formal condemnation: the target loses standing with the countries that voted for it.' },
   ceasefire: { name: 'Demand a ceasefire', desc: 'A call to stop fighting: the sides are pressed to accept an armistice.' },
   sanctions: { name: 'Impose sanctions', desc: 'Binding sanctions for a year: every member must cut trade with the target (its friends may not comply).' },
+  force: { name: 'Authorise force', desc: 'When an aggressor has ignored a ceasefire the Council demanded for a month, members are authorised to use force: willing ones join the war on the victim\'s side, with the world\'s blessing.' },
   peacekeeping: { name: 'Send peacekeepers', desc: 'A UN force separates the sides of a civil war or a war of secession for two years: the fighting stops along the line, and the sides are pushed towards reconciliation.' },
 };
 
@@ -99,6 +105,7 @@ export function lean(w: World, v: Nation, r: Pick<Resolution, 'kind' | 'target' 
   let y = 0.6 - relT / 110 + relS / 300 + (victim ? 0.6 : 0) - (v.alliances.includes(t.id) ? 0.7 : 0);
   if (r.kind === 'sanctions') y -= 0.3 + Math.min(0.2, (v.ties?.[t.id]?.interdep ?? 0) / 300); // sanctions cost the sanctioner too
   if (r.kind === 'ceasefire') y += 0.15;
+  if (r.kind === 'force') y -= 0.25; // war is a grave step, even against an aggressor
   if (r.kind === 'peacekeeping') y += 0.25 - (war && war.def !== v.id && (v.relations[war.def]?.score ?? 0) < -40 ? 0.3 : 0); // a cheap way to stop the killing, unless you want the rebels beaten
   if (activeWars(w).some((x) => x.att === v.id)) y -= 0.15; // those waging wars dislike precedents
   y += (nationalStaffing(w, r.sponsor, 'intl') - 0.6) * 0.15; // a sponsor well represented in the UN system lobbies better
@@ -118,6 +125,11 @@ export function tableCheck(w: World, n: Nation, body: 'sc' | 'ga', kind: ResKind
     if (body !== 'sc') return 'Only the Security Council can send peacekeepers.';
     if (!activeWars(w).some((x) => x.att === target && (x.kind === 'civil' || x.kind === 'secession'))) return 'Peacekeepers are for a government fighting a civil war or a war of secession.';
   }
+  if (kind === 'force') {
+    if (body !== 'sc') return 'Only the Security Council can authorise force.';
+    const war = activeWars(w).find((x) => x.att === target);
+    if (!war || !forceCase(w, war)) return 'Force is authorised only against an aggressor that has ignored a ceasefire the Council demanded (a month ago or more).';
+  }
   if (kind !== 'condemn' && !activeWars(w).some((x) => x.att === target)) return 'This resolution is for a country waging war.';
   if (kind === 'condemn' && !Object.values(w.wars).some((x) => x.att === target && (x.status === 'active' || x.declared > w.time - 30 * DAY))) return 'Condemnation is for a country that has attacked another in the last month.';
   return null;
@@ -134,7 +146,7 @@ export function tableResolution(w: World, n: Nation, body: 'sc' | 'ga', kind: Re
   if (pn.president === pl.id && voters(w, r).includes(pn.id)) notify(w, 'diplomacy', `${text} Cast ${pn.name}'s vote on the Diplomacy screen.`, { link: 'diplomacy' });
   return r;
 }
-export const voters = (w: World, r: Resolution) => (r.body === 'sc' ? councilMembers(w) : w.nations.filter((n) => !n.exile).map((n) => n.id));
+export const voters = (w: World, r: Resolution) => (r.body === 'sc' ? councilMembers(w) : w.nations.filter((n) => !n.exile && !loses19(w, n)).map((n) => n.id)); // (no vote two years behind with dues, 3.0.3)
 
 export function castCheck(w: World, n: Nation, r: Resolution | undefined): string | null {
   if (!r || r.status !== 'open') return 'The vote has closed.';
@@ -205,6 +217,11 @@ function enactResolution(w: World, r: Resolution): string {
       st.sanctions.push({ res: r.id, target: t.id, until: w.time + 365 * DAY, imposed });
       return `${imposed.length} countries cut trade with ${t.name} for a year${defied.length ? `; ${defied.join(', ')} did not comply` : ''}.`;
     }
+    case 'force': {
+      const war = r.war != null ? w.wars[r.war] : null;
+      if (!war || war.status !== 'active') return 'The war had already ended.';
+      return enactForce(w, war, Object.entries(r.votes).filter(([, v]) => v === 'y').map(([id]) => Number(id)));
+    }
     case 'peacekeeping': {
       const war = r.war != null ? w.wars[r.war] : null;
       if (!war || war.status !== 'active') return 'The war had already ended.';
@@ -247,6 +264,7 @@ function aiTable(w: World) {
     } else if (over) continue;
     else if (age >= 10 && !about('ceasefire') && sponsor) tableResolution(w, w.nations[sponsor.i], 'sc', 'ceasefire', att);
     else if (age >= 20 && war.occupied.length && !about('sanctions') && sponsor && sponsor.s > 50) tableResolution(w, w.nations[sponsor.i], 'sc', 'sanctions', att);
+    else if (forceCase(w, war) && sponsor && sponsor.s > 60) tableResolution(w, w.nations[sponsor.i], 'sc', 'force', att);
   }
 }
 

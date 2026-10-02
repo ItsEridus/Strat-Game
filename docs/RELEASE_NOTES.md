@@ -3,6 +3,34 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 3.0.3: the UN as an organisation
+
+The third part of 3.1 Diplomacy completed.
+
+- **A budget, and dues.** Every member pays UN dues each January on the real scale of assessments: the US 22%,
+  China 20%, Japan 7%, and so down to South Africa.
+  - Governments that resent the UN (nationalists, or those it has recently condemned) hold back half.
+  - So does a government that runs out of gold.
+  - A country two years behind loses its vote in the General Assembly.
+  - As head of government you can choose to hold back half your country's dues.
+- **Where the money goes:**
+  - each peacekeeping mission costs the UN every month, and the countries sending troops are reimbursed;
+  - when the money runs out, missions end early;
+  - the rest pays for the UN's own work, mostly at its headquarters in New York.
+- **The Secretary-General.** António Guterres serves until the end of 2026; after that, a Secretary-General is
+  elected every five years.
+  - In the autumn of the election year, the Security Council holds straw polls. A permanent member that opposes
+    a candidate vetoes them, and the Assembly appoints the winner.
+  - Candidates are the best-known public figures of countries without a veto. A successor comes from a different
+    country, and a different part of the world is favoured.
+  - A Secretary-General serves at most two terms, and appeals for ceasefires in the wars of the day. Their
+    authority grows with every success.
+  - **You can stand** if you are between 45 and 75, from a country without a veto, have the standing (influence
+    40), and are not your country's head of government. Once elected, you make the ceasefire appeals yourself.
+- **Authorising force.** When an aggressor has ignored a ceasefire the Security Council demanded for a month, the
+  Council can authorise members to use force. Willing members join the war on the victim's side, with the world's
+  blessing. The AI powers table such resolutions too.
+
 ### New in 3.0.2: trade policy
 
 The second part of 3.1 Diplomacy completed: the tools between free trade and a full embargo.

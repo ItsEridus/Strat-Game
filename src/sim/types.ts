@@ -21,7 +21,7 @@ export type Ministry = 'vp' | 'development' | 'defense' | 'economy' | 'labor' | 
 export type GearSlot = 'helmet' | 'vest' | 'elbows' | 'gloves' | 'pants' | 'boots';
 export type GearFamily = 'combat' | 'construction' | 'mining' | 'plains' | 'mountains' | 'forest' | 'desert';
 
-export type AccountKind = 'cit' | 'co' | 'nat' | 'hh' | 'hold' | 'unit' | 'paper' | 'party' | 'reg' | 'synd';
+export type AccountKind = 'cit' | 'co' | 'nat' | 'hh' | 'hold' | 'unit' | 'paper' | 'party' | 'reg' | 'synd' | 'org';
 export interface AccountRef { k: AccountKind; id: Id }
 
 export interface Buff { type: string; until: number; value: number; source?: string }
@@ -483,6 +483,7 @@ export interface Nation {
   alignment?: { towards: Id; choice: 'balance' | 'bandwagon'; since: number }; // facing a far stronger threat (2.0) // under an IMF programme (2.0) // when its leader last met the other's (2.0)
   alliances: Id[];
   embargoes: Id[];
+  unWithhold?: boolean; // the player's government holds back half its UN dues (3.0.3)
   tp?: import('./tradePolicy').TradePolicy; // tariffs and quotas by partner, sectoral and secondary sanctions (3.0.2)
   pacts: Record<Id, number>; // nationId -> non-aggression until time
   exile: boolean;
@@ -628,6 +629,7 @@ export interface War {
   extensions?: number; // times the deadline passed with both sides still fighting (2.2)
   frozen?: number; // when it froze along the front line (2.2)
   peacekeepers?: { until: number; by: Id[] }; // a UN force holding the line (2.3)
+  authorised?: boolean; // the UN Security Council authorised force against the aggressor (3.0.3)
   joined?: Id; // a war joined under an offensive alliance: the partner's war it joined (3.0.1)
   civilDone?: boolean; // a civil war whose outcome (crushed, rebel victory, partition) has been settled (2.3)
   log?: { t: number; text: string }[]; // escalations and reviews (2.2)
