@@ -429,6 +429,7 @@ export interface Nation {
   failedSince?: number; // a failed state since then (2.3)
   techs?: Record<string, number>; // technologies it has, and when it got them (2.4)
   cyberLast?: number; // when its cyber command last attacked (2.4)
+  space?: import('./space').SpaceState; // its space agency and satellites (2.4)
   lastCoup?: { t: number; ok: boolean; leader: Id }; // the latest coup attempt (2.3)
   armedBy?: Record<Id, number>; // foreign sponsors that sent it arms, and how often (2.3)
   overlord?: Id; // the power it answers to, if it is a puppet state (2.3)
@@ -836,6 +837,7 @@ export interface World {
   treaties?: Record<Id, import('./treaties').Treaty>;
   intl?: import('./intlOrgs').IntlState;
   newStates?: import('./secession').NewState[]; // states born in play (2.3)
+  orbit?: { debris: number; cascades: number }; // debris in low orbit, 0..100 (2.4)
   cyber?: import('./cyber').CyberIncident[]; // recent cyber attacks, as their victims understand them (2.4)
   patents?: import('./technology').Patent[]; // breakthroughs, who holds them and what they earned (2.4)
   techFirsts?: Record<string, import('./technology').TechFirst>; // who achieved each technology first, and when (2.4)

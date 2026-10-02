@@ -26,7 +26,7 @@ import { MONEY } from '../data/economy';
 import { NAME_POOLS, POLICE_NAMES, SYNDICATE_STYLES } from '../data/names';
 import { B } from '../data/balance';
 import { IDENTITY, ADJECTIVE, INDEP_2025 } from '../data/identity';
-import { setIsoAlias } from '../data/isoAlias';
+import { resetGdpScales, setIsoAlias, splitGdp } from '../data/isoAlias';
 import { census, companiesOf, invalidateCensus } from './census';
 import { companyCurrency, coref, hhref, natref, player } from './query';
 import { relation } from './congress';
@@ -41,15 +41,18 @@ import { makeFormation } from './forces';
 import { stateFound } from '../ai/economy';
 import { outputKey, kindOf } from '../data/items';
 
-export interface NewState { id: Id; parent: Id; t: number; how: 'referendum' | 'declaration' | 'rebellion'; iso: string; cur: string; money: { name: string; symbol: string } }
+export interface NewState { id: Id; parent: Id; t: number; how: 'referendum' | 'declaration' | 'rebellion'; iso: string; cur: string; money: { name: string; symbol: string }; share?: number }
 
 export const identityOf = (r: Region) => (r.identity ??= IDENTITY[r.name] ?? Math.round(5 + hash01(r.id, 2301) * 10));
 
 /** Make the data a save needs (new states' currencies and data aliases) available again after loading. */
 export function registerDynamic(w: World) {
+  resetGdpScales();
   for (const s of w.newStates ?? []) {
     const parent = w.nations[s.parent];
     if (parent) setIsoAlias(s.iso, parent.iso);
+    // Economic weight: the new state's share of its old country's people (returned if it rejoins).
+    if (parent && w.nations[s.id] && w.nations[s.id].dissolved == null) splitGdp(s.iso, parent.iso, s.share ?? 0.1);
     const base = MONEY[parent?.cur ?? 'USD'] ?? MONEY.USD;
     if (!MONEY[s.cur]) MONEY[s.cur] = { ...base, name: s.money.name, symbol: s.money.symbol };
     copyCurrencyTables(s.cur, parent?.cur ?? 'USD');
@@ -152,6 +155,8 @@ export function createState(w: World, parent: Nation, regionIds: Id[], how: NewS
   w.households.push({ nation: id, wallet: {}, inv: {}, pop, unmet: 0 });
   mint(w, hhref(id), code, cur(pop * B.households.startPerPop), 'Currency issued at independence');
   const share = pop / Math.max(1, w.regions.filter((r) => r.owner === parent.id).reduce((s, r) => s + r.pop, 0) + pop);
+  w.newStates![w.newStates!.length - 1].share = share;
+  registerDynamic(w);
   const gold = Math.floor((parent.wallet[GOLD] ?? 0) * share);
   if (gold > 0) pay(w, natref(parent.id), natref(id), GOLD, gold, `Share of reserves for ${name}`);
   mint(w, natref(id), code, Math.max(cur(500), Math.round((parent.wallet[parent.cur] ?? 0) * share)), 'Currency issued at independence');

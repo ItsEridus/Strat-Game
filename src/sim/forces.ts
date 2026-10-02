@@ -14,6 +14,7 @@
 // becomes chief of staff. AI defence ministries raise, supply, deploy and order
 // forces by the same rules the player's government uses.
 import { techFx } from './technology';
+import { satBonus } from './space';
 import { scoped } from './scope';
 import { combatWeather } from './weather';
 import { conscriptionOf, doctrineFactor, serviceShareFactor, upkeepFactor } from './forceStructure';
@@ -66,7 +67,7 @@ export function power(w: World, f: Formation): number {
   const cmd = f.commander != null ? w.citizens[f.commander] : null;
   if (cmd) p *= 1 + cmd.mil.rank * 0.02;
   if (w.nations[f.nation].defense.chief != null) p *= 1 + B.forces.chiefBonus;
-  return p * qualityFactor(formationGen(w, f)) * doctrineFactor(w, f) * combatWeather(w, f).mult * (1 + techFx(w.nations[f.nation]).military);
+  return p * qualityFactor(formationGen(w, f)) * doctrineFactor(w, f) * combatWeather(w, f).mult * (1 + techFx(w.nations[f.nation]).military + satBonus(w.nations[f.nation]));
 }
 
 /** Naval power a nation (and its allies) has in a sea zone. */

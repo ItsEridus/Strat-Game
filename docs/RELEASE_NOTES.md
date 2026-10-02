@@ -3,6 +3,33 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.3.4: space
+
+The fourth part of 2.4 Frontiers.
+
+- **Space agencies** for every country (NASA, the China National Space Administration, Roscosmos, ISRO, JAXA and
+  the others). Each has three constellations of satellites, for communications, reconnaissance and navigation,
+  starting from 2025: Starlink, GPS, BeiDou, GLONASS, OneWeb, NavIC and QZSS.
+- **Launches.** Six countries can launch on their own rockets in 2025 (the United States, China, Russia, India,
+  Japan and South Korea); others buy launches abroad, more slowly. Constellations grow towards what a country's
+  space technology and economy can sustain, faster with reusable rockets and mega-constellations. A country with
+  the know-how develops its own launcher.
+- **What satellites do.** Reconnaissance satellites sharpen intelligence collection; navigation and
+  communications satellites make armed forces more effective.
+- **Anti-satellite weapons and debris.** In a general war, a country with anti-satellite weapons may shoot down
+  the enemy's satellites. Hawkish governments occasionally test them in peacetime (at most once a decade), and
+  the world disapproves. Every strike and test leaves debris that wears down everyone's satellites; too much of
+  it sets off a cascade of collisions.
+- **Prestige missions:** a national space station, an asteroid sample return, astronauts on the Moon (the first
+  since Apollo), and a probe to the outer planets. They lift approval at home and standing abroad; some fail.
+  Missions flown before 2025 count, and none can fly before it realistically could: in test runs, China and the
+  United States land astronauts on the Moon around 2030.
+- **Fix: new states' economic weight.** A new state's economic weight is now its share of the old country's
+  people, and the old country keeps the rest. Before, it inherited the whole economy of the country it left.
+  This affects its research effort, power index and space programme.
+- **The Country screen** has a Space panel: the agency, its constellations and their effects, missions, and the
+  debris in orbit.
+
 ### New in 2.3.3: cyber commands
 
 The third part of 2.4 Frontiers.

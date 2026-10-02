@@ -22,6 +22,8 @@ import { identityOf } from '../../sim/secession';
 import { TECHS } from '../../data/techTree';
 import { controlled, hasTech, researchMass, researchWorkforce, threshold } from '../../sim/technology';
 import { capsOf } from '../../sim/strategic';
+import { CONST_LABEL, orbitOf, reconBonus, satBonus, spaceCapability, spaceOf, type Constellation } from '../../sim/space';
+import { MISSIONS } from '../../data/space';
 
 export function CountryExtras({ w, id }: { w: World; id: Id }) {
   const p = player(w);
@@ -32,6 +34,7 @@ export function CountryExtras({ w, id }: { w: World; id: Id }) {
     <>
       <RegimePanel w={w} id={id} />
       <TechPanel w={w} id={id} />
+      <SpacePanel w={w} id={id} />
       {mine && n.president === p.id && <Cabinet w={w} />}
       {mine && offices.length > 0 && (
         <Panel title="Your office">
@@ -115,6 +118,24 @@ function Applications({ w }: { w: World }) {
           <ActBtn small run={(w) => decideCitizenship(w, p.id, n.id, r.cit, true)}>Approve</ActBtn>
           <ActBtn small kind="danger" run={(w) => decideCitizenship(w, p.id, n.id, r.cit, false)}>Deny</ActBtn></div>
       )) : <Empty>No pending applications.</Empty>}
+    </Panel>
+  );
+}
+
+function SpacePanel({ w, id }: { w: World; id: Id }) {
+  const n = w.nations[id];
+  const s = spaceOf(n);
+  const orbit = orbitOf(w);
+  return (
+    <Panel title={`🚀 ${s.agency}`}>
+      <p class="small">{s.launcher ? 'Launches on its own rockets.' : 'Buys launches abroad (slower).'} Space capability {Math.round(spaceCapability(w, n))} (the United States in 2025 is 100).</p>
+      <table class="table compact small"><tbody>
+        {(['comms', 'recon', 'nav'] as Constellation[]).map((k) => <tr><td>{CONST_LABEL[k]} satellites</td><td><Bar v={s.sats[k]} max={100} color="#5b8def" label={`${Math.round(s.sats[k])}`} /></td></tr>)}
+      </tbody></table>
+      <p class="small">Satellites add {Math.round(reconBonus(n) * 100)} points to intelligence collection and {Math.round(satBonus(n) * 100)}% to the armed forces' effectiveness.</p>
+      <ul class="small">{MISSIONS.map((m) => <li>{m.icon} {m.name}: {s.missions[m.id] == null ? 'not yet' : s.missions[m.id] < 0 ? 'achieved before 2025' : `achieved ${fmtWhen(w, s.missions[m.id])}`}</li>)}</ul>
+      <p class="small muted">Debris in low orbit: {Math.round(orbit.debris)} of 100{orbit.cascades ? `; ${orbit.cascades} collision cascade${orbit.cascades > 1 ? 's' : ''} so far` : ''}.</p>
+      <Help>Constellations grow towards what a country's space technology and economy can sustain, faster with its own launcher and reusable rockets. Reconnaissance satellites sharpen intelligence; navigation and communications make forces more effective. Anti-satellite weapons can blind an enemy in a general war, but every strike and every test leaves debris that wears down everyone's satellites, and too much of it cascades. Prestige missions lift approval at home and standing abroad; some fail.</Help>
     </Panel>
   );
 }

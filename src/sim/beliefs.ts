@@ -11,6 +11,7 @@
 // believedPower is what a government thinks), so surprise and miscalculation happen.
 // After the fact, each estimate can be compared with the truth (the review).
 import { hasTech, techFx } from './technology';
+import { reconBonus } from './space';
 import type { Id, Nation, World } from './types';
 import { dayOf } from '../engine/clock';
 import { dateAt } from '../engine/calendar';
@@ -50,7 +51,7 @@ export function truthOf(w: World, observer: Nation, t: Nation): Record<Measure, 
 export function collectionQuality(w: World, n: Nation, t: Nation): number {
   // Agents in place see past the counter-intelligence (collection.ts); partners share what they see (counterIntel.ts).
   // Technology sharpens collection (and a quantum computer reads traffic not yet protected by post-quantum codes).
-  const tech = techFx(n).intel + (hasTech(n, 'quantum') && !hasTech(t, 'pqc') ? 0.06 : 0) - (hasTech(t, 'pqc') ? 0.02 : 0);
+  const tech = techFx(n).intel + reconBonus(n) + (hasTech(n, 'quantum') && !hasTech(t, 'pqc') ? 0.06 : 0) - (hasTech(t, 'pqc') ? 0.02 : 0);
   return Math.max(0.05, Math.min(0.97, Math.max(rawQuality(w, n, t) + agentQuality(w, n, t) + tech, sharedPicture(w, n, t))));
 }
 /** What a service sees of `t` by its own means (no agents, no partners). */

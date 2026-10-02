@@ -33,7 +33,7 @@ import { changeRegime, isDemocracy, regimeOf } from './regimes';
 import { appointCabinetAI } from './politics';
 import { changeCitizenship } from './travel';
 import { activeWars, computeSupply, declareWar, updateExile, warCheck } from './war';
-import { createState } from './secession';
+import { createState, registerDynamic } from './secession';
 import { endTreaty, signTreaty } from './treaties';
 import { militaryPower } from './war';
 import { leaderProfile } from './relations';
@@ -256,6 +256,7 @@ export function mergeState(w: World, gone: Nation, into: Nation, how: MergeHow) 
   gone.exile = true;
   gone.dissolved = w.time;
   gone.mergedInto = into.id;
+  registerDynamic(w); // its economic weight returns to the data it came from
   invalidateCensus(w);
   const text = {
     crushed: `🏴 The rebellion in ${into.name} was crushed: the ${gone.name} government collapsed and its lands returned to ${into.name}.`,
