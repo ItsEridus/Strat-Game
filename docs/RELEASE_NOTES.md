@@ -3,6 +3,34 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.6.1: circles
+
+The first part of 2.7 Life 2.0: the social fabric.
+
+- **Circles.** Everyone moves in several circles:
+  - family;
+  - friends;
+  - workmates (at a firm, or in the same public service);
+  - neighbours;
+  - a club, from a pastime (running, chess, football, painting and more);
+  - for believers, a congregation.
+- **Standing in a circle** is what its members think of you, on average, from "disliked" to "much loved". Standing
+  among workmates now counts towards promotion in public service.
+- **Friendships form across the world.** People in a circle meet each month and mostly grow closer, more so when
+  their values are alike; now and then two rub each other up the wrong way. This happens to everyone, not only
+  around you.
+- **A week with your circles.** Once a week you can spend time with each circle:
+  - a family dinner;
+  - have friends round;
+  - drinks after work;
+  - help out a neighbour;
+  - a club night;
+  - attend services.
+  Everyone who comes thinks a little better of you.
+- **On screen:** a "Your circles" panel in Life, with the members of each circle and your standing in it.
+- Circles are worked out from who people are, and each person keeps track of at most the forty people who matter
+  most to them, so saves stay small.
+
 ### New in 2.6.0: Life 2.0, the mind
 
 2.6 is complete: the inner life of every person. Its parts:

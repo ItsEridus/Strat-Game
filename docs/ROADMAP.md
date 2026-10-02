@@ -33,7 +33,7 @@ version before it (2.0's parts were 1.9.3 to 1.9.7, and 2.0.0 marked it complete
 | 2.4.0 | **Frontiers** (GEO 8: technology, cyber and space) | A near-future technology race that changes economies, armies and spying | ✅ done |
 | 2.5.0 | **A world of consequences** (GEO 9: world economy, climate, soft power) | Debt crises, central banks, climate over decades, soft power; the decades-long campaign and the World Almanac | ✅ done |
 | 2.6.0 | **Life 2.0: the mind** | Personality that grows from experience, values, mental health in depth, habits and addictions, therapy | ✅ done |
-| 2.7.0 | **Life 2.0: the social fabric** | Friend circles, rivals, communities, relationships under each country's laws, custody and blended families, family gatherings | planned |
+| 2.7.0 | **Life 2.0: the social fabric** | Friend circles, rivals, communities, relationships under each country's laws, custody and blended families, family gatherings | ▶ in progress: circles (2.6.1) |
 | 2.8.0 | **Life 2.0: the everyday** | A day planner, commuting and cars, cooking, sleep, fitness and the body, shopping, chores | planned |
 | 2.9.0 | **Life 2.0: culture and belonging** | Faith, festivals, languages, migration and integration, identity | planned |
 | 3.0.0 | **Life 2.0: generations** | Dynasties over centuries: family trees, inherited looks and traits, the family name, ancestral homes and businesses, a family chronicle | planned |

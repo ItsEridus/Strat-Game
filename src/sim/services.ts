@@ -3,6 +3,7 @@
 // salary from the national treasury (with work tax, like any wage). Each post
 // has a ladder of grades; promotions come with service, good work and the
 // qualifications for the grade. Staffing feeds back into the service itself.
+import { workStanding } from './circles';
 import { spaceOf } from './space';
 import { scoped } from './scope';
 import { hasQuirk } from './nature';
@@ -212,7 +213,7 @@ export function servicesDaily(w: World, fill = false) {
     if ((d + c.id) % 30 !== 0 || p.grade >= maxGrade(c, p.kind) || p.grade >= 4) continue;
     const need = 40 + p.grade * 60; // shifts at this grade before the next
     const since = p.shifts;
-    const merit = (c.attrs[SERVICES[p.kind].skill] ?? 0) / 20 + c.traits.ambition;
+    const merit = (c.attrs[SERVICES[p.kind].skill] ?? 0) / 20 + c.traits.ambition + workStanding(w, c) / 100; // well liked by colleagues (circles.ts)
     if (since >= need && chance(w, Math.min(0.9, 0.35 + merit * 0.2))) {
       p.grade++; p.promoted = w.time; p.shifts = 0;
       logWork(w, c, `${postTitle(p)} (${SERVICES[p.kind].place})`, w.regions[p.region].name);

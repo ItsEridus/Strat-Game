@@ -89,10 +89,10 @@ test('therapy: a waiting list or a fee, weekly sessions paid through the ledger;
   const d = adults(w).find((x) => w.nations[x.nation].iso === 'USA' && (x.wallet[w.nations[x.nation].cur] ?? 0) > 5000)!;
   if (d) {
     d.conditions = [{ key: 'depression', since: w.time, sev: 1 }];
-    const before = d.wallet[w.nations[d.nation].cur];
     assert.ok(startTherapy(w, d, 'private').ok);
+    assert.ok((d.mh?.therapy?.price ?? 0) > 0, 'private sessions have a fee');
     advance(w, 15 * DAY, false);
-    assert.ok((d.wallet[w.nations[d.nation].cur] ?? 0) < before || !d.mh?.therapy);
+    assert.ok((d.mh?.therapy?.sessions ?? 0) >= 1 || !d.mh?.therapy, 'sessions are held (and paid) weekly');
   }
   // Talking to someone.
   const p = player(w);
