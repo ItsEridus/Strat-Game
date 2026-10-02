@@ -37,10 +37,11 @@ import { appointCabinetAI, createParty, fillDeputies, sortPartyList } from './po
 import { changeCitizenship } from './travel';
 import { computeSupply, declareWar, updateExile, warCheck } from './war';
 import { defenceShare } from '../data/arsenal';
+import { makeFormation } from './forces';
 import { stateFound } from '../ai/economy';
 import { outputKey, kindOf } from '../data/items';
 
-export interface NewState { id: Id; parent: Id; t: number; how: 'referendum' | 'declaration'; iso: string; cur: string; money: { name: string; symbol: string } }
+export interface NewState { id: Id; parent: Id; t: number; how: 'referendum' | 'declaration' | 'rebellion'; iso: string; cur: string; money: { name: string; symbol: string } }
 
 export const identityOf = (r: Region) => (r.identity ??= IDENTITY[r.name] ?? Math.round(5 + hash01(r.id, 2301) * 10));
 
@@ -98,7 +99,7 @@ function supportMonth(w: World) {
       const s = createState(w, n, [r.id], 'declaration');
       // The country it left will try to take it back.
       const params = { target: s.id, days: 30, goals: [r.id] };
-      if (!warCheck(w, n, params)) declareWar(w, n, params);
+      if (!warCheck(w, n, params)) declareWar(w, n, params).kind = 'secession';
     }
   }
 }
@@ -112,10 +113,10 @@ const uniqueIso = (w: World, name: string) => {
 };
 const shift = (hex: string, k: number) => '#' + [1, 3, 5].map((i) => Math.max(0, Math.min(255, parseInt(hex.slice(i, i + 2), 16) + k)).toString(16).padStart(2, '0')).join('');
 
-export function createState(w: World, parent: Nation, regionIds: Id[], how: NewState['how']): Nation {
+export function createState(w: World, parent: Nation, regionIds: Id[], how: NewState['how'], opts: { name?: string; adj?: string; leader?: Id; defect?: number } = {}): Nation {
   const first = w.regions[regionIds[0]];
-  const name = first.name.replace(/^Republic of /, '');
-  const adj = ADJECTIVE[first.name] ?? name;
+  const name = opts.name ?? first.name.replace(/^Republic of /, '');
+  const adj = opts.adj ?? ADJECTIVE[first.name] ?? name;
   const iso = uniqueIso(w, name);
   const code = iso + 'X';
   const pm = MONEY[parent.cur] ?? MONEY.USD;
@@ -141,7 +142,7 @@ export function createState(w: World, parent: Nation, regionIds: Id[], how: NewS
   // Relations: it inherits a softened version of its parent's, and its parent's feelings depend on how it left.
   for (const o of w.nations) {
     if (o.id === id) continue;
-    const base = o.id === parent.id ? (how === 'referendum' ? 20 : -60) : Math.round((o.relations[parent.id]?.score ?? 0) * 0.5);
+    const base = o.id === parent.id ? (how === 'referendum' ? 20 : how === 'rebellion' ? -75 : -60) : Math.round((o.relations[parent.id]?.score ?? 0) * 0.5);
     n.relations[o.id] = { score: base, hist: [] };
     o.relations[id] = { score: base, hist: [] };
   }
@@ -155,11 +156,25 @@ export function createState(w: World, parent: Nation, regionIds: Id[], how: NewS
   if (gold > 0) pay(w, natref(parent.id), natref(id), GOLD, gold, `Share of reserves for ${name}`);
   mint(w, natref(id), code, Math.max(cur(500), Math.round((parent.wallet[parent.cur] ?? 0) * share)), 'Currency issued at independence');
   const residents = census(w).all.filter((c) => regionIds.includes(c.home) && c.nation === parent.id && !c.gone);
-  for (const c of residents) if (!c.player) changeCitizenship(w, c, id);
+  for (const c of residents) if (!c.player) changeCitizenship(w, c, id, true);
   // Firms there switch to the new currency (their balances converted one for one).
   for (const co of Object.values(w.companies)) if (regionIds.includes(co.region)) {
     const old = co.wallet[parent.cur] ?? 0;
     if (old > 0 && companyCurrency(w, co) === code) { pay(w, coref(co.id), hhref(parent.id), parent.cur, old, 'Currency conversion at independence'); mint(w, coref(co.id), code, old, 'Currency conversion at independence'); }
+  }
+  // Armed forces based there: withdrawn after an agreed referendum; otherwise they go over
+  // to the new state, with part of the rest of the army if it has split.
+  const army = Object.values(w.forces).filter((f) => f.nation === parent.id && f.branch !== 'navy').sort((a, b) => a.id - b.id);
+  for (const f of army) {
+    const here = regionIds.includes(f.loc);
+    if (how === 'referendum') { if (here) { f.loc = parent.capital; f.path = []; f.order = { kind: 'garrison', target: null }; } continue; }
+    if (here || hash01(f.id, 2302) < (opts.defect ?? 0)) {
+      f.nation = id; f.commander = null; f.loc = here ? f.loc : first.id; f.path = []; f.order = { kind: 'garrison', target: null };
+    }
+  }
+  if (how !== 'referendum' && !Object.values(w.forces).some((f) => f.nation === id)) {
+    const m = makeFormation(w, id, 'infantry', first.id, `${adj} Militia`, 60);
+    m.equipment = 40;
   }
   invalidateCensus(w);
   // Its first government: two parties, a president and a congress from among its people.
@@ -168,14 +183,15 @@ export function createState(w: World, parent: Nation, regionIds: Id[], how: NewS
   for (const [i, ideo] of ideos.entries()) {
     const leader = people.find((c) => c.ideo === ideo);
     if (!leader) continue;
-    const p = createParty(w, id, ideo, leader.id, i === 0 ? `${adj} ${how === 'referendum' ? 'Independence' : 'Liberation'} Party` : undefined);
+    const p = createParty(w, id, ideo, leader.id, i === 0 ? (how === 'rebellion' ? `${adj} Front` : `${adj} ${how === 'referendum' ? 'Independence' : 'Liberation'} Party`) : undefined);
     for (const c of people.filter((x) => x.ideo === ideo && x.party == null).slice(0, 8)) { c.party = p.id; if (!p.members.includes(c.id)) p.members.push(c.id); }
     p.support = Math.round((p.members.length / Math.max(1, people.length)) * 100);
     sortPartyList(w, p);
     n.seats[p.id] = i === 0 ? 3 : 2;
   }
   fillDeputies(w, n);
-  n.president = people[0]?.id ?? null;
+  if (opts.leader != null && w.citizens[opts.leader] && !w.citizens[opts.leader].player) { const l = w.citizens[opts.leader]; if (l.nation !== id) changeCitizenship(w, l, id, true); }
+  n.president = opts.leader != null && w.citizens[opts.leader]?.nation === id ? opts.leader : people[0]?.id ?? null;
   appointCabinetAI(w, n);
   // Essentials it cannot yet make for itself: the new government sets up state enterprises.
   const made = new Set(companiesOf(w, id).map((co) => kindOf(outputKey(co.industry, co.q))));
@@ -183,12 +199,14 @@ export function createState(w: World, parent: Nation, regionIds: Id[], how: NewS
   // Recognition.
   for (const o of w.nations) {
     if (o.id === id || o.id === parent.id || o.exile) continue;
-    const yes = how === 'referendum' ? (o.relations[parent.id]?.score ?? 0) > -60 : (o.relations[parent.id]?.score ?? 0) < -20;
+    const yes = how === 'referendum' ? (o.relations[parent.id]?.score ?? 0) > -60 : (o.relations[parent.id]?.score ?? 0) < (how === 'rebellion' ? -40 : -20);
     if (yes) n.recognisedBy!.push(o.id);
     else relation(w, o.id, id, -10, 'refused to recognise it');
   }
   if (how === 'referendum') n.recognisedBy!.push(parent.id);
-  const text = how === 'referendum'
+  const text = how === 'rebellion'
+    ? `⚔️ Civil war in ${parent.name}: the ${name} holds ${regionIds.map((r) => w.regions[r].name).join(', ')} against the government. ${n.recognisedBy!.length} countr${n.recognisedBy!.length === 1 ? 'y recognises' : 'ies recognise'} it.`
+    : how === 'referendum'
     ? `🎉 ${name} became an independent state after its referendum, with the agreement of ${parent.name}. ${n.recognisedBy!.length} countries recognise it; it issues the ${money.name}.`
     : `🏴 ${name} declared independence from ${parent.name}. Only ${n.recognisedBy!.length} countr${n.recognisedBy!.length === 1 ? 'y recognises' : 'ies recognise'} it; ${parent.name} calls it rebellion.`;
   record(w, 'politics', text, { nation: id, important: true });

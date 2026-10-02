@@ -34,8 +34,8 @@ import { signTreaty } from './treaties';
 import { dailyRevenue } from './publicFinance';
 import { nationals } from './census';
 
-export type WarKind = 'invasion' | 'limited' | 'punitive';
-export const WAR_KIND_LABEL: Record<WarKind, string> = { invasion: 'an invasion', limited: 'a limited war', punitive: 'a punitive war' };
+export type WarKind = 'invasion' | 'limited' | 'punitive' | 'civil' | 'secession';
+export const WAR_KIND_LABEL: Record<WarKind, string> = { invasion: 'an invasion', limited: 'a limited war', punitive: 'a punitive war', civil: 'a civil war', secession: 'a war of secession' };
 export const LEVEL_LABEL = ['', 'border fighting', 'a limited war', 'a general war (cities and industry struck)', 'nuclear threats'];
 
 export const warKindOf = (war: War): WarKind => war.kind ?? (war.goals.length > 1 ? 'invasion' : war.goals.length === 1 ? 'limited' : 'punitive');

@@ -113,7 +113,7 @@ export function visible(w: World, viewer: Id, f: Formation): boolean {
 
 // ---------- genesis ----------
 
-function makeFormation(w: World, nation: Id, kind: FormationKind, loc: Id, name: string, strength = 100): Formation {
+export function makeFormation(w: World, nation: Id, kind: FormationKind, loc: Id, name: string, strength = 100): Formation {
   const k = KINDS[kind];
   const f: Formation = {
     id: nid(w), nation, branch: k.branch, kind, name, loc, zone: k.branch === 'navy' ? seasOf(loc)[0] ?? null : null,

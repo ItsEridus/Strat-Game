@@ -125,7 +125,7 @@ export function decideCitizenship(w: World, actor: Id, nation: Id, cit: Id, appr
   return ok(`${c.name} is now a citizen of ${n.name}.`);
 }
 
-export function changeCitizenship(w: World, c: Citizen, nation: Id) {
+export function changeCitizenship(w: World, c: Citizen, nation: Id, quiet = false) {
   const old = w.nations[c.nation];
   if (c.party != null) leaveParty(w, c);
   old.deputies = old.deputies.filter((x) => x !== c.id);
@@ -134,7 +134,7 @@ export function changeCitizenship(w: World, c: Citizen, nation: Id) {
   c.nation = nation;
   invalidateCensus(w);
   c.influence = Math.round(c.influence / 2);
-  record(w, 'citizenship', `${c.name} left ${old.name} to become a citizen of ${w.nations[nation].name}.`, { cit: c.id, nation, player: c.player });
+  if (!quiet || c.player) record(w, 'citizenship', `${c.name} left ${old.name} to become a citizen of ${w.nations[nation].name}.`, { cit: c.id, nation, player: c.player });
   if (c.player) notify(w, 'personal', `🛂 You are now a citizen of ${w.nations[nation].name}.`, { critical: true });
 }
 

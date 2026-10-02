@@ -3,6 +3,33 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.2.4: civil wars and dynamic nations
+
+The fourth part of 2.3 Rise & fall.
+
+- **Civil war.** It can break out in two ways:
+  - an uprising is met with force in a country whose regime has lost its legitimacy;
+  - a failed coup splits the army.
+- **The rebel government.** The rebels form a government (a faction) in the most restless third of the country,
+  never the capital. Forces based there go over to them, with part of the rest of the army if it has split;
+  rebels without troops raise a militia. The government's rivals recognise them; most countries do not.
+- **The government fights back** campaign by campaign with the ordinary war machinery, for as long as it has
+  fight left in it. A civil war ends in one of three ways:
+  - **crushed:** the government retakes everything and the faction dissolves back into the country;
+  - **rebel victory:** the rebels take the capital or the government surrenders, and their leader rules the whole
+    country under a new regime;
+  - **partition:** an armistice, or a front that freezes, leaves two governments.
+- **Mergers.** A state can be absorbed by another: a breakaway state wholly retaken, a crushed rebellion, or a
+  voluntary union when a seceded or partitioned state and its old country are on good terms. Land, citizens,
+  firms and the treasury move across, and balances convert to the new money at the market rate. The absorbed
+  state ceases to exist, and its wars and alliances end with it.
+- **Failed states.** When legitimacy, order and the treasury all collapse, the state fails. Institutions decay,
+  unrest spreads and a coup becomes twice as likely, until legitimacy and order return.
+- **Restoration.** A government in exile returns home when the people of an occupied home region rise against the
+  occupier.
+- **The Country screen** shows when a state is a rebel government, a failed state or no longer exists.
+- Wars now have two more kinds: a civil war and a war of secession.
+
 ### New in 2.2.3: secession and new states
 
 The third part of 2.3 Rise & fall.

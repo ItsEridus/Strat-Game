@@ -120,6 +120,7 @@ export function resolveOp(w: World, id: Id) {
   if (!op || op.status !== 'active') return;
   const n = w.nations[op.nation];
   const t = w.nations[op.target];
+  if (n.dissolved != null || t.dissolved != null) { op.status = 'failed'; return; } // a state that no longer exists
   const agent = op.agent != null ? w.citizens[op.agent] : null;
   const p = player(w);
   const net = op.kind === 'counter' ? 60 : n.agency.network[op.target] ?? 0;

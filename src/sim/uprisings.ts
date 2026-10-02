@@ -25,6 +25,7 @@ import { REGIMES, changeRegime, isDemocracy, regimeOf, type RegimeType } from '.
 import { appointCabinetAI, callSpecialElection } from './politics';
 import { toReserve } from './forces';
 import { RANKS } from '../data/military';
+import { startCivilWar } from './civilWar';
 
 /** Yearly chance of a coup attempt, by regime (before state capacity and turmoil). */
 const COUP_BASE: Record<RegimeType, number> = { full: 0.0005, flawed: 0.003, hybrid: 0.01, oneparty: 0.004, personalist: 0.015, junta: 0.05, monarchy: 0.005 };
@@ -39,7 +40,7 @@ export function coupRisk(w: World, n: Nation): number {
   const avgUnrest = w.regions.filter((x) => x.owner === n.id).reduce((s, x, _i, a) => s + x.unrest / a.length, 0);
   const capacity = 1.6 - caps.inst.effectiveness; // weak states are coup-prone
   const turmoil = (r.legitimacy < 35 ? 2 : r.legitimacy < 50 ? 1.3 : 1) * (avgUnrest > 50 ? 1.5 : 1) * (n.warScore < -40 ? 1.5 : 1);
-  return COUP_BASE[r.type] * capacity * turmoil * (1 - (n.coupProof ?? 0) * 0.7);
+  return COUP_BASE[r.type] * capacity * turmoil * (n.failedSince != null ? 2 : 1) * (1 - (n.coupProof ?? 0) * 0.7);
 }
 
 export function attemptCoup(w: World, n: Nation, leader?: Citizen): 'success' | 'failed' | 'none' {
@@ -70,6 +71,11 @@ export function attemptCoup(w: World, n: Nation, leader?: Citizen): 'success' | 
   for (const c of plotters.slice(0, 4)) {
     const k = { id: nid(w), suspect: c.id, kind: 'treason' as const, region: c.loc, nation: n.id, evidence: 90, opened: w.time, status: 'open' as const, detective: null, loot: 0 };
     w.cases[k.id] = k;
+  }
+  // A failed coup by a large part of the officer corps can split the army: civil war.
+  if (plotters.length >= 4 && r.legitimacy < 35 && chance(w, 0.25)) {
+    const f = startCivilWar(w, n, `The army split after a failed coup led by ${head.name}`, head, 0.4);
+    if (f) return 'failed';
   }
   for (const c of plotters.slice(4)) toReserve(w, c, 'purged after the failed coup');
   n.coupProof = Math.min(1, (n.coupProof ?? 0) + 0.3);
@@ -134,6 +140,9 @@ function protestMonth(w: World, n: Nation) {
     (n.chronicle ??= []).push({ t: w.time, text });
     if (ousted?.player) notify(w, 'office', '✊ A revolution swept you from power.', { critical: true });
     else if (pl.nation === n.id) notify(w, 'politics', text, { critical: true });
+  } else if (r.legitimacy < 25 && chance(w, 0.3) && startCivilWar(w, n, `Protesters fired upon took up arms against the government`)) {
+    n.protest = 30;
+    r.legitimacy = Math.max(0, r.legitimacy - 10);
   } else {
     n.protest = 10;
     r.legitimacy = Math.max(0, r.legitimacy - 10);
