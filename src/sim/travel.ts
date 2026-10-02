@@ -1,5 +1,6 @@
 // Travel and citizenship. Location (where you are) and citizenship (who you
 // belong to) are separate. Travel shows methods, ticket use and energy first.
+import { naturalisationBar } from './migration';
 import { flightsGrounded, overlandFactor } from './weather';
 import { lifeGate } from './lifecycle';
 import { ageOf } from './growth';
@@ -92,6 +93,7 @@ export function citizenshipCheck(w: World, c: Citizen, nation: Id): string | nul
   if (c.nation === nation) return 'You are already a citizen.';
   if (n.requests.some((r) => r.cit === c.id)) return 'Application already pending.';
   if (controller(w.regions[c.loc]) !== nation) return `You must be located in ${n.name} to apply.`;
+  { const bar = naturalisationBar(w, c, nation); if (bar) return bar; } // residence and the language test (migration.ts)
   if ((c.wallet[GOLD] ?? 0) < g(B.citizenship.cost)) return `The application fee is ${B.citizenship.cost} gold.`;
   return null;
 }

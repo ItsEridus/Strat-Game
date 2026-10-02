@@ -43,7 +43,17 @@ export function languagesOf(w: World, c: Citizen): Partial<Record<Lang, number>>
   return bornLanguages(w, c);
 }
 function bornLanguages(w: World, c: Citizen): Partial<Record<Lang, number>> {
-  const d = langData(w.nations[c.nation]?.iso ?? 'USA');
+  // Migrants grew up with their home country's languages, and have some of their new country's.
+  const from = c.origin != null && w.nations[c.origin] ? w.nations[c.origin] : null;
+  if (from) {
+    const o = bornFrom(c, langData(from.iso));
+    const work = langData(w.nations[c.nation]?.iso ?? 'USA').work;
+    o[work] = Math.max(o[work] ?? 0, 30 + Math.round(hash01(c.id, 3505) * 40));
+    return o;
+  }
+  return bornFrom(c, langData(w.nations[c.nation]?.iso ?? 'USA'));
+}
+function bornFrom(c: Citizen, d: ReturnType<typeof langData>): Partial<Record<Lang, number>> {
   let x = hash01(c.id, 3501);
   let mother: Lang = d.native[0][0];
   for (const [l, s] of d.native) { x -= s; if (x <= 0) { mother = l; break; } }
@@ -104,7 +114,7 @@ export function languagesMonth(w: World) {
     // Living where a language is spoken (people who arrived from elsewhere learn it).
     if (c.langs || fluency(w, c, local) < 90) {
       const now = fluency(w, c, local);
-      if (now < 90 && (c.langs || here !== c.nation)) { const L = learnable(w, c); L[local] = Math.min(95, Math.round((now + gain(c, now, 4)) * 10) / 10); }
+      if (now < 90 && (c.langs || here !== c.nation || c.origin != null)) { const L = learnable(w, c); L[local] = Math.min(95, Math.round((now + gain(c, now, 4)) * 10) / 10); }
     }
     if (c.course) {
       const n = w.nations[c.nation];

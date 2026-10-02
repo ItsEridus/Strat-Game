@@ -301,6 +301,7 @@ function immigrant(w: World, r: Region) {
   const pool = NAME_POOLS[(origin ?? n).cur];
   const name = `${pick(w, pool.first)} ${pick(w, pool.last)}`;
   const c = newResident(w, n, r.id, { name, age: randInt(w, 20, 45), savings: randInt(w, 60, 250) });
+  if (origin) c.origin = origin.id; // (2.9: their mother tongue, money sent home, a diaspora)
   localNews(w, r.id, `🧳 ${c.name} arrived from ${from} to start a new life in ${r.name}.`);
   if (c.nation === player(w).nation) record(w, 'people', `🧳 ${c.name} immigrated from ${from} to ${r.name}.`, { cit: c.id, nation: c.nation });
   // Couples often come together.
@@ -309,6 +310,7 @@ function immigrant(w: World, r: Region) {
     const want = (orientationOf(c) === 'gay') === (sexOf(w, c) === 'm') ? 0 : 1;
     const firsts = pool.first.filter((_, i) => i % 2 === want);
     const d = newResident(w, n, r.id, { name: `${pick(w, firsts.length ? firsts : pool.first)} ${name.split(' ').slice(-1)[0]}`, age: Math.max(18, ageOf(w, c) + randInt(w, -5, 5)), savings: randInt(w, 30, 150) });
+    if (origin) d.origin = origin.id;
     const st = marriageBar(w, c, d, n) ? 'dating' : 'married';
     fam(c).partner = d.id; fam(c).status = st; fam(d).partner = c.id; fam(d).status = st;
     fam(c).since = fam(d).since = bornYearsAgo(w, randInt(w, 1, 10), randInt(w, 0, 300));
@@ -331,7 +333,8 @@ function moveHome(w: World, c: Citizen, to: Id, why: string) {
 /** Move someone (and their household) to another region; across borders they apply for citizenship. */
 export function relocate(w: World, c: Citizen, to: Id, why: string) {
   const house = [c, ...(c.family?.status === 'married' && c.family.partner != null ? [w.citizens[c.family.partner]].filter((x) => x && !x.gone && !x.player && canEmigrate(w, x)) : [])];
-  for (const x of house) moveHome(w, x, to, why);
+  const nat0 = controller(w.regions[to]);
+  for (const x of house) { if (nat0 !== x.nation) x.origin ??= x.nation; moveHome(w, x, to, why); }
   invalidateCensus(w);
   const nat = controller(w.regions[to]);
   if (nat !== c.nation) for (const x of house) if ((x.wallet[GOLD] ?? 0) >= g(B.citizenship.cost)) applyCitizenship(w, x, nat);

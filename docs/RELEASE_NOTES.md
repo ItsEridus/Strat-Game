@@ -3,6 +3,30 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.8.4: migration and integration
+
+The third part of 2.9 Life 2.0: culture and belonging.
+
+- **Moving abroad** is a life choice, on a visa:
+  - **A work visa.** Points-based countries (Canada, Australia, Britain, Germany, Japan, Korea), and governments
+    that have closed their doors, want graduates or skilled workers. The United States draws lots: about one in
+    four applications succeeds each year. Elsewhere an employer sponsors you.
+  - **A family visa**, to join a spouse who is a citizen.
+  - **A student visa**, for the price of tuition.
+  - **Asylum**, for those whose country is at war or occupied, where the doors are open.
+  Your household moves with you to a rented room in the capital.
+- **Settling in.** The first year abroad is a strain (culture shock) that eases month by month, and homesickness is
+  worse with nobody from home nearby.
+- **Diaspora communities.** People from the same country form a community, one of their circles, with evenings
+  that bring a taste of home.
+- **Sending money home.** People working abroad send part of their pay to their country of origin each month.
+- **Immigrants' languages.** People who arrive from abroad grow up speaking their home country's languages and keep
+  learning their new country's.
+- **Becoming a citizen** needs the years of residence each country requires (from two in Argentina and three in
+  Canada to five in most and eleven in India; China and Saudi Arabia almost never naturalise foreigners) and a
+  test in the language.
+- **On screen:** a "Moving abroad" panel in Life, with your residence and the road to citizenship.
+
 ### New in 2.8.3: languages
 
 The second part of 2.9 Life 2.0: culture and belonging.

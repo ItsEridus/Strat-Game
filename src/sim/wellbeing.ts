@@ -23,6 +23,8 @@ import { everydayParts } from './everyday';
 import { bodyParts } from './body';
 import { homeParts } from './homeLife';
 import { languageStrain } from './languages';
+import { migrantParts, monthsAbroad } from './migration';
+import { residents } from './census';
 
 type Part = [string, number];
 
@@ -100,6 +102,7 @@ function parts(w: World, c: Citizen, friends: number): { happy: Part[]; stress: 
   happy.push(...hm.happy); stress.push(...hm.stress);
   const lang = languageStrain(w, c);
   if (lang) stress.push(['a language barrier', lang]);
+  if (c.origin != null && (monthsAbroad(w, c) ?? 99) < 12) { const m = migrantParts(w, c, residents(w, c.home).some((x) => x !== c && x.origin === c.origin)); happy.push(...m.happy); stress.push(...m.stress); }
   return { happy, stress };
 }
 

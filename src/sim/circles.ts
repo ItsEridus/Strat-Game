@@ -19,7 +19,7 @@ import { c as cur, fmtAmt } from '../engine/money';
 import { chance, hash01, next } from '../engine/rng';
 import { fail, ok, type Result } from '../engine/result';
 import { census, residents } from './census';
-import { cref, hhref, jailed, player } from './query';
+import { controller, cref, hhref, jailed, player } from './query';
 import { ageOf } from './growth';
 import { lifeOf } from './lifecycle';
 import { adjustRel } from './social';
@@ -27,7 +27,7 @@ import { valueDistance } from './mind';
 import { HOBBIES } from './hobbies';
 import { siblingsOf } from './kinship';
 
-export type CircleKind = 'family' | 'friends' | 'work' | 'neighbours' | 'club' | 'faith';
+export type CircleKind = 'family' | 'friends' | 'work' | 'neighbours' | 'club' | 'faith' | 'diaspora';
 export interface Circle { kind: CircleKind; name: string; members: Citizen[] }
 export const CIRCLE_INFO: Record<CircleKind, { icon: string; label: string; act: string; actHint: string }> = {
   family: { icon: '👪', label: 'Family', act: 'Family dinner', actHint: 'a meal together' },
@@ -36,6 +36,7 @@ export const CIRCLE_INFO: Record<CircleKind, { icon: string; label: string; act:
   neighbours: { icon: '🏘️', label: 'Neighbours', act: 'Help out a neighbour', actHint: 'an evening of your time' },
   club: { icon: '🎯', label: 'Club', act: 'Club night', actHint: 'practice and company' },
   faith: { icon: '🕊️', label: 'Congregation', act: 'Attend services', actHint: 'peace, and the community' },
+  diaspora: { icon: '🧳', label: 'People from home', act: 'A taste of home', actHint: 'food, music and news from home' },
 };
 
 const alive = (x: Citizen | undefined): x is Citizen => !!x && !x.gone;
@@ -88,6 +89,11 @@ export function circlesOf(w: World, c: Citizen): Circle[] {
   const pt = pastimeOf(c);
   if (pt) { const club = near(c, home.filter((x) => pastimeOf(x) === pt && ageOf(w, x) >= 14), 20); if (club.length) out.push({ kind: 'club', name: `${HOBBIES[pt].label} club, ${w.regions[c.home].name}`, members: club }); }
   if (believer(w, c)) { const rel = religionOf(w, c); const cong = near(c, home.filter((x) => believer(w, x) && religionOf(w, x) === rel && ageOf(w, x) >= 14), 25); if (cong.length) out.push({ kind: 'faith', name: `${RELIGION_INFO[rel].people} congregation (${RELIGION_INFO[rel].place}), ${w.regions[c.home].name}`, members: cong }); }
+  if (c.origin != null && c.origin !== controller(w.regions[c.home])) {
+    const o = c.origin;
+    const dia = near(c, census(w).all.filter((x) => x.origin === o && !x.gone && controller(w.regions[x.home]) === controller(w.regions[c.home])), 20);
+    if (dia.length) out.push({ kind: 'diaspora', name: `${w.nations[o].adj} community in ${w.nations[controller(w.regions[c.home])].name}`, members: dia });
+  }
   return out;
 }
 
@@ -147,7 +153,7 @@ export function circlesDaily(w: World) {
 
 // ---------- the player's week ----------
 
-const cost = (kind: CircleKind, n: number) => (kind === 'friends' ? cur(1.5) * Math.min(8, n) : kind === 'work' ? cur(1) * Math.min(8, n) : kind === 'family' ? cur(1) * Math.min(6, n) : kind === 'faith' ? cur(0.5) : 0);
+const cost = (kind: CircleKind, n: number) => (kind === 'diaspora' ? cur(1) * Math.min(6, n) : kind === 'friends' ? cur(1.5) * Math.min(8, n) : kind === 'work' ? cur(1) * Math.min(8, n) : kind === 'family' ? cur(1) * Math.min(6, n) : kind === 'faith' ? cur(0.5) : 0);
 
 export function circleActCheck(w: World, c: Citizen, kind: CircleKind): string | null {
   if (c.gone) return 'No longer living.';
@@ -188,6 +194,7 @@ export function circleAct(w: World, kind: CircleKind, c: Citizen = player(w)): R
     neighbours: `You spend the evening helping ${names}. They will not forget it.`,
     club: `Club night with ${names}.`,
     faith: `Services, and tea afterwards with ${names}.`,
+    diaspora: `An evening with ${names}: food from home, the old songs, news from home.`,
   };
   return ok(`${CIRCLE_INFO[kind].icon} ${text[kind]}`);
 }
