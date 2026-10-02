@@ -37,7 +37,7 @@ version before it (2.0's parts were 1.9.3 to 1.9.7, and 2.0.0 marked it complete
 | 2.8.0 | **Life 2.0: the everyday** | A day planner, commuting and cars, cooking, sleep, fitness and the body, shopping, chores | ✅ done |
 | 2.9.0 | **Life 2.0: culture and belonging** | Faith, festivals, languages, migration and integration, identity | ✅ done |
 | 3.0.0 | **Life 2.0: generations** | Dynasties over centuries: family trees, inherited looks and traits, the family name, ancestral homes and businesses, a family chronicle | ✅ done |
-| 3.1.0 | **Diplomacy completed** (what 2.0 left for later) | Offensive alliances, military access, recognition, customs unions, tariffs and quotas by partner, sectoral and secondary sanctions, smuggling, a Secretary-General and organisation budgets, resolutions authorising force, spheres of influence, a foreign minister, a relations map and briefings | ▶ in progress: offensive alliances, military access and recognition (3.0.1), trade policy (3.0.2), the UN as an organisation (3.0.3), spheres of influence and the foreign ministry (3.0.4) |
+| 3.1.0 | **Diplomacy completed** (what 2.0 left for later) | Offensive alliances, military access, recognition, customs unions, tariffs and quotas by partner, sectoral and secondary sanctions, smuggling, a Secretary-General and organisation budgets, resolutions authorising force, spheres of influence, a foreign minister, a relations map and briefings | ✅ done |
 
 **Why this order.** Each part builds on the ones before it:
 - A realistic economy comes first: money, prices, wages and costs underpin every later part.
@@ -641,6 +641,7 @@ improve or decay, and the power ranking moves for reasons the player can read.
   per-partner tariffs and quotas, sectoral and secondary sanctions and smuggling to evade them (→ 2.5); UN
   peacekeeping and resolutions authorising force (→ 2.2); a Secretary-General and organisation budgets; spheres of
   influence and hedging; a relations map and briefings before decisions; a foreign minister in the cabinet.
+- **Built later:** all of these, in 3.0.1 to 3.1.0 (Diplomacy completed).
 
 ## 2.1.0 — Shadows (GEO 5: intelligence gets better)
 
@@ -997,6 +998,10 @@ What 2.0 listed but did not build, finished as patches of 3.0:
   resolutions authorising force.
 - **3.0.4 — Spheres and the foreign ministry.** Spheres of influence and hedging between powers; a foreign minister
   in the cabinet; a relations map and briefings before decisions on the Diplomacy screen.
+- **Complete in 3.1.0:** the four parts above, with four stories (tariffs reaching the shop floor, a smuggler's
+  offer on a sanctioned border, a great power courting a hedging government, and the call to stand for
+  Secretary-General) and a hundred-year check that the new systems keep a century's skip fast. Everything 2.0 left
+  for later is now built.
 
 ## In every version
 

@@ -3,6 +3,30 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 3.1.0: Diplomacy completed
+
+3.1 is complete: everything 2.0 listed but left for later is now built. Its parts:
+
+- alliances and recognition (3.0.1);
+- trade policy (3.0.2);
+- the UN as an organisation (3.0.3);
+- spheres of influence and the foreign ministry (3.0.4).
+
+This release adds:
+
+- **Stories of diplomacy:**
+  - **Tariffs reach the shop floor:** another country's tariff hits the firm you work for. Write to your
+    representative, keep your head down, or, if you run foreign policy, answer in kind.
+  - **A van, a border, no questions:** near a border under sanctions, a syndicate offers you a smuggling run. It
+    is good money, and a crime; or you can walk away.
+  - **A great power comes courting:** if your government is hedging between two powers, one offers an alliance.
+    Take it and make a rival, or stay on the fence.
+  - **A call from New York:** if you could be Secretary-General, an old friend asks whether you will stand.
+- **A hundred years, measured again:**
+  - a century's skip now takes about five and a half minutes, slightly faster than before 3.1, with every new
+    system running;
+  - the ledger balances throughout, and the save grows to about 21 MB.
+
 ### New in 3.0.4: spheres of influence and the foreign ministry
 
 The fourth part of 3.1 Diplomacy completed.
