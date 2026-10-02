@@ -3,6 +3,32 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.4.5: demography, migration and long-run growth
+
+The fifth part of 2.5 A world of consequences.
+
+- **National populations.** Behind the simulated people, each country has a population starting from 2025 (UN
+  World Population Prospects 2024): fertility (Korea 0.72 children per woman, India 2.0, Saudi Arabia 2.3), an age
+  structure (Japan has half a pensioner per person of working age, India a tenth), and net migration (Canada and
+  Australia take the most).
+- **Change over the decades.** Fertility drifts towards about 1.5. Low fertility and longer lives age a society;
+  immigrants, mostly young, slow it. Population changes with births, the age structure and migration. In 50-year
+  test runs Japan shrinks by about 30%, China and Korea by about a fifth, and India grows by about an eighth.
+- **What it changes:**
+  - a country's economic weight grows and shrinks with its population;
+  - an ageing workforce and pension costs slow growth.
+- **Immigration policy** follows the government: nationalist leaders close the doors, liberal ones open them.
+  Wars with occupied land and civil wars send refugees to neighbours that take them, and a nationalist public
+  resents a large intake.
+- **Long-run growth, fixed:**
+  - fast-growing economies now slow as they catch up: once productivity has quadrupled since 2025, potential
+    growth is down to about 1.5%;
+  - slow-growing rich countries no longer lose "catching up" growth they never had.
+  In 50-year runs India's output per worker now grows about fivefold rather than fifteen to nineteen, and China's
+  about 3.5-fold rather than eight.
+- **The Country screen** has a Population panel: population against 2025, fertility, the old-age ratio and its
+  cost, net migration (with refugees), immigration policy and climate migration.
+
 ### New in 2.4.4: soft power and prestige events
 
 The fourth part of 2.5 A world of consequences.

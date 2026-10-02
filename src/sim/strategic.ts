@@ -19,6 +19,7 @@ import { TECH_DOMAINS, baselineOf, type TechDomain } from '../data/nationBaselin
 import { healthFactor, infraFactor, researchFactor } from './nationalBudget';
 import { techGrowth } from './technology';
 import { climateCommitment, transitionRate } from './climate';
+import { ageingDrag } from './demography';
 
 export interface Capabilities {
   tech: Record<TechDomain, number>; // 0..100+ (the leader near 100 in 2025)
@@ -74,7 +75,10 @@ export function strategicMonth(w: World, n: Nation, leaders: Record<TechDomain, 
     c.tech[d] = Math.round((c.tech[d] + own + spread) * 100) / 100;
   }
   // Growth: potential, adjusted for what the country has and what it is going through.
-  const why: [string, number][] = [['potential', b.growth]];
+  // Convergence: fast-growing economies slow as they catch up; once productivity has quadrupled
+  // since 2025, potential growth is down to about 1.5% (as Japan, Korea and China slowed).
+  const potential = b.growth > 1.5 ? b.growth - (b.growth - 1.5) * Math.min(1, Math.max(0, (c.productivity - 1) / 3)) : b.growth;
+  const why: [string, number][] = [['potential', potential]];
   // The potential rate already reflects where the country stood in 2025, so only changes since then move it.
   const base = (c.base ??= { human: c.human, infra: c.infra, eff: c.inst.effectiveness, gap: 0 });
   why.push(['skills', (c.human - base.human) * 0.03]);
@@ -85,7 +89,10 @@ export function strategicMonth(w: World, n: Nation, leaders: Record<TechDomain, 
   // Catching up: a country closing its technology gap faster than in 2025 has less left to catch up on.
   const gap = Math.max(0, 1 - techAvg(c) / lead);
   if (!base.gap) base.gap = gap || 1e-6;
-  why.push(['catching up', (gap - base.gap) * 6]);
+  // Falling further behind leaves more to copy; closing the gap uses up catch-up growth, which slow-growing
+  // rich countries (whose potential includes little catching up) barely have.
+  const cu = (gap - base.gap) * 6;
+  why.push(['catching up', cu >= 0 ? cu : cu * Math.min(1, b.growth / 2)]);
   // Innovation: research beyond the usual effort is growth of its own (catching up only counts imitation).
   if (Math.abs(extra) > 1e-4) why.push(['research', extra * 12 * 1.5]);
   if (c.cohesion < 45) why.push(['unrest', (c.cohesion - 45) * 0.06]);
@@ -97,6 +104,8 @@ export function strategicMonth(w: World, n: Nation, leaders: Record<TechDomain, 
   why.push(['the world economy', w.econ.cycle * 1.2]);
   if (n.defaultedAt != null && w.time - n.defaultedAt < 2 * 365 * DAY) why.push(['debt default', -1.5]);
   if (climateCommitment(w, n) > 0.3) why.push(['green industry', transitionRate(w, n) * 15]);
+  const ag = ageingDrag(n);
+  if (Math.abs(ag) >= 0.05) why.push(['ageing', ag]);
   const tg = techGrowth(w, n);
   if (tg) why.push(['new technology', tg]);
   const g = Math.max(-6, Math.min(10, why.reduce((t, [, v]) => t + v, 0)));

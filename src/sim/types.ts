@@ -447,6 +447,7 @@ export interface Nation {
   fossil0?: number; // the fossil share of its energy mix at the start (2.5)
   climateMigrants?: number; // people who left its hottest regions for cooler ones (2.5)
   soft?: number; // soft power, 0..100 (2.5)
+  demo?: import('./demography').Demography; // fertility, ageing, migration and population (2.5)
   hosted?: number; // Olympics and World Expos hosted (2.5)
   lastCoup?: { t: number; ok: boolean; leader: Id }; // the latest coup attempt (2.3)
   armedBy?: Record<Id, number>; // foreign sponsors that sent it arms, and how often (2.3)

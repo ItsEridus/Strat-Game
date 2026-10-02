@@ -25,6 +25,7 @@ import { capsOf } from '../../sim/strategic';
 import { CONST_LABEL, orbitOf, reconBonus, satBonus, spaceCapability, spaceOf, type Constellation } from '../../sim/space';
 import { MISSIONS } from '../../data/space';
 import { creditSummary } from '../../sim/sovereign';
+import { ageingDrag, demoOf } from '../../sim/demography';
 import { reserveShare, stocksOf } from '../../sim/markets';
 import { bondRate } from '../../sim/publicFinance';
 
@@ -37,6 +38,7 @@ export function CountryExtras({ w, id }: { w: World; id: Id }) {
     <>
       <RegimePanel w={w} id={id} />
       <CreditPanel w={w} id={id} />
+      <DemographyPanel w={w} id={id} />
       <TechPanel w={w} id={id} />
       <SpacePanel w={w} id={id} />
       {mine && n.president === p.id && <Cabinet w={w} />}
@@ -122,6 +124,25 @@ function Applications({ w }: { w: World }) {
           <ActBtn small run={(w) => decideCitizenship(w, p.id, n.id, r.cit, true)}>Approve</ActBtn>
           <ActBtn small kind="danger" run={(w) => decideCitizenship(w, p.id, n.id, r.cit, false)}>Deny</ActBtn></div>
       )) : <Empty>No pending applications.</Empty>}
+    </Panel>
+  );
+}
+
+function DemographyPanel({ w, id }: { w: World; id: Id }) {
+  const n = w.nations[id];
+  const d = demoOf(n);
+  const POLICY = { open: 'open: immigrants and refugees are welcome', selective: 'selective', closed: 'closed: few are let in' };
+  return (
+    <Panel title="👪 Population">
+      <table class="table compact small"><tbody>
+        <tr><td>Population</td><td>{Math.round(d.pop * 100)}% of 2025 ({d.growth >= 0 ? '+' : ''}{d.growth.toFixed(2)}% last year)</td></tr>
+        <tr><td>Children per woman</td><td>{d.tfr.toFixed(2)}</td></tr>
+        <tr><td>People over 65 per person of working age</td><td>{d.oadr.toFixed(2)} (was {d.oadr0.toFixed(2)} in 2025){ageingDrag(n) < -0.05 ? `; ageing costs ${(-ageingDrag(n)).toFixed(1)} points of growth` : ''}</td></tr>
+        <tr><td>Net migration</td><td>{d.mig >= 0 ? '+' : ''}{d.mig.toFixed(1)} per 1,000 a year{d.refugees > 0 ? ` (incl. ${d.refugees.toFixed(1)} refugees)` : ''}</td></tr>
+        <tr><td>Immigration policy</td><td>{POLICY[d.policy]}</td></tr>
+        {(n.climateMigrants ?? 0) > 0 && <tr><td>Climate migration</td><td>{(n.climateMigrants ?? 0).toLocaleString()} have moved from the hottest regions</td></tr>}
+      </tbody></table>
+      <Help>The simulated people are a sample of a national population that starts from 2025 (UN figures). Fertility drifts towards about 1.5; low fertility and longer lives age a society, and immigrants (mostly young) slow it. The population and its economic weight change with births, the age structure and migration. Nationalist governments close the doors, liberal ones open them, and wars next door bring refugees.</Help>
     </Panel>
   );
 }

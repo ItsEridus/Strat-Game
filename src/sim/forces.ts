@@ -876,8 +876,8 @@ function nationScoresNow(w: World): NationScore[] {
     const quality = caps.tech.military / 100;
     const ready = fs.length ? fs.reduce((t, f) => t + f.readiness, 0) / fs.length / 100 : 0.6;
     const army = (sum('army') + soldiers) * quality * (0.5 + ready / 2), navy = sum('navy') * quality * (0.5 + ready / 2), air = sum('air') * quality * (0.5 + ready / 2);
-    // Economic mass: the real 2025 share of world GDP, grown by productivity since.
-    const economy = baselineOf(n.iso).gdpShare * caps.productivity;
+    // Economic mass: the real 2025 share of world GDP, grown by productivity and population since.
+    const economy = baselineOf(n.iso).gdpShare * caps.productivity * (n.demo?.pop ?? 1);
     const tech = techAvg(caps);
     const own = w.regions.filter((r) => controller(r) === n.id);
     const stability = own.length ? n.approval - own.reduce((s, r) => s + r.unrest + r.crime / 2, 0) / own.length : 0;
