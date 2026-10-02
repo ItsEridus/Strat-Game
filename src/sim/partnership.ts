@@ -1,5 +1,5 @@
 // Relationships under each country's laws (2.7 Life 2.0: the social fabric).
-// - Who people are drawn to: most are straight; about 4% are gay or lesbian and 6% bisexual
+// - Who people are drawn to: most are straight; about 3% are gay or lesbian and 5% bisexual
 //   (Gallup and national surveys put adults identifying as LGBT at 5–10%, more among the young).
 //   The player can set their own.
 // - Same-sex couples can marry where the law allows it (2025: the United States, Canada, Mexico,
@@ -31,7 +31,7 @@ export const ORIENT_LABEL: Record<Orientation, string> = { straight: 'straight',
 export function orientationOf(c: Citizen): Orientation {
   if (c.orient) return c.orient;
   const h = hash01(c.id, 2901);
-  return h < 0.04 ? 'gay' : h < 0.1 ? 'bi' : 'straight';
+  return h < 0.03 ? 'gay' : h < 0.08 ? 'bi' : 'straight';
 }
 /** Whether a is drawn to b. */
 export function attracted(w: World, a: Citizen, b: Citizen): boolean {
@@ -40,7 +40,12 @@ export function attracted(w: World, a: Citizen, b: Citizen): boolean {
   const same = sexOf(w, a) === sexOf(w, b);
   return o === 'gay' ? same : !same;
 }
-export const mutual = (w: World, a: Citizen, b: Citizen) => attracted(w, a, b) && attracted(w, b, a);
+export function mutual(w: World, a: Citizen, b: Citizen): boolean {
+  if (!attracted(w, a, b) || !attracted(w, b, a)) return false;
+  // Most bisexual people's partners are of the other sex: a same-sex pairing involving a bisexual person is rarer.
+  if (sameSex(w, a, b) && (orientationOf(a) === 'bi' || orientationOf(b) === 'bi') && !(orientationOf(a) === 'gay' || orientationOf(b) === 'gay')) return hash01(Math.min(a.id, b.id), Math.max(a.id, b.id), 2902) < 0.3;
+  return true;
+}
 export const sameSex = (w: World, a: Citizen, b: Citizen) => sexOf(w, a) === sexOf(w, b);
 
 /** Family law (2025): same-sex unions, the share of property split equally, years of maintenance, waiting days. */

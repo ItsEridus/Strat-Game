@@ -47,6 +47,7 @@ export interface Citizen {
   mind?: import('./mind').Mind; // values, and how experience has shaped them (2.6)
   mh?: import('./mentalHealth').MentalHealth; // past episodes, losses being grieved, therapy (2.6)
   orient?: import('./partnership').Orientation; alimony?: import('./partnership').Alimony; // whom they are drawn to (player's choice); maintenance they pay (2.7)
+  matches?: import('./familyLife').Match[]; // dating matches to meet (2.7)
   ties?: import('./ties').Tie[]; // lasting memories of other people: grudges, gratitude, old flames, rivals, comrades (2.6)
   habits?: Partial<Record<import('./habits').Habit, import('./habits').HabitState>>; // smoking, drinking, gambling, gaming (2.6)
   habitDay?: Partial<Record<import('./habits').Habit, number>>; betsToday?: { day: number; n: number }; // the player's daily limits
@@ -196,7 +197,7 @@ export interface LifeState {
 
 /** Family ties. Children under 18 are not yet citizens: they live in `kids` until they come of age. */
 /** A child growing up at home (a compact record until 18). `how` is set when they are not one's own by birth. */
-export interface Kid { name: string; born: number; how?: 'adopted' | 'grandchild' | 'sibling' | 'stepchild' | 'fostered'; bond?: number; grades?: number; lastTime?: number }
+export interface Kid { name: string; born: number; how?: 'adopted' | 'grandchild' | 'sibling' | 'stepchild' | 'fostered'; bond?: number; grades?: number; lastTime?: number; other?: Id; step?: Id } // other: the parent who lives apart; step: a step-parent (2.7)
 
 export interface Family {
   partner: Id | null;

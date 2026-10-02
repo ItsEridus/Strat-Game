@@ -3,7 +3,8 @@
 // citizens; the bereaved grieve and inherit. The player lives by the same rules:
 // ask someone out, take them on dates, propose, marry, start a family — and a
 // partner who is neglected may leave.
-import { attracted, divorce, marriageBar, mutual, sameSex } from './partnership';
+import { blend, custody, weddingGathering } from './familyLife';
+import { divorce, marriageBar, mutual, sameSex } from './partnership';
 import { flameBonus, partedWays } from './ties';
 import { addHeirloom, releaseTrusts } from './legacy';
 import type { Citizen, Family, Id, Kid, World } from './types';
@@ -65,7 +66,7 @@ function pair(w: World, a: Citizen, b: Citizen, status: Family['status'], since 
 
 function split(w: World, a: Citizen, b: Citizen | null) {
   const fa = fam(a);
-  if (b && !b.gone) partedWays(w, a, b, fa.status === 'married'); // they remember each other (sim/ties.ts)
+  if (b && !b.gone) { partedWays(w, a, b, fa.status === 'married'); custody(w, a, b); } // memories (ties.ts); the children (familyLife.ts)
   if (b) { const fb = fam(b); if (fb.partner === a.id) { fb.partner = null; fb.status = 'single'; fb.since = w.time; if (!fb.exes.includes(a.id)) fb.exes.push(a.id); } if (!fa.exes.includes(b.id)) fa.exes.push(b.id); }
   fa.partner = null; fa.status = 'single'; fa.since = w.time;
 }
@@ -216,6 +217,7 @@ function fertilityFactor(w: World, c: Citizen): number {
 function wed(w: World, a: Citizen, b: Citizen) {
   fam(a).status = fam(b).status = 'married';
   fam(a).since = fam(b).since = w.time;
+  blend(a, b); weddingGathering(w, a, b); // step-families and both families together (familyLife.ts)
   // One household: the one with a job (or the player) keeps their home.
   const stay = a.player ? a : b.player ? b : a.job != null || b.job == null ? a : b;
   moveIn(w, stay === a ? b : a, stay);
@@ -286,7 +288,7 @@ export function romanceCheck(w: World, p: Citizen, npc: Citizen | undefined, wha
     if (!isAdult(w, p) || !isAdult(w, npc)) return 'Only adults.';
     if (f.partner != null) return `You are ${STATUS_LABEL[f.status]} to ${w.citizens[f.partner]?.name}.`;
     if (fam(npc).partner != null) return `${npc.name} is ${STATUS_LABEL[fam(npc).status]}.`;
-    if (!attracted(w, npc, p)) return `${npc.name} is not drawn to you that way.`;
+    if (!mutual(w, npc, p)) return `${npc.name} is not drawn to you that way.`;
     if (fam(p).parents.includes(npc.id) || fam(p).children.includes(npc.id)) return 'Family.';
     if (npc.loc !== p.loc) return `${npc.name} is in ${w.regions[npc.loc].name}.`;
     if ((npc.rel[p.id] ?? 0) < 30) return `${npc.name} barely knows you (relationship 30+ first: talk, help, spend time).`;

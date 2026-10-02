@@ -46,14 +46,18 @@ const DARK_HAIR_ISO = new Set(['MEX', 'BRA', 'TUR', 'SAU', 'ZAF', 'IND', 'CHN', 
 const weighted = (ws: number[], r: number) => { const t = ws.reduce((a, b) => a + b, 0); let x = r * t; for (let i = 0; i < ws.length; i++) { x -= ws[i]; if (x <= 0) return i; } return ws.length - 1; };
 
 /** Presentation from the first name (the name lists alternate), else a stable coin. */
+let anyPool: Map<string, 'f' | 'm'> | null = null;
 export function sexOf(w: World, c: Citizen): 'f' | 'm' {
+  if (c.look?.sex) return c.look.sex; // a designed look says so
   const first = c.name.split(' ')[0];
   const code = w.nations[c.nation]?.cur;
   for (const list of [NAME_POOLS[code]?.first, EXTRA_NAMES[code]?.first]) {
     const i = list?.indexOf(first) ?? -1;
     if (i >= 0) return i % 2 === 0 ? 'm' : 'f';
   }
-  return hash01(c.id, 1401, 1) < 0.5 ? 'f' : 'm';
+  // A name from another country (people who moved, or arrived from abroad).
+  if (!anyPool) { anyPool = new Map(); for (const pools of [NAME_POOLS, EXTRA_NAMES]) for (const pool of Object.values(pools)) pool?.first?.forEach((n: string, i: number) => { if (!anyPool!.has(n)) anyPool!.set(n, i % 2 === 0 ? 'm' : 'f'); }); }
+  return anyPool.get(first) ?? (hash01(c.id, 1401, 1) < 0.5 ? 'f' : 'm');
 }
 
 /** The look someone was born with (stable), unless they have designed or changed it. */

@@ -8,6 +8,7 @@
 // Leaving the world is done properly: a death hands the estate to the family
 // (or the state), offices fall vacant and are refilled, commands pass on, and
 // the person stays on record so history can still name them.
+import { funeral } from './familyLife';
 import { marriageBar, orientationOf } from './partnership';
 import { sexOf } from './looks';
 import { techFx } from './technology';
@@ -221,6 +222,7 @@ export function die(w: World, c: Citizen, cause: string) {
   releaseRoles(w, c, 'died');
   settleEstate(w, c, heir);
   mourn(w, c);
+  funeral(w, c, heir);
   bereave(w, c);
   c.gone = { t: w.time, why: 'died', note: cause };
   invalidateCensus(w);

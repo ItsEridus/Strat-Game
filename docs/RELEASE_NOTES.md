@@ -3,11 +3,40 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.6.4: families that change, and dating
+
+The fourth part of 2.7 Life 2.0: the social fabric.
+
+- **Custody and child support.** When parents of young children split up:
+  - the children live with one parent (mostly the mother);
+  - the other parent has a weekly visiting day and pays child support every month until the children are grown
+    (about a tenth of income for each child, up to three);
+  - missing the children weighs on them.
+  You can visit your children from the "Love and the law" panel.
+- **Step-families.** A parent who marries again brings their children into a blended family, with a step-parent.
+- **Gatherings:**
+  - each country's great family holiday (Christmas, the Lunar New Year, Diwali, Eid, the New Year) brings
+    families together. Mostly they grow closer, but old rows can flare as well as heal;
+  - with no family near, you spend the holiday alone;
+  - weddings bring both families together, and funerals bring families together too;
+  - children passed over in a will may resent the heir.
+- **Dating:**
+  - besides neighbours and workmates, people now meet through dating apps, which match singles across the country
+    by age, outlook, values and temperament, and through friends who set them up;
+  - you can spend a week on an app, ask friends to set you up, and meet your matches; how a first date goes
+    depends on how well you would get on.
+- **Fixes:**
+  - a person's sex is now read correctly for names from other countries, so couples who arrive from abroad follow
+    attraction too;
+  - bisexual people mostly partner the other sex, as surveys find, and same-sex couples are about 1% of couples,
+    as in life;
+  - orientation shares are now about 3% gay or lesbian and 5% bisexual.
+
 ### New in 2.6.3: relationships under each country's laws
 
 The third part of 2.7 Life 2.0: the social fabric.
 
-- **Whom people are drawn to.** Most people are straight; about 4% are gay or lesbian and 6% bisexual. Couples
+- **Whom people are drawn to.** Most people are straight; about 3% are gay or lesbian and 5% bisexual. Couples
   form only where the attraction is mutual, and you can ask out only people who are drawn to you. You choose your
   own orientation in Life.
 - **Same-sex couples under the law (2025):**

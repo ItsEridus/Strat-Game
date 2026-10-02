@@ -1,9 +1,10 @@
 // Love and the law (2.7): whom you are drawn to, and your country's family law.
 import type { Citizen, World } from '../../sim/types';
-import { Help, Select } from '../common';
+import { ActBtn, CitLink, Help, Select } from '../common';
 import { store } from '../store';
 import { fmtAmt } from '../../engine/money';
 import { fmtDate } from '../../engine/calendar';
+import { appCheck, askFriends, childrenAway, meetCheck, meetMatch, setUpCheck, supportDue, useApp, visitCheck, visitChildren } from '../../sim/familyLife';
 import { ORIENT_LABEL, SS_LABEL, lawOf, orientationOf, setOrientation, type Orientation } from '../../sim/partnership';
 
 export function LovePanel({ w, p }: { w: World; p: Citizen }) {
@@ -22,7 +23,20 @@ export function LovePanel({ w, p }: { w: World; p: Citizen }) {
         {a && <tr><td>You pay</td><td>{fmtAmt(a.cur, a.amount)} a month to {w.citizens[a.to]?.name} until {fmtDate(a.until, 'medium')}</td></tr>}
         {owed?.alimony && <tr><td>You receive</td><td>{fmtAmt(owed.alimony.cur, owed.alimony.amount)} a month from {owed.name}</td></tr>}
       </tbody></table>
-      <Help>People are drawn to the other sex, their own, or both; whom you can ask out depends on whom they are drawn to. Same-sex couples marry where the law allows it, register a partnership where there is one, and elsewhere live as partners; where they are persecuted, many hide and some emigrate. A divorce follows your country's law: savings are evened out and the better-off spouse may pay maintenance.</Help>
+      {p.family?.partner == null && <>
+        <h4>Dating</h4>
+        <div class="row">
+          <ActBtn small why={appCheck(w, p)} run={(w) => useApp(w)}>📱 A week on a dating app</ActBtn>
+          <ActBtn small why={setUpCheck(w, p)} run={(w) => askFriends(w)}>🫂 Ask friends to set you up</ActBtn>
+        </div>
+        {(p.matches ?? []).length > 0 && <ul class="small">{p.matches!.map((m) => <li><CitLink w={w} id={m.id} /> · {Math.round(m.score * 100)}% match <ActBtn small kind="ghost" why={meetCheck(w, p, m.id)} run={(w) => meetMatch(w, m.id)}>Meet</ActBtn></li>)}</ul>}
+      </>}
+      {childrenAway(w, p).length > 0 && <>
+        <h4>Your children</h4>
+        <p class="small">{childrenAway(w, p).map((x) => x.kid.name.split(' ')[0]).join(', ')} live{childrenAway(w, p).length > 1 ? '' : 's'} with {childrenAway(w, p)[0].with.name}. Child support: about {fmtAmt(w.nations[p.nation].cur, supportDue(p, childrenAway(w, p).length))} a month.</p>
+        <ActBtn small why={visitCheck(w, p)} run={(w) => visitChildren(w)}>👧 Visiting day</ActBtn>
+      </>}
+      <Help>Besides neighbours and workmates, people meet through friends and dating apps, which match people across the country by age, outlook, values and temperament. When parents split up, the children live with one of them (mostly the mother); the other sees them every week and pays child support until they are grown. People are drawn to the other sex, their own, or both; whom you can ask out depends on whom they are drawn to. Same-sex couples marry where the law allows it, register a partnership where there is one, and elsewhere live as partners; where they are persecuted, many hide and some emigrate. A divorce follows your country's law: savings are evened out and the better-off spouse may pay maintenance.</Help>
     </div>
   );
 }
