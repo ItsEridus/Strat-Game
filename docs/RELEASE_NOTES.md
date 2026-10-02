@@ -3,6 +3,21 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.9.4: ancestral places
+
+The fourth part of 3.0 Life 2.0: generations.
+
+- **The family home.** A home handed down to an heir who lives there stays the family home and counts its
+  generations: "the family home, generation 3".
+- **Graves.** The family's dead are buried where they lived. Visiting a grave (once a month) eases grief,
+  including grief that would not ease.
+- **Memorials.** You can raise a memorial (a bench by the path, with their name and dates). It honours the dead,
+  adds to the family name, and is entered in the family chronicle.
+- **Birthplaces.** Everyone now has a birthplace: children are born where their parents live. Going back to where
+  you were born, after years away, is a homecoming (once a year).
+- **On screen:** an "Ancestral places" panel in Life (Legacy), with the family home, the family's graves, and your
+  birthplace.
+
 ### New in 2.9.3: the family name
 
 The third part of 3.0 Life 2.0: generations.

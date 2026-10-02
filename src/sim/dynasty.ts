@@ -124,4 +124,6 @@ export const yearsOfDynasty = (w: World) => dateAt(w.time).year - dateAt(dynasty
 /** Daily: the dynasty exists from the first day (cheap). */
 export function dynastyDaily(w: World) {
   dynastyOf(w);
+  const p = player(w);
+  if (p && p.birthplace == null) p.birthplace = p.home;
 }

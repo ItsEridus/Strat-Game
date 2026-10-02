@@ -46,6 +46,7 @@ export interface Citizen {
   look?: import('./looks').Look;
   mind?: import('./mind').Mind; // values, and how experience has shaped them (2.6)
   mh?: import('./mentalHealth').MentalHealth; // past episodes, losses being grieved, therapy (2.6)
+  birthplace?: Id; memorial?: number; // where they were born; a memorial raised to them (3.0)
   origin?: Id; residence?: import('./migration').Residence; // the country someone migrated from; their residence abroad (2.9)
   langs?: Partial<Record<import('./languages').Lang, number>>; course?: import('./languages').Lang; // languages spoken, once learning starts; lessons under way (2.9)
   religion?: import('./faith').Religion; // their faith, once chosen or changed (2.9)

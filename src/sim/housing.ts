@@ -18,7 +18,7 @@ import { ageOf } from './growth';
 import { lifeGate, milestone } from './lifecycle';
 
 export type HomeSize = 'room' | 'flat' | 'house';
-export interface Home { kind: 'rent' | 'own' | 'family'; region: Id; size: HomeSize; since: number; paid?: number /* purchase price (minor) */; improved?: import('./homeLife').Improvement[] /* (2.8) */ }
+export interface Home { kind: 'rent' | 'own' | 'family'; region: Id; size: HomeSize; since: number; paid?: number /* purchase price (minor) */; improved?: import('./homeLife').Improvement[] /* (2.8) */; gens?: number /* a family home handed down (3.0) */ }
 
 export const SIZES: Record<HomeSize, { label: string; icon: string; comfort: number }> = {
   room: { label: 'Room in a shared house', icon: '🚪', comfort: -2 },
@@ -65,7 +65,7 @@ export function assignHome(w: World, c: Citizen) {
 export function settleHome(w: World, c: Citizen, heir: Citizen | null) {
   const h = c.dwelling;
   if (h?.kind !== 'own') return;
-  if (heir && heir.home === h.region && heir.dwelling?.kind !== 'own') { heir.dwelling = { ...h, since: w.time }; c.dwelling = undefined; return; }
+  if (heir && heir.home === h.region && heir.dwelling?.kind !== 'own') { heir.dwelling = { ...h, since: w.time, gens: (h.gens ?? 1) + 1 }; c.dwelling = undefined; return; } // the family home (ancestry.ts)
   sellTo(w, c, h);
   c.dwelling = undefined;
 }
