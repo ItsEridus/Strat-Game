@@ -3,6 +3,31 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.6.3: relationships under each country's laws
+
+The third part of 2.7 Life 2.0: the social fabric.
+
+- **Whom people are drawn to.** Most people are straight; about 4% are gay or lesbian and 6% bisexual. Couples
+  form only where the attraction is mutual, and you can ask out only people who are drawn to you. You choose your
+  own orientation in Life.
+- **Same-sex couples under the law (2025):**
+  - they can marry in the United States, Canada, Mexico, Brazil, Argentina, Britain, Germany, South Africa and
+    Australia;
+  - they can register a partnership in Japan;
+  - elsewhere they live as partners without recognition;
+  - where they are persecuted (Saudi Arabia, Russia), they live under strain and some emigrate to live openly
+    together;
+  - they have children through adoption or surrogacy.
+- **Divorce follows the law of the country:**
+  - savings are evened out between the spouses, from an equal split in Britain, Canada and Australia to little
+    under Saudi law;
+  - the better-off spouse pays monthly maintenance, from none in Japan to years in Turkey and India;
+  - each country has its own waiting periods, such as Korea's and China's cooling-off month and India's six months.
+  This applies to your divorce, which used to cost a flat quarter of your savings, and to everyone else's.
+- Couples arriving from abroad now follow the same rules.
+- **On screen:** a "Love and the law" panel in Life, with your orientation, your country's law, and any maintenance
+  you pay or receive.
+
 ### New in 2.6.2: gossip, rumours and feuds
 
 The second part of 2.7 Life 2.0: the social fabric.

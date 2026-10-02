@@ -29,6 +29,7 @@ import { MindPanel } from './MindPanel';
 import { HabitsPanel } from './HabitsPanel';
 import { CirclesPanel } from './CirclesPanel';
 import { GossipPanel } from './GossipPanel';
+import { LovePanel } from './LovePanel';
 import { pensionOf, pensionQuote, pensionRules, retire, retireCheck } from '../../sim/pensions';
 import { isMinor, parentTime, parentTimeCheck, play, playCheck, schoolDay, schoolDayCheck } from '../../sim/childhood';
 import { continueAsNewcomer, successor, writeWill } from '../../sim/legacy';
@@ -119,6 +120,7 @@ export function Life({ w }: { w: World }) {
         <Panel title="🚬 Habits"><HabitsPanel w={w} p={p} /></Panel>
         <Panel title="👥 Your circles" class="wide"><CirclesPanel w={w} p={p} /></Panel>
         <Panel title="🗣️ What people are saying"><GossipPanel w={w} p={p} /></Panel>
+        <Panel title="💞 Love and the law"><LovePanel w={w} p={p} /></Panel>
         <Panel title="Education"><EducationPanel w={w} p={p} /></Panel>
         <Panel title="Hobbies"><Hobbies w={w} p={p} /></Panel>
         <Panel title="Pets"><Pets w={w} p={p} /></Panel>

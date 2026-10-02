@@ -1,4 +1,6 @@
 import { test } from 'node:test';
+import type { Citizen } from '../src/sim/types';
+import { attracted, marriageBar, sameSex } from '../src/sim/partnership';
 import assert from 'node:assert/strict';
 import { generateWorld } from '../src/sim/worldgen';
 import { registerSystems } from '../src/sim/systems';
@@ -84,8 +86,9 @@ test('the player dates, proposes and marries under the same rules as everyone', 
   const w = fresh(305);
   const p = player(w);
   mint(w, cref(p.id), 'USD', cur(1000), 'test');
-  const npc = residents(w, p.home).find((c) => !c.player && c.family?.partner == null && Math.abs(ageOf(w, c) - ageOf(w, p)) < 8 && !p.family!.parents.includes(c.id))
-    ?? npcs(w).find((c) => c.family?.partner == null && Math.abs(ageOf(w, c) - ageOf(w, p)) < 8)!;
+  const drawn = (c: Citizen) => attracted(w, c, p) && attracted(w, p, c) && (sameSex(w, c, p) ? !marriageBar(w, c, p, w.nations[p.nation]) : true);
+  const npc = residents(w, p.home).find((c) => !c.player && c.family?.partner == null && Math.abs(ageOf(w, c) - ageOf(w, p)) < 8 && !p.family!.parents.includes(c.id) && drawn(c))
+    ?? npcs(w).find((c) => c.family?.partner == null && Math.abs(ageOf(w, c) - ageOf(w, p)) < 8 && drawn(c))!;
   npc.loc = p.loc;
   assert.match(romanceCheck(w, p, npc, 'ask') ?? '', /barely knows/);
   npc.rel[p.id] = 100;

@@ -8,6 +8,8 @@
 // Leaving the world is done properly: a death hands the estate to the family
 // (or the state), offices fall vacant and are refilled, commands pass on, and
 // the person stays on record so history can still name them.
+import { marriageBar, orientationOf } from './partnership';
+import { sexOf } from './looks';
 import { techFx } from './technology';
 import { hasQuirk } from './nature';
 import { playerDies, settleWill } from './legacy';
@@ -297,8 +299,12 @@ function immigrant(w: World, r: Region) {
   if (c.nation === player(w).nation) record(w, 'people', `🧳 ${c.name} immigrated from ${from} to ${r.name}.`, { cit: c.id, nation: c.nation });
   // Couples often come together.
   if (chance(w, 0.3)) {
-    const d = newResident(w, n, r.id, { name: `${pick(w, pool.first)} ${name.split(' ').slice(-1)[0]}`, age: Math.max(18, ageOf(w, c) + randInt(w, -5, 5)), savings: randInt(w, 30, 150) });
-    fam(c).partner = d.id; fam(c).status = 'married'; fam(d).partner = c.id; fam(d).status = 'married';
+    // A partner they are drawn to (names carry sex: even entries are men's, odd women's).
+    const want = (orientationOf(c) === 'gay') === (sexOf(w, c) === 'm') ? 0 : 1;
+    const firsts = pool.first.filter((_, i) => i % 2 === want);
+    const d = newResident(w, n, r.id, { name: `${pick(w, firsts.length ? firsts : pool.first)} ${name.split(' ').slice(-1)[0]}`, age: Math.max(18, ageOf(w, c) + randInt(w, -5, 5)), savings: randInt(w, 30, 150) });
+    const st = marriageBar(w, c, d, n) ? 'dating' : 'married';
+    fam(c).partner = d.id; fam(c).status = st; fam(d).partner = c.id; fam(d).status = st;
     fam(c).since = fam(d).since = bornYearsAgo(w, randInt(w, 1, 10), randInt(w, 0, 300));
   }
   return c;

@@ -3,6 +3,7 @@
 // citizens; the bereaved grieve and inherit. The player lives by the same rules:
 // ask someone out, take them on dates, propose, marry, start a family — and a
 // partner who is neglected may leave.
+import { attracted, divorce, marriageBar, mutual, sameSex } from './partnership';
 import { flameBonus, partedWays } from './ties';
 import { addHeirloom, releaseTrusts } from './legacy';
 import type { Citizen, Family, Id, Kid, World } from './types';
@@ -46,6 +47,7 @@ function compatible(w: World, a: Citizen, b: Citizen): number {
   if (a.id === b.id || !isAdult(w, a) || !isAdult(w, b)) return 0;
   const fa = fam(a), fb = fam(b);
   if (fa.partner != null || fb.partner != null) return 0;
+  if (!mutual(w, a, b)) return 0; // whom each is drawn to (partnership.ts)
   if (fa.parents.includes(b.id) || fb.parents.includes(a.id) || fa.parents.some((x) => fb.parents.includes(x))) return 0; // family
   const ages = [ageOf(w, a), ageOf(w, b)];
   const gap = Math.abs(ages[0] - ages[1]);
@@ -158,15 +160,15 @@ export function familyDaily(w: World) {
     bumpRel(a, b, drift);
     if (f.status === 'dating') {
       if (rel < 10 && chance(w, 0.1)) { split(w, a, b); localNews(w, a.home, `💔 ${a.name} and ${b.name} have split up.`); continue; }
-      if (rel >= 60 && days >= 30 && chance(w, 0.02 * (0.5 + (valueOf(w, a, 'family') + valueOf(w, b, 'family')) / 2))) { fam(a).status = fam(b).status = 'engaged'; fam(a).since = fam(b).since = w.time; localNews(w, a.home, `💍 ${a.name} and ${b.name} are engaged!`); }
+      if (rel >= 60 && days >= 30 && !marriageBar(w, a, b, w.nations[a.nation]) && chance(w, 0.02 * (0.5 + (valueOf(w, a, 'family') + valueOf(w, b, 'family')) / 2))) { fam(a).status = fam(b).status = 'engaged'; fam(a).since = fam(b).since = w.time; localNews(w, a.home, `💍 ${a.name} and ${b.name} are engaged!`); }
     } else if (f.status === 'engaged') {
       if (rel < 10 && chance(w, 0.1)) { split(w, a, b); localNews(w, a.home, `💔 ${a.name} and ${b.name} called off their engagement.`); continue; }
       if (days >= 20 && chance(w, 0.06)) wed(w, a, b);
     } else if (f.status === 'married') {
-      if (rel < 0 && chance(w, 0.02)) { split(w, a, b); localNews(w, a.home, `📄 ${a.name} and ${b.name} are divorcing.`); continue; }
+      if (rel < 0 && chance(w, 0.02)) { divorce(w, a, b, w.nations[a.nation]); split(w, a, b); localNews(w, a.home, `📄 ${a.name} and ${b.name} are divorcing.`); continue; }
       const young = Math.min(ageOf(w, a), ageOf(w, b)), older = Math.max(ageOf(w, a), ageOf(w, b));
       const kids = fam(a).kids.length + fam(b).kids.length + fam(a).children.length;
-      if (young >= 20 && older <= 46 && kids < 4 && chance(w, (0.3 * fertilityFactor(w, a) * (0.4 + (valueOf(w, a, 'family') + valueOf(w, b, 'family')) * 0.6)) / (w.settings.lifeYearDays ?? 365) / (1 + kids))) haveBaby(w, a, b);
+      if (young >= 20 && older <= 46 && kids < 4 && chance(w, ((sameSex(w, a, b) ? 0.25 : 1) * 0.3 * fertilityFactor(w, a) * (0.4 + (valueOf(w, a, 'family') + valueOf(w, b, 'family')) * 0.6)) / (w.settings.lifeYearDays ?? 365) / (1 + kids))) haveBaby(w, a, b);
     }
   }
   // New couples: neighbours, colleagues, friends of friends.
@@ -233,7 +235,7 @@ export function initFamilies(w: World) {
       const b = adults.find((x) => x.family!.partner == null && compatible(w, a, x) > 0.2);
       if (!b) continue;
       const years = Math.max(0, Math.min(ageOf(w, a), ageOf(w, b)) - randInt(w, 20, 32));
-      const married = years > 0 && chance(w, 0.8);
+      const married = years > 0 && chance(w, 0.8) && !marriageBar(w, a, b, w.nations[a.nation]);
       pair(w, a, b, married ? 'married' : 'dating', married ? bornYearsAgo(w, years, randInt(w, 0, 300)) : w.time - randInt(w, 10, 300) * DAY);
       bumpRel(a, b, randInt(w, 40, 80));
       if (!married) continue;
@@ -284,6 +286,7 @@ export function romanceCheck(w: World, p: Citizen, npc: Citizen | undefined, wha
     if (!isAdult(w, p) || !isAdult(w, npc)) return 'Only adults.';
     if (f.partner != null) return `You are ${STATUS_LABEL[f.status]} to ${w.citizens[f.partner]?.name}.`;
     if (fam(npc).partner != null) return `${npc.name} is ${STATUS_LABEL[fam(npc).status]}.`;
+    if (!attracted(w, npc, p)) return `${npc.name} is not drawn to you that way.`;
     if (fam(p).parents.includes(npc.id) || fam(p).children.includes(npc.id)) return 'Family.';
     if (npc.loc !== p.loc) return `${npc.name} is in ${w.regions[npc.loc].name}.`;
     if ((npc.rel[p.id] ?? 0) < 30) return `${npc.name} barely knows you (relationship 30+ first: talk, help, spend time).`;
@@ -303,11 +306,13 @@ export function romanceCheck(w: World, p: Citizen, npc: Citizen | undefined, wha
   if (what === 'propose') {
     if (f.status !== 'dating') return f.status === 'engaged' ? 'You are already engaged.' : 'You are already married.';
     if ((w.time - f.since) / DAY < 14) return 'Give it a little longer (two weeks together).';
+    { const bar = marriageBar(w, p, npc, w.nations[controller(w.regions[p.loc])]); if (bar) return bar; }
     if (npc.loc !== p.loc) return `Propose in person: ${npc.name} is in ${w.regions[npc.loc].name}.`;
     return null;
   }
   if (what === 'wed') {
     if (f.status !== 'engaged') return 'You need to be engaged.';
+    { const bar = marriageBar(w, p, npc, w.nations[controller(w.regions[p.loc])]); if (bar) return bar; }
     if (npc.loc !== p.loc) return `${npc.name} is in ${w.regions[npc.loc].name}.`;
     const code = w.nations[controller(w.regions[p.loc])].cur;
     if ((p.wallet[code] ?? 0) < cur(B.family.weddingCost)) return `A modest wedding costs ${fmtAmt(code, cur(B.family.weddingCost))}.`;
@@ -315,6 +320,7 @@ export function romanceCheck(w: World, p: Citizen, npc: Citizen | undefined, wha
   }
   if (what === 'child') {
     if (f.status !== 'married') return 'Start a family once you are married.';
+    if (sameSex(w, p, npc)) return 'You will need to adopt (see adoption) or find a surrogate.';
     if (ageOf(w, npc) > 46 && ageOf(w, p) > 46) return 'That chapter has passed.';
     if ((p.flags.triedChild ?? -1) === today(w)) return 'Not today.';
     const due = w.life.pregnancies.find((x) => x.parents.includes(p.id));
@@ -400,15 +406,13 @@ export function breakUp(w: World): Result {
   const npc = partnerOf(w, p);
   const f = fam(p);
   const was = f.status;
+  let settlement = '';
   if (was === 'married' && npc) {
-    // A divorce settlement: a quarter of your cash in your home currency.
-    const code = w.nations[p.nation].cur;
-    const share = Math.floor((p.wallet[code] ?? 0) * 0.25);
-    if (share > 0) pay(w, cref(p.id), cref(npc.id), code, share, 'Divorce settlement');
+    settlement = divorce(w, p, npc, w.nations[p.nation]); // under the law of the land (partnership.ts)
   }
   split(w, p, npc);
   if (npc) { remember(w, npc, -30, was === 'married' ? 'divorced me' : 'broke up with me'); localNews(w, p.home, `💔 ${p.name} and ${npc.name} have split up.`); }
-  return ok(was === 'married' ? 'The divorce is final. A quarter of your savings went to the settlement.' : 'You ended it.');
+  return ok(was === 'married' ? `The divorce is final. ${settlement}` : 'You ended it.');
 }
 
 export function tryForChild(w: World): Result {
