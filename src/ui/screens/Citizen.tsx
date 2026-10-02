@@ -19,8 +19,9 @@ import { ActBtn } from '../common';
 import { familyRegard, memoriesOf } from '../../sim/story';
 import { levelLabel } from '../../sim/education';
 import { TRAIT_LABEL, VALUES, VALUE_LABEL, valuesOf, type Value } from '../../sim/mind';
-import { Bar } from '../common';
+import { Bar, CitLink } from '../common';
 import { postTitle } from '../../sim/services';
+import { TIE_INFO } from '../../sim/ties';
 import { BACKGROUNDS, QUIRKS, TALENTS, backgroundOf, natureOf } from '../../sim/nature';
 import { startTalk, talkCheck } from '../../sim/interact';
 
@@ -79,6 +80,9 @@ export function CitizenProfile({ w }: { w: World }) {
         <p class="small muted">Ambition {Math.round(c.traits.ambition * 100)} · appetite for risk {Math.round(c.traits.risk * 100)} · loyalty {Math.round(c.traits.loyalty * 100)} · love of money {Math.round(c.traits.greed * 100)} · energy {Math.round(c.traits.activity * 100)}</p>
         {(c.mind?.log.length ?? 0) > 0 && <><h4>How life has shaped {c.player ? 'you' : 'them'}</h4><ul class="small">{[...c.mind!.log].reverse().slice(0, 8).map((l) => <li>{fmtDate(l.t, 'medium')}: {l.why} — {(VALUES as string[]).includes(l.trait) ? `${VALUE_LABEL[l.trait as Value].toLowerCase()} matters ${l.delta > 0 ? 'more' : 'less'}` : `${TRAIT_LABEL[l.trait as keyof typeof TRAIT_LABEL]} ${l.delta > 0 ? 'up' : 'down'}`}</li>)}</ul></>}
       </Panel>
+      {(c.ties?.length ?? 0) > 0 && <Panel title={c.player ? '🗝️ People you remember' : `🗝️ People ${c.name.split(' ')[0]} remembers`}>
+        <ul class="small">{c.ties!.map((t) => <li>{TIE_INFO[t.kind].icon} {c.player ? 'You' : c.name.split(' ')[0]} {c.player ? TIE_INFO[t.kind].label.replace(/^is /, 'are ').replace(/^holds /, 'hold ').replace(/^still thinks /, 'still think ').replace(/^sees /, 'see ') : TIE_INFO[t.kind].label} <CitLink w={w} id={t.who} /> ({t.why}, {fmtDate(t.t, 'short')}){t.s < 25 ? ', fading' : ''}</li>)}</ul>
+      </Panel>}
       {(c.life?.work?.length ?? 0) > 0 && <Panel title="Work history">
         <table class="table compact small"><tbody>{[...c.life!.work!].reverse().map((x) => <tr><td>{x.what}</td><td class="muted">{x.where}</td><td>{fmtDate(x.from, 'short')} – {x.to ? fmtDate(x.to, 'short') : 'now'}</td><td class="muted">{x.why ?? ''}</td></tr>)}</tbody></table>
       </Panel>}

@@ -3,6 +3,7 @@
 // citizens; the bereaved grieve and inherit. The player lives by the same rules:
 // ask someone out, take them on dates, propose, marry, start a family — and a
 // partner who is neglected may leave.
+import { flameBonus, partedWays } from './ties';
 import { addHeirloom, releaseTrusts } from './legacy';
 import type { Citizen, Family, Id, Kid, World } from './types';
 import { B } from '../data/balance';
@@ -49,7 +50,7 @@ function compatible(w: World, a: Citizen, b: Citizen): number {
   const ages = [ageOf(w, a), ageOf(w, b)];
   const gap = Math.abs(ages[0] - ages[1]);
   if (gap > Math.max(6, Math.min(...ages) * 0.3)) return 0;
-  return Math.max(0, 1 - gap / 20 - ideoDistance(a.ideo, b.ideo) * 0.25 - valueDistance(w, a, b) * 0.6); // shared values draw people together (mind.ts)
+  return Math.max(0, 1 - gap / 20 - ideoDistance(a.ideo, b.ideo) * 0.25 - valueDistance(w, a, b) * 0.6 + flameBonus(a, b)); // old flames find their way back (ties.ts); shared values draw people together (mind.ts)
 }
 
 function pair(w: World, a: Citizen, b: Citizen, status: Family['status'], since = w.time) {
@@ -62,6 +63,7 @@ function pair(w: World, a: Citizen, b: Citizen, status: Family['status'], since 
 
 function split(w: World, a: Citizen, b: Citizen | null) {
   const fa = fam(a);
+  if (b && !b.gone) partedWays(w, a, b, fa.status === 'married'); // they remember each other (sim/ties.ts)
   if (b) { const fb = fam(b); if (fb.partner === a.id) { fb.partner = null; fb.status = 'single'; fb.since = w.time; if (!fb.exes.includes(a.id)) fb.exes.push(a.id); } if (!fa.exes.includes(b.id)) fa.exes.push(b.id); }
   fa.partner = null; fa.status = 'single'; fa.since = w.time;
 }

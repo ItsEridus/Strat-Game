@@ -2,6 +2,7 @@
 //  - Elections run on the in-game calendar without player intervention.
 //  - Voters are individual AI citizens plus aggregated background blocs.
 //  - Every result stores turnout, tallies, seats and a readable explanation.
+import { lostTo, tieBias } from './ties';
 import { ideologyFit } from './mind';
 import { managedBonus, termLimited } from './regimes';
 import { interferenceBonus } from './counterIntel';
@@ -334,6 +335,7 @@ function candidateUtility(w: World, voter: Citizen | null, voterIdeo: Citizen['i
   parts.party = (cp?.support ?? 0) / 6;
   if (voter) parts.relationship = (voter.rel[cand.id] ?? 0) / 4;
   if (voter) parts.values = (ideologyFit(w, voter, ideo) - 0.65) * 30; // a party whose outlook fits what they value (mind.ts)
+  if (voter?.ties) { const m = tieBias(voter, cand.id); if (m) parts.memory = m; } // grudges and gratitude (ties.ts)
   if (voter && voter.flags.pledge === cand.id && dayOf(w.time) - (voter.flags.pledgeDay ?? -99) <= 30) parts.pledge = 25; // promised in person
   const foreign = interferenceBonus(w, n, cp?.id);
   if (foreign) parts.foreign = foreign; // a foreign service's campaign
@@ -431,6 +433,7 @@ export function runElection(w: World, eid: Id) {
       for (const [k, d] of diffs.slice(0, 4)) explain.push(`• ${k}: ${d >= 0 ? 'you +' : 'them +'}${Math.abs(d).toFixed(1)} per voter`);
     }
   }
+  if ((e.kind === 'president' || e.kind === 'party') && sorted[1] != null && sorted[1] !== winner) lostTo(w, w.citizens[sorted[1]], w.citizens[winner], e.kind === 'president' ? 'presidential' : e.kind === 'party' ? 'party leadership' : e.kind);
   e.result = { turnout, electorate: voters.length + bgTotal, tallies: sorted.map((id) => ({ cand: id, votes: tallies[id], party: w.citizens[id].party ?? undefined })), winners: [winner], explain };
   if (e.kind === 'party') {
     const p = w.parties[e.party!];

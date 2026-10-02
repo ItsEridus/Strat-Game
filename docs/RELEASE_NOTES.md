@@ -3,6 +3,27 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.5.4: memories between people
+
+The fourth part of 2.6 Life 2.0: the mind. People now remember each other, not only you, so communities have
+histories:
+
+- **Grudges:**
+  - against the boss who dismissed them;
+  - against the owner who let them go after years of service (some never forgive it);
+  - against the ex who left them badly.
+- **Gratitude** to the employer who took them on after a long search for work.
+- **Old flames.** Exes who parted on good terms still think of each other, and are drawn back together when both are
+  free.
+- **Rivals.** Those beaten in a presidential or party-leadership election remember who beat them.
+- **Comrades.** Those who served in the same war remember each other.
+- **What memories do:**
+  - they pull feelings their way: a grudge keeps a relationship cold however often people meet;
+  - they sway votes for or against a candidate;
+  - they fade over the years: grudges fastest in people who value community, comradeship hardly at all;
+  - grudges die with the person they were held against, while old flames and comrades are remembered.
+- Each person keeps at most six memories, so saves stay small. Profiles show "People they remember".
+
 ### New in 2.5.3: habits and addictions
 
 The third part of 2.6 Life 2.0: the mind.

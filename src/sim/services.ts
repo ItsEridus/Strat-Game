@@ -197,6 +197,7 @@ export function logWork(w: World, c: Citizen, what: string, where: string) {
 export function endWork(w: World, c: Citizen, why: string) {
   const open = c.life?.work?.find((x) => x.to == null);
   if (open) { open.to = w.time; open.why = why; }
+  c.flags.jobEnded = w.time; // (how long someone was out of work: sim/ties.ts)
 }
 
 // ---------- promotions and staffing ----------

@@ -32,7 +32,7 @@ version before it (2.0's parts were 1.9.3 to 1.9.7, and 2.0.0 marked it complete
 | 2.3.0 | **Rise & fall** (GEO 7: regimes, secession, new nations) | Coups, revolutions, democratisation and backsliding, secession, civil wars, new and vanished states | ✅ done |
 | 2.4.0 | **Frontiers** (GEO 8: technology, cyber and space) | A near-future technology race that changes economies, armies and spying | ✅ done |
 | 2.5.0 | **A world of consequences** (GEO 9: world economy, climate, soft power) | Debt crises, central banks, climate over decades, soft power; the decades-long campaign and the World Almanac | ✅ done |
-| 2.6.0 | **Life 2.0: the mind** | Personality that grows from experience, values, mental health in depth, habits and addictions, therapy | ▶ in progress: values and personality that grows (2.5.1), mental health in depth (2.5.2), habits and addictions (2.5.3) |
+| 2.6.0 | **Life 2.0: the mind** | Personality that grows from experience, values, mental health in depth, habits and addictions, therapy | ▶ in progress: values and personality that grows (2.5.1), mental health in depth (2.5.2), habits and addictions (2.5.3), memories between people (2.5.4) |
 | 2.7.0 | **Life 2.0: the social fabric** | Friend circles, rivals, communities, relationships under each country's laws, custody and blended families, family gatherings | planned |
 | 2.8.0 | **Life 2.0: the everyday** | A day planner, commuting and cars, cooking, sleep, fitness and the body, shopping, chores | planned |
 | 2.9.0 | **Life 2.0: culture and belonging** | Faith, festivals, languages, migration and integration, identity | planned |

@@ -1,6 +1,8 @@
 // Companies, employment and production chains. A shift consumes energy, inputs
 // and wage funds, and creates goods; it refuses to run (with a reason) when
 // labour, funds, inputs or storage capacity are missing.
+import { hash01 } from '../engine/rng';
+import { letGo, takenOn } from './ties';
 import { machineFactor } from './automation';
 import { energyFactors, opecOutput } from './energy';
 import { weatherFactor } from './weather';
@@ -250,8 +252,10 @@ export function applyJob(w: World, c: Citizen, coId: Id): Result {
   const co = w.companies[coId];
   const why = applyCheck(w, c, co);
   if (why) return fail(why);
+  const idle = c.job == null && !c.post && c.flags.jobEnded != null ? (w.time - c.flags.jobEnded) / DAY : 0;
   if (c.job != null) quitJob(w, c, true);
   if (c.post) leavePost(w, c, `took a job at ${co.name}`);
+  if (co.owner.k === 'cit') takenOn(w, c, co.owner.id, co.name, idle);
   co.workers.push(c.id);
   c.job = co.id;
   c.jobSince = w.time;
@@ -280,6 +284,7 @@ export function fire(w: World, actor: Id, coId: Id, workerId: Id): Result {
   co.workers = co.workers.filter((x) => x !== workerId);
   c.job = null;
   endWork(w, c, 'dismissed');
+  if (co.owner.k === 'cit') letGo(w, c, co.owner.id, co.name, true);
   jobLost(w, c, co, co.offer?.wage ?? 0);
   if (c.player) notify(w, 'economy', `You were dismissed by ${co.name}.`, { link: 'jobs' });
   return ok(`${c.name} dismissed.`);
@@ -302,6 +307,7 @@ export function setOffer(w: World, actor: Id, coId: Id, wage: number, slots: num
     const c = w.citizens[id];
     c.job = null;
     endWork(w, c, 'made redundant');
+    if (co.owner.k === 'cit' && w.time - (c.jobSince ?? w.time) > 180 * DAY && hash01(c.id, co.id, Math.floor(w.time / DAY)) < 0.3) letGo(w, c, co.owner.id, co.name, false); // long service, cut loose: some never forgive it
     jobLost(w, c, co, co.offer.wage);
     if (c.player) notify(w, 'economy', `${co.name} cut positions; you were made redundant.${c.benefit ? ` You can claim ${fmtAmt(n.cur, c.benefit.daily)} a day in unemployment benefit.` : ''}`, { link: 'jobs' });
   }
