@@ -1,0 +1,43 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { generateWorld } from '../src/sim/worldgen';
+import { registerSystems } from '../src/sim/systems';
+import { advance } from '../src/sim/tick';
+import { DAY } from '../src/engine/clock';
+import { audit } from '../src/engine/ledger';
+import { census } from '../src/sim/census';
+import { player } from '../src/sim/query';
+import { bornYearsAgo } from '../src/sim/growth';
+import { playerDies } from '../src/sim/legacy';
+import { bereave, fam, haveBaby } from '../src/sim/family';
+import { releaseRoles, settleEstate } from '../src/sim/population';
+import { descendants, dynastyOf, eldest, generationOf, generations } from '../src/sim/dynasty';
+import { serialize, deserialize } from '../src/engine/save';
+
+registerSystems();
+const deps = { releaseRoles, settleEstate, bereave };
+
+test('the dynasty: founded with the first life; births and successions in the chronicle; generations; the tree', () => {
+  const w = generateWorld(5701, 'Founder', 0, { citizensPerRegion: 2 });
+  advance(w, DAY, false);
+  const p = player(w);
+  const d = dynastyOf(w);
+  assert.equal(d.founder, p.id);
+  assert.equal(generationOf(w, p.id), 1);
+  const [spouse, child] = census(w).all.filter((c) => !c.player && !c.gone && !fam(p).parents.includes(c.id) && !fam(p).children.includes(c.id));
+  child.born = bornYearsAgo(w, 30, 1);
+  fam(p).children.push(child.id); fam(child).parents.push(p.id);
+  haveBaby(w, p, spouse);
+  assert.ok(d.events.some((e) => e.kind === 'birth'), 'a birth in the chronicle');
+  const tree = descendants(w, eldest(w, p), 3);
+  const flat = (n: typeof tree): string[] => [n.name, ...n.children.flatMap(flat)];
+  assert.ok(flat(tree).includes(child.name), 'the child is on the tree');
+  const heir = playerDies(w, 'of old age', deps)!;
+  assert.equal(heir.id, child.id);
+  assert.equal(generationOf(w, heir.id), 2, 'a child is the next generation');
+  assert.ok(d.events.some((e) => e.kind === 'succession') && d.events.some((e) => e.kind === 'death'));
+  assert.ok(generations(w).some((g) => g.gen === 2 && g.name === heir.name));
+  const w2 = deserialize(serialize(w));
+  assert.equal(w2.dynasty?.gens[heir.id], 2);
+  assert.ok(audit(w).ok);
+});

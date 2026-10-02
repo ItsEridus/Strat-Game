@@ -1,0 +1,378 @@
+// UI-side game controller: owns the World, runs the real-time loop at the chosen
+// speed, applies player actions, autosaves, and notifies Preact to re-render.
+import { skipMonth } from '../sim/statYear';
+import { sound } from './sound';
+import { periodStart, periodSummary } from '../sim/periodReview';
+import { DAY } from '../engine/clock';
+import { useEffect, useState } from 'preact/hooks';
+import type { World } from '../sim/types';
+import type { Result } from '../engine/result';
+import { advance, lod } from '../sim/tick';
+import { generateWorld } from '../sim/worldgen';
+import { registerSystems } from '../sim/systems';
+import { deserialize, latestSlot, loadFromSlot, saveToSlot, savesSettled, serialize } from '../engine/save';
+import { invalidateCensus } from '../sim/census';
+import { checkProgress } from '../sim/quests';
+
+/**
+ * Fate is not written in advance. The simulation itself is deterministic (the
+ * same dice give the same results, which keeps it testable), but the game mixes
+ * real randomness into the world's dice as time passes and whenever a save is
+ * loaded, so no two playthroughs, and no two reloads, unfold the same way.
+ * Campaigns started from a chosen seed ("reproducible world") skip this.
+ */
+function entropy(): number {
+  try { return crypto.getRandomValues(new Uint32Array(1))[0]; } catch { return Math.floor(Math.random() * 2 ** 32); }
+}
+function stir(w: World) {
+  if (!w.settings.fixedFate) w.rng = (w.rng ^ entropy()) | 0;
+}
+
+registerSystems();
+
+/** Simulated minutes per real second at each speed. */
+// World minutes per real second at each speed: at 1× a day lasts 24 real minutes.
+export const SPEEDS = [0, 1, 5, 30, 1440];
+export const SPEED_LABELS = ['Paused', '1× — a minute each second', '2× — 5 minutes a second', '3× — half an hour a second', '4× — a day each second'];
+
+type Toast = { id: number; text: string; ok: boolean };
+/** A place in the interface: a screen with its selection (the person shown, the sub-tab…) and how far down it was scrolled. */
+type Visit = { tab: string; sel: Record<string, any>; y: number };
+/** Selections that belong to the moment rather than the screen (an open story window) and are never brought back. */
+const TRANSIENT = ['story'];
+/** Screen history kept for going back and forward. */
+const HISTORY = 50;
+
+class Store {
+  w: World | null = null;
+  version = 0;
+  tab = 'dashboard';
+  sel: Record<string, any> = {};
+  toasts: Toast[] = [];
+  private listeners = new Set<() => void>();
+  private acc = 0;
+  private lastRender = 0;
+  private lastAutosave = 0; // real time of the last autosave
+  saving = false;
+  private toastId = 1;
+  pauseReason = '';
+
+  subscribe(fn: () => void) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
+  emit() { this.version++; for (const l of this.listeners) l(); }
+
+  get paused() { return !this.w || this.w.settings.paused || this.w.settings.speed === 0; }
+
+  newGame(seed: number | null, name: string, nation: number, citizensPerRegion: number, difficulty: World['settings']['difficulty'], advanced: World['settings']['advanced'], lifeYearDays = 365, startAge = 24, character?: World['settings']['character'], scenario: World['settings']['scenario'] = 'present') {
+    this.w = generateWorld(seed ?? entropy() % 1e9, name, nation, { citizensPerRegion, difficulty, advanced, fixedFate: seed != null, lifeYearDays, startAge, character, scenario });
+    this.resetView();
+    this.save('autosave');
+    this.emit();
+  }
+
+  loading = false;
+  async loadSlot(slot: string) {
+    this.loading = true;
+    this.emit();
+    try {
+      const w = await loadFromSlot(slot);
+      if (!w) return this.toast('That slot is empty.', false);
+      w.settings.paused = true; // closing the game pauses; resume manually
+      stir(w); // reloading does not replay the same future
+      this.w = w;
+      this.resetView();
+      this.lastAutosave = Date.now();
+      this.toast(`Loaded ${slot}.`, true);
+    } catch (e) {
+      this.toast(`Could not load ${slot}: ${(e as Error).message}`, false);
+    } finally {
+      this.loading = false;
+      this.emit();
+    }
+  }
+
+  tryResume() {
+    const slot = latestSlot();
+    if (!slot) return false;
+    void this.loadSlot(slot);
+    return true;
+  }
+
+  importText(text: string) {
+    const w = deserialize(text);
+    w.settings.paused = true;
+    stir(w);
+    this.w = w;
+    this.resetView();
+    this.save('autosave');
+    this.toast('Save imported.', true);
+    this.emit();
+  }
+
+  exportText() { return this.w ? serialize(this.w) : ''; }
+
+  save(slot: string): Promise<void> {
+    if (!this.w) return Promise.resolve();
+    if (slot === 'autosave') this.lastAutosave = Date.now();
+    this.saving = true;
+    return saveToSlot(this.w, slot).then((r) => {
+      this.saving = false;
+      if (slot !== 'autosave' || !r.ok) this.toast(r.msg, r.ok);
+      this.emit();
+    });
+  }
+
+  /** Autosave at most every few real minutes while time runs (a large world takes a moment to save). */
+  private maybeAutosave() {
+    if (Date.now() - this.lastAutosave > AUTOSAVE_MS) void this.save('autosave');
+  }
+
+  go(tab: string, sel: Record<string, any> = {}) {
+    const next = { ...this.sel, ...sel };
+    // Another screen, or another person's profile, is a new page; a filter or sub-tab on the same screen is not.
+    const shown = (x: Record<string, any>) => x.citizen ?? this.w?.playerId; // no one chosen: your own profile
+    if (tab !== this.tab || (tab === 'citizen' && shown(next) !== shown(this.sel))) {
+      this.past = [...this.past.slice(1 - HISTORY), this.here()];
+      this.future = [];
+      this.page++;
+      this.scrollTo = 0;
+    }
+    this.tab = tab;
+    this.sel = next;
+    this.emit();
+  }
+
+  // ---------- going back and forward between screens ----------
+  private past: Visit[] = [];
+  private future: Visit[] = [];
+  /** Counts page changes (the view scrolls to `scrollTo` on each). */
+  page = 0;
+  scrollTo = 0;
+
+  get backTo(): Visit | null { return this.past[this.past.length - 1] ?? null; }
+  get forwardTo(): Visit | null { return this.future[this.future.length - 1] ?? null; }
+  back() { const v = this.past.pop(); if (v) { this.future.push(this.here()); this.visit(v); } }
+  forward() { const v = this.future.pop(); if (v) { this.past.push(this.here()); this.visit(v); } }
+
+  private here(): Visit {
+    return { tab: this.tab, sel: { ...this.sel }, y: typeof window !== 'undefined' ? window.scrollY : 0 };
+  }
+  private visit(v: Visit) {
+    const keep = Object.fromEntries(TRANSIENT.map((k) => [k, this.sel[k]]));
+    this.tab = v.tab;
+    this.sel = { ...v.sel, ...keep };
+    this.page++;
+    this.scrollTo = v.y;
+    this.emit();
+  }
+  /** A new or loaded game starts on the dashboard with no history. */
+  private resetView() {
+    this.tab = 'dashboard';
+    this.sel = {};
+    this.past = [];
+    this.future = [];
+    this.page++;
+    this.scrollTo = 0;
+  }
+
+  toast(text: string, ok: boolean) {
+    if (!text) return;
+    const t = { id: this.toastId++, text, ok };
+    this.toasts = [...this.toasts.slice(-4), t];
+    setTimeout(() => { this.toasts = this.toasts.filter((x) => x.id !== t.id); this.emit(); }, ok ? 3500 : 5500);
+    this.emit();
+  }
+
+  /** Run a player action: show its result, re-check progression, re-render. */
+  act(fn: (w: World) => Result | void): Result | void {
+    if (!this.w) return;
+    const r = fn(this.w);
+    invalidateCensus(this.w); // the action may have moved people or changed jobs
+    if (r) { this.toast(r.msg, r.ok); sound(this.w, r.ok ? (/[💸💰🪙]|earned|paid out|bought|sold/i.test(r.msg) ? 'coin' : 'click') : 'click'); }
+    checkProgress(this.w);
+    this.emit();
+    return r;
+  }
+
+  setSpeed(s: number) {
+    if (!this.w) return;
+    this.w.settings.speed = s;
+    this.w.settings.paused = s === 0;
+    if (s > 0) this.pauseReason = '';
+    this.emit();
+  }
+
+  /** Jump the clock (event-based advancement). Stops early on pausing notifications. */
+  jump(minutes: number, label = 'later') {
+    if (!this.w) return;
+    this.startAdvance(this.w.time + minutes, label);
+  }
+  jumpTo(t: number, label = 'the next event') {
+    this.startAdvance(t, label);
+  }
+  /** Synchronous advance for scripts and tests (blocks until done or a pausing event). */
+  advanceSync(minutes: number) {
+    if (!this.w) return;
+    stir(this.w);
+    const r = advance(this.w, minutes, true);
+    this.afterAdvance(r.stopped);
+  }
+  advanceSyncTo(t: number) { if (this.w && t > this.w.time) this.advanceSync(t - this.w.time); }
+
+  // ---------- long advances (to a birthday, a week ahead…) ----------
+  // Time moves in short chunks of the same ten-minute steps as normal play,
+  // yielding to the window between chunks so it stays responsive. A pausing
+  // event stops the run where it is (the target is kept, so it can resume);
+  // cancelling stops at the time actually reached.
+  /** Minutes of the current ten-minute step already elapsed on the clock (display only). */
+  get pendingMinutes() { return this.paused || this.advRunning ? 0 : Math.min(9, Math.floor(this.acc)); }
+  private shownMinute = 0;
+
+  advRunning = false;
+  advStopped = '';
+  private advCancel = false;
+
+  startAdvance(target: number, label: string, skip = false) {
+    const w = this.w;
+    if (!w || target <= w.time) return;
+    w.settings.paused = true;
+    w.life.advance = { target, from: w.time, label, start: target - w.time >= 7 * DAY ? periodStart(w) : undefined, skip: skip || undefined };
+    this.advStopped = '';
+    this.runAdvance();
+  }
+
+  resumeAdvance() {
+    if (!this.w?.life.advance) return;
+    this.advStopped = '';
+    this.runAdvance();
+  }
+
+  /** Stop running but keep the target (closing the window mid-advance: the save can resume it). */
+  cancelAdvanceKeepTarget() {
+    if (this.advRunning) this.advCancel = true;
+  }
+
+  cancelAdvance() {
+    if (this.w) this.w.life.advance = null;
+    this.advStopped = '';
+    if (this.advRunning) this.advCancel = true;
+    this.emit();
+  }
+
+  /** When the current run started (real ms and game minutes), for the time-left estimate. */
+  advClock = { real: 0, game: 0 };
+  /** Estimated real seconds left in a running advance (null until there is a rate to go on). */
+  advEta(): number | null {
+    const w = this.w, a = w?.life.advance;
+    if (!w || !a || !this.advRunning) return null;
+    const dt = (Date.now() - this.advClock.real) / 1000, dg = w.time - this.advClock.game;
+    if (dt < 2 || dg <= 0) return null;
+    return ((a.target - w.time) / dg) * dt;
+  }
+
+  private runAdvance() {
+    if (this.advRunning) return;
+    this.advRunning = true;
+    if (this.w) this.advClock = { real: Date.now(), game: this.w.time };
+    this.emit();
+    const step = () => {
+      const w = this.w;
+      const a = w?.life.advance;
+      if (!w || !a || this.advCancel) { this.advRunning = false; this.advCancel = false; this.emit(); return; }
+      const t0 = Date.now();
+      let stopped = false;
+      // Long advances run in the background in bigger slices (the screen redraws a few times a second).
+      const budget = a.target - a.from >= 30 * DAY ? 220 : 60;
+      // A week or more at once runs other countries at a coarser level of detail (sim/tick.ts); skipping a year
+      // runs everyone outside your own region that way, and does not stop for notifications.
+      lod.coarse = a.target - a.from >= 7 * DAY;
+      try {
+        // Skipping a year moves statistically, a month at a time (sim/statYear.ts).
+        if (a.skip) { while (w.time < a.target && Date.now() - t0 < budget) skipMonth(w, a.target); }
+        else while (w.time < a.target && Date.now() - t0 < budget) {
+          stir(w);
+          const r = advance(w, Math.min(60, a.target - w.time), true);
+          if (r.stopped) { stopped = true; break; }
+        }
+      } finally { lod.coarse = false; }
+      if (w.time >= a.target) {
+        if (a.start) w.life.period = periodSummary(w, a.start, a.label);
+        w.life.advance = null;
+        this.advRunning = false;
+        if (stopped) this.pauseReason = w.notices[0]?.text ?? '';
+        this.maybeAutosave();
+        this.emit();
+        return;
+      }
+      if (stopped) {
+        this.advRunning = false;
+        this.advStopped = w.notices[0]?.text ?? 'An important event';
+        this.pauseReason = this.advStopped;
+        this.maybeAutosave();
+        this.emit();
+        return;
+      }
+      this.emit();
+      setTimeout(step, 0);
+    };
+    setTimeout(step, 0);
+  }
+
+  private afterAdvance(stopped: boolean) {
+    const w = this.w!;
+    if (stopped) {
+      w.settings.paused = true;
+      this.pauseReason = w.notices[0]?.text ?? 'Important event';
+      this.toast(`⏸ Paused: ${this.pauseReason}`, true);
+    }
+    this.maybeAutosave();
+    this.emit();
+  }
+
+  /** Real-time loop tick (called every 100 ms). */
+  loop(dtMs: number) {
+    const w = this.w;
+    if (!w || this.paused || this.advRunning) return;
+    this.acc += (SPEEDS[w.settings.speed] * dtMs) / 1000;
+    // Never fall behind: if the computer cannot keep up, run as fast as it can instead of piling up a backlog
+    // (but always let a whole ten-minute step build up, or the slower speeds would never move).
+    this.acc = Math.min(this.acc, Math.max(20, SPEEDS[w.settings.speed] * 0.3));
+    const whole = Math.floor(this.acc / 10) * 10;
+    if (whole <= 0) {
+      // The world moves in ten-minute steps; the clock shows the minutes in between.
+      if (Math.floor(this.acc) !== this.shownMinute) { this.shownMinute = Math.floor(this.acc); this.emit(); }
+      return;
+    }
+    this.acc -= whole;
+    stir(w);
+    // At top speed (a day a second), distant parts of the world are simulated coarsely, as in long skips.
+    lod.coarse = lod.local = w.settings.speed === SPEEDS.length - 1;
+    let r: ReturnType<typeof advance>;
+    try { r = advance(w, whole, true); } finally { lod.coarse = lod.local = false; }
+    if (r.stopped) { this.acc = 0; this.afterAdvance(true); return; }
+    this.maybeAutosave();
+    const now = Date.now();
+    if (now - this.lastRender > 150) { this.lastRender = now; this.emit(); }
+  }
+}
+
+const AUTOSAVE_MS = 3 * 60 * 1000;
+
+export const store = new Store();
+
+let last = Date.now();
+if (typeof window !== 'undefined') {
+  setInterval(() => { const now = Date.now(); store.loop(now - last); last = now; }, 100);
+  window.addEventListener('beforeunload', () => { void store.save('autosave'); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && store.w) { store.w.settings.paused = true; void store.save('autosave'); store.emit(); }
+  });
+  // The desktop window calls this on close and waits for the save to finish.
+  (window as any).__meridianSave = async () => { if (store.w) { store.w.settings.paused = true; if (store.advRunning) store.cancelAdvanceKeepTarget(); await store.save('autosave'); } await savesSettled(); };
+}
+
+/** Preact hook: re-render when the store changes. */
+export function useStore() {
+  const [, set] = useState(0);
+  useEffect(() => store.subscribe(() => set((x) => x + 1)), []);
+  return store;
+}

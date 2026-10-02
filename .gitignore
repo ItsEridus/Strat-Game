@@ -1,0 +1,7 @@
+node_modules/
+build/
+tools/ne/
+launcher/web/
+release/
+launcher/*.syso
+tests/_*.ts

@@ -1,0 +1,10 @@
+import { generateWorld } from '../../src/sim/worldgen';
+import { registerSystems } from '../../src/sim/systems';
+import { advance } from '../../src/sim/tick';
+import { DAY } from '../../src/engine/clock';
+registerSystems();
+const w = generateWorld(7, 'T', 0);
+advance(w, Number(process.argv[2] ?? 60) * DAY, false);
+const f = (m: Record<string, number>) => Object.entries(m).filter(([k]) => k.startsWith('GOLD|')).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k.slice(5)}: ${Math.round(v / 1000)}`).join('\n  ');
+console.log('minted:\n  ' + f(w.stats.minted));
+console.log('burned:\n  ' + f(w.stats.burned));

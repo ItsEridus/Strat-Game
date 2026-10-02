@@ -1,0 +1,149 @@
+// Neighbourhood: the place you are in right now — its people, what they are
+// doing this hour, what worries them, its businesses and its news — and the
+// things you can do here in person: talk, canvass, hold a rally.
+import { WX_INFO, ZONE_LABEL, forecast, growingIndex, weatherAt, zoneOf } from '../../sim/weather';
+import { useSort } from '../sort';
+import { AppointmentsPanel, MeetControls, PlacesPanel } from './Places';
+import { SEASON_ICON, fmtDate, partOfDay, seasonAt } from '../../engine/calendar';
+import { latitudeOf } from '../../data/earth';
+import { fmtDay } from '../../engine/calendar';
+import { ageOf } from '../../sim/growth';
+import { useState } from 'preact/hooks';
+import type { Citizen, World } from '../../sim/types';
+import { ActBtn, Amt, CitLink, Empty, Help, Panel, RegionLink, Select } from '../common';
+import { Avatar } from '../Avatar';
+import { store } from '../store';
+import { controller, player } from '../../sim/query';
+import { presentIn, residents, companiesIn } from '../../sim/census';
+import { DOING_INFO, activityCounts, nowDoing } from '../../sim/life';
+import { ISSUES, ISSUE_INFO, attitude, canvass, canvassCheck, holdRally, localIssues, playerCandidacy, pledgeOf, rallyCheck, rallyCost, startTalk, talkCheck, type Issue } from '../../sim/interact';
+import { govTemplate } from '../../sim/stategov';
+import { IDEOLOGIES } from '../../data/ideologies';
+import { INDUSTRY_INFO, grade } from '../../data/items';
+
+type Filter = 'here' | 'residents' | 'friends' | 'pledged';
+
+
+export function Local({ w }: { w: World }) {
+  const p = player(w);
+  const r = w.regions[p.loc];
+  const nat = controller(r);
+  const n = w.nations[nat];
+  const s = w.govs[r.id];
+  const tpl = govTemplate(w, r.id);
+  const [filter, setFilter] = useState<Filter>('here');
+  const [page, setPage] = useState(0);
+  const [issue, setIssue] = useState<Issue>(localIssues(w, r.id)[0].issue);
+  const issues = localIssues(w, r.id);
+  const counts = activityCounts(w, r.id);
+  const pop = residents(w, r.id).filter((c) => !c.player);
+  const mood = pop.length ? pop.reduce((t, c) => t + c.mood, 0) / pop.length : 0;
+  const cand = playerCandidacy(w);
+  const pool: Citizen[] = (filter === 'here' ? [...presentIn(w, r.id)] : filter === 'residents' ? [...residents(w, r.id)] : filter === 'friends' ? [...presentIn(w, r.id)].filter((c) => (c.rel[p.id] ?? 0) >= 20) : [...residents(w, r.id)].filter((c) => pledgeOf(w, c) === p.id))
+    .filter((c) => !c.player)
+    .sort((a, b) => (b.rel[p.id] ?? 0) - (a.rel[p.id] ?? 0) || b.influence - a.influence || a.id - b.id);
+  const per = 18;
+  const shown = pool.slice(page * per, page * per + per);
+  const cos = companiesIn(w, r.id).slice().sort((a, b) => (b.offer && b.workers.length < b.offer.slots ? 1 : 0) - (a.offer && a.workers.length < a.offer.slots ? 1 : 0) || b.workers.length - a.workers.length);
+  const bsort = useSort('local-businesses', cos, {
+    name: (co) => co.name, industry: (co) => INDUSTRY_INFO[co.industry].name, wage: (co) => (co.offer && co.workers.length < co.offer.slots ? co.offer.wage : null),
+  }, { key: 'wage', dir: 'desc' });
+  const news = (r.news ?? []).slice().reverse();
+  return (
+    <div class="grid local">
+      <section class="panel wide local-hero">
+        <div>
+          <h2>{r.name}</h2>
+          <p class="muted">{partOfDay(w.time).icon} {partOfDay(w.time).name} · {fmtDate(w.time, 'long')} · {SEASON_ICON[seasonAt(w.time, latitudeOf(r.id))]} {seasonAt(w.time, latitudeOf(r.id))} · {n.name}{r.occ ? ` (occupied by ${w.nations[r.occ.nation].name})` : ''}
+            {s?.head.name ? <> · {tpl?.title} {s.head.cit != null ? <CitLink w={w} id={s.head.cit} /> : s.head.name} ({IDEOLOGIES[s.head.ideo].name})</> : null}</p>
+          <p>{pop.length.toLocaleString()} citizens live here among {r.pop.toLocaleString()} residents. The mood is <b class={mood > 0.15 ? 'good' : mood < -0.15 ? 'bad' : ''}>{mood > 0.3 ? 'upbeat' : mood > 0.1 ? 'content' : mood > -0.1 ? 'uneasy' : 'angry'}</b>.</p>
+          <div class="doing-row">{(Object.keys(DOING_INFO) as (keyof typeof DOING_INFO)[]).filter((k) => counts[k] > 0).map((k) => <span class="chip">{DOING_INFO[k].icon} {counts[k]} {DOING_INFO[k].label}</span>)}</div>
+        </div>
+        <div class="hero-issues">
+          <h4>What people here worry about</h4>
+          {issues.slice(0, 4).map((x) => (
+            <div class="issue"><span>{ISSUE_INFO[x.issue].icon} {ISSUE_INFO[x.issue].name}</span><div class="bar"><i style={{ width: `${Math.round(Math.min(1, x.severity) * 100)}%`, background: x.severity > 0.6 ? 'var(--bad)' : x.severity > 0.35 ? 'var(--warn)' : 'var(--good)' }} /></div><small class="muted">{x.why}</small></div>
+          ))}
+        </div>
+      </section>
+
+      <PlacesPanel w={w} />
+      <AppointmentsPanel w={w} />
+
+      <Panel title="📣 Win people over" class="wide">
+        <div class="row">
+          <ActBtn kind="primary" why={canvassCheck(w, p)} run={(w) => canvass(w)}>🚪 Canvass door to door (−15⚡)</ActBtn>
+          <span class="row small">Hold a rally on <Select value={issue} options={ISSUES.map((i) => [i, `${ISSUE_INFO[i].icon} ${ISSUE_INFO[i].name}`])} onChange={setIssue} />
+            <ActBtn why={rallyCheck(w, p, issue)} run={(w) => holdRally(w, issue)}>Rally (−30⚡, <Amt asset={n.cur} v={rallyCost(w, r.id)} />)</ActBtn></span>
+        </div>
+        <Help>{cand ? `You are running for ${cand.label}. ` : ''}Residents stand for their region's electorate: every one you win over shifts real votes (in state elections half the result follows what the residents decide). Rallies work best on the issue people here care about most; canvassing meets people one by one and learns what matters to them. Promises of support last 30 days.</Help>
+      </Panel>
+
+      <Panel title={`👥 People (${pool.length})`} class="wide" right={<span class="row small">{(['here', 'residents', 'friends', 'pledged'] as Filter[]).map((f) => <button class={`btn sm ${filter === f ? 'primary' : 'ghost'}`} onClick={() => { setFilter(f); setPage(0); }}>{{ here: 'Here now', residents: 'Residents', friends: 'Friends', pledged: 'Pledged to you' }[f]}</button>)}</span>}>
+        {shown.length ? <div class="people-grid">{shown.map((c) => <PersonCard w={w} c={c} />)}</div> : <Empty>{filter === 'pledged' ? 'Nobody has promised you their vote here yet.' : 'Nobody here.'}</Empty>}
+        {pool.length > per && <div class="row small"><button class="btn sm" disabled={page === 0} onClick={() => setPage(page - 1)}>‹ Prev</button> {page + 1} / {Math.ceil(pool.length / per)} <button class="btn sm" disabled={(page + 1) * per >= pool.length} onClick={() => setPage(page + 1)}>Next ›</button></div>}
+      </Panel>
+
+      <Panel title={`🏪 Local businesses (${cos.length})`}>
+        {cos.length ? <table class="table compact small"><thead><tr>{bsort.th('name', 'Business')}{bsort.th('industry', 'Industry')}{bsort.th('wage', 'Hiring')}</tr></thead><tbody>{bsort.rows.slice(0, 12).map((co) => {
+          const open = co.offer && co.workers.length < co.offer.slots;
+          return <tr><td>{co.name} <small class="muted">{grade(co.q)}</small><br /><small class="muted">{co.owner.k === 'cit' ? <CitLink w={w} id={co.owner.id} /> : co.owner.k === 'nat' ? 'state-owned' : 'holding'} · {co.workers.length} staff</small></td>
+            <td>{INDUSTRY_INFO[co.industry].icon} {INDUSTRY_INFO[co.industry].name}</td>
+            <td>{open ? <span class="good">hiring · <Amt asset={n.cur} v={co.offer!.wage} /></span> : <span class="muted">full</span>}</td></tr>;
+        })}</tbody></table> : <Empty>No businesses here yet — a gap in the market?</Empty>}
+        <div class="row"><button class="btn sm" onClick={() => store.go('jobs')}>Find work</button><button class="btn sm" onClick={() => store.go('companies')}>Start a business</button></div>
+      </Panel>
+
+      <WeatherPanel w={w} />
+
+      <Panel title="📰 Local news">
+        {news.length ? <ul class="news small">{news.map((x) => <li><small class="muted">{fmtDay(x.t)}</small> {x.text}</li>)}</ul> : <Empty>A quiet place. Nothing has made the local paper lately.</Empty>}
+        <div class="row small">Elsewhere: {w.regions[r.id].links.slice(0, 6).map((l) => <RegionLink w={w} id={l} />).reduce((a: any[], x, i) => (i ? [...a, ', ', x] : [x]), [])}</div>
+      </Panel>
+    </div>
+  );
+}
+
+function PersonCard({ w, c }: { w: World; c: Citizen }) {
+  const p = player(w);
+  const rel = Math.round(c.rel[p.id] ?? 0);
+  const d = nowDoing(w, c);
+  const issue = c.flags.toldIssue != null ? ISSUES[c.flags.toldIssue] : null;
+  const pledged = pledgeOf(w, c) === p.id;
+  const job = c.job != null ? w.companies[c.job] : null;
+  return (
+    <div class={`person ${p.sec.rivals.includes(c.id) ? 'rival' : rel >= 30 ? 'friend' : ''}`}>
+      <Avatar c={c} />
+      <div class="person-body">
+        <b class="link" onClick={() => store.go('citizen', { citizen: c.id })}>{c.name}</b>
+        <small class="muted">{c.persona} · {ageOf(w, c)}{job ? ` · ${job.name}` : ''}</small>
+        <small>{DOING_INFO[d].icon} {DOING_INFO[d].label}{c.home !== c.loc ? ` · visiting from ${w.regions[c.home].name}` : ''}</small>
+        <MeetControls w={w} c={c} />
+        <small><span class={rel >= 10 ? 'good' : rel <= -10 ? 'bad' : 'muted'}>{attitude(rel)}</span>{issue ? <> · cares about {ISSUE_INFO[issue].icon}</> : null}{pledged ? <> · <span class="good">🗳️ your vote</span></> : null}</small>
+      </div>
+      <ActBtn small why={talkCheck(w, p, c)} showWhy={false} run={(w) => startTalk(w, c.id)}>💬 Talk</ActBtn>
+    </div>
+  );
+}
+
+
+/** Today's weather where you are, tomorrow's forecast and the growing season. */
+function WeatherPanel({ w }: { w: World }) {
+  const p = player(w);
+  if (!w.weather) return null;
+  const x = weatherAt(w, p.loc);
+  const f = forecast(w, p.loc);
+  const g = growingIndex(w, p.loc);
+  return (
+    <Panel title={`${WX_INFO[x.kind].icon} Weather in ${w.regions[p.loc].name}`}>
+      <table class="table compact small"><tbody>
+        <tr><td>Today</td><td>{WX_INFO[x.kind].label} · {x.t}°C{x.mm ? ` · ${x.mm} mm` : ''} · wind {x.wind} km/h</td></tr>
+        <tr><td>Tomorrow (forecast)</td><td>{WX_INFO[f.kind].icon} {f.t}°C · {f.rainChance}% chance of rain or snow</td></tr>
+        {(w.warnings ?? []).filter((x) => x.regions.includes(p.loc)).map((x) => <tr><td class="bad">⚠️ Warning</td><td class="bad">{x.label} expected within a day</td></tr>)}
+        <tr><td>Climate</td><td>{ZONE_LABEL[zoneOf(w, p.loc)]}</td></tr>
+        <tr><td>Growing season</td><td class={g < 0.9 ? 'bad' : g > 1.05 ? 'good' : ''}>{g < 0.9 ? 'poor (dry, frost or heat)' : g > 1.05 ? 'good' : 'normal'} · farms at {Math.round(g * 100)}%</td></tr>
+      </tbody></table>
+      <p class="small muted">Forecasts are uncertain, less so where meteorology is better. Storms ground flights and stop work outdoors; snow and heavy rain slow building and overland travel; cold and heat raise energy bills; mud, winter, heavy seas and bad flying weather hamper military operations.</p>
+    </Panel>
+  );
+}
