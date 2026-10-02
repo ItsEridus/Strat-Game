@@ -1,5 +1,6 @@
 // AI business management and background household demand. AI owners use the
 // same market/company actions (and permission checks) as the player.
+import { peggedAnchor } from '../sim/markets';
 import { hasQuirk } from '../sim/nature';
 import { welfareTransfer } from '../sim/nationalBudget';
 import { createCompany } from '../sim/company';
@@ -338,7 +339,7 @@ export function centralBank(w: World) {
     const reserve = (n.wallet[GOLD] ?? 0) / ((B.fx.reserveTarget * 1000) / representation(w, n.id));
     if (reserve < 0.5) anchor *= 1 + B.fx.pressure; // running out of gold: let currency weaken
     else if (reserve > 1.5) anchor *= 1 - B.fx.pressure; // gold piling up: let currency strengthen
-    n.fxAnchor = Math.round(anchor);
+    n.fxAnchor = Math.round(peggedAnchor(w, n) ?? anchor); // a pegged currency holds its peg (markets.ts)
     const rate = n.fxAnchor;
     const goldBudget = Math.floor((n.wallet[GOLD] ?? 0) * B.fx.bankShare);
     const curBudget = Math.floor((n.wallet[n.cur] ?? 0) * B.fx.bankShare);

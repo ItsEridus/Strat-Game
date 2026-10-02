@@ -25,6 +25,7 @@ import { capsOf } from '../../sim/strategic';
 import { CONST_LABEL, orbitOf, reconBonus, satBonus, spaceCapability, spaceOf, type Constellation } from '../../sim/space';
 import { MISSIONS } from '../../data/space';
 import { creditSummary } from '../../sim/sovereign';
+import { reserveShare, stocksOf } from '../../sim/markets';
 import { bondRate } from '../../sim/publicFinance';
 
 export function CountryExtras({ w, id }: { w: World; id: Id }) {
@@ -135,6 +136,8 @@ function CreditPanel({ w, id }: { w: World; id: Id }) {
         <tr><td>Public debt</td><td>{c.debtYears.toFixed(2)} years of revenue</td></tr>
         <tr><td>Bond rate</td><td>{bondRate(n).toFixed(2)}% ({c.spread.toFixed(2)} points over the policy rate for the rating)</td></tr>
         <tr><td>Central bank</td><td>policy rate {(n.policyRate ?? 0).toFixed(2)}%; independence {Math.round(c.independence * 100)}%</td></tr>
+        <tr><td>Stock market</td><td>index {stocksOf(n).index.toFixed(2)} (2025 = 1){stocksOf(n).bubble > 0.5 ? '; prices look frothy' : ''}</td></tr>
+        <tr><td>Currency</td><td>{n.peg ? `pegged to the ${w.nations[n.peg.to].adj} currency` : 'floating'}{reserveShare(n) > 0.005 ? `; ${Math.round(reserveShare(n) * 100)}% of world reserves (cheaper borrowing)` : ''}{n.fxCrisis != null ? `; last currency crisis ${fmtWhen(w, n.fxCrisis)}` : ''}</td></tr>
         {c.defaults > 0 && <tr><td>Defaults</td><td>{c.defaults}{n.defaultedAt != null ? `, the last ${fmtWhen(w, n.defaultedAt)}` : ''}</td></tr>}
       </tbody></table>
       <Help>Ratings start from 2025 and move a notch at a time with the debt the government runs up, growth, inflation, institutions, war and past defaults; the rating sets the premium on its bonds. A government that borrows to its limit and cannot pay defaults: bondholders take a loss, the currency falls and growth suffers for two years. An independent central bank follows its rule; a dependent one is leaned on to cut rates before elections, which feeds inflation.</Help>

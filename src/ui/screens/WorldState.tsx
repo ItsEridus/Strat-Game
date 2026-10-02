@@ -14,6 +14,7 @@ import { capsOf, techAvg } from '../../sim/strategic';
 import { cyberOffence } from '../../sim/cyber';
 import { spaceCapability } from '../../sim/space';
 import { TECH } from '../../data/techTree';
+import { reserveShare, riskAppetite, stocksOf, superCycle } from '../../sim/markets';
 import { fmtAmt } from '../../engine/money';
 import { HAZARDS } from '../../data/hazards';
 import { KIND_ICON, activeCrises, donate, joinProtest, joinProtestCheck, lockdownCheck, monthOf, reliefCheck, toggleLockdown, volunteer } from '../../sim/dynamics';
@@ -36,6 +37,12 @@ export function WorldState({ w }: { w: World }) {
         <p><b>{PHASE[e.phase]}</b> <small class="muted">(cycle {e.cycle >= 0 ? '+' : ''}{e.cycle.toFixed(2)})</small></p>
         <Sparkline values={e.hist.length ? e.hist : [0]} width={300} height={50} />
         <p class="small">Household spending {e.cycle >= 0 ? '+' : ''}{Math.round(e.cycle * 30)}% · crime pressure {e.cycle < 0 ? `+${Math.round(-e.cycle * 10)}` : 'normal'}</p>
+        <p class="small">Appetite for risk {Math.round(riskAppetite(w) * 100)}%{(e.fear ?? 0) > 0.1 ? ' (markets are frightened)' : ''}: {riskAppetite(w) > 0.55 ? 'money flows into emerging markets' : riskAppetite(w) < 0.4 ? 'money flees emerging markets' : 'capital flows are calm'}.</p>
+        <table class="table compact small"><thead><tr><th>Stock market</th><th>Index (2025 = 1)</th><th>Bubble</th></tr></thead><tbody>
+          {w.nations.filter((n) => !n.exile).map((n) => ({ n, s: stocksOf(n) })).sort((a, b) => b.s.index - a.s.index).slice(0, 8).map(({ n, s }) => <tr><td><NationChip w={w} id={n.id} /></td><td>{s.index.toFixed(2)}{s.lastCrash != null && w.time - s.lastCrash < 365 * 1440 ? ' 📉' : ''}</td><td>{s.bubble > 0.5 ? 'frothy' : s.bubble > 0.25 ? 'rising' : '—'}</td></tr>)}
+        </tbody></table>
+        <p class="small">Commodity super-cycles (long-run prices against normal): {['oil', 'copper', 'grain', 'iron'].map((k) => `${k} ${superCycle(w, k) >= 1 ? '+' : ''}${Math.round((superCycle(w, k) - 1) * 100)}%`).join(', ')}.</p>
+        <p class="small">World reserves: {w.nations.filter((n) => reserveShare(n) > 0.01).sort((a, b) => reserveShare(b) - reserveShare(a)).map((n) => `${n.adj} ${Math.round(reserveShare(n) * 100)}%`).join(', ')}.</p>
         <table class="table compact small"><tbody>{Object.entries(e.commodity).map(([k, v]) => (
           <tr><td>{k}</td><td class={v > 1 ? 'good' : v < 1 ? 'bad' : ''}>{v === 1 ? 'normal output' : `${v > 1 ? '+' : ''}${Math.round((v - 1) * 100)}% world output`}</td></tr>
         ))}</tbody></table>

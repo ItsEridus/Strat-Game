@@ -3,6 +3,30 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.4.2: markets, currencies and commodity cycles
+
+The second part of 2.5 A world of consequences.
+
+- **Stock markets.** Every country has a stock index (2025 = 1). It rises with growth, the business cycle and an
+  equity premium. In long booms with cheap money a bubble builds, and the bigger the bubble, the likelier the
+  crash. A crash in a large market spreads: other markets fall, fear grips investors, and the world economy turns
+  down. In 40-year test runs there are about three global crashes, close to the real record.
+- **Capital flows.** When the world is calm and dollar interest rates are low, money flows into emerging markets
+  (countries rated below A-) and their currencies firm; when fear returns, it flows out and they weaken.
+- **Currency crises.** An emerging market with thin reserves and a poor rating can suffer a sudden stop: its
+  currency collapses by a fifth to two fifths.
+- **Pegs.** Saudi Arabia keeps the riyal pegged to the dollar, as it has since 1986. Defending the peg in hard
+  times (low oil prices, frightened markets) spends reserves; if they run too low the peg breaks with a
+  devaluation.
+- **Reserve currencies.** Shares of world reserves start from the IMF's 2024 figures (dollar 58%, euro 20%, yen
+  6%, pound 5%) and drift slowly with economic weight, credit ratings, capital controls and the use of sanctions.
+  In test runs the dollar's share eases to about half by the 2060s and the yuan's rises to about a tenth.
+  Issuers of reserve currencies borrow more cheaply.
+- **Commodity super-cycles.** Beyond daily volatility, the long-run price of each raw material swings by about a
+  third either way over 20 to 30 years.
+- **On screen.** The State of the World shows risk appetite, the leading stock markets, the super-cycles and world
+  reserves. The Credit panel shows the country's stock index, its currency regime and its reserve share.
+
 ### New in 2.4.1: central banks, credit ratings and defaults
 
 The first part of 2.5 A world of consequences.

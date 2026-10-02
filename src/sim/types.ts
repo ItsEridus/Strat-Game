@@ -278,6 +278,8 @@ export interface EconState {
   commodity: Record<string, number>; // world supply multipliers for raw goods
   harvest?: number; // the big grain exporters' harvest against normal (1.9)
   world?: Record<string, { p: number; hist: number[] }>; // world commodity prices (gold per unit) and their last 60 days
+  superCycle?: Record<string, { phase: number; period: number }>; // commodity super-cycles (2.5)
+  fear?: number; // panic after a crash, 0..1 (2.5)
 }
 
 export interface DayRecord {
@@ -438,6 +440,10 @@ export interface Nation {
   credit?: import('./sovereign').Credit; // its credit rating and defaults (2.5)
   cbIndependence?: number; // how independent its central bank is, 0..1 (2.5)
   defaultedAt?: number; // its last sovereign default (2.5)
+  stocks?: import('./markets').Stocks; // its stock market (2.5)
+  peg?: { to: number; ratio: number } | null; // a currency peg (null: none, or broken) (2.5)
+  fxCrisis?: number; // its last currency crisis (2.5)
+  reserveShare?: number; // share of world reserves held in its currency (2.5)
   lastCoup?: { t: number; ok: boolean; leader: Id }; // the latest coup attempt (2.3)
   armedBy?: Record<Id, number>; // foreign sponsors that sent it arms, and how often (2.3)
   overlord?: Id; // the power it answers to, if it is a puppet state (2.3)

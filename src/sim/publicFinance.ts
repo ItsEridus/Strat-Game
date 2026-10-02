@@ -8,6 +8,7 @@ import { burn, mint, pay } from '../engine/ledger';
 import { hhref, natref } from './query';
 import { POLICY_RATE } from './loans';
 import { ratingSpread } from './sovereign';
+import { reservePrivilege } from './markets';
 
 const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 /** Daily spending and revenue, averaged over the last month. */
@@ -15,7 +16,7 @@ export const dailySpending = (n: Nation) => avg(n.stats.spendHist);
 export const dailyRevenue = (n: Nation) => avg(n.stats.revHist);
 /** Interest on the debt (%): the policy rate plus a premium set by the credit rating (sovereign.ts). */
 export function bondRate(n: Nation): number {
-  return (n.policyRate ?? POLICY_RATE[n.iso] ?? 4) + 0.5 + ratingSpread(n) * (n.imfRelief ? 0.5 : 1); // an IMF programme calms the markets
+  return Math.max(0.1, (n.policyRate ?? POLICY_RATE[n.iso] ?? 4) + 0.5 + ratingSpread(n) * (n.imfRelief ? 0.5 : 1) - reservePrivilege(n)); // an IMF programme calms the markets; reserve currencies borrow cheaply
 }
 /** Three years of revenue, and never less than six months of spending (so a collapsing government can still pay its staff). */
 export const debtLimit = (n: Nation) => Math.round(Math.max(dailyRevenue(n) * 365 * 3, dailySpending(n) * 180));
