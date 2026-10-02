@@ -25,12 +25,13 @@ import { FRONTIER_STORIES } from './frontiers';
 import { MIND_STORIES } from './mind';
 import { SOCIAL_STORIES } from './social';
 import { EVERYDAY2_STORIES } from './everyday2';
+import { CULTURE_STORIES } from './culture';
 
 let done = false;
 export function registerAllStories() {
   if (done) return;
   done = true;
-  registerStory(...EVERYDAY, ...ADOPTED, ...WORK_CHAINS, ...LIFE_CHAINS, ...LIFE_ENCOUNTERS, ...SYSTEM_CHAINS, ...BUSINESS_STORIES, ...NATION_STORIES, ...JUSTICE_STORIES, ...DEFENCE_STORIES, ...NATURE_STORIES, ...DIPLOMACY_STORIES, ...SHADOW_STORIES, ...WAR_STORIES, ...RISE_FALL_STORIES, ...FRONTIER_STORIES, ...MIND_STORIES, ...SOCIAL_STORIES, ...EVERYDAY2_STORIES);
+  registerStory(...EVERYDAY, ...ADOPTED, ...WORK_CHAINS, ...LIFE_CHAINS, ...LIFE_ENCOUNTERS, ...SYSTEM_CHAINS, ...BUSINESS_STORIES, ...NATION_STORIES, ...JUSTICE_STORIES, ...DEFENCE_STORIES, ...NATURE_STORIES, ...DIPLOMACY_STORIES, ...SHADOW_STORIES, ...WAR_STORIES, ...RISE_FALL_STORIES, ...FRONTIER_STORIES, ...MIND_STORIES, ...SOCIAL_STORIES, ...EVERYDAY2_STORIES, ...CULTURE_STORIES);
 }
 
 /** Scheduled repayments of loans and investments made in stories. */

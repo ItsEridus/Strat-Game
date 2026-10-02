@@ -14,7 +14,7 @@ a **deeper life simulation** after the geopolitical thread (2.6.0 → 3.0.0, "Li
 
 Parts marked **GEO** are the geopolitical simulation. Every version ships as a series of playable patch
 releases (every push is a release); the minor version marks its theme complete. The parts of a theme ship as patches of the
-version before it (2.0's parts were 1.9.3 to 1.9.7, and 2.0.0 marked it complete), so 2.1's parts were 2.0.1 to 2.0.4, 2.2's were 2.1.1 to 2.1.3, 2.3's were 2.2.1 to 2.2.5, 2.4's were 2.3.1 to 2.3.5, 2.5's were 2.4.1 to 2.4.6, 2.6's were 2.5.1 to 2.5.4, 2.7's were 2.6.1 to 2.6.4, 2.8's were 2.7.1 to 2.7.4, and 2.9's are 2.8.x.
+version before it (2.0's parts were 1.9.3 to 1.9.7, and 2.0.0 marked it complete), so 2.1's parts were 2.0.1 to 2.0.4, 2.2's were 2.1.1 to 2.1.3, 2.3's were 2.2.1 to 2.2.5, 2.4's were 2.3.1 to 2.3.5, 2.5's were 2.4.1 to 2.4.6, 2.6's were 2.5.1 to 2.5.4, 2.7's were 2.6.1 to 2.6.4, 2.8's were 2.7.1 to 2.7.4, 2.9's were 2.8.1 to 2.8.5, and 3.0's are 2.9.x.
 
 ## At a glance
 
@@ -35,7 +35,7 @@ version before it (2.0's parts were 1.9.3 to 1.9.7, and 2.0.0 marked it complete
 | 2.6.0 | **Life 2.0: the mind** | Personality that grows from experience, values, mental health in depth, habits and addictions, therapy | ✅ done |
 | 2.7.0 | **Life 2.0: the social fabric** | Friend circles, rivals, communities, relationships under each country's laws, custody and blended families, family gatherings | ✅ done |
 | 2.8.0 | **Life 2.0: the everyday** | A day planner, commuting and cars, cooking, sleep, fitness and the body, shopping, chores | ✅ done |
-| 2.9.0 | **Life 2.0: culture and belonging** | Faith, festivals, languages, migration and integration, identity | ▶ in progress: faith and festivals (2.8.2), languages (2.8.3), migration and integration (2.8.4), identity (2.8.5) |
+| 2.9.0 | **Life 2.0: culture and belonging** | Faith, festivals, languages, migration and integration, identity | ✅ done |
 | 3.0.0 | **Life 2.0: generations** | Dynasties over centuries: family trees, inherited looks and traits, the family name, ancestral homes and businesses, a family chronicle | planned |
 
 **Why this order.** Each part builds on the ones before it:

@@ -58,8 +58,8 @@ export function religionOf(w: World, c: Citizen): Religion {
   const s = sharesOf(w.nations[c.nation]?.iso ?? 'USA');
   const faith = valueOf(w, c, 'faith');
   const none = s.none ?? 0;
-  // The less faith matters, the likelier no religion: rank people by faith against the share of no religion.
-  if (none > 0 && faith < 0.25 + none * 0.6 && hash01(c.id, 3401) < Math.min(1, none * 1.6)) return 'none';
+  // As many as the country's share are of no religion, but never the devout.
+  if (none > 0 && faith < 0.6 && hash01(c.id, 3401) < none * 0.95) return 'none';
   const rel = (Object.entries(s) as [Religion, number][]).filter(([k]) => k !== 'none');
   const total = rel.reduce((t, [, v]) => t + v, 0);
   let x = hash01(c.id, 3402) * total;

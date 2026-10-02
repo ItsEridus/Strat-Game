@@ -3,6 +3,31 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.9.0: Life 2.0, culture and belonging
+
+2.9 is complete: where people come from and what they belong to. Its parts:
+
+- money in skipped years (2.8.1);
+- faith and festivals (2.8.2);
+- languages (2.8.3);
+- migration and integration (2.8.4);
+- identity (2.8.5).
+
+This release adds:
+
+- **Stories of culture and belonging:**
+  - **A festival is coming:** host it for the family, go to the service, or keep it quiet this year.
+  - **An invitation next door:** a newcomer abroad is asked to Sunday lunch. Go and try the language, or stay in.
+  - **A family with doubts:** a devout parent worries about a partner of another faith. Stand by your partner,
+    bring them together over a meal, or ask your partner about taking your faith.
+  - **Becoming a citizen:** when you have lived abroad long enough and speak the language, apply for citizenship,
+    or keep your passport for now.
+- **Calibration across twenty years:**
+  - religious shares now match each country (Britain and Germany about half Christian and two in five of no
+    religion);
+  - pride and division move with events;
+  - people born abroad grow to about a tenth of the population as migrants keep arriving.
+
 ### New in 2.8.5: identity
 
 The fourth part of 2.9 Life 2.0: culture and belonging.
