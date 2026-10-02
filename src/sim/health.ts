@@ -85,6 +85,8 @@ function catchCondition(w: World, c: Citizen, key: CondKey) {
   list.push({ key, since: w.time, sev: d.sev, until: d.acute ? w.time + Math.round(d.acute[0] + (d.acute[1] - d.acute[0]) * h) * DAY : undefined });
   if (c.player) notify(w, 'personal', `${d.icon} You have ${d.label.toLowerCase()}${d.chronic ? ' (a long-term condition)' : ''}. A clinic visit helps${tooIll(w, c) ? '; you are too ill to work for now' : ''}.`, { critical: d.sev >= 2, link: 'life' });
 }
+/** An injury (a road accident, a fall). */
+export const injure = (w: World, c: Citizen) => catchCondition(w, c, 'injury');
 /** A battle wound (called from war damage for those who fight). */
 export const wound = (w: World, c: Citizen) => catchCondition(w, c, 'wound');
 

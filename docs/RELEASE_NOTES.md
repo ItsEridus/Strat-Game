@@ -3,6 +3,32 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.7.2: cars
+
+The second part of 2.8 Life 2.0: the everyday.
+
+- **Buying a car.** Choose a used runabout, a new family car, a premium saloon or an electric car:
+  - prices differ by country: import duties make cars dear in Brazil, Argentina and Turkey, while India and China
+    make them cheaply;
+  - cars lose about 15% of their value a year;
+  - trade in your old car, or sell it.
+- **Running costs**, every month:
+  - fuel at the pump, from about 60 US cents a litre in Saudi Arabia and Russia to nearly $2 in Germany and
+    Britain, rising and falling with the world oil price;
+  - or charging, for an electric car, which is much cheaper per kilometre;
+  - insurance and upkeep;
+  - more if you drive far to work.
+  Part of what drivers pay goes to the state in fuel duty.
+- **Accidents:**
+  - the risk follows the country's road safety (WHO road deaths per 100,000: about 3 in Britain, Germany and
+    Japan, 13 in the United States, over 20 in South Africa) and the driver: young drivers, drink, short nights
+    and a taste for risk all raise it;
+  - most crashes cost money for repairs, some injure, and a few kill.
+- **Everyone drives:** people own cars about as often as in their country (most Americans and Australians, few
+  Indians), pay to run them, and have accidents.
+- **On screen:** a "Your car" panel in Life (Money), with the yearly chance of a crash. With a car, you can drive
+  to work.
+
 ### New in 2.7.1: a day planner, sleep and the commute
 
 The first part of 2.8 Life 2.0: the everyday.
