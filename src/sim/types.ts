@@ -46,6 +46,7 @@ export interface Citizen {
   look?: import('./looks').Look;
   mind?: import('./mind').Mind; // values, and how experience has shaped them (2.6)
   mh?: import('./mentalHealth').MentalHealth; // past episodes, losses being grieved, therapy (2.6)
+  langs?: Partial<Record<import('./languages').Lang, number>>; course?: import('./languages').Lang; // languages spoken, once learning starts; lessons under way (2.9)
   religion?: import('./faith').Religion; // their faith, once chosen or changed (2.9)
   orient?: import('./partnership').Orientation; alimony?: import('./partnership').Alimony; // whom they are drawn to (player's choice); maintenance they pay (2.7)
   matches?: import('./familyLife').Match[]; // dating matches to meet (2.7)

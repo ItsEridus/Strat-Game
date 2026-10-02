@@ -22,6 +22,7 @@ import { habitParts } from './habits';
 import { everydayParts } from './everyday';
 import { bodyParts } from './body';
 import { homeParts } from './homeLife';
+import { languageStrain } from './languages';
 
 type Part = [string, number];
 
@@ -97,6 +98,8 @@ function parts(w: World, c: Citizen, friends: number): { happy: Part[]; stress: 
   happy.push(...bd.happy); stress.push(...bd.stress);
   const hm = homeParts(w, c);
   happy.push(...hm.happy); stress.push(...hm.stress);
+  const lang = languageStrain(w, c);
+  if (lang) stress.push(['a language barrier', lang]);
   return { happy, stress };
 }
 

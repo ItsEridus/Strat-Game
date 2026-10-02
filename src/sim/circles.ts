@@ -8,6 +8,7 @@
 // - Standing at work counts towards promotion in public service.
 // - The player can do something with each circle once a week: have friends round, drinks after
 //   work, help a neighbour, a club night, attend services.
+import { commonLanguage } from './languages';
 import { RELIGION_INFO, devout, religionOf } from './faith';
 import { startRumour } from './gossip';
 import type { Citizen, Id, World } from './types';
@@ -123,7 +124,8 @@ export function circlesMonth(w: World) {
       const a = g[Math.floor(next(w) * g.length)], b = g[Math.floor(next(w) * g.length)];
       if (a === b || a.player || b.player) continue;
       const fit = 0.5 - valueDistance(w, a, b) * 2; // like minds get on
-      const d = chance(w, 0.12) ? -3 : Math.round((2 + fit * 2 + (a.traits.activity + b.traits.activity) - 1) * 10) / 10;
+      const talk = Math.max(0.3, commonLanguage(w, a, b) / 100); // and those who share a language
+      const d = chance(w, 0.12) ? -3 : Math.round((2 + fit * 2 + (a.traits.activity + b.traits.activity) - 1) * talk * 10) / 10;
       adjustRel(a, b.id, d);
       adjustRel(b, a.id, d * (0.8 + next(w) * 0.4));
     }

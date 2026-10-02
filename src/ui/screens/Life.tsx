@@ -35,6 +35,7 @@ import { CarPanel } from './CarPanel';
 import { BodyPanel } from './BodyPanel';
 import { HomeLifePanel } from './HomeLifePanel';
 import { FaithPanel } from './FaithPanel';
+import { LanguagesPanel } from './LanguagesPanel';
 import { pensionOf, pensionQuote, pensionRules, retire, retireCheck } from '../../sim/pensions';
 import { isMinor, parentTime, parentTimeCheck, play, playCheck, schoolDay, schoolDayCheck } from '../../sim/childhood';
 import { continueAsNewcomer, successor, writeWill } from '../../sim/legacy';
@@ -132,6 +133,7 @@ export function Life({ w }: { w: World }) {
         <Panel title="🗣️ What people are saying"><GossipPanel w={w} p={p} /></Panel>
         <Panel title="💞 Love and the law"><LovePanel w={w} p={p} /></Panel>
         <Panel title="Education"><EducationPanel w={w} p={p} /></Panel>
+        <Panel title="🗣️ Languages"><LanguagesPanel w={w} p={p} /></Panel>
         <Panel title="Hobbies"><Hobbies w={w} p={p} /></Panel>
         <Panel title="Pets"><Pets w={w} p={p} /></Panel>
       </>}

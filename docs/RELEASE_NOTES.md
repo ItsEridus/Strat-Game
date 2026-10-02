@@ -3,6 +3,30 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.8.3: languages
+
+The second part of 2.9 Life 2.0: culture and belonging.
+
+- **Each country's languages:**
+  - English in the United States (with Spanish), Britain and Australia;
+  - English and French in Canada;
+  - Spanish in Mexico and Argentina, and Portuguese in Brazil;
+  - German, Russian, Turkish (with Kurdish), Arabic, Mandarin, Japanese and Korean;
+  - Hindi, Bengali and Telugu in India;
+  - Zulu, Xhosa, Afrikaans and English in South Africa.
+- **What people speak:**
+  - everyone speaks their mother tongue, and the language of their country's schools and work;
+  - many also speak English: widely in Germany, South Africa and Saudi Arabia, much less in China, Japan, Brazil
+    and Russia (after the EF English Proficiency Index).
+- **Learning:**
+  - take lessons (paid monthly), or live where a language is spoken;
+  - fluency grows fastest at first, and faster with aptitude.
+- **Language matters abroad:**
+  - working in a country needs some of its language (a little for manual work, conversational for skilled work);
+  - people who share no language find it much harder to become friends;
+  - living somewhere you cannot speak the language is a daily strain.
+- **On screen:** a "Languages" panel in Life, with your fluency in each language and lessons.
+
 ### New in 2.8.2: faith and festivals
 
 The first part of 2.9 Life 2.0: culture and belonging.
