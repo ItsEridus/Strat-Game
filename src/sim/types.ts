@@ -369,6 +369,7 @@ export interface Region {
   news?: { t: number; text: string }[]; // local happenings, newest last (kept short)
   disrupted: number; // production disrupted until this time (disasters, riots, sabotage)
   blackout?: number; // the day of the last power cut (1.9)
+  cyberDown?: number; // a hacked grid stays down until then (2.4)
   pop0?: number; // background population at genesis
   draw?: number; // how attractive the region is to live in, -1..1, smoothed (sim/population.ts)
   blockade: Id | null; // nation whose navy blockades this coast
@@ -427,6 +428,7 @@ export interface Nation {
   mergedInto?: Id; // the country that absorbed it (2.3)
   failedSince?: number; // a failed state since then (2.3)
   techs?: Record<string, number>; // technologies it has, and when it got them (2.4)
+  cyberLast?: number; // when its cyber command last attacked (2.4)
   lastCoup?: { t: number; ok: boolean; leader: Id }; // the latest coup attempt (2.3)
   armedBy?: Record<Id, number>; // foreign sponsors that sent it arms, and how often (2.3)
   overlord?: Id; // the power it answers to, if it is a puppet state (2.3)
@@ -834,6 +836,7 @@ export interface World {
   treaties?: Record<Id, import('./treaties').Treaty>;
   intl?: import('./intlOrgs').IntlState;
   newStates?: import('./secession').NewState[]; // states born in play (2.3)
+  cyber?: import('./cyber').CyberIncident[]; // recent cyber attacks, as their victims understand them (2.4)
   patents?: import('./technology').Patent[]; // breakthroughs, who holds them and what they earned (2.4)
   techFirsts?: Record<string, import('./technology').TechFirst>; // who achieved each technology first, and when (2.4)
   standoffs?: import('./crises').Crisis[]; // international crises short of war (2.0)

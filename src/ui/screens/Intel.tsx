@@ -14,6 +14,7 @@ import { MEASURES, MEASURE_LABEL, believed, estimateOf, rangeOf } from '../../si
 import { militaryPower } from '../../sim/war';
 import { MOTIVE_LABEL, agentsOf, coverFactor, placementOf } from '../../sim/collection';
 import { OP_DIR, dirOfAgent, joinDirectorate, orgOf, prioritise, staffByDir } from '../../sim/intelOrg';
+import { CYBER_INFO, cyberCheck, cyberDefence, cyberOffence, orderCyberAttack, type CyberKind } from '../../sim/cyber';
 import { ARANKS, OPS, analyze, analyzeCheck, joinAgency, joinAgencyCheck, knownDossier, launchOp, leaveAgency, opCheck, quitAsset, setAgencyBudget } from '../../sim/intel';
 
 export function Intel({ w }: { w: World }) {
@@ -45,6 +46,7 @@ export function Intel({ w }: { w: World }) {
       {(official || p.sec.agency === p.nation || n.president === p.id) && <Estimates w={w} />}
       {(official || (p.sec.agency === p.nation && p.sec.arank >= 2)) && <Sources w={w} />}
       {official && <DirectorPanel w={w} />}
+      <CyberPanel w={w} official={official} />
       <CareerPanel w={w} />
       {(official || (p.sec.agency === p.nation && p.sec.arank >= 1)) && <OpsPanel w={w} />}
 
@@ -78,6 +80,39 @@ function DirectorPanel({ w }: { w: World }) {
         <label><input type="checkbox" checked={focus.includes(x.id)} onChange={() => setFocus(focus.includes(x.id) ? focus.filter((f) => f !== x.id) : [...focus, x.id].slice(-4))} />{x.name}</label>
       ))}</div>
       <ActBtn small run={(w) => setAgencyBudget(w, p.id, p.nation, budget / 100, focus)}>Apply (up to 4 focus countries)</ActBtn>
+    </Panel>
+  );
+}
+
+function CyberPanel({ w, official }: { w: World; official: boolean }) {
+  const p = player(w);
+  const n = w.nations[p.nation];
+  const foreign = w.nations.filter((x) => x.id !== p.nation && !x.exile);
+  const [kind, setKind] = useState<CyberKind>('companies');
+  const [target, setTarget] = useState<Id>(foreign[0]?.id ?? 0);
+  const regions = w.regions.filter((r) => r.owner === target);
+  const [region, setRegion] = useState<Id>(regions[0]?.id ?? -1);
+  const rid = regions.some((r) => r.id === region) ? region : regions[0]?.id ?? null;
+  // What we know: our own attacks in full; attacks on us as our investigators understand them.
+  const ours = (w.cyber ?? []).filter((i) => official && i.attacker === p.nation).slice(-6).reverse();
+  const onUs = (w.cyber ?? []).filter((i) => i.target === p.nation).slice(-6).reverse();
+  return (
+    <Panel title="💻 Cyber command">
+      <div class="stats">
+        <div class="stat"><small>Offence</small><Bar v={cyberOffence(w, n)} max={100} color="#e0574f" label={`${Math.round(cyberOffence(w, n))}`} /></div>
+        <div class="stat"><small>Defence</small><Bar v={cyberDefence(w, n)} max={100} color="#4caf7a" label={`${Math.round(cyberDefence(w, n))}`} /></div>
+      </div>
+      {onUs.length > 0 && <><h4>Attacks on us</h4><ul class="small">{onUs.map((i) => <li>{fmtDay(i.t)}: {CYBER_INFO[i.kind].icon} {i.success ? 'succeeded' : 'fended off'}; {i.blamed != null ? `blamed on ${w.nations[i.blamed].name}` : 'culprit unknown'}</li>)}</ul></>}
+      {ours.length > 0 && <><h4>Our attacks</h4><ul class="small">{ours.map((i) => <li>{fmtDay(i.t)}: {CYBER_INFO[i.kind].icon} {w.nations[i.target].name}, {i.success ? 'succeeded' : 'failed'}; {i.blamed === p.nation ? 'traced to us' : i.blamed != null ? `blamed on ${w.nations[i.blamed].name}` : 'not attributed'}</li>)}</ul></>}
+      {official && (
+        <div class="row small">
+          <Select value={kind} options={(Object.keys(CYBER_INFO) as CyberKind[]).map((k) => [k, CYBER_INFO[k].name] as [CyberKind, string])} onChange={setKind} />
+          <Select value={target} options={foreign.map((x) => [x.id, x.name] as [Id, string])} onChange={setTarget} />
+          {kind !== 'election' && <Select value={rid ?? -1} options={regions.map((r) => [r.id, r.name] as [Id, string])} onChange={setRegion} />}
+          <ActBtn small why={cyberCheck(w, n, kind, target, kind === 'election' ? null : rid)} run={(w) => orderCyberAttack(w, p.id, kind, target, kind === 'election' ? null : rid)}>Launch</ActBtn>
+        </div>
+      )}
+      <Help>{CYBER_INFO[kind].desc} Success depends on our offence against their defence (information technology, AI-driven cyber tools, post-quantum codes, a working state and a sound grid). Attribution is uncertain: a strong defender with a good network inside our country will usually trace an attack to us; otherwise it may stay unexplained or be blamed on someone else. A traced attack costs relations, but it is not an act of war.</Help>
     </Panel>
   );
 }

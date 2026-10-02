@@ -3,6 +3,29 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.3.3: cyber commands
+
+The third part of 2.4 Frontiers.
+
+- **Every country has a cyber command** with an offence and a defence. They are built from:
+  - information technology and the agency's budget;
+  - AI-driven cyber tools, quantum computers and post-quantum codes;
+  - a working state and a sound grid;
+  - the 2025 investment of the leading cyber powers (Russia, China, the United States and Britain).
+- **Three kinds of attack:**
+  - on a power grid: blackouts across a region for several days;
+  - ransomware: firms in a region locked out of their systems;
+  - hack and leak: stolen material released before an election helps the attacker's favoured party.
+- **Attribution is uncertain.** The victim investigates. A strong defender with a good network inside the
+  attacker's country usually finds the culprit; otherwise the attack stays unexplained, or is blamed on the
+  victim's worst rival, who takes the diplomatic blame. A traced attack costs relations and leaves a grievance,
+  but it is not an act of war.
+- **AI commands** strike rivals now and then, and enemies often in wartime: about ten notable attacks a year
+  worldwide.
+- **The Intelligence screen** has a Cyber command panel: offence and defence, attacks on your country as your
+  investigators understand them, and (for the president, vice president or intelligence minister) your own
+  attacks and the order to launch one.
+
 ### New in 2.3.2: the innovation system
 
 The second part of 2.4 Frontiers.
