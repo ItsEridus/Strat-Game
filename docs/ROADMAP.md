@@ -14,7 +14,7 @@ a **deeper life simulation** after the geopolitical thread (2.6.0 → 3.0.0, "Li
 
 Parts marked **GEO** are the geopolitical simulation. Every version ships as a series of playable patch
 releases (every push is a release); the minor version marks its theme complete. The parts of a theme ship as patches of the
-version before it (2.0's parts were 1.9.3 to 1.9.7, and 2.0.0 marked it complete), so 2.1's parts were 2.0.1 to 2.0.4, 2.2's were 2.1.1 to 2.1.3, and 2.3's are 2.2.x.
+version before it (2.0's parts were 1.9.3 to 1.9.7, and 2.0.0 marked it complete), so 2.1's parts were 2.0.1 to 2.0.4, 2.2's were 2.1.1 to 2.1.3, 2.3's were 2.2.1 to 2.2.5, and 2.4's are 2.3.x.
 
 ## At a glance
 
@@ -29,8 +29,8 @@ version before it (2.0's parts were 1.9.3 to 1.9.7, and 2.0.0 marked it complete
 | 2.0.0 | **The great game** (GEO 4: diplomacy and the international order) | Treaties, alliances, sanctions, a Security Council, blocs and summits; leaders whose character shapes policy | ✅ done |
 | 2.1.0 | **Shadows** (GEO 5: intelligence gets better) | Services that grow and learn; governments act on estimates, so surprise and miscalculation happen | ✅ done |
 | 2.2.0 | **War & peace** (GEO 6: realistic wars) | Wars with causes, escalation, fronts, mobilisation, exhaustion, negotiated endings and long aftermaths | ✅ done |
-| 2.3.0 | **Rise & fall** (GEO 7: regimes, secession, new nations) | Coups, revolutions, democratisation and backsliding, secession, civil wars, new and vanished states | ▶ in progress: regimes (2.2.1), coups and revolutions (2.2.2), secession and new states (2.2.3), civil wars and dynamic nations (2.2.4), puppets, proxy wars and peacekeeping (2.2.5) |
-| 2.4.0 | **Frontiers** (GEO 8: technology, cyber and space) | A near-future technology race that changes economies, armies and spying | planned |
+| 2.3.0 | **Rise & fall** (GEO 7: regimes, secession, new nations) | Coups, revolutions, democratisation and backsliding, secession, civil wars, new and vanished states | ✅ done |
+| 2.4.0 | **Frontiers** (GEO 8: technology, cyber and space) | A near-future technology race that changes economies, armies and spying | ▶ next |
 | 2.5.0 | **A world of consequences** (GEO 9: world economy, climate, soft power) | Debt crises, central banks, climate over decades, soft power; the decades-long campaign and the World Almanac | planned |
 | 2.6.0 | **Life 2.0: the mind** | Personality that grows from experience, values, mental health in depth, habits and addictions, therapy | planned |
 | 2.7.0 | **Life 2.0: the social fabric** | Friend circles, rivals, communities, relationships under each country's laws, custody and blended families, family gatherings | planned |
@@ -761,7 +761,8 @@ improve or decay, and the power ranking moves for reasons the player can read.
   chronicle, the four stories, and calibration (a decade brings few wars, each with a recorded cause).
   **Complete in 2.2.0.**
 - **Not yet built, carried forward:** proxy wars, insurgency and counter-insurgency, grey-zone pressure beyond
-  crises, terrorism by non-state groups and peacekeeping (→ 2.3, with civil wars); blockades and air campaigns as
+  crises, terrorism by non-state groups and peacekeeping (→ 2.3, with civil wars; proxy wars, insurgency and
+  peacekeeping were built in 2.2.5); blockades and air campaigns as
   kinds of war of their own (the naval and air layers exist); a separate war room screen (the Wars screen and the
   war history cover it); war correspondent, medic and resistance member as careers.
 
@@ -803,6 +804,20 @@ improve or decay, and the power ranking moves for reasons the player can read.
   takes no side.
 - **Done when:** long runs show regime changes and border changes at plausible rates, and new states run and
   trade like any other.
+- **Progress:** 2.2.1 regimes as rule sets (elections, term limits, press, repression, succession; legitimacy;
+  backsliding and opening up); 2.2.2 coups and revolutions (officer plotters, coup-proofing, purges and treason
+  trials; protest movements, concessions and repression; revolutions and early elections); 2.2.3 secession and new
+  states (regional identity, support for independence from 2025 polls, referendums and unilateral declarations;
+  new states with their own currency, government, citizens and recognition); 2.2.4 civil wars (rebel governments
+  with troops; crushed, rebel victory or partition), mergers and voluntary unions, failed states and restoration
+  from exile; 2.2.5 puppet states, arming rebels, UN peacekeepers and insurgency; 2.3.0 the three stories, the
+  Rise & Fall timeline on the State of the World screen, and calibration (sixty simulated years bring a handful of
+  coup attempts and, in some runs, a successful referendum; civil wars and new borders are rare but possible).
+  **Complete in 2.3.0.**
+- **Not yet built, carried forward:** federations and currency unions (→ 2.5, with the world economy); decline
+  through hyperinflation, default and brain drain as named paths (→ 2.5); flags drawn for new states (they get
+  their own colours and names); revolutionary, plotter and secessionist-leader careers beyond what stories and
+  office already allow; recognition by international organisations beyond the UN vote.
 
 ## 2.4.0 — Frontiers (GEO 8: technology, cyber and space)
 

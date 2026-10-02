@@ -20,12 +20,13 @@ import { NATURE_STORIES } from './nature';
 import { DIPLOMACY_STORIES } from './diplomacy';
 import { SHADOW_STORIES } from './shadows';
 import { WAR_STORIES } from './war';
+import { RISE_FALL_STORIES } from './riseFall';
 
 let done = false;
 export function registerAllStories() {
   if (done) return;
   done = true;
-  registerStory(...EVERYDAY, ...ADOPTED, ...WORK_CHAINS, ...LIFE_CHAINS, ...LIFE_ENCOUNTERS, ...SYSTEM_CHAINS, ...BUSINESS_STORIES, ...NATION_STORIES, ...JUSTICE_STORIES, ...DEFENCE_STORIES, ...NATURE_STORIES, ...DIPLOMACY_STORIES, ...SHADOW_STORIES, ...WAR_STORIES);
+  registerStory(...EVERYDAY, ...ADOPTED, ...WORK_CHAINS, ...LIFE_CHAINS, ...LIFE_ENCOUNTERS, ...SYSTEM_CHAINS, ...BUSINESS_STORIES, ...NATION_STORIES, ...JUSTICE_STORIES, ...DEFENCE_STORIES, ...NATURE_STORIES, ...DIPLOMACY_STORIES, ...SHADOW_STORIES, ...WAR_STORIES, ...RISE_FALL_STORIES);
 }
 
 /** Scheduled repayments of loans and investments made in stories. */

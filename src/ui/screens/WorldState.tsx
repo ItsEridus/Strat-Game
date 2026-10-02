@@ -61,10 +61,35 @@ export function WorldState({ w }: { w: World }) {
         }) : <Empty>Nothing major is happening right now.</Empty>}
       </Panel>
 
+      <Panel title="🏛️ Rise & fall" class="wide"><RiseFall w={w} /></Panel>
+
       <Panel title="🗓️ Recent history">
         {past.length ? <ul class="small">{past.map((c) => <li>{KIND_ICON[c.kind]} {c.name} ({fmtDay(c.start)} – {fmtDay(c.end)}){c.deaths ? `, ${c.deaths.toLocaleString()} dead` : ''}</li>)}</ul> : <Empty>No past events yet.</Empty>}
       </Panel>
     </div>
+  );
+}
+
+/** The Rise & Fall timeline: regime changes, coups, revolutions, new states, civil wars, mergers and puppets. */
+const RISE_FALL = /^(🪖|✊|🗽|⛓️|🎉|🏴|⚔️|🗺️|🤝|🏚️|🏗️|🎎|📢|🩸)/;
+function RiseFall({ w }: { w: World }) {
+  const seen = new Set<string>();
+  const items: { t: number; text: string }[] = [];
+  for (const n of w.nations) for (const e of n.chronicle ?? []) {
+    const k = `${e.t}|${e.text}`;
+    if (!RISE_FALL.test(e.text) || seen.has(k)) continue;
+    seen.add(k);
+    items.push(e);
+  }
+  items.sort((a, b) => b.t - a.t);
+  const born = w.nations.filter((n) => n.founded != null && n.dissolved == null).length;
+  const gone = w.nations.filter((n) => n.dissolved != null).length;
+  return (
+    <>
+      <p class="small">{w.nations.filter((n) => n.dissolved == null).length} countries today{born ? `, ${born} of them born in play` : ''}{gone ? `; ${gone} no longer exist` : ''}.</p>
+      {items.length ? <ul class="small">{items.slice(0, 40).map((e) => <li><span class="muted">{fmtDay(e.t)}</span> {e.text}</li>)}</ul> : <Empty>No regime has fallen and no border has moved yet.</Empty>}
+      <Help>Coups, revolutions, democratisation and backsliding, secession, civil wars, new and vanished states, puppets and failed states, across the whole world, newest first.</Help>
+    </>
   );
 }
 

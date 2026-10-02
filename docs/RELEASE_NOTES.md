@@ -3,6 +3,30 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.3.0: Rise & fall
+
+2.3 is complete. Countries now rise and fall:
+- regimes with their own rules (2.2.1);
+- coups and revolutions (2.2.2);
+- secession and new states (2.2.3);
+- civil wars, mergers, failed states and restoration (2.2.4);
+- puppets, proxy wars, peacekeeping and insurgency (2.2.5).
+
+This release adds:
+
+- **Three stories:**
+  - *The night of the coup*: stay home, stand in the square against the soldiers, or offer your services to the
+    new rulers (or inform on the plotters if the coup fails).
+  - *The referendum*: campaign for independence, campaign to stay together, or keep your opinion to yourself.
+    Your campaigning moves support a little.
+  - *A new flag*: when your home becomes a new state, apply for its citizenship, celebrate, or worry about what
+    comes next.
+- **The Rise & Fall timeline** on the State of the World screen lists every regime change, coup, revolution, new
+  state, civil war, merger, puppet and failed state, newest first, with a count of the countries alive today.
+- **Calibration.** Sixty simulated years bring a handful of coup attempts, the occasional successful one, and in
+  some runs a successful independence referendum. Civil wars and new borders are rare but possible. Secession comes
+  from region data and play, never from a script, and the game takes no side.
+
 ### New in 2.2.5: puppets, proxy wars and peacekeeping
 
 The fifth part of 2.3 Rise & fall. It also completes what 2.2 War & peace carried forward: support to insurgents,

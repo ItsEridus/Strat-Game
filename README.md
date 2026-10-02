@@ -193,6 +193,21 @@ and partisans resist occupation. Wars escalate and wear both sides down until th
 front line or peter out; peace brings treaties, reparations, memorials and, after the worst wars, tribunals. Diplomat, trade negotiator and
 international civil servant are careers. (Country screen → Diplomacy.)
 
+**Rise and fall.** Every country starts from its real regime of 2025, from full democracies to a one-party state
+and an absolute monarchy. Regimes have their own rules for elections, term limits, the press and succession. Their
+legitimacy follows how they perform:
+- democracies can backslide, and autocracies can open up;
+- disloyal officers plot coups, and protest movements can topple a government;
+- regions with an identity of their own (Scotland, Quebec, Tibet and others) can vote or fight their way to
+  independence. A new state gets its own currency, government and citizens, and other countries decide whether to
+  recognise it;
+- civil wars end crushed, in rebel victory or in partition;
+- states merge, fail, become puppets, or return from exile;
+- foreign powers arm rebels, and the UN sends peacekeepers.
+
+None of it is scripted: it comes from how countries are governed and how they fare. (State of the World → Rise &
+fall; Country screen → regime.)
+
 **The economy.** Money is real:
 - Every country uses its own currency at real early-2025 exchange rates. Pay follows each country's real median
   wage and minimum wage, so a typical day's pay is about $200 in the United States and ₹780 in India, and prices

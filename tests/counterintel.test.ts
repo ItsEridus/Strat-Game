@@ -41,7 +41,8 @@ test('in a free country, exposed covert action costs the government at home', ()
   advance(w, DAY, false);
   const gb = by(w, 'GBR');
   const a0 = gb.approval, b0 = gb.agency.budget;
-  for (let i = 0; i < 10; i++) domesticFallout(w, gb, 'sabotage against someone');
+  // A scandal is a matter of chance each time; keep exposing operations until one breaks.
+  for (let i = 0; i < 300 && !w.log.some((e) => /Scandal at home/.test(e.text)); i++) domesticFallout(w, gb, 'sabotage against someone');
   assert.ok(gb.approval < a0, 'approval falls');
   assert.ok(gb.agency.budget <= b0);
   assert.ok(w.log.some((e) => /Scandal at home/.test(e.text)));

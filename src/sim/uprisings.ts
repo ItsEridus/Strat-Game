@@ -51,7 +51,9 @@ export function attemptCoup(w: World, n: Nation, leader?: Citizen): 'success' | 
   const p = Math.max(0.05, Math.min(0.85, 0.35 + Math.min(0.2, plotters.length * 0.03) + (r.legitimacy < 30 ? 0.2 : 0) - (n.coupProof ?? 0) * 0.4 - (isDemocracy(n) ? 0.25 : 0)));
   const pl = player(w);
   const ousted = n.president != null ? w.citizens[n.president] : null;
-  if (chance(w, p)) {
+  const won = chance(w, p);
+  n.lastCoup = { t: w.time, ok: won, leader: head.id };
+  if (won) {
     n.president = head.id;
     n.cabinet = {};
     appointCabinetAI(w, n);

@@ -426,6 +426,7 @@ export interface Nation {
   dissolved?: number; // when it ceased to exist (absorbed by another country) (2.3)
   mergedInto?: Id; // the country that absorbed it (2.3)
   failedSince?: number; // a failed state since then (2.3)
+  lastCoup?: { t: number; ok: boolean; leader: Id }; // the latest coup attempt (2.3)
   armedBy?: Record<Id, number>; // foreign sponsors that sent it arms, and how often (2.3)
   overlord?: Id; // the power it answers to, if it is a puppet state (2.3)
   insurgency?: number; // armed resistance against the government, 0..100 (2.3)
