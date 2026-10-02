@@ -14,6 +14,8 @@ import { capsOf, techAvg } from '../../sim/strategic';
 import { cyberOffence } from '../../sim/cyber';
 import { spaceCapability } from '../../sim/space';
 import { TECH } from '../../data/techTree';
+import { climateCommitment, climateOf, emissionsOf } from '../../sim/climate';
+import { energyOf } from '../../sim/energy';
 import { reserveShare, riskAppetite, stocksOf, superCycle } from '../../sim/markets';
 import { fmtAmt } from '../../engine/money';
 import { HAZARDS } from '../../data/hazards';
@@ -73,6 +75,7 @@ export function WorldState({ w }: { w: World }) {
         }) : <Empty>Nothing major is happening right now.</Empty>}
       </Panel>
 
+      <Panel title="🌡️ Climate" class="wide"><Climate w={w} /></Panel>
       <Panel title="🔬 The technology race" class="wide"><TechRace w={w} /></Panel>
       <Panel title="🏛️ Rise & fall" class="wide"><RiseFall w={w} /></Panel>
 
@@ -80,6 +83,24 @@ export function WorldState({ w }: { w: World }) {
         {past.length ? <ul class="small">{past.map((c) => <li>{KIND_ICON[c.kind]} {c.name} ({fmtDay(c.start)} – {fmtDay(c.end)}){c.deaths ? `, ${c.deaths.toLocaleString()} dead` : ''}</li>)}</ul> : <Empty>No past events yet.</Empty>}
       </Panel>
     </div>
+  );
+}
+
+/** Climate: temperature, sea level, emissions, the biggest emitters and the climate treaty. */
+function Climate({ w }: { w: World }) {
+  const c = climateOf(w);
+  const paris = Object.values(w.treaties ?? {}).find((t) => t.kind === 'climate' && t.status === 'active');
+  const emitters = w.nations.filter((n) => !n.exile).map((n) => ({ n, e: emissionsOf(w, n) })).sort((a, b) => b.e - a.e).slice(0, 6);
+  const total = c.hist.length ? c.hist[c.hist.length - 1].gt : null;
+  return (
+    <>
+      <p><b>{c.temp.toFixed(2)}°C</b> above pre-industrial levels · sea level +{Math.round(c.sea * 100)} cm since 2025{total != null ? ` · ${total} billion tonnes of CO₂ last year` : ''}</p>
+      {c.hist.length > 1 && <Sparkline values={c.hist.map((h) => h.temp)} width={300} height={40} />}
+      <table class="table compact small"><thead><tr><th>Largest emitters</th><th>CO₂ (Gt a year)</th><th>Fossil share of energy</th><th>Climate agreement</th></tr></thead><tbody>
+        {emitters.map(({ n, e }) => <tr><td><NationChip w={w} id={n.id} /></td><td>{e.toFixed(2)}</td><td>{Math.round(['coal', 'gas', 'oil'].reduce((t, s) => t + ((energyOf(n).mix as any)[s] ?? 0), 0) * 100)}%</td><td>{paris?.parties.includes(n.id) ? (climateCommitment(w, n) > 0.5 ? 'member' : 'member (in name)') : 'outside'}</td></tr>)}
+      </tbody></table>
+      <Help>Temperature follows cumulative emissions (about 0.45°C per thousand billion tonnes). A warmer world brings hotter weather (more near the poles), more frequent storms, floods, droughts and wildfires, poorer harvests in hot zones and better ones in cold zones, coastal flooding as the sea rises, and people moving from the hottest regions. The energy transition is faster for committed members of the climate agreement and with clean-energy technology; nationalist governments and fuel exporters tend to leave or do little.</Help>
+    </>
   );
 }
 

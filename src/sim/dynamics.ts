@@ -3,6 +3,7 @@
 // along borders, strikes, protests and riots driven by conditions on the ground,
 // internal migration, and new people arriving. Governments (AI or player)
 // respond with relief spending, lockdowns, crackdowns or concessions.
+import { hazardFactor } from './climate';
 import { hazardArrives } from './naturalHazards';
 import { dateAt } from '../engine/calendar';
 import { lifeGate } from './lifecycle';
@@ -81,7 +82,7 @@ function disastersDaily(w: World) {
   const m = monthOf(w);
   for (const h of HAZARDS) {
     if (h.months.length && !h.months.includes(m)) continue;
-    const perDay = (h.weight / (h.months.length ? h.months.length * 30.4 : 365)) * B.dynamics.disasterChance;
+    const perDay = (h.weight / (h.months.length ? h.months.length * 30.4 : 365)) * B.dynamics.disasterChance * hazardFactor(w, h.kind); // more often in a warmer world
     if (!chance(w, perDay)) continue;
     const keys = h.regions.filter((k) => regionKey.has(k));
     if (!keys.length) continue;

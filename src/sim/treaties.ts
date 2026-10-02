@@ -26,7 +26,7 @@ import { militaryPower } from './war';
 import { strategicOf } from './forceStructure';
 import { nationalStaffing } from './services';
 
-export type TreatyKind = 'defence' | 'guarantee' | 'nonaggression' | 'trade' | 'basing' | 'intel' | 'armscontrol' | 'border' | 'tech';
+export type TreatyKind = 'defence' | 'guarantee' | 'nonaggression' | 'trade' | 'basing' | 'intel' | 'armscontrol' | 'border' | 'tech' | 'climate';
 export interface Treaty {
   id: Id; kind: TreatyKind; name: string; parties: Id[];
   guarantor?: Id; // guarantee: the country giving it
@@ -48,6 +48,7 @@ export const TREATY_INFO: Record<TreatyKind, { name: string; icon: string; years
   intel: { name: 'Intelligence sharing', icon: '👁️', years: null, effect: 'The parties share intelligence: trust stays high, and each agency gains from the others.' },
   armscontrol: { name: 'Arms control', icon: '☢️', years: 10, effect: 'Verified limits on strategic weapons: the parties see less threat in each other.' },
   border: { name: 'Border agreement', icon: '📍', years: null, effect: 'A settled border: old territorial grievances between the parties are halved.' },
+  climate: { name: 'Climate agreement', icon: '🌡️', years: null, effect: 'Members cut the fossil share of their energy faster, as far as their leaders mean it.' },
   tech: { name: 'Technology partnership', icon: '🔬', years: 10, effect: 'Joint research: partners adopt each other\'s technologies faster and never keep them from each other.' },
 };
 
@@ -202,6 +203,10 @@ export function willingness(w: World, n: Nation, other: Nation, kind: TreatyKind
     case 'border':
       p = 0.2 + rel / 150 - t.grievance / 200 - lp.nationalism * 0.3;
       why = t.grievance > 30 ? 'old claims stand in the way' : 'a chance to settle the border';
+      break;
+    case 'climate':
+      p = 0.3 + rel / 200 - lp.nationalism * 0.4;
+      why = lp.nationalism > 0.6 ? 'the government puts national industry first' : 'a shared problem';
       break;
     case 'tech':
       p = 0.05 + rel / 120 + t.trust / 300 - t.threat / 200;

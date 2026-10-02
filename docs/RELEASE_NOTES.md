@@ -3,6 +3,32 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.4.3: climate over decades
+
+The third part of 2.5 A world of consequences.
+
+- **Emissions.** Each country's CO₂ emissions start from 2025 (Global Carbon Project: China 12 billion tonnes, the
+  United States 4.9, India 3.1...). They follow its economy, the fossil share of its energy and a steady fall in
+  energy intensity. The rest of the world adds about ten billion tonnes, falling slowly.
+- **Temperature** follows cumulative emissions (the IPCC's 0.45°C per thousand billion tonnes), from 1.3°C above
+  pre-industrial levels in 2025; the sea rises with it. In 50-year test runs the world passes 1.5°C in the early
+  2030s and reaches about 2.1°C by the 2070s, with the sea up about 30 cm. The world is told when it crosses
+  1.5, 2, 2.5 and 3°C.
+- **Effects:**
+  - weather is warmer everywhere, more so near the poles;
+  - hurricanes, floods, droughts and wildfires come more often (about 30% more per degree);
+  - harvests fall in tropical and arid regions and improve a little in cold ones;
+  - low-lying coasts flood once the sea has risen enough;
+  - people move from the hottest regions to cooler ones.
+- **The energy transition.** Coal goes first, then oil, then gas, replaced by wind, solar, nuclear and a little
+  hydro and bio. It is faster for committed members of the climate agreement and with batteries, geothermal, small
+  reactors and (especially) fusion. Committed members gain a little growth from green industry.
+- **The Paris Agreement** starts with every country but the United States (which left in 2025) and suffers from
+  free-riding. Nationalist governments, and fuel exporters most of all, may leave; members whose leaders are
+  nationalist stay in name only; others join as the world warms.
+- **The State of the World** has a Climate panel: temperature and its history, sea level, last year's emissions,
+  the largest emitters with their fossil shares, and who is in the agreement.
+
 ### New in 2.4.2: markets, currencies and commodity cycles
 
 The second part of 2.5 A world of consequences.

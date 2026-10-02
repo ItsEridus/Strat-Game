@@ -18,6 +18,7 @@ import { B } from '../data/balance';
 import { TECH_DOMAINS, baselineOf, type TechDomain } from '../data/nationBaselines';
 import { healthFactor, infraFactor, researchFactor } from './nationalBudget';
 import { techGrowth } from './technology';
+import { climateCommitment, transitionRate } from './climate';
 
 export interface Capabilities {
   tech: Record<TechDomain, number>; // 0..100+ (the leader near 100 in 2025)
@@ -95,6 +96,7 @@ export function strategicMonth(w: World, n: Nation, leaders: Record<TechDomain, 
   if (tp.agreements) why.push(['trade agreements', tp.agreements]);
   why.push(['the world economy', w.econ.cycle * 1.2]);
   if (n.defaultedAt != null && w.time - n.defaultedAt < 2 * 365 * DAY) why.push(['debt default', -1.5]);
+  if (climateCommitment(w, n) > 0.3) why.push(['green industry', transitionRate(w, n) * 15]);
   const tg = techGrowth(w, n);
   if (tg) why.push(['new technology', tg]);
   const g = Math.max(-6, Math.min(10, why.reduce((t, [, v]) => t + v, 0)));

@@ -9,6 +9,7 @@
 // work outdoors, the energy bill for heating and cooling, travel (storms ground flights;
 // snow makes overland travel harder), and military operations (mud, winter, sea state
 // and flying weather).
+import { climateYield, warming } from './climate';
 import type { Formation, Id, World } from './types';
 import { EARTH } from '../data/earth';
 import { DAY, dayOf } from '../engine/clock';
@@ -57,7 +58,7 @@ export function normals(w: World, rid: Id, doy: number): { t: number; wet: numbe
   // Coldest about 15 January in the north, 15 July in the south.
   const phase = ((doy - 15) / 365) * 2 * Math.PI;
   const season = -Math.cos(phase) * (lat >= 0 ? 1 : -1); // +1 in northern midsummer
-  const t = mean + amp * season;
+  const t = mean + amp * season + warming(w) * (a >= 60 ? 1.6 : a >= 45 ? 1.2 : 1); // a warming world, more so near the poles (climate.ts)
   const summer = season > 0;
   // Wet days and rain per wet day, roughly as observed (London ~110 wet days and ~600 mm; Delhi a monsoon summer).
   const wet = zone === 'tropical' ? (summer ? 0.45 : 0.12) : zone === 'arid' ? 0.04 : zone === 'temperate' ? (coast ? 0.32 : 0.27) : zone === 'continental' ? (summer ? 0.3 : 0.22) : zone === 'subarctic' ? 0.28 : 0.3;
@@ -132,7 +133,7 @@ export function weatherFactor(w: World, rid: Id, industry: string): { label: str
   const farm = industry === 'grain' || industry === 'cotton' || industry === 'timber';
   let mult = 1;
   const labels: string[] = [];
-  if (farm) { const g = growingIndex(w, rid); if (Math.abs(g - 1) > 0.02) { mult *= g; labels.push(g < 1 ? 'poor growing season' : 'good growing season'); } }
+  if (farm) { const g = growingIndex(w, rid); if (Math.abs(g - 1) > 0.02) { mult *= g; labels.push(g < 1 ? 'poor growing season' : 'good growing season'); } const cy = climateYield(w, zoneOf(w, rid)); if (Math.abs(cy - 1) > 0.02) { mult *= cy; labels.push(cy < 1 ? 'a hotter climate' : 'a longer growing season'); } }
   if (x.kind === 'storm') { mult *= farm || industry === 'materials' || industry === 'timber' ? 0.6 : 0.85; labels.push('storm'); }
   else if (x.kind === 'snow' && (farm || industry === 'materials')) { mult *= 0.8; labels.push('snow'); }
   else if (x.kind === 'heat' && farm) { mult *= 0.9; labels.push('heatwave'); }
