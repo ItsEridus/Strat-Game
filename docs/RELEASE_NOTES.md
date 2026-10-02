@@ -3,6 +3,26 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.4.4: soft power and prestige events
+
+The fourth part of 2.5 A world of consequences.
+
+- **Soft power** starts from the Brand Finance Global Soft Power Index 2025 (the United States 79, China 73,
+  Britain and Japan 67, Germany 66...). It drifts with:
+  - freedom (repression and coups repel, democracies attract);
+  - aggression (starting a war costs it);
+  - prestige: world-first breakthroughs, space missions, hosting the Olympics or a World Expo;
+  - the strength of a country's universities and economy.
+  It changes slowly: at most 15 points above where a country started.
+- **What it does:** other countries warm to an attractive country a little every month, foreign students and
+  researchers add to its research workforce, and it gains diplomatic capital.
+- **The Summer Olympics** every four years (Los Angeles 2028 and Brisbane 2032 are set) and a **World Expo** every
+  five (Riyadh 2030). Later hosts are chosen seven years ahead, weighted by soft power and economy. Hosting costs
+  the treasury and lifts approval and standing abroad. The Olympic medal table rewards big, rich and healthy
+  countries (and the host), and the top three gain soft power.
+- **The State of the World** has a Soft power and prestige panel: the ranking, and the Games and Expos past and
+  planned.
+
 ### New in 2.4.3: climate over decades
 
 The third part of 2.5 A world of consequences.

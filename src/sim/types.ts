@@ -446,6 +446,8 @@ export interface Nation {
   reserveShare?: number; // share of world reserves held in its currency (2.5)
   fossil0?: number; // the fossil share of its energy mix at the start (2.5)
   climateMigrants?: number; // people who left its hottest regions for cooler ones (2.5)
+  soft?: number; // soft power, 0..100 (2.5)
+  hosted?: number; // Olympics and World Expos hosted (2.5)
   lastCoup?: { t: number; ok: boolean; leader: Id }; // the latest coup attempt (2.3)
   armedBy?: Record<Id, number>; // foreign sponsors that sent it arms, and how often (2.3)
   overlord?: Id; // the power it answers to, if it is a puppet state (2.3)
@@ -854,6 +856,7 @@ export interface World {
   intl?: import('./intlOrgs').IntlState;
   newStates?: import('./secession').NewState[]; // states born in play (2.3)
   orbit?: { debris: number; cascades: number }; // debris in low orbit, 0..100 (2.4)
+  games?: import('./softPower').GamesEvent[]; // Olympics and World Expos, held and planned (2.5)
   climate?: import('./climate').ClimateState; // global temperature, emissions and sea level (2.5)
   cyber?: import('./cyber').CyberIncident[]; // recent cyber attacks, as their victims understand them (2.4)
   patents?: import('./technology').Patent[]; // breakthroughs, who holds them and what they earned (2.4)

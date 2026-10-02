@@ -30,6 +30,7 @@ import { nationalStaffing } from './services';
 import { nationals } from './census';
 import { occupationOf } from './labour';
 import { treatyBetween } from './treaties';
+import { studentPull } from './softPower';
 import { pay } from '../engine/ledger';
 import { GOLD } from '../engine/money';
 import type { Id } from './types';
@@ -76,7 +77,7 @@ export function researchWorkforce(w: World, n: Nation): number {
   const lab = nationalStaffing(w, n.id, 'research');
   const all = nationals(w, n.id);
   const sci = all.filter((c) => !c.gone && SCIENCE.has(occupationOf(w, c) ?? '')).length / Math.max(1, all.length);
-  return Math.max(0.5, Math.min(1.6, 0.6 + lab * 0.4 + Math.min(0.6, sci * 8)));
+  return Math.max(0.5, Math.min(1.7, (0.6 + lab * 0.4 + Math.min(0.6, sci * 8)) * studentPull(n))); // foreign students and researchers follow soft power
 }
 
 export interface Patent { tech: string; nation: Id; company: Id | null; researcher: Id | null; t: number; royalties: number }

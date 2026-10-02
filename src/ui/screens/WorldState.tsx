@@ -7,7 +7,7 @@ import { useState } from 'preact/hooks';
 import { TIER_LABEL } from '../../sim/forces';
 import { STRATEGY_INFO } from '../../sim/nationalBudget';
 import type { World } from '../../sim/types';
-import { ActBtn, Empty, Help, NationChip, Num, Panel, RegionLink, Sparkline } from '../common';
+import { ActBtn, Bar, Empty, Help, NationChip, Num, Panel, RegionLink, Sparkline } from '../common';
 import { player } from '../../sim/query';
 import { researchMass, techStanding } from '../../sim/technology';
 import { capsOf, techAvg } from '../../sim/strategic';
@@ -15,6 +15,7 @@ import { cyberOffence } from '../../sim/cyber';
 import { spaceCapability } from '../../sim/space';
 import { TECH } from '../../data/techTree';
 import { climateCommitment, climateOf, emissionsOf } from '../../sim/climate';
+import { gamesOf, softPowerOf } from '../../sim/softPower';
 import { energyOf } from '../../sim/energy';
 import { reserveShare, riskAppetite, stocksOf, superCycle } from '../../sim/markets';
 import { fmtAmt } from '../../engine/money';
@@ -76,6 +77,7 @@ export function WorldState({ w }: { w: World }) {
       </Panel>
 
       <Panel title="🌡️ Climate" class="wide"><Climate w={w} /></Panel>
+      <Panel title="🎭 Soft power and prestige"><SoftPower w={w} /></Panel>
       <Panel title="🔬 The technology race" class="wide"><TechRace w={w} /></Panel>
       <Panel title="🏛️ Rise & fall" class="wide"><RiseFall w={w} /></Panel>
 
@@ -83,6 +85,20 @@ export function WorldState({ w }: { w: World }) {
         {past.length ? <ul class="small">{past.map((c) => <li>{KIND_ICON[c.kind]} {c.name} ({fmtDay(c.start)} – {fmtDay(c.end)}){c.deaths ? `, ${c.deaths.toLocaleString()} dead` : ''}</li>)}</ul> : <Empty>No past events yet.</Empty>}
       </Panel>
     </div>
+  );
+}
+
+/** Soft power ranking and the Olympics and World Expos, past and planned. */
+function SoftPower({ w }: { w: World }) {
+  const ranked = w.nations.filter((n) => !n.exile).sort((a, b) => softPowerOf(b) - softPowerOf(a));
+  const year = dateAt(w.time).year;
+  const games = gamesOf(w).slice().sort((a, b) => a.year - b.year);
+  return (
+    <>
+      <table class="table compact small"><tbody>{ranked.slice(0, 10).map((n, i) => <tr><td>{i + 1}</td><td><NationChip w={w} id={n.id} /></td><td><Bar v={softPowerOf(n)} max={100} color="#8a63d2" label={`${Math.round(softPowerOf(n))}`} /></td></tr>)}</tbody></table>
+      <ul class="small">{games.filter((g) => g.year >= year - 4).slice(0, 6).map((g) => <li>{g.kind === 'olympics' ? '🏅 Summer Olympics' : '🎪 World Expo'} {g.year}: {w.nations[g.host].name}{g.city ? ` (${g.city})` : ''}{g.done ? ' ✓' : ''}</li>)}</ul>
+      <Help>Soft power starts from the Brand Finance index (2025) and drifts with freedom, aggression, breakthroughs, space missions, hosting the Olympics or a World Expo, and the strength of a country's universities and economy. Others warm to attractive countries, and foreign students add to their research.</Help>
+    </>
   );
 }
 
