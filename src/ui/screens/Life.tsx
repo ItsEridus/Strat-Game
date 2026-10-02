@@ -30,6 +30,7 @@ import { HabitsPanel } from './HabitsPanel';
 import { CirclesPanel } from './CirclesPanel';
 import { GossipPanel } from './GossipPanel';
 import { LovePanel } from './LovePanel';
+import { DayPlanner } from './DayPlanner';
 import { pensionOf, pensionQuote, pensionRules, retire, retireCheck } from '../../sim/pensions';
 import { isMinor, parentTime, parentTimeCheck, play, playCheck, schoolDay, schoolDayCheck } from '../../sim/childhood';
 import { continueAsNewcomer, successor, writeWill } from '../../sim/legacy';
@@ -102,6 +103,7 @@ export function Life({ w }: { w: World }) {
           {!partner && <Help>Single. Get to know people in your Neighbourhood; once someone likes you (relationship 30+), you can ask them out from their profile.</Help>}
         </Panel>
         <Panel title="Daily routine"><RoutinePanel w={w} p={p} /></Panel>
+        <Panel title="🗓️ Your day" class="wide"><DayPlanner w={w} p={p} /></Panel>
         <Panel title="Recent milestones" right={<Btn small kind="ghost" onClick={() => store.go('journal')}>Journal</Btn>}>
           {L.milestones.length ? <ul class="small milestones">{[...L.milestones].reverse().slice(0, 10).map((m) => <li><span class="muted">age {m.age}</span> {m.text}</li>)}</ul> : <Empty>Your story is just beginning.</Empty>}
         </Panel>

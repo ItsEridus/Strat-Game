@@ -3,6 +3,26 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.7.1: a day planner, sleep and the commute
+
+The first part of 2.8 Life 2.0: the everyday.
+
+- **Your day, hour by hour.** A new planner lays out your day from your routine: sleep, the commute, the work
+  shift, classes, training, meals, family time, a hobby and rest. What does not fit shows as a clash.
+- **Sleep.** You choose your bedtime and how long you sleep. Adults need about seven to nine hours:
+  - less raises stress and slowly wears your health down;
+  - a good night's sleep eases stress;
+  - everyone else keeps their own habits, and people with long commutes sleep less.
+- **The commute.** How long it takes to get to work depends on:
+  - where the work is: the same region, the next one, or further;
+  - how you travel: on foot or by bike, by public transport, or by car;
+  - the country: public transport is fast and dense in Japan, Korea and Germany, cities are built for cars in
+    America, Saudi Arabia and Australia, and traffic is heaviest in India, Brazil and Turkey.
+  A long commute is a daily strain on happiness and stress.
+- **Fares.** Public transport costs a fare, from about 20 US cents a trip in India to $3 in Germany and
+  Australia, paid monthly by everyone who uses it.
+- **Cars.** Driving needs a car of your own; buying and running one comes in the next part.
+
 ### New in 2.7.0: Life 2.0, the social fabric
 
 2.7 is complete: people live among others. Its parts:

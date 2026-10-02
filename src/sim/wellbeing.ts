@@ -19,6 +19,7 @@ import { incomeOf, loansOf } from './loans';
 import { hasQuirk } from './nature';
 import { griefOf } from './mentalHealth';
 import { habitParts } from './habits';
+import { everydayParts } from './everyday';
 
 type Part = [string, number];
 
@@ -88,6 +89,8 @@ function parts(w: World, c: Citizen, friends: number): { happy: Part[]; stress: 
   if (hobbies) { happy.push(['hobbies', Math.min(6, hobbies * 2)]); stress.push(['hobbies', -Math.min(9, hobbies * 3)]); }
   const hp = habitParts(w, c);
   happy.push(...hp.happy); stress.push(...hp.stress);
+  const ev = everydayParts(w, c);
+  happy.push(...ev.happy); stress.push(...ev.stress);
   return { happy, stress };
 }
 
