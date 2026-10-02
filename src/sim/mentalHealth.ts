@@ -171,7 +171,7 @@ export function mentalRisks(w: World, c: Citizen, sup = supported(w, c)): Record
   const stress = c.life?.stress ?? 25;
   const age = ageOf(w, c);
   const fem = sexOf(w, c) === 'f';
-  const past = 1 + Math.min(2, (c.mh?.episodes ?? 0) * 0.5);
+  const past = 1 + Math.min(1, (c.mh?.episodes ?? 0) * 0.3);
   const st = 1 + Math.max(0, stress - 25) / 15;
   const jobless = c.job == null && !c.post && !c.retired && !c.business && age < 66 && c.persona !== 'industrialist' && c.persona !== 'investor' && !c.edu?.enrolled;
   const grief = griefOf(w, c);

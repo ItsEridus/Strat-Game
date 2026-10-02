@@ -167,15 +167,14 @@ function payFor(w: World, c: Citizen, h: Habit, amt: number) {
 }
 
 /** Monthly chances of trying to quit, and of relapsing (by the months since quitting). */
-const QUIT: Record<Habit, number> = { smoking: 0.02, drinking: 0.012, gambling: 0.015, gaming: 0.02 };
+const QUIT: Record<Habit, number> = { smoking: 0.015, drinking: 0.012, gambling: 0.015, gaming: 0.02 };
 const RELAPSE: Record<Habit, number> = { smoking: 0.6, drinking: 0.5, gambling: 0.45, gaming: 0.35 };
 
 /** Monthly chance someone without a habit takes it up (young people, mostly; stress and grief drive drinking). */
 function startHazard(w: World, c: Citizen, h: Habit): number {
   const age = ageOf(w, c);
   const p = prevalence(w, c, h);
-  const years = (w.time / (365 * DAY));
-  if (h === 'smoking') return age < 14 || age > 40 ? 0 : (-Math.log(Math.max(0.05, 1 - Math.min(0.9, p * 1.3))) / 130) * (age > 25 ? 0.15 : 1) * Math.pow(tobaccoDuty(w.nations[c.nation]), -0.6) * Math.pow(0.98, years);
+  if (h === 'smoking') return age < 14 || age > 40 ? 0 : (-Math.log(Math.max(0.05, 1 - Math.min(0.9, p * 1.3))) / 130) * (age > 25 ? 0.15 : 1) * Math.pow(tobaccoDuty(w.nations[c.nation]), -0.6);
   const stress = c.life?.stress ?? 25;
   const push = (1 + Math.max(0, stress - 40) / 20) * (griefOf(w, c) > 8 ? 2 : 1);
   if (h === 'drinking') return age < 16 ? 0 : (p / 300) * push;
@@ -236,7 +235,7 @@ function nationsYear(w: World) {
   for (const n of w.nations) {
     if (n.exile || n.dissolved != null || n.president === pl.id) continue;
     // Governments raise tobacco duty over the years (faster where health care is public and money is tight).
-    if (chance(w, 0.3)) n.tobacco = Math.round(tobaccoDuty(n) * (1.05 + next(w) * 0.1) * 100) / 100;
+    if (chance(w, 0.2)) n.tobacco = Math.round(tobaccoDuty(n) * (1.03 + next(w) * 0.05) * 100) / 100;
   }
 }
 

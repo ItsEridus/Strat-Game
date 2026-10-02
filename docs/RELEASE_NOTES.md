@@ -3,6 +3,32 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.6.0: Life 2.0, the mind
+
+2.6 is complete: the inner life of every person. Its parts:
+
+- values, and personality that grows (2.5.1);
+- mental health in depth (2.5.2);
+- habits and addictions (2.5.3);
+- memories between people (2.5.4).
+
+This release adds:
+
+- **Stories of the mind:**
+  - **A low season:** depression or anxiety settles in. You can confide in someone, ask for therapy, see a doctor
+    or push through alone.
+  - **The anniversary of a loss:** visit the grave, gather the family, or keep busy.
+  - **The craving:** weeks after quitting, the old habit calls. You can hold on, call a friend, or give in.
+  - **An old flame gets in touch** when you are both free.
+- **Calibration across decades** (twenty years simulated):
+  - depression and anxiety hold at about one adult in twenty-five each;
+  - the share of the struggling who are in care rises from about a third towards a half, as access grows and
+    stigma fades;
+  - smoking declines steadily, as it has since the 1970s, while tobacco duty rises gently;
+  - alcohol dependence and problem gambling hold steady.
+- **Tuning:** a past episode of depression now raises the risk of another by less, so prevalence no longer creeps
+  upwards over the years.
+
 ### New in 2.5.4: memories between people
 
 The fourth part of 2.6 Life 2.0: the mind. People now remember each other, not only you, so communities have
