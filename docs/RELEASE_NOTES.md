@@ -3,6 +3,36 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.7.0: Life 2.0, the social fabric
+
+2.7 is complete: people live among others. Its parts:
+
+- circles (2.6.1);
+- gossip, rumours and feuds (2.6.2);
+- relationships under each country's laws (2.6.3);
+- families that change, and dating (2.6.4).
+
+This release adds:
+
+- **Stories of the social fabric:**
+  - **People are talking:** a rumour about you goes round. Set the record straight, own up, have it out with
+    whoever started it (it may clear the air, or start a feud), or laugh it off.
+  - **A row at the holiday table:** relatives with a grudge clash. Make peace between them, take a side, or stay
+    out of it.
+  - **The visiting arrangements:** your ex wants to change them. Ask for more time with the children, be flexible,
+    or get a lawyer.
+  - **The club wants you as its chair** when you are well liked there.
+- **Love in skipped years:** courtship, engagements, weddings and divorces now carry on through statistical skips,
+  so the share of people in couples keeps rising towards real levels instead of stalling. About two adults in five
+  are in a couple after twenty years.
+- **Fix: everyday situations.** They come up as often as before. The director now looks further for a situation
+  that fits the moment, since many only fit now and then.
+- **Calibration across twenty years:**
+  - friendships keep forming, to two or three close friends each;
+  - memories, rumours and maintenance orders stay bounded;
+  - saves grow slowly;
+  - the books balance.
+
 ### New in 2.6.4: families that change, and dating
 
 The fourth part of 2.7 Life 2.0: the social fabric.

@@ -24,6 +24,7 @@ import { B } from '../data/balance';
 import { census, invalidateCensus } from './census';
 import { ageOf } from './growth';
 import { turnoverMonth } from './companyLife';
+import { familySkipMonth } from './family';
 import { disastersMonth } from './dynamics';
 import { companyCurrency, coref, cref, hhref, natref, player } from './query';
 import { runQueue } from './tick';
@@ -195,6 +196,7 @@ export function skipMonth(w: World, target: number) {
     w.time = next;
     runQueue(w); // elections, war deadlines and anything else scheduled in the month, in order
     peopleMonth(w, days);
+    familySkipMonth(w); // courtship, weddings and divorces
     // The monthly national turn (these run on the first of the month).
     regimesDaily(w); uprisingsDaily(w); secessionDaily(w); warCourseDaily(w); civilWarDaily(w); technologyDaily(w); cyberDaily(w); spaceDaily(w); automationDaily(w); sovereignDaily(w); marketsDaily(w); climateDaily(w); softPowerDaily(w); demographyDaily(w); almanacDaily(w); mindDaily(w); mentalHealthDaily(w); habitsDaily(w); tiesDaily(w); circlesDaily(w); gossipDaily(w); partnershipDaily(w); familyLifeDaily(w); warHomeDaily(w, days);
     withScope(() => { warDecisionDaily(w, days); beliefsDaily(w, days); treatiesDaily(w); relationsDaily(w, days); diplomacyActionsDaily(w, days); intlDaily(w, days); balanceOfPowerDaily(w); crisesDaily(w, days); });

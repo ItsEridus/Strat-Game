@@ -226,6 +226,35 @@ function wed(w: World, a: Citizen, b: Citizen) {
   for (const g of guests) { adjustRel(g, a.id, 2); adjustRel(g, b.id, 2); }
 }
 
+/** A month of love lives in a statistical skip (the daily courtship compounded over a month). */
+export function familySkipMonth(w: World) {
+  for (const a of census(w).all) {
+    const f = a.family;
+    if (!f || f.partner == null || a.player || a.gone) continue;
+    const b = alive(w, f.partner);
+    if (!b || b.player || a.id > b.id) continue;
+    const rel = Math.min(a.rel[b.id] ?? 0, b.rel[a.id] ?? 0);
+    const days = (w.time - f.since) / DAY;
+    bumpRel(a, b, rand(w, -6, 9) - Math.max(0, valueDistance(w, a, b) - 0.15) * 20);
+    if (f.status === 'dating') {
+      if (rel < 10 && chance(w, 0.9)) { split(w, a, b); continue; }
+      if (rel >= 60 && days >= 30 && !marriageBar(w, a, b, w.nations[a.nation]) && chance(w, 0.4 * (0.5 + (valueOf(w, a, 'family') + valueOf(w, b, 'family')) / 2))) { fam(a).status = fam(b).status = 'engaged'; fam(a).since = fam(b).since = w.time; }
+    } else if (f.status === 'engaged') {
+      if (days >= 20 && chance(w, 0.8)) wed(w, a, b);
+    } else if (f.status === 'married' && rel < 0 && chance(w, 0.45)) { divorce(w, a, b, w.nations[a.nation]); split(w, a, b); }
+  }
+  // New couples: a month of meeting neighbours and workmates.
+  for (const r of w.regions) {
+    const singles = residents(w, r.id).filter((c) => !c.player && c.family?.partner == null && isAdult(w, c) && ageOf(w, c) < 70 && !jailed(w, c));
+    for (let k = 0; k < Math.min(10, Math.floor(singles.length / 2)); k++) {
+      const a = pick(w, singles), b = pick(w, singles);
+      if (a === b || a.family?.partner != null || b.family?.partner != null) continue;
+      const kk = compatible(w, a, b);
+      if (kk > 0 && chance(w, kk * 0.3)) { pair(w, a, b, 'dating'); bumpRel(a, b, 25); }
+    }
+  }
+}
+
 /** Genesis: couples, children growing up at home, and grown-up children living nearby. */
 export function initFamilies(w: World) {
   for (const r of w.regions) {

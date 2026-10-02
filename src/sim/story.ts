@@ -343,7 +343,7 @@ export function offerAmbient(w: World, p: Citizen): StoryInstance | null {
   if (!FREQ[w.story.settings.frequency]) return null;
   if (Object.values(w.story.instances).some((i) => i.status === 'offered' && STORIES[i.def]?.ambient)) return null;
   let pool = Object.values(STORIES).filter((d) => d.ambient && d.bind && (w.story.cooldowns[d.id] ?? 0) <= w.time);
-  for (let tries = 0; tries < 5 && pool.length; tries++) {
+  for (let tries = 0; tries < 15 && pool.length; tries++) { // many situations fit only now and then
     const d = weighted(w, pool, (x) => x.ambient!.weight)!;
     pool = pool.filter((x) => x !== d);
     const b = d.bind!(w, p);
