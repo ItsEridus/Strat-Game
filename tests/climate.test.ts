@@ -28,11 +28,13 @@ test('climate: emissions, temperature, the climate agreement and its effects', (
   assert.ok(hazardFactor(w, 'hurricane') > 1.2 && hazardFactor(w, 'earthquake') === 1);
   assert.ok(climateYield(w, 'tropical') < y0 && climateYield(w, 'subarctic') > 1);
   climateOf(w).temp = 1.3;
-  // A year on: the Paris Agreement exists, without the United States; the temperature has risen.
+  // A year on: the Paris Agreement exists with Britain in it (the United States left in 2025, though a new
+  // government may rejoin within the year); the temperature has risen.
   statisticalSkip(w, w.time + 400 * DAY);
   const paris = Object.values(w.treaties ?? {}).find((t: any) => t.kind === 'climate');
-  assert.ok(paris && !paris.parties.includes(us.id) && paris.parties.includes(gb.id));
+  assert.ok(paris && paris.parties.includes(gb.id));
+  if (paris.parties.includes(us.id)) assert.ok((us.chronicle ?? []).some((e: any) => /rejoined the Paris/.test(e.text)), 'only by rejoining');
   assert.ok(climateOf(w).temp > 1.3 && climateOf(w).hist.length >= 1);
-  if (climateCommitment(w, gb) > 0) assert.ok(transitionRate(w, gb) > transitionRate(w, us));
+  if (climateCommitment(w, gb) > 0 && !paris.parties.includes(us.id)) assert.ok(transitionRate(w, gb) > transitionRate(w, us));
   assert.ok(audit(w).ok);
 });

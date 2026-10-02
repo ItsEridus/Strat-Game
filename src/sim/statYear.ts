@@ -25,13 +25,15 @@ import { census, invalidateCensus } from './census';
 import { ageOf } from './growth';
 import { turnoverMonth } from './companyLife';
 import { familySkipMonth } from './family';
+import { pensionsMonth } from './pensions';
+import { benefitsMonth } from './labour';
 import { disastersMonth } from './dynamics';
 import { companyCurrency, coref, cref, hhref, natref, player } from './query';
 import { runQueue } from './tick';
 import { activeBattles, finishBattle } from './battle';
 import { engaged, power } from './forces';
 import { die, mortality, populationDaily } from './population';
-import { dailyRevenue, dailySpending } from './publicFinance';
+import { dailyRevenue, dailySpending, publicFinanceDaily } from './publicFinance';
 import { strategicDaily } from './strategic';
 import { arsenalDaily } from './arsenal';
 import { energyDaily } from './energy';
@@ -116,19 +118,19 @@ function hiringMonth(w: World) {
 }
 
 /** A month of companies trading at their recent averages. */
-function companiesMonth(w: World, days: number) {
+/** Last month's share of usual sales that households could afford, by country (firms buy inputs to match). */
+const lastShare = new WeakMap<World, Map<number, number>>();
+
+/** A month of companies: first they pay for inputs and wages, then households buy from them. */
+function companiesPayMonth(w: World, days: number) {
+  const shares = lastShare.get(w);
   for (const co of Object.values(w.companies)) {
     const h = co.hist.slice(-14);
     if (!h.length) continue;
     const code = companyCurrency(w, co);
     const nat = w.regions[co.region].owner;
-    const hh = w.households[nat];
-    if (!hh) continue;
-    const sales = Math.round(avg(h.map((x) => x.revenue)) * days);
-    const costs = Math.round(avg(h.map((x) => x.inputCost + (x.overheads ?? 0))) * days);
-    if (sales > 0) pay(w, hhref(nat), coref(co.id), code, Math.min(sales, Math.floor((hh.wallet[code] ?? 0) * 0.02)), 'Sales (statistical month)');
-    if (costs > 0) pay(w, coref(co.id), hhref(nat), code, Math.min(costs, co.wallet[code] ?? 0), 'Costs (statistical month)');
-    // Wages: about five shifts a week.
+    if (!w.households[nat]) continue;
+    // Wages first (about five shifts a week): staff are paid before suppliers.
     const wage = co.offer?.wage ?? 0;
     for (const id of [...co.workers]) {
       const c = w.citizens[id];
@@ -139,6 +141,32 @@ function companiesMonth(w: World, days: number) {
       if (paid > 0) pay(w, coref(co.id), cref(c.id), code, paid, `Wages from ${co.name} (statistical month)`);
       c.incomeAvg = Math.round(due / days);
     }
+    const costs = Math.round(avg(h.map((x) => x.inputCost + (x.overheads ?? 0))) * days * (shares?.get(nat) ?? 1));
+    if (costs > 0) pay(w, coref(co.id), hhref(nat), code, Math.min(costs, co.wallet[code] ?? 0), 'Costs (statistical month)');
+  }
+}
+/** What households can spend is shared among each country's firms in proportion to their usual sales
+ * (2.8.1: a fixed 2% cap per firm, taken before wages and costs had come back round, starved firms). */
+function companiesSellMonth(w: World, days: number) {
+  const want = new Map<number, number>();
+  for (const co of Object.values(w.companies)) {
+    const h = co.hist.slice(-14);
+    if (!h.length) continue;
+    const nat = w.regions[co.region].owner;
+    want.set(nat, (want.get(nat) ?? 0) + avg(h.map((x) => x.revenue)) * days);
+  }
+  const share = new Map<number, number>();
+  for (const [nat, total] of want) { const hh = w.households[nat]; const code = w.nations[nat]?.cur; if (hh && code) share.set(nat, Math.min(1, ((hh.wallet[code] ?? 0) * 0.9) / Math.max(1, total))); }
+  lastShare.set(w, share);
+  for (const co of Object.values(w.companies)) {
+    const h = co.hist.slice(-14);
+    if (!h.length) continue;
+    const code = companyCurrency(w, co);
+    const nat = w.regions[co.region].owner;
+    const hh = w.households[nat];
+    if (!hh) continue;
+    const sales = Math.round(avg(h.map((x) => x.revenue)) * days * (share.get(nat) ?? 0));
+    if (sales > 0) pay(w, hhref(nat), coref(co.id), code, Math.min(sales, hh.wallet[code] ?? 0), 'Sales (statistical month)');
   }
 }
 
@@ -156,7 +184,7 @@ function householdsAndStatesMonth(w: World, days: number) {
   for (const n of w.nations) {
     if (n.exile) continue;
     const hh = w.households[n.id];
-    const rev = Math.min(Math.round(dailyRevenue(n) * days), Math.floor((hh.wallet[n.cur] ?? 0) * 0.1));
+    const rev = Math.min(Math.round(dailyRevenue(n) * days), Math.floor((hh.wallet[n.cur] ?? 0) * 0.3));
     if (rev > 0 && pay(w, hhref(n.id), natref(n.id), n.cur, rev, 'Taxes (statistical month)')) n.stats.revenue += rev;
     const spend = Math.min(Math.round(dailySpending(n) * days), Math.floor((n.wallet[n.cur] ?? 0) * 0.5));
     if (spend > 0 && pay(w, natref(n.id), hhref(n.id), n.cur, spend, 'Public spending (statistical month)')) n.stats.spending += spend;
@@ -192,10 +220,13 @@ export function skipMonth(w: World, target: number) {
     const next = Math.min(target, nextMonth(w.time));
     const days = Math.max(1, Math.round((next - w.time) / DAY));
     hiringMonth(w);
-    companiesMonth(w, days);
+    companiesPayMonth(w, days);
     turnoverMonth(w);
     disastersMonth(w, days);
     householdsAndStatesMonth(w, days);
+    pensionsMonth(w, days); benefitsMonth(w, days); // (2.8.1: these were not paid in skipped months)
+    publicFinanceDaily(w, days); // interest, and borrowing to cover a deficit (2.8.1: governments did not borrow in skipped months)
+    companiesSellMonth(w, days); // households buy last, with the month's wages and spending come round
     settleBattles(w);
     w.time = next;
     runQueue(w); // elections, war deadlines and anything else scheduled in the month, in order

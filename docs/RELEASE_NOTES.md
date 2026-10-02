@@ -3,6 +3,23 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.8.1: money in skipped years
+
+Fixes to the statistical skip ("Skip a year"), found while checking twenty-year runs. Over a few skipped years,
+most people's savings ran down to nothing and governments emptied their treasuries.
+
+- **Pensions and unemployment benefit** are now paid in skipped months. Before, retirees and the unemployed
+  received nothing until day-to-day play resumed, and people now retire at the usual rate.
+- **Governments borrow and pay interest** in skipped months, as they do day to day. Before, a government running a
+  deficit simply spent its treasury down to almost nothing.
+- **Firms pay their staff first**, then their suppliers. Afterwards households buy from firms with the month's
+  wages and spending: what households can spend is shared among firms in proportion to their usual sales, and
+  firms buy inputs to match what they sold. Before, a fixed cap on each firm's sales, taken before the month's
+  money had come round, starved firms so that they could not pay wages.
+- **Taxes** are collected from a realistic share of household spending.
+
+Workers now come out slightly ahead each month in skipped years, and treasuries hold steady.
+
 ### New in 2.8.0: Life 2.0, the everyday
 
 2.8 is complete: the texture of ordinary days. Its parts:

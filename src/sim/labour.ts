@@ -76,6 +76,18 @@ export function jobLost(w: World, c: Citizen, co: Company | null, wage: number) 
   if (r.rate > 0 && r.weeks > 0 && wage > 0) c.benefit = { until: w.time + r.weeks * 7 * DAY, daily: Math.round(wage * r.rate) };
 }
 
+/** A statistical month of unemployment benefit (sim/statYear.ts). */
+export function benefitsMonth(w: World, days: number) {
+  for (const c of census(w).all) {
+    const b = c.benefit;
+    if (!b) continue;
+    if (c.job != null || c.post || c.gone || c.retired || w.time > b.until) { delete c.benefit; continue; }
+    const n = w.nations[c.nation];
+    const amt = b.daily * Math.min(days, Math.max(1, Math.round((b.until - w.time) / DAY)));
+    if ((n.wallet[n.cur] ?? 0) > amt * 20 && pay(w, natref(n.id), cref(c.id), n.cur, amt, 'Unemployment benefit (statistical month)')) n.stats.spending += amt;
+  }
+}
+
 export function labourDaily(w: World) {
   const d = dateAt(w.time);
   for (const c of census(w).all) {

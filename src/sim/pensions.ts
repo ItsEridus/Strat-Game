@@ -86,6 +86,25 @@ export function retire(w: World, c: Citizen = player(w)): Result {
   return ok(`🌅 Retired. Pensions: ${fmtAmt(code, q.state)} a day from the state${q.private ? `, ${fmtAmt(code, q.private)} from your pension pot` : ''}${q.military ? `, ${fmtAmt(code, q.military)} military pension` : ''}.`);
 }
 
+/** A statistical month (sim/statYear.ts): pensions for the month, and retirements at the daily rate compounded. */
+export function pensionsMonth(w: World, days: number) {
+  for (const c of census(w).all) {
+    if (c.gone) continue;
+    if (!c.retired) {
+      const r = pensionRules(w, c);
+      const age = ageOf(w, c);
+      if (!c.player && age >= r.age - 2 && hash01(c.id, Math.floor(w.time / DAY), 1317) < 1 - Math.pow(1 - Math.min(1, 0.01 * (age - r.age + 3)), days) && !c.unit && !holdsOffice(w, c)) retire(w, c);
+      continue;
+    }
+    const p = pensionOf(c);
+    if (p.state == null) { p.days = Math.round(fullCareer(w) * (0.5 + hash01(c.id, 1316) * 0.5)); const q = pensionQuote(w, c); p.state = q.state; p.private = 0; p.military = q.military; p.since = w.time; }
+    const n = w.nations[c.nation];
+    const stateAmt = ((p.state ?? 0) + (p.military ?? 0)) * days;
+    if (stateAmt && (n.wallet[n.cur] ?? 0) > stateAmt * 20 && pay(w, natref(n.id), cref(c.id), n.cur, stateAmt, 'Pensions (statistical month)')) n.stats.spending += stateAmt;
+    if (p.private && p.pot > 0) { const amt = Math.min(p.private * days, p.pot); if (pay(w, hhref(n.id), cref(c.id), n.cur, amt, 'Private pension')) p.pot -= amt; }
+  }
+}
+
 /** Daily: pensions are paid; NPCs retire around their country's pension age. */
 export function pensionsDaily(w: World) {
   for (const c of census(w).all) {

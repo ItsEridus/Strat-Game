@@ -21,7 +21,7 @@ export function bondRate(n: Nation): number {
 /** Three years of revenue, and never less than six months of spending (so a collapsing government can still pay its staff). */
 export const debtLimit = (n: Nation) => Math.round(Math.max(dailyRevenue(n) * 365 * 3, dailySpending(n) * 180));
 
-export function publicFinanceDaily(w: World) {
+export function publicFinanceDaily(w: World, days = 1) { // (days > 1 in a statistical month)
   for (const n of w.nations) {
     if (n.exile) continue;
     const cash = n.wallet[n.cur] ?? 0;
@@ -29,7 +29,7 @@ export function publicFinanceDaily(w: World) {
     if (month <= 0 || n.stats.spendHist.length < 7) continue; // a week of history before judging the finances
     // Interest, paid daily; unpaid interest is added to the debt.
     if (n.debt) {
-      const due = Math.round((n.debt * bondRate(n)) / 36500);
+      const due = Math.round((n.debt * bondRate(n) * days) / 36500);
       const paid = Math.min(due, cash);
       if (paid > 0 && pay(w, natref(n.id), hhref(n.id), n.cur, paid, 'Interest on public debt')) { n.stats.spendToday += paid; n.interestPaid = (n.interestPaid ?? 0) + paid; }
       if (due > paid) n.debt += due - paid;
