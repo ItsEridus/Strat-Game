@@ -43,6 +43,7 @@ import { fam, bereave, kidComesOfAge } from './family';
 import { mourn } from './mentalHealth';
 import { habitToll } from './habits';
 import { sleepToll } from './everyday';
+import { bodyToll } from './body';
 import { assignEducation } from './education';
 import { conditionToll } from './health';
 
@@ -63,6 +64,7 @@ function healthTarget(w: World, c: Citizen): number {
   t -= Math.max(0, (c.life?.stress ?? 25) - 65) * 0.3;
   t -= habitToll(c); // smoking and heavy drinking
   t -= sleepToll(w, c); // short nights
+  t -= bodyToll(w, c); // weight, diet and fitness
   t -= conditionToll(w, c); // illnesses and injuries // long strain wears people down
   if (c.life?.treated != null && today(w) - c.life.treated < B.goods.treatmentDays) t += B.goods.treatment; // under treatment
   return Math.max(5, Math.min(100, t));

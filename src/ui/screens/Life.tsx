@@ -32,6 +32,7 @@ import { GossipPanel } from './GossipPanel';
 import { LovePanel } from './LovePanel';
 import { DayPlanner } from './DayPlanner';
 import { CarPanel } from './CarPanel';
+import { BodyPanel } from './BodyPanel';
 import { pensionOf, pensionQuote, pensionRules, retire, retireCheck } from '../../sim/pensions';
 import { isMinor, parentTime, parentTimeCheck, play, playCheck, schoolDay, schoolDayCheck } from '../../sim/childhood';
 import { continueAsNewcomer, successor, writeWill } from '../../sim/legacy';
@@ -120,6 +121,7 @@ export function Life({ w }: { w: World }) {
       </>}
       {tab === 'health' && <>
         <Panel title="Health"><HealthPanel w={w} p={p} /></Panel>
+        <Panel title="💪 Body"><BodyPanel w={w} p={p} /></Panel>
         <Panel title="🧠 Mind and mood"><MindPanel w={w} p={p} /></Panel>
         <Panel title="🚬 Habits"><HabitsPanel w={w} p={p} /></Panel>
         <Panel title="👥 Your circles" class="wide"><CirclesPanel w={w} p={p} /></Panel>
@@ -540,7 +542,7 @@ function Budget({ w, p }: { w: World; p: Citizen }) {
 function RoutinePanel({ w, p }: { w: World; p: Citizen }) {
   const r = routineOf(w);
   const b = routineBudget(w, r);
-  const toggle = (k: 'work' | 'train' | 'family' | 'rest' | 'jobHunt' | 'school') => { r[k] = !r[k]; if (k === 'train') w.settings.autoTrain = r.train; store.emit(); };
+  const toggle = (k: 'work' | 'train' | 'family' | 'rest' | 'jobHunt' | 'school' | 'exercise') => { r[k] = !r[k]; if (k === 'train') w.settings.autoTrain = r.train; store.emit(); };
   const hh = (h: number) => `${String(h).padStart(2, '0')}:00`;
   return (
     <div>
@@ -554,6 +556,7 @@ function RoutinePanel({ w, p }: { w: World; p: Citizen }) {
         {Object.entries(HOBBIES).map(([k, h]) => <option value={k}>{h.icon} {h.label}</option>)}
       </select></label>
       <label class="check"><input type="checkbox" checked={r.rest} onChange={() => toggle('rest')} /> Rest at 21:00</label>
+      <label class="check"><input type="checkbox" checked={!!r.exercise} onChange={() => toggle('exercise')} /> Exercise at 07:00</label>
       <p class="small muted">{b.hours} of {b.free} waking hours planned. Routine actions are the same as doing them yourself: one paid shift a day, and only when you are able.</p>
       {b.clashes.map((c) => <p class="small bad">⚠ {c}</p>)}
     </div>

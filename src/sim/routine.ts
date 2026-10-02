@@ -14,6 +14,7 @@ import { study, studyCheck } from './education';
 import { schoolDay, schoolDayCheck } from './childhood';
 import { serviceShift, serviceShiftCheck } from './services';
 import { familyTime, familyTimeCheck, rest, restCheck } from './wellbeing';
+import { exercise, exerciseCheck } from './body';
 
 /** Hourly, for the player only. */
 export function routineHourly(w: World) {
@@ -30,4 +31,5 @@ export function routineHourly(w: World) {
   if (r.family && h === 19 && !familyTimeCheck(w, p)) familyTime(w, p);
   if (r.hobby && h === 20 && !hobbyCheck(w, p, r.hobby)) pursueHobby(w, r.hobby, p);
   if (r.rest && h === 21 && !restCheck(w, p)) rest(w, p);
+  if (r.exercise && h === 7 && !exerciseCheck(w, p)) exercise(w, p);
 }

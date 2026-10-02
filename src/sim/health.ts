@@ -22,6 +22,7 @@ import { schoolQuality } from './education';
 import { INDUSTRY_INFO } from '../data/items';
 import { activeCrises } from './dynamics';
 import { habitRisk } from './habits';
+import { weightRisk } from './body';
 
 export type CondKey = 'flu' | 'injury' | 'back' | 'depression' | 'anxiety' | 'burnout' | 'diabetes' | 'heart' | 'cancer' | 'wound';
 export interface Condition { key: CondKey; since: number; until?: number; treatedUntil?: number; sev: number; sought?: boolean } // sought: help asked for (mental health)
@@ -99,8 +100,8 @@ function onsetRates(w: World, c: Citizen, epidemic: boolean): [CondKey, number][
     ['flu', (epidemic ? 1.5 : 0.25) / 365],
     ['injury', (manual ? 0.06 : 0.01) / 365],
     ['back', (age > 35 ? 0.03 : 0.01) / 365],
-    ['diabetes', (age > 40 ? 0.006 : 0.001) * life / 365],
-    ['heart', (age > 50 ? 0.003 * (age - 45) / 5 : 0) * habitRisk(c, 'heart') * life / 365],
+    ['diabetes', (age > 40 ? 0.006 : 0.001) * weightRisk(w, c) * life / 365],
+    ['heart', (age > 50 ? 0.003 * (age - 45) / 5 : 0) * habitRisk(c, 'heart') * weightRisk(w, c) * life / 365],
     ['cancer', (age > 50 ? 0.002 * (age - 40) / 10 : 0.0002) * habitRisk(c, 'cancer') * life / 365],
   ];
 }

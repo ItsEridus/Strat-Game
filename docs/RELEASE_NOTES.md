@@ -3,6 +3,28 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.7.3: the body
+
+The third part of 2.8 Life 2.0: the everyday.
+
+- **Weight.** Everyone's body-mass index follows their country, as in the WHO's 2022 adult obesity figures:
+  - about two in five Americans are obese;
+  - about a third in Mexico, Argentina, Saudi Arabia and Australia;
+  - about a fifth in Germany;
+  - under a tenth in China, Korea, Japan and India.
+  People are heavier in middle age.
+- **Diet.** You can cook at home (cheapest and healthiest, an hour a day), mix home cooking with meals out, eat out,
+  or live on fast food (quick but fattening). Meals out cost what they do in each country, from about $3 in India
+  to $20 in the United States, paid monthly by everyone who eats out.
+- **Fitness.** Exercise, active hobbies (running, gardening, football), walking or cycling to work and a sporty
+  nature build it; age and sitting still wear it down. You can exercise for an hour a day, or make it part of
+  your routine at 07:00.
+- **Health:**
+  - obesity raises the risk of diabetes and heart disease, and lowers the health people drift towards;
+  - fitness and a good diet raise it and ease stress;
+  - the average person is unchanged, so the fit gain and the unfit lose.
+- **On screen:** a "Body" panel in Life (Health), and cooking and exercise on your day planner.
+
 ### New in 2.7.2: cars
 
 The second part of 2.8 Life 2.0: the everyday.

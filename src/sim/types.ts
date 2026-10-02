@@ -48,6 +48,7 @@ export interface Citizen {
   mh?: import('./mentalHealth').MentalHealth; // past episodes, losses being grieved, therapy (2.6)
   orient?: import('./partnership').Orientation; alimony?: import('./partnership').Alimony; // whom they are drawn to (player's choice); maintenance they pay (2.7)
   matches?: import('./familyLife').Match[]; // dating matches to meet (2.7)
+  body?: { bmi: number; fitness: number; diet: import('./body').Diet }; // weight, fitness and diet, once they change (2.8)
   commute?: import('./everyday').Mode; sleep?: import('./everyday').Sleep; car?: import('./everyday').Car | null; // how they get to work, their nights, their car (2.8)
   ties?: import('./ties').Tie[]; // lasting memories of other people: grudges, gratitude, old flames, rivals, comrades (2.6)
   habits?: Partial<Record<import('./habits').Habit, import('./habits').HabitState>>; // smoking, drinking, gambling, gaming (2.6)
@@ -180,7 +181,7 @@ export interface AnnualReview {
 }
 
 /** Personal routine: what the player does automatically each day (through the same validated actions as manual play). */
-export interface Routine { work: boolean; train: boolean; family: boolean; rest: boolean; hobby: string | null; school: boolean; jobHunt?: boolean }
+export interface Routine { work: boolean; train: boolean; family: boolean; rest: boolean; hobby: string | null; school: boolean; jobHunt?: boolean; exercise?: boolean }
 
 /** The life simulation's saved state (versioned with the world). */
 export interface LifeState {

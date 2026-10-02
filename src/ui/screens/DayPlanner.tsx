@@ -5,7 +5,7 @@ import { store } from '../store';
 import { fmtAmt } from '../../engine/money';
 import { MODE_LABEL, commuteMinutes, dayPlan, hasCar, modeOf, monthlyFares, reachOf, setCommute, setSleep, sleepLabel, sleepOf, type Mode } from '../../sim/everyday';
 
-const COLORS: Record<string, string> = { sleep: '#4b5d9a', commute: '#9a7b4b', work: '#3f8f6b', school: '#6b5fb0', train: '#b05f5f', meal: '#a0a0a0', family: '#c0884a', hobby: '#4a9cc0', rest: '#7aa36b' };
+const COLORS: Record<string, string> = { sleep: '#4b5d9a', commute: '#9a7b4b', work: '#3f8f6b', school: '#6b5fb0', train: '#b05f5f', meal: '#a0a0a0', cook: '#c06a4a', family: '#c0884a', hobby: '#4a9cc0', rest: '#7aa36b' };
 const hh = (h: number) => { const x = ((h % 24) + 24) % 24; return `${String(Math.floor(x)).padStart(2, '0')}:${x % 1 ? String(Math.round((x % 1) * 60)).padStart(2, '0') : '00'}`; };
 
 export function DayPlanner({ w, p }: { w: World; p: Citizen }) {

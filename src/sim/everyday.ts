@@ -19,6 +19,7 @@ import { dataIso } from '../data/isoAlias';
 import { census } from './census';
 import { cref, hhref, player } from './query';
 import { routineOf } from './lifecycle';
+import { dietHours, dietOf } from './body';
 
 export type Mode = 'walk' | 'transit' | 'car';
 /** A car someone owns (bought, running costs and accidents: sim/cars.ts). */
@@ -126,6 +127,9 @@ export function dayPlan(w: World, c: Citizen = player(w)): { blocks: Block[]; cl
   }
   if (r.school) blocks.push({ from: 9, to: 16, what: 'Classes', icon: '📚', kind: 'school' });
   if (r.train) blocks.push({ from: c.trainHour, to: c.trainHour + 1, what: 'Training', icon: '🏋️', kind: 'train' });
+  if (r.exercise) blocks.push({ from: 7, to: 8, what: 'Exercise', icon: '🏃', kind: 'train' });
+  const cook = dietHours(dietOf(w, c));
+  if (cook) blocks.push({ from: 18.5 - cook, to: 18.5, what: 'Cooking', icon: '🍳', kind: 'cook' });
   blocks.push({ from: 12.5, to: 13, what: 'Lunch', icon: '🥪', kind: 'meal' }, { from: 18.5, to: 19, what: 'Dinner', icon: '🍽️', kind: 'meal' });
   if (r.family) blocks.push({ from: 19, to: 21, what: 'Family time', icon: '👪', kind: 'family' });
   if (r.hobby) blocks.push({ from: 20, to: 22, what: 'Hobby', icon: '🎯', kind: 'hobby' });

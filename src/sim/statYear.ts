@@ -69,6 +69,7 @@ import { partnershipDaily } from './partnership';
 import { familyLifeDaily } from './familyLife';
 import { everydayDaily } from './everyday';
 import { carsDaily } from './cars';
+import { bodyDaily } from './body';
 import { treatiesDaily } from './treaties';
 import { relationsDaily } from './relations';
 import { diplomacyActionsDaily } from './diplomacyActions';
@@ -200,7 +201,7 @@ export function skipMonth(w: World, target: number) {
     peopleMonth(w, days);
     familySkipMonth(w); // courtship, weddings and divorces
     // The monthly national turn (these run on the first of the month).
-    regimesDaily(w); uprisingsDaily(w); secessionDaily(w); warCourseDaily(w); civilWarDaily(w); technologyDaily(w); cyberDaily(w); spaceDaily(w); automationDaily(w); sovereignDaily(w); marketsDaily(w); climateDaily(w); softPowerDaily(w); demographyDaily(w); almanacDaily(w); mindDaily(w); mentalHealthDaily(w); habitsDaily(w); tiesDaily(w); circlesDaily(w); gossipDaily(w); partnershipDaily(w); familyLifeDaily(w); everydayDaily(w); carsDaily(w); warHomeDaily(w, days);
+    regimesDaily(w); uprisingsDaily(w); secessionDaily(w); warCourseDaily(w); civilWarDaily(w); technologyDaily(w); cyberDaily(w); spaceDaily(w); automationDaily(w); sovereignDaily(w); marketsDaily(w); climateDaily(w); softPowerDaily(w); demographyDaily(w); almanacDaily(w); mindDaily(w); mentalHealthDaily(w); habitsDaily(w); tiesDaily(w); circlesDaily(w); gossipDaily(w); partnershipDaily(w); familyLifeDaily(w); everydayDaily(w); carsDaily(w); bodyDaily(w); warHomeDaily(w, days);
     withScope(() => { warDecisionDaily(w, days); beliefsDaily(w, days); treatiesDaily(w); relationsDaily(w, days); diplomacyActionsDaily(w, days); intlDaily(w, days); balanceOfPowerDaily(w); crisesDaily(w, days); });
     intelOrgDaily(w); collectionDaily(w); counterIntelDaily(w);
     strategicDaily(w); arsenalDaily(w); energyDaily(w); foodDaily(w); powerMonthly(w); budgetDaily(w);
