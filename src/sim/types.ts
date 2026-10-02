@@ -372,7 +372,7 @@ export interface Region {
   pop0?: number; // background population at genesis
   draw?: number; // how attractive the region is to live in, -1..1, smoothed (sim/population.ts)
   blockade: Id | null; // nation whose navy blockades this coast
-  staff?: { school: number; clinic: number; offices: number; courts?: number; prison?: number; emergency?: number; meteorology?: number; diplomacy?: number; trade?: number; intl?: number };
+  staff?: { school: number; clinic: number; offices: number; courts?: number; prison?: number; emergency?: number; meteorology?: number; diplomacy?: number; trade?: number; intl?: number; research?: number };
   housePx?: number; // housing price index, 0.5..2.5, drifts slowly (sim/housing.ts) // public-service staffing 0..1 (sim/services.ts)
 }
 
@@ -834,6 +834,7 @@ export interface World {
   treaties?: Record<Id, import('./treaties').Treaty>;
   intl?: import('./intlOrgs').IntlState;
   newStates?: import('./secession').NewState[]; // states born in play (2.3)
+  patents?: import('./technology').Patent[]; // breakthroughs, who holds them and what they earned (2.4)
   techFirsts?: Record<string, import('./technology').TechFirst>; // who achieved each technology first, and when (2.4)
   standoffs?: import('./crises').Crisis[]; // international crises short of war (2.0)
   armsRaces?: import('./balanceOfPower').ArmsRace[]; // rival pairs building up against each other (2.0)

@@ -56,3 +56,32 @@ test('technologies make growth faster, forces stronger, intelligence sharper, li
   const w2 = deserialize(serialize(w));
   assert.ok(hasTech(by(w2, 'USA'), 'aiagents'));
 });
+
+test('the innovation system: research workforce, patents and royalties, partnerships and stolen designs', async () => {
+  const { gain, researchWorkforce, stealTech } = await import('../src/sim/technology');
+  const { signTreaty } = await import('../src/sim/treaties');
+  const w = fresh(2603);
+  advance(w, 2 * DAY, false);
+  const us = by(w, 'USA'), de = by(w, 'DEU'), cn = by(w, 'CHN');
+  const wf = researchWorkforce(w, us);
+  assert.ok(wf >= 0.5 && wf <= 1.6);
+  // A breakthrough is patented; adopters pay royalties.
+  gain(w, us, TECH.swarms, 'discovered');
+  const pat = w.patents!.find((p) => p.tech === 'swarms')!;
+  assert.ok(pat && pat.nation === us.id);
+  if (pat.company != null) {
+    de.wallet.GOLD = Math.max(de.wallet.GOLD ?? 0, 0);
+    const before = pat.royalties;
+    if ((de.wallet.GOLD ?? 0) > 1000) { gain(w, de, TECH.swarms, 'adopted'); assert.ok(pat.royalties > before); }
+  }
+  // Partners never keep technology from each other.
+  for (const n of w.nations) if (hasTech(n, 'swarms') && n.id !== cn.id) n.relations[cn.id].score = -60;
+  assert.ok(controlled(w, cn, 'swarms'));
+  signTreaty(w, 'tech', [us.id, cn.id], { quiet: true });
+  assert.ok(!controlled(w, cn, 'swarms'));
+  // Spies steal designs when the thief is close enough to use them.
+  capsOf(w, cn).tech.military = threshold(TECH.swarms);
+  const d = hasTech(cn, 'swarms') ? null : stealTech(w, cn, us);
+  if (d) assert.ok(hasTech(cn, d.id));
+  assert.ok(audit(w).ok);
+});

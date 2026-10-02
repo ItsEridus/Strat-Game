@@ -9,6 +9,7 @@
 // Exposure causes diplomatic incidents and arrests. Citizens (AI and player) can
 // join their service and climb from analyst to deputy director, and foreign
 // services try to turn well-placed citizens into double agents.
+import { stealTech } from './technology';
 import { lifeGate } from './lifecycle';
 import { ageOf, repNeed, seniority, standing } from './growth';
 import type { Citizen, Id, OpKind, SpyOp, World } from './types';
@@ -267,7 +268,8 @@ function applyOp(w: World, op: SpyOp): string {
         const gap = theirs.tech[d] - mine.tech[d];
         if (gap > 0) { mine.tech[d] = Math.round((mine.tech[d] + gap * 0.03) * 100) / 100; stolen.push(d); }
       }
-      return `Inside ${t.name}'s networks: the estimate is sharper${stolen.length ? `, and ${stolen.join(' and ')} technology was copied` : ''}.`;
+      const design = stealTech(w, n, t);
+      return `Inside ${t.name}'s networks: the estimate is sharper${stolen.length ? `, and ${stolen.join(' and ')} technology was copied` : ''}${design ? `; the designs for ${design.name.toLowerCase()} were stolen` : ''}.`;
     }
     case 'election': {
       const e = nextElection(w, t.id);

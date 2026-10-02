@@ -24,7 +24,7 @@ import { leaveCheck } from './health';
 import { contribute } from './pensions';
 import { recordPay } from './wages';
 
-export type Service = 'teacher' | 'nurse' | 'doctor' | 'clerk' | 'engineer' | 'prosecutor' | 'defender' | 'judge' | 'warden' | 'procurement' | 'emergency' | 'meteorology' | 'diplomat' | 'tradeneg' | 'intlcivil';
+export type Service = 'teacher' | 'nurse' | 'doctor' | 'clerk' | 'engineer' | 'prosecutor' | 'defender' | 'judge' | 'warden' | 'procurement' | 'emergency' | 'meteorology' | 'diplomat' | 'tradeneg' | 'intlcivil' | 'research';
 export interface Post { kind: Service; region: Id; grade: number; since: number; promoted: number; shifts: number; lastDay: number }
 
 interface ServiceDef { label: string; icon: string; place: string; ladder: string[]; pay: number[]; needs: { level: EduLevel; field?: Field[] }[]; per: number; skill: 'lead' | 'end' | 'eco' | 'cons' | 'acc' }
@@ -72,6 +72,10 @@ export const SERVICES: Record<Service, ServiceDef> = {
     needs: [{ level: 'vocational' }, { level: 'bachelor', field: ['science'] }, { level: 'bachelor', field: ['science'] }, { level: 'master', field: ['science'] }, { level: 'master', field: ['science'] }] },
   // Foreign affairs (2.0): diplomats build the country's diplomatic capital; trade negotiators win better agreements
   // and WTO cases; the country's people in international organisations carry its voice at the UN.
+  // Government research (2.4): national laboratories whose researchers raise the country's research effort.
+  research: { label: 'Government research', icon: '🔬', place: 'national laboratory', per: 250, skill: 'acc',
+    ladder: ['Research assistant', 'Researcher', 'Senior researcher', 'Principal investigator', 'Laboratory director'], pay: [1.5, 2.1, 2.8, 3.6, 4.6],
+    needs: [{ level: 'bachelor', field: ['science', 'engineering', 'medicine'] }, { level: 'master', field: ['science', 'engineering', 'medicine'] }, { level: 'doctorate', field: ['science', 'engineering', 'medicine'] }, { level: 'doctorate', field: ['science', 'engineering', 'medicine'] }, { level: 'doctorate', field: ['science', 'engineering', 'medicine'] }] },
   diplomat: { label: 'Foreign service', icon: '🌐', place: 'foreign ministry', per: 400, skill: 'lead',
     ladder: ['Attaché', 'Third secretary', 'First secretary', 'Counsellor', 'Ambassador'], pay: [1.6, 2.1, 2.8, 3.6, 4.8],
     needs: [{ level: 'bachelor' }, { level: 'bachelor' }, { level: 'master' }, { level: 'master' }, { level: 'master' }] },
@@ -94,7 +98,7 @@ export function maxGrade(c: Citizen, kind: Service): number {
 }
 /** Posts in a region: one per `per` residents (about 13% of people work in these services, as in OECD countries); small places share a teacher, a nurse and a clerk. */
 /** Courts sit in the larger places: the smallest number of residents for each court post. */
-const COURT_MIN: Partial<Record<Service, number>> = { prosecutor: 30, defender: 30, judge: 30, warden: 30, procurement: 40, emergency: 20, meteorology: 40, diplomat: 50, tradeneg: 60, intlcivil: 60 };
+const COURT_MIN: Partial<Record<Service, number>> = { prosecutor: 30, defender: 30, judge: 30, warden: 30, procurement: 40, emergency: 20, meteorology: 40, diplomat: 50, tradeneg: 60, intlcivil: 60, research: 50 };
 export function postsIn(w: World, region: Id, kind: Service): number {
   const n = residents(w, region).length;
   const core = kind === 'teacher' || kind === 'nurse' || kind === 'clerk';
@@ -214,7 +218,7 @@ export function servicesDaily(w: World, fill = false) {
   for (const c of census(w).all) if (c.post) staff.set(`${c.post.region}:${c.post.kind}`, (staff.get(`${c.post.region}:${c.post.kind}`) ?? 0) + 1);
   for (const r of w.regions) {
     const ratio = (kinds: Service[]) => { let have = 0, want = 0; for (const k of kinds) { have += staff.get(`${r.id}:${k}`) ?? 0; want += postsIn(w, r.id, k); } return want ? Math.min(1, have / want) : 0.6; }; // nothing to staff: neutral
-    r.staff = { school: ratio(['teacher']), clinic: ratio(['nurse', 'doctor']), offices: ratio(['clerk', 'engineer']), courts: ratio(['prosecutor', 'defender', 'judge']), prison: ratio(['warden']), emergency: ratio(['emergency']), meteorology: ratio(['meteorology']), diplomacy: ratio(['diplomat']), trade: ratio(['tradeneg']), intl: ratio(['intlcivil']) };
+    r.staff = { school: ratio(['teacher']), clinic: ratio(['nurse', 'doctor']), offices: ratio(['clerk', 'engineer']), courts: ratio(['prosecutor', 'defender', 'judge']), prison: ratio(['warden']), emergency: ratio(['emergency']), meteorology: ratio(['meteorology']), diplomacy: ratio(['diplomat']), trade: ratio(['tradeneg']), intl: ratio(['intlcivil']), research: ratio(['research']) };
     for (const kind of SERVICE_KEYS) {
       const open = postsIn(w, r.id, kind) - (staff.get(`${r.id}:${kind}`) ?? 0);
       if (open < 0 && !fill) { // more staff than posts (people moved away, budgets): the newest NPC hire is let go
@@ -234,7 +238,7 @@ export function servicesDaily(w: World, fill = false) {
 export const initServices = (w: World) => { for (let i = 0; i < 3; i++) servicesDaily(w, true); };
 
 /** A nation's staffing of a service (0..1, averaged over the regions that have posts; 0.6 where none do). */
-export function nationalStaffing(w: World, nation: Id, key: 'diplomacy' | 'trade' | 'intl' | 'emergency' | 'meteorology' | 'courts'): number {
+export function nationalStaffing(w: World, nation: Id, key: 'diplomacy' | 'trade' | 'intl' | 'emergency' | 'meteorology' | 'courts' | 'research'): number {
   return scoped(`staff:${nation}:${key}`, () => {
   let t = 0, k = 0;
   for (const r of w.regions) if (r.owner === nation && r.staff?.[key] != null) { t += r.staff[key]!; k++; }

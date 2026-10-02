@@ -10,6 +10,12 @@
 //   that dislikes them slow it.
 // - Effects: extra growth for a decade after adoption, stronger forces, sharper
 //   intelligence, longer lives, cheaper energy, and (later) automation.
+// - The innovation system (2.3.2): the research effort counts government laboratories
+//   (researchers are citizens with careers in the research service) and the scientists
+//   and engineers firms employ. A breakthrough is patented by a firm at home, with a lead
+//   researcher who becomes known for it; countries that later adopt the technology pay
+//   the patent holder royalties. Technology partnerships (a treaty) speed adoption between
+//   partners; spies can steal what a rival has (a cyber intrusion, intel.ts).
 import type { Nation, World } from './types';
 import { dateAt } from '../engine/calendar';
 import { notify, record } from '../engine/events';
@@ -19,7 +25,14 @@ import { TECHS, TECH, type TechDef, type TechEffects } from '../data/techTree';
 import { BASELINES, TECH_DOMAINS, baselineOf, type TechDomain } from '../data/nationBaselines';
 import { capsOf, historyPace } from './strategic';
 import { researchFactor } from './nationalBudget';
-import { player } from './query';
+import { coref, natref, player } from './query';
+import { nationalStaffing } from './services';
+import { nationals } from './census';
+import { occupationOf } from './labour';
+import { treatyBetween } from './treaties';
+import { pay } from '../engine/ledger';
+import { GOLD } from '../engine/money';
+import type { Id } from './types';
 
 export interface TechFirst { nation: number; t: number }
 const YEAR = 365 * DAY;
@@ -52,19 +65,55 @@ export function techGrowth(w: World, n: Nation): number {
   return g;
 }
 /** The size of a country's research effort (relative: the US is about 10). */
-export function researchMass(n: Nation): number {
+export function researchMass(n: Nation, w?: World): number {
   const b = baselineOf(n.iso);
-  return b.rd * researchFactor(n) * Math.sqrt(Math.max(0.05, b.gdpShare));
+  const people = w ? researchWorkforce(w, n) : 1;
+  return b.rd * researchFactor(n) * Math.sqrt(Math.max(0.05, b.gdpShare)) * people;
+}
+const SCIENCE = new Set(['scientist', 'chemist', 'electrical', 'aeroeng', 'defeng', 'geologist', 'developer']);
+/** How well staffed the country's research is (1 = normal): government laboratories and firms' scientists. */
+export function researchWorkforce(w: World, n: Nation): number {
+  const lab = nationalStaffing(w, n.id, 'research');
+  const all = nationals(w, n.id);
+  const sci = all.filter((c) => !c.gone && SCIENCE.has(occupationOf(w, c) ?? '')).length / Math.max(1, all.length);
+  return Math.max(0.5, Math.min(1.6, 0.6 + lab * 0.4 + Math.min(0.6, sci * 8)));
 }
 
-function gain(w: World, n: Nation, d: TechDef, how: 'discovered' | 'adopted') {
+export interface Patent { tech: string; nation: Id; company: Id | null; researcher: Id | null; t: number; royalties: number }
+/** Patent a breakthrough: a firm in the right industry, and the lead researcher. */
+function patent(w: World, n: Nation, d: TechDef): Patent {
+  const ind: Record<string, string[]> = { information: ['electronics'], military: ['wa', 'wg'], medical: ['medicine'], space: ['wa', 'electronics'], energy: ['oil', 'electronics'], industrial: ['materials', 'electronics'] };
+  const cos = Object.values(w.companies).filter((co) => w.regions[co.region]?.owner === n.id && (ind[d.domain] ?? []).includes(co.industry)).sort((a, b) => b.workers.length - a.workers.length || a.id - b.id);
+  const lab = nationals(w, n.id).filter((c) => !c.gone && (c.post?.kind === 'research' || occupationOf(w, c) === 'scientist')).sort((a, b) => (b.post?.grade ?? 0) - (a.post?.grade ?? 0) || b.influence - a.influence || a.id - b.id)[0];
+  const p: Patent = { tech: d.id, nation: n.id, company: cos[0]?.id ?? null, researcher: lab?.id ?? null, t: w.time, royalties: 0 };
+  (w.patents ??= []).push(p);
+  if (lab) {
+    lab.sec.fame += 6; lab.influence += 15;
+    lab.flags.breakthroughs = (lab.flags.breakthroughs ?? 0) + 1;
+    if (lab.player) notify(w, 'personal', `${d.icon} Your team made the breakthrough: ${d.name.toLowerCase()}. Your name is on the patent.`, { critical: true });
+  }
+  return p;
+}
+/** Adopters pay the patent holder (a small share of their gold reserves, once). */
+function royalties(w: World, n: Nation, d: TechDef) {
+  const p = (w.patents ?? []).find((x) => x.tech === d.id);
+  if (!p || p.company == null || p.nation === n.id || !w.companies[p.company]) return;
+  const amt = Math.floor((n.wallet[GOLD] ?? 0) * 0.002);
+  if (amt > 0 && pay(w, natref(n.id), coref(p.company), GOLD, amt, `Royalties: ${d.name}`)) p.royalties += amt;
+}
+const partners = (w: World, a: Nation, b: Nation) => !!treatyBetween(w, a.id, b.id, 'tech');
+
+export function gain(w: World, n: Nation, d: TechDef, how: 'discovered' | 'adopted' | 'stolen') {
   techsOf(n)[d.id] = w.time;
   const firsts = (w.techFirsts ??= {});
   const first = !firsts[d.id];
   if (first) firsts[d.id] = { nation: n.id, t: w.time };
+  const pat = first ? patent(w, n, d) : null;
+  if (how === 'adopted') royalties(w, n, d);
+  const who = pat?.researcher != null ? ` The team was led by ${w.citizens[pat.researcher].name}${pat.company != null ? `; ${w.companies[pat.company].name} holds the patent` : ''}.` : '';
   const text = first
-    ? `${d.icon} Breakthrough: ${n.adj} researchers achieved ${d.name.toLowerCase()}, a world first.`
-    : `${d.icon} ${n.name} ${how === 'discovered' ? 'developed' : 'adopted'} ${d.name.toLowerCase()}.`;
+    ? `${d.icon} Breakthrough: ${n.adj} researchers achieved ${d.name.toLowerCase()}, a world first.${who}`
+    : `${d.icon} ${n.name} ${how === 'discovered' ? 'developed' : how === 'stolen' ? 'copied (from stolen designs)' : 'adopted'} ${d.name.toLowerCase()}.`;
   record(w, 'politics', text, { nation: n.id, important: first });
   if (first) (n.chronicle ??= []).push({ t: w.time, text });
   // A prestige mission impresses the world.
@@ -75,7 +124,7 @@ function gain(w: World, n: Nation, d: TechDef, how: 'discovered' | 'adopted') {
 /** Do all the holders of a technology who dislike `n` keep it from them? */
 export function controlled(w: World, n: Nation, id: string): boolean {
   const holders = w.nations.filter((o) => o.id !== n.id && !o.exile && hasTech(o, id));
-  return holders.length > 0 && holders.every((o) => (o.relations[n.id]?.score ?? 0) < -20 || o.embargoes.includes(n.id));
+  return holders.length > 0 && holders.every((o) => !partners(w, o, n) && ((o.relations[n.id]?.score ?? 0) < -20 || o.embargoes.includes(n.id)));
 }
 
 export function techMonth(w: World) {
@@ -87,14 +136,15 @@ export function techMonth(w: World) {
       if (!known) {
         // Discovery.
         if (level < threshold(d)) continue;
-        const p = 0.02 * researchMass(n) / 5 * (d.uncertain ? 0.15 : 1);
+        const p = 0.02 * researchMass(n, w) / 5 * (d.uncertain ? 0.15 : 1);
         if (chance(w, p)) gain(w, n, d, 'discovered');
       } else {
         // Diffusion from those who have it.
         const blocked = controlled(w, n, d.id);
         if (level < threshold(d) - (blocked ? 0 : 4)) continue;
         const eff = capsOf(w, n).inst.effectiveness;
-        const p = (0.04 + eff * 0.06 + (level >= threshold(d) ? 0.05 : 0)) * (blocked ? 0.3 : 1);
+        const partnered = w.nations.some((o) => o.id !== n.id && hasTech(o, d.id) && partners(w, o, n));
+        const p = (0.04 + eff * 0.06 + (level >= threshold(d) ? 0.05 : 0) + (partnered ? 0.08 : 0)) * (blocked ? 0.3 : 1);
         if (chance(w, p)) gain(w, n, d, 'adopted');
       }
     }
@@ -103,6 +153,15 @@ export function techMonth(w: World) {
 
 export function technologyDaily(w: World) {
   if (dateAt(w.time).day === 1) for (let k = 0; k < historyPace(w); k++) techMonth(w);
+}
+
+/** Spies copy a technology the target has, if the thief's own level is close enough to use it. */
+export function stealTech(w: World, thief: Nation, target: Nation): TechDef | null {
+  const level = capsOf(w, thief).tech;
+  const d = TECHS.find((x) => hasTech(target, x.id) && !hasTech(thief, x.id) && level[x.domain] >= threshold(x) - 8);
+  if (!d) return null;
+  gain(w, thief, d, 'stolen');
+  return d;
 }
 
 /** A country's place in the technology race: technologies held, and world firsts. */

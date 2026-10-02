@@ -300,13 +300,13 @@ export function aiChoice(w: World, n: Nation): [DipAction, DipParams] | null {
     // Allies of victims sanction the aggressor.
     if (!n.embargoes.includes(t.id) && activeWars(w).some((x) => x.att === t.id && n.alliances.includes(x.def))) opts.push(['sanction', { target: t.id }, 2]);
     // Treaties: alliances against a shared threat, trade deals with partners, pacts with the feared.
-    for (const kind of ['defence', 'trade', 'nonaggression', 'intel', 'armscontrol', 'border'] as TreatyKind[]) {
+    for (const kind of ['defence', 'trade', 'nonaggression', 'intel', 'armscontrol', 'border', 'tech'] as TreatyKind[]) {
       if (proposeTreatyCheck(w, n, t, kind)) continue;
       // Only offer what it wants itself and the other might accept.
       if (recentTreaty) break; // a government concludes at most one new treaty a year
       if (willingness(w, n, t, kind).p < 0.55) continue; // only what it wants itself
       const p = kind === 'defence' ? 0.8 : kind === 'trade' ? (ties.interdep > 40 ? 0.4 : 0) : kind === 'nonaggression' ? (ties.threat > 35 ? 0.4 : 0)
-        : kind === 'intel' ? (n.alliances.includes(t.id) ? 0.2 : 0) : kind === 'armscontrol' ? (ties.threat > 30 ? 0.3 : 0) : (ties.grievance > 10 ? 0.2 : 0);
+        : kind === 'intel' ? (n.alliances.includes(t.id) ? 0.2 : 0) : kind === 'armscontrol' ? (ties.threat > 30 ? 0.3 : 0) : kind === 'tech' ? (rel > 40 ? 0.15 : 0) : (ties.grievance > 10 ? 0.2 : 0);
       if (p > 0) opts.push(['treaty', { target: t.id, kind }, p]);
     }
     if (ties.trust < -40 && rel < -50) opts.push(['expel', { target: t.id }, 0.02]);

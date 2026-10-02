@@ -3,6 +3,23 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.3.2: the innovation system
+
+The second part of 2.4 Frontiers.
+
+- **Government research** is a new public service: national laboratories with a career ladder from research
+  assistant to laboratory director, open to graduates in science, engineering and medicine.
+- **The research workforce.** A country's research effort now counts how well its laboratories are staffed and
+  how many scientists and engineers its firms employ (from half to 1.6 times the normal effort).
+- **Patents.** A breakthrough is patented by a firm at home in the matching industry, and the lead researcher
+  becomes known for it (fame and influence; you, if you lead the team). Every country that later adopts the
+  technology pays the patent holder royalties.
+- **Technology partnerships** are a new treaty. Partners adopt each other's technologies faster and never keep
+  them from each other. AI governments offer them to friends.
+- **Stolen designs.** A successful cyber intrusion can steal the designs of a technology the target has, if the
+  thief's own level is close enough to use them.
+- The Technology panel shows the research workforce and the country's patents with their royalties.
+
 ### New in 2.3.1: the technology tree
 
 The first part of 2.4 Frontiers.

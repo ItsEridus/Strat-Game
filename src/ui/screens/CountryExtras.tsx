@@ -20,7 +20,7 @@ import { coupRisk } from '../../sim/uprisings';
 import { Bar } from '../common';
 import { identityOf } from '../../sim/secession';
 import { TECHS } from '../../data/techTree';
-import { controlled, hasTech, researchMass, threshold } from '../../sim/technology';
+import { controlled, hasTech, researchMass, researchWorkforce, threshold } from '../../sim/technology';
 import { capsOf } from '../../sim/strategic';
 
 export function CountryExtras({ w, id }: { w: World; id: Id }) {
@@ -126,12 +126,13 @@ function TechPanel({ w, id }: { w: World; id: Id }) {
   const next = TECHS.filter((d) => !hasTech(n, d.id)).map((d) => ({ d, gap: threshold(d) - caps.tech[d.domain] })).sort((a, b) => a.gap - b.gap).slice(0, 4);
   return (
     <Panel title="🔬 Technology">
-      <p class="small">Research effort {researchMass(n).toFixed(1)} (R&D spending × the size of the economy). {Object.keys(n.techs ?? {}).length} of {TECHS.length} frontier technologies; {Object.values(firsts).filter((f) => f.nation === id).length} world firsts.</p>
+      <p class="small">Research effort {researchMass(n, w).toFixed(1)} (R&D spending × the size of the economy × its research workforce, now {Math.round(researchWorkforce(w, n) * 100)}% of normal: government laboratories and the scientists and engineers firms employ). {Object.keys(n.techs ?? {}).length} of {TECHS.length} frontier technologies; {Object.values(firsts).filter((f) => f.nation === id).length} world firsts.</p>
       <table class="table compact small"><tbody>
         {TECHS.filter((d) => hasTech(n, d.id)).map((d) => <tr><td title={d.desc}>{d.icon} {d.name}</td><td>{firsts[d.id]?.nation === id ? '🥇 first' : 'adopted'} {fmtWhen(w, n.techs![d.id])}</td></tr>)}
         {next.map(({ d, gap }) => <tr class="muted"><td title={d.desc}>{d.icon} {d.name}</td><td>{gap > 0 ? `${gap.toFixed(1)} points of ${d.domain} technology short` : firsts[d.id] ? (controlled(w, n, d.id) ? 'within reach; its holders keep it from us' : 'within reach; adoption under way') : d.uncertain ? 'within reach of research; an uncertain breakthrough' : 'within reach of research'}</td></tr>)}
       </tbody></table>
-      <Help>Technologies become possible as a country advances in each domain (R&D, with know-how spreading from the leaders). The first to reach one may make the breakthrough, more likely with a larger research effort; others adopt it once they are close, faster with good institutions, slower if every holder dislikes them. Each brings faster growth for a decade, stronger forces, sharper intelligence, longer lives or cheaper energy.</Help>
+      {(w.patents ?? []).some((p) => p.nation === id) && <p class="small">Patents: {(w.patents ?? []).filter((p) => p.nation === id).map((p) => `${TECHS.find((d) => d.id === p.tech)?.name}${p.company != null && w.companies[p.company] ? ` (${w.companies[p.company].name}${p.royalties ? `, ${fmtAmt(GOLD, p.royalties)} in royalties` : ''})` : ''}`).join('; ')}.</p>}
+      <Help>Technologies become possible as a country advances in each domain (R&D, with know-how spreading from the leaders). The first to reach one may make the breakthrough, more likely with a larger research effort; others adopt it once they are close, faster with good institutions and for technology partners, slower if every holder dislikes them; spies can steal the designs. A breakthrough is patented by a firm at home, and later adopters pay it royalties. Each brings faster growth for a decade, stronger forces, sharper intelligence, longer lives or cheaper energy.</Help>
     </Panel>
   );
 }
