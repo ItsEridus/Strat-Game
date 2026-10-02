@@ -25,13 +25,14 @@ import { natref, player } from './query';
 import { relation } from './congress';
 import { noteTrust, prestigeOf } from './relations';
 import { activeWars, settle } from './war';
+import { freeze } from './warCourse';
 import { nationScores } from './forces';
 import { debtLimit, dailySpending } from './publicFinance';
 import { B } from '../data/balance';
 import { nationalStaffing } from './services';
 
 export const PERMANENT = ['USA', 'CHN', 'RUS', 'GBR'];
-export type ResKind = 'condemn' | 'ceasefire' | 'sanctions';
+export type ResKind = 'condemn' | 'ceasefire' | 'sanctions' | 'peacekeeping';
 export type Vote = 'y' | 'n' | 'a';
 export interface Resolution {
   id: Id; body: 'sc' | 'ga'; kind: ResKind; target: Id; war?: Id; sponsor: Id;
@@ -54,6 +55,7 @@ export const RES_INFO: Record<ResKind, { name: string; desc: string }> = {
   condemn: { name: 'Condemn the aggression', desc: 'A formal condemnation: the target loses standing with the countries that voted for it.' },
   ceasefire: { name: 'Demand a ceasefire', desc: 'A call to stop fighting: the sides are pressed to accept an armistice.' },
   sanctions: { name: 'Impose sanctions', desc: 'Binding sanctions for a year: every member must cut trade with the target (its friends may not comply).' },
+  peacekeeping: { name: 'Send peacekeepers', desc: 'A UN force separates the sides of a civil war or a war of secession for two years: the fighting stops along the line, and the sides are pushed towards reconciliation.' },
 };
 
 const isoId = (w: World, iso: string) => w.nations.find((n) => n.iso === iso)?.id;
@@ -97,6 +99,7 @@ export function lean(w: World, v: Nation, r: Pick<Resolution, 'kind' | 'target' 
   let y = 0.6 - relT / 110 + relS / 300 + (victim ? 0.6 : 0) - (v.alliances.includes(t.id) ? 0.7 : 0);
   if (r.kind === 'sanctions') y -= 0.3 + Math.min(0.2, (v.ties?.[t.id]?.interdep ?? 0) / 300); // sanctions cost the sanctioner too
   if (r.kind === 'ceasefire') y += 0.15;
+  if (r.kind === 'peacekeeping') y += 0.25 - (war && war.def !== v.id && (v.relations[war.def]?.score ?? 0) < -40 ? 0.3 : 0); // a cheap way to stop the killing, unless you want the rebels beaten
   if (activeWars(w).some((x) => x.att === v.id)) y -= 0.15; // those waging wars dislike precedents
   y += (nationalStaffing(w, r.sponsor, 'intl') - 0.6) * 0.15; // a sponsor well represented in the UN system lobbies better
   return y;
@@ -111,6 +114,10 @@ export function tableCheck(w: World, n: Nation, body: 'sc' | 'ga', kind: ResKind
   if (body === 'ga' && kind === 'sanctions') return 'Only the Security Council can impose binding sanctions.';
   if (st.resolutions.some((r) => r.status === 'open' && r.target === target && r.kind === kind)) return 'A resolution like it is already before the UN.';
   if (st.resolutions.some((r) => r.sponsor === n.id && w.time - r.tabled < 7 * DAY)) return 'You tabled a resolution in the last week.';
+  if (kind === 'peacekeeping') {
+    if (body !== 'sc') return 'Only the Security Council can send peacekeepers.';
+    if (!activeWars(w).some((x) => x.att === target && (x.kind === 'civil' || x.kind === 'secession'))) return 'Peacekeepers are for a government fighting a civil war or a war of secession.';
+  }
   if (kind !== 'condemn' && !activeWars(w).some((x) => x.att === target)) return 'This resolution is for a country waging war.';
   if (kind === 'condemn' && !Object.values(w.wars).some((x) => x.att === target && (x.status === 'active' || x.declared > w.time - 30 * DAY))) return 'Condemnation is for a country that has attacked another in the last month.';
   return null;
@@ -118,7 +125,7 @@ export function tableCheck(w: World, n: Nation, body: 'sc' | 'ga', kind: ResKind
 
 export function tableResolution(w: World, n: Nation, body: 'sc' | 'ga', kind: ResKind, target: Id): Resolution | null {
   if (tableCheck(w, n, body, kind, target)) return null;
-  const war = activeWars(w).find((x) => x.att === target) ?? Object.values(w.wars).filter((x) => x.att === target).sort((a, b) => b.declared - a.declared)[0];
+  const war = (kind === 'peacekeeping' ? activeWars(w).find((x) => x.att === target && (x.kind === 'civil' || x.kind === 'secession')) : null) ?? activeWars(w).find((x) => x.att === target) ?? Object.values(w.wars).filter((x) => x.att === target).sort((a, b) => b.declared - a.declared)[0];
   const r: Resolution = { id: nid(w), body, kind, target, war: war?.id, sponsor: n.id, tabled: w.time, closes: w.time + 3 * DAY, votes: { [n.id]: 'y' }, status: 'open' };
   intlOf(w).resolutions.push(r);
   const text = `🇺🇳 ${n.name} tabled a resolution at the ${body === 'sc' ? 'Security Council' : 'General Assembly'}: ${RES_INFO[kind].name.toLowerCase()} — ${w.nations[target].name}. The vote is in three days.`;
@@ -198,6 +205,14 @@ function enactResolution(w: World, r: Resolution): string {
       st.sanctions.push({ res: r.id, target: t.id, until: w.time + 365 * DAY, imposed });
       return `${imposed.length} countries cut trade with ${t.name} for a year${defied.length ? `; ${defied.join(', ')} did not comply` : ''}.`;
     }
+    case 'peacekeeping': {
+      const war = r.war != null ? w.wars[r.war] : null;
+      if (!war || war.status !== 'active') return 'The war had already ended.';
+      const by = Object.entries(r.votes).filter(([, v]) => v === 'y').map(([id]) => Number(id)).filter((id) => id !== war.att && id !== war.def);
+      freeze(w, war);
+      war.peacekeepers = { until: w.time + 2 * 365 * DAY, by };
+      return `A UN force${by.length ? ` (troops from ${by.slice(0, 4).map((id) => w.nations[id].name).join(', ')})` : ''} now holds the line between ${t.name} and ${w.nations[war.def].name}.`;
+    }
   }
 }
 
@@ -217,6 +232,11 @@ function aiTable(w: World) {
     const sponsor = council.map((i) => ({ i, s: -(w.nations[i].relations[att]?.score ?? 0) + (w.nations[i].relations[war.def]?.score ?? 0) / 2 + (i === war.def ? 100 : 0) }))
       .sort((a, b) => b.s - a.s || a.i - b.i)[0];
     const gaSponsor = w.nations.filter((n) => n.id === war.def && n.president !== pl.id)[0];
+    // A government fighting rebels is not condemned as an aggressor; the Council may send peacekeepers.
+    if (war.kind === 'civil' || war.kind === 'secession') {
+      if (!over && age >= 14 && !about('peacekeeping') && sponsor) tableResolution(w, w.nations[sponsor.i], 'sc', 'peacekeeping', att);
+      continue;
+    }
     if (age >= 2 && !about('condemn')) {
       if (sponsor && sponsor.s > 30) tableResolution(w, w.nations[sponsor.i], 'sc', 'condemn', att);
       else if (gaSponsor) tableResolution(w, gaSponsor, 'ga', 'condemn', att);

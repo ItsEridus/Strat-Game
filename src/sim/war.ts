@@ -110,6 +110,7 @@ export function warCheck(w: World, n: Nation, params: Record<string, any>): stri
   if (!t || t.id === n.id) return 'Pick a target nation.';
   if (warBetween(w, n.id, t.id)) return 'Already at war.';
   if ((n.pacts[t.id] ?? 0) > w.time) return 'A non-aggression pact is in force.';
+  if (n.overlord === t.id) return `A puppet state cannot attack ${t.name}, its overlord.`;
   if (n.alliances.includes(t.id)) return 'You are allied with that nation.';
   if (!B.war.durations.includes(params.days)) return `Duration must be one of ${B.war.durations.join('/')} days.`;
   const goals: Id[] = params.goals ?? [];

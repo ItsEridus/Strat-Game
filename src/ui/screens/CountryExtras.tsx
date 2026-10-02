@@ -133,6 +133,9 @@ function RegimePanel({ w, id }: { w: World; id: Id }) {
       </tbody></table>
       {n.dissolved != null && <p class="small">🏴 {n.name} no longer exists: it became part of {w.nations[n.mergedInto ?? -1]?.name ?? 'another country'} on {fmtWhen(w, n.dissolved)}.</p>}
       {n.faction && n.dissolved == null && <p class="small">⚔️ A rebel government fighting a civil war against {w.nations[n.parent ?? -1]?.name ?? 'the old government'}.</p>}
+      {n.overlord != null && <p class="small">🎎 A puppet of {w.nations[n.overlord]?.name}: bound by a defence treaty, paying 2% of its gold a month in tribute, and unable to attack its overlord.</p>}
+      {w.nations.some((o) => o.overlord === n.id && o.dissolved == null) && <p class="small">🎎 Puppet states: {w.nations.filter((o) => o.overlord === n.id && o.dissolved == null).map((o) => o.name).join(', ')}.</p>}
+      {(n.insurgency ?? 0) >= 30 && <p class="small">💣 An insurgency ({Math.round(n.insurgency ?? 0)} of 100) is wearing down troops and raising unrest in restive regions.</p>}
       {n.failedSince != null && <p class="small">🏚️ A failed state since {fmtWhen(w, n.failedSince)}: institutions are decaying, unrest is spreading and a coup is twice as likely. It recovers when legitimacy passes 30 and unrest falls below 45.</p>}
       {n.parent != null && (
         <p class="small">🏳️ Independent from {w.nations[n.parent]?.name ?? 'its old country'} since {fmtWhen(w, n.founded ?? 0)}. Recognised by {(n.recognisedBy ?? []).length} of {w.nations.filter((o) => o.id !== n.id && !o.exile).length} countries{(n.recognisedBy ?? []).length ? `: ${(n.recognisedBy ?? []).map((o) => w.nations[o]?.name).filter(Boolean).join(', ')}` : ''}.</p>

@@ -33,6 +33,7 @@ import { tollOf } from './warHome';
 import { signTreaty } from './treaties';
 import { dailyRevenue } from './publicFinance';
 import { nationals } from './census';
+import { maybePuppetAfterWar } from './civilWar';
 
 export type WarKind = 'invasion' | 'limited' | 'punitive' | 'civil' | 'secession';
 export const WAR_KIND_LABEL: Record<WarKind, string> = { invasion: 'an invasion', limited: 'a limited war', punitive: 'a punitive war', civil: 'a civil war', secession: 'a war of secession' };
@@ -157,6 +158,7 @@ export function peaceTerms(w: World, war: War, kind: string, transferred: Id[]) 
   const loser: Nation | null = transferred.length ? (transferred.every((r) => w.regions[r].owner === att.id) ? def : att) : kind === 'surrender' ? def : null;
   if (loser) {
     const winner = loser.id === att.id ? def : att;
+    if (kind === 'conquest' || kind === 'surrender') maybePuppetAfterWar(w, winner, loser);
     const amt = Math.floor((loser.wallet[GOLD] ?? 0) * 0.1);
     if (amt > 0) {
       (w.intlLoans ??= []).push({ id: nid(w), from: winner.id, to: loser.id, left: amt, monthly: Math.ceil(amt / 12), reparations: true });

@@ -6,7 +6,8 @@
 // - sanctions and their lifting, expelling diplomats,
 // - treaty offers and renunciations (sim/treaties.ts),
 // - ultimatums (comply, or hand the issuer a cause for war),
-// - mediation between countries at war.
+// - mediation between countries at war,
+// - arming rebels or a breakaway state fighting its government (a proxy war, 2.3).
 // The AI governments use the same actions on the same terms.
 import { believedPower } from './beliefs';
 import type { Id, Nation, World } from './types';
@@ -23,8 +24,9 @@ import { relation } from './congress';
 import { addGrievance, leaderProfile, noteTrust, prestigeOf, tiesOfPair } from './relations';
 import { TREATY_INFO, activeTreaties, alliedPower, allTreaties, offerTreaty, proposeTreatyCheck, willingness, renounce, treatyBetween, type TreatyKind } from './treaties';
 import { activeWars, militaryPower, peaceAppetite, settle, warBetween } from './war';
+import { makeFormation } from './forces';
 
-export type DipAction = 'praise' | 'condemn' | 'summit' | 'aid' | 'loan' | 'sanction' | 'liftSanctions' | 'expel' | 'treaty' | 'renounce' | 'ultimatum' | 'mediate';
+export type DipAction = 'praise' | 'condemn' | 'summit' | 'aid' | 'loan' | 'sanction' | 'liftSanctions' | 'expel' | 'treaty' | 'renounce' | 'ultimatum' | 'mediate' | 'arm';
 export type Demand = 'liftSanctions' | 'endWar' | 'leaveAlliance';
 export interface DipParams { target: Id; kind?: TreatyKind; treaty?: Id; demand?: Demand; war?: Id; other?: Id }
 export interface IntlLoan { id: Id; from: Id; to: Id; left: number; monthly: number; defaulted?: boolean; imf?: boolean; reparations?: boolean }
@@ -43,6 +45,7 @@ export const DIP_INFO: Record<DipAction, { name: string; capital: number; cooldo
   renounce: { name: 'Renounce a treaty', capital: 10, cooldown: 0, desc: 'Walk away from an agreement: partners trust you less, and attacking them within a year is a betrayal.' },
   ultimatum: { name: 'Issue an ultimatum', capital: 30, cooldown: 180, desc: 'A demand backed by force: they give in if weaker and cautious; refusal gives you a cause for war for 90 days.' },
   mediate: { name: 'Mediate a war', capital: 30, cooldown: 30, desc: 'Offer to broker a ceasefire between two countries at war; success raises your standing.' },
+  arm: { name: 'Arm the rebels', capital: 20, cooldown: 60, desc: 'Send weapons and money (3% of the treasury\'s gold) to rebels or a breakaway state fighting its government: their forces grow stronger, and the government becomes your enemy.' },
 };
 export const DEMAND_NAME: Record<Demand, string> = { liftSanctions: 'lift their sanctions on us', endWar: 'end the war they started', leaveAlliance: 'leave their alliance with our rival' };
 /** The demand as the world reports it. */
@@ -79,6 +82,13 @@ export function dipCheck(w: World, n: Nation, a: DipAction, p: DipParams): strin
       if (warBetween(w, n.id, t.id)) return 'You are at war with them.';
       if (a === 'loan' && (w.intlLoans ?? []).some((l) => l.from === n.id && l.to === t.id && l.left > 0)) return 'They are still repaying a loan from you.';
       return null;
+    case 'arm': {
+      const war = activeWars(w).find((x) => x.def === t.id && (x.kind === 'civil' || x.kind === 'secession'));
+      if (!war) return `${t.name} is not fighting a civil war or a war of secession.`;
+      if (war.att === n.id) return 'You are the government they are fighting.';
+      if ((n.wallet[GOLD] ?? 0) < 20000) return 'The treasury has too little gold.';
+      return null;
+    }
     case 'sanction': return n.embargoes.includes(t.id) ? 'Sanctions are already in force.' : null;
     case 'liftSanctions': return n.embargoes.includes(t.id) ? null : 'No sanctions to lift.';
     case 'treaty': return p.kind ? proposeTreatyCheck(w, n, t, p.kind) : 'Pick a kind of treaty.';
@@ -174,8 +184,26 @@ export function doDiplomacy(w: World, n: Nation, a: DipAction, p: DipParams): Re
     }
     case 'ultimatum': return ultimatum(w, n, t, p);
     case 'mediate': return mediate(w, n, p.war!);
+    case 'arm': return armRebels(w, n, t);
   }
   return fail('Unknown action.');
+}
+
+/** A proxy war: weapons and money for rebels fighting their government. */
+function armRebels(w: World, n: Nation, t: Nation): Result {
+  const war = activeWars(w).find((x) => x.def === t.id && (x.kind === 'civil' || x.kind === 'secession'))!;
+  const gov = w.nations[war.att];
+  const amt = Math.floor((n.wallet[GOLD] ?? 0) * 0.03);
+  if (amt > 0) pay(w, natref(n.id), natref(t.id), GOLD, amt, `Arms and money for ${t.name}`);
+  let boosted = 0;
+  for (const f of Object.values(w.forces)) if (f.nation === t.id) { f.equipment = Math.min(100, f.equipment + 12); f.morale = Math.min(100, f.morale + 6); boosted++; }
+  if (!boosted) { const m = makeFormation(w, t.id, 'infantry', w.regions.find((r) => r.owner === t.id)?.id ?? t.capital, `${t.adj} Volunteers`, 50); m.equipment = 55; }
+  (t.armedBy ??= {})[n.id] = (t.armedBy[n.id] ?? 0) + 1;
+  relation(w, t.id, n.id, 10, 'armed us');
+  relation(w, gov.id, n.id, -20, 'armed the rebels');
+  addGrievance(w, gov.id, n.id, 10);
+  note(w, n, `🔫 ${n.name} sent arms to ${t.name}, fighting ${gov.name}.`, true, gov.id);
+  return ok(`Arms and ${fmtAmt(GOLD, amt)} reached ${t.name}. ${gov.name} is furious.`);
 }
 
 function ultimatum(w: World, n: Nation, t: Nation, p: DipParams): Result {
@@ -283,6 +311,12 @@ export function aiChoice(w: World, n: Nation): [DipAction, DipParams] | null {
     }
     if (ties.trust < -40 && rel < -50) opts.push(['expel', { target: t.id }, 0.02]);
     if (lp.hawk > 0.6 && t.embargoes.includes(n.id) && militaryPower(w, n.id) > believedPower(w, n.id, t.id) * 1.5) opts.push(['ultimatum', { target: t.id, demand: 'liftSanctions' }, 0.05]);
+  }
+  // Proxy wars: arm rebels fighting a rival's government.
+  for (const war of activeWars(w)) {
+    if ((war.kind !== 'civil' && war.kind !== 'secession') || war.att === n.id || war.def === n.id) continue;
+    const relGov = n.relations[war.att]?.score ?? 0;
+    if (relGov < -30) opts.push(['arm', { target: war.def }, 0.2 + lp.risk * 0.4 + lp.hawk * 0.3]);
   }
   // Renounce treaties with those it has come to hate.
   for (const tr of activeTreaties(w, n.id)) {

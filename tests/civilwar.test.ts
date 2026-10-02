@@ -101,3 +101,52 @@ test('failed states, restoration of exiles, and voluntary unions', () => {
   assert.equal(s.mergedInto, ca.id);
   assert.ok(audit(w).ok);
 });
+
+test('proxy wars, UN peacekeepers, puppets and insurgency', async () => {
+  const { dipCheck, doDiplomacy } = await import('../src/sim/diplomacyActions');
+  const { tableResolution, castVote, intlOf } = await import('../src/sim/intlOrgs');
+  const { makePuppet } = await import('../src/sim/civilWar');
+  const { warCheck } = await import('../src/sim/war');
+  const w = fresh(2405);
+  advance(w, 2 * DAY, false);
+  const mx = by(w, 'MEX'), us = by(w, 'USA');
+  const f = startCivilWar(w, mx, 'A test')!;
+  // Arming the rebels.
+  const ru = by(w, 'RUS');
+  ru.dip = { capital: 100, last: {} };
+  assert.equal(dipCheck(w, ru, 'arm', { target: f.id }), null);
+  const eqBefore = Object.values(w.forces).filter((x) => x.nation === f.id).reduce((s, x) => s + x.equipment, 0);
+  assert.ok(doDiplomacy(w, ru, 'arm', { target: f.id }).ok);
+  assert.ok(Object.values(w.forces).filter((x) => x.nation === f.id).reduce((s, x) => s + x.equipment, 0) > eqBefore);
+  assert.equal(f.armedBy?.[ru.id], 1);
+  assert.ok(dipCheck(w, ru, 'arm', { target: by(w, 'DEU').id }), 'only rebels can be armed');
+  // Peacekeepers freeze the civil war.
+  const war = activeWars(w).find((x) => x.def === f.id)!;
+  const st = intlOf(w);
+  const sponsor = w.nations.find((n) => st.seats.some((s: any) => s.nation === n.id) || ['GBR', 'CHN', 'USA', 'RUS'].includes(n.iso) && n.id !== mx.id)!;
+  const r = tableResolution(w, sponsor, 'sc', 'peacekeeping', mx.id);
+  assert.ok(r, 'tabled');
+  for (const id of Object.keys(w.nations)) { const n = w.nations[Number(id)]; if (n.id !== mx.id) try { castVote(w, n, r!, 'y'); } catch { /* not a voter */ } }
+  r!.closes = w.time;
+  advance(w, DAY, false);
+  assert.equal(r!.status, 'passed');
+  {
+    assert.equal(war.status, 'frozen');
+    assert.ok(war.peacekeepers && war.peacekeepers.until > w.time);
+  }
+  // A puppet state.
+  makePuppet(w, f, us, 'a test');
+  assert.equal(f.overlord, us.id);
+  assert.ok(warCheck(w, f, { target: us.id, days: 30, goals: [] }));
+  const goldBefore = us.wallet.GOLD ?? 0;
+  f.wallet.GOLD = (f.wallet.GOLD ?? 0);
+  civilMonth(w);
+  assert.ok((us.wallet.GOLD ?? 0) >= goldBefore);
+  // Insurgency on annexed land.
+  const tr = by(w, 'TUR');
+  const land = w.regions.filter((r) => r.owner === tr.id).slice(0, 3);
+  for (const x of land) x.core = by(w, 'SAU').id;
+  for (let i = 0; i < 6; i++) civilMonth(w);
+  assert.ok((tr.insurgency ?? 0) >= 30, `insurgency ${tr.insurgency}`);
+  assert.ok(audit(w).ok);
+});

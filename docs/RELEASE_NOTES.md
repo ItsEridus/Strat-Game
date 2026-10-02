@@ -3,6 +3,32 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.2.5: puppets, proxy wars and peacekeeping
+
+The fifth part of 2.3 Rise & fall. It also completes what 2.2 War & peace carried forward: support to insurgents,
+peacekeeping, and insurgency.
+
+- **Arming the rebels (a proxy war).** A new diplomatic action sends weapons and money (3% of the treasury's gold)
+  to rebels, or to a breakaway state fighting its government. Their forces gain equipment and morale (or raise
+  volunteers), and the government they are fighting becomes your enemy. AI governments arm rebels fighting their
+  rivals.
+- **UN peacekeepers.** The Security Council can send peacekeepers to a civil war or a war of secession. If the
+  resolution passes, the fighting stops along the line for two years, the two sides are pushed towards
+  reconciliation, and a reunion becomes possible at lower trust. A government fighting rebels is no longer
+  condemned as an aggressor.
+- **Puppet states.** A puppet is bound to its overlord by a defence treaty, pays 2% of its gold a month in
+  tribute, and cannot attack its overlord. A state becomes one in two ways:
+  - a breakaway state kept alive by a foreign sponsor's arms answers to that sponsor once the war ends in
+    partition;
+  - a much stronger victor may make a small or breakaway state its puppet after a war.
+- **Breaking free.** Puppets can break free when the overlord is losing a war or a nationalist government
+  takes over.
+- **Insurgency.** Annexed land, frustrated independence movements and failed states feed armed resistance. Once
+  an insurgency is strong enough, it wears down the troops stationed in restive regions, raises unrest and
+  costs the government approval. Effective institutions suppress it.
+- **The Country screen** shows puppets, overlords and insurgencies; the Diplomacy screen has the new action and
+  resolution.
+
 ### New in 2.2.4: civil wars and dynamic nations
 
 The fourth part of 2.3 Rise & fall.

@@ -426,6 +426,9 @@ export interface Nation {
   dissolved?: number; // when it ceased to exist (absorbed by another country) (2.3)
   mergedInto?: Id; // the country that absorbed it (2.3)
   failedSince?: number; // a failed state since then (2.3)
+  armedBy?: Record<Id, number>; // foreign sponsors that sent it arms, and how often (2.3)
+  overlord?: Id; // the power it answers to, if it is a puppet state (2.3)
+  insurgency?: number; // armed resistance against the government, 0..100 (2.3)
   founded?: number; // when it became independent (2.3)
   recognisedBy?: Id[]; // the countries that recognise it (2.3)
   regime?: import('./regimes').Regime;
@@ -581,6 +584,7 @@ export interface War {
   level?: number; // escalation: 1 border fighting .. 4 nuclear threats (2.2)
   extensions?: number; // times the deadline passed with both sides still fighting (2.2)
   frozen?: number; // when it froze along the front line (2.2)
+  peacekeepers?: { until: number; by: Id[] }; // a UN force holding the line (2.3)
   civilDone?: boolean; // a civil war whose outcome (crushed, rebel victory, partition) has been settled (2.3)
   log?: { t: number; text: string }[]; // escalations and reviews (2.2)
   reparations?: { from: Id; to: Id; amount: number }; // (2.2)
