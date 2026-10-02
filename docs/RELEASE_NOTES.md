@@ -3,6 +3,31 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.8.2: faith and festivals
+
+The first part of 2.9 Life 2.0: culture and belonging.
+
+- **Religions by country** (Pew Research, rounded):
+  - Christians are most Americans, Mexicans, Brazilians, Russians and South Africans;
+  - Muslims are nearly all Turks and Saudis;
+  - Hindus are four in five Indians;
+  - about two Britons, Germans and Canadians in five follow no religion;
+  - most Chinese, Japanese and Koreans follow no religion, with Buddhism and folk religion common.
+  Everyone has a faith or none, matching how much faith matters to them: the devout are rarely of no religion.
+- **Congregations.** The devout of the same faith in a place form a congregation, one of their circles, at the
+  church, mosque, temple, synagogue or shrine that every neighbourhood now has.
+- **Festivals on their real dates:**
+  - Christmas and Easter (calculated each year);
+  - the two Eids, which move about eleven days earlier each year;
+  - Diwali, the Lunar New Year, Vesak, Rosh Hashanah and Hanukkah;
+  - each country's national days: Independence Day and Thanksgiving, Canada Day, Carnival, Victory Day,
+    Republic Days, Golden Week, Australia Day, Remembrance Sunday and more.
+  Those who keep a festival are happier that day, and couples grow closer.
+- **Faith in love.** Devout people of different faiths get on less easily; at a wedding, the less devout spouse
+  sometimes takes the other's faith.
+- **On screen:** a "Faith and festivals" panel in Life, where you choose your faith and see the festivals you keep
+  in the coming months, and a faith-and-holidays panel on each country page.
+
 ### New in 2.8.1: money in skipped years
 
 Fixes to the statistical skip ("Skip a year"), found while checking twenty-year runs. Over a few skipped years,

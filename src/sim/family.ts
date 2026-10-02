@@ -3,6 +3,7 @@
 // citizens; the bereaved grieve and inherit. The player lives by the same rules:
 // ask someone out, take them on dates, propose, marry, start a family — and a
 // partner who is neglected may leave.
+import { faithGap, weddingFaith } from './faith';
 import { blend, custody, weddingGathering } from './familyLife';
 import { divorce, marriageBar, mutual, sameSex } from './partnership';
 import { flameBonus, partedWays } from './ties';
@@ -53,7 +54,7 @@ function compatible(w: World, a: Citizen, b: Citizen): number {
   const ages = [ageOf(w, a), ageOf(w, b)];
   const gap = Math.abs(ages[0] - ages[1]);
   if (gap > Math.max(6, Math.min(...ages) * 0.3)) return 0;
-  return Math.max(0, 1 - gap / 20 - ideoDistance(a.ideo, b.ideo) * 0.25 - valueDistance(w, a, b) * 0.6 + flameBonus(a, b)); // old flames find their way back (ties.ts); shared values draw people together (mind.ts)
+  return Math.max(0, 1 - gap / 20 - ideoDistance(a.ideo, b.ideo) * 0.25 - valueDistance(w, a, b) * 0.6 - faithGap(w, a, b) + flameBonus(a, b)); // old flames find their way back (ties.ts); shared values draw people together (mind.ts)
 }
 
 function pair(w: World, a: Citizen, b: Citizen, status: Family['status'], since = w.time) {
@@ -217,7 +218,7 @@ function fertilityFactor(w: World, c: Citizen): number {
 function wed(w: World, a: Citizen, b: Citizen) {
   fam(a).status = fam(b).status = 'married';
   fam(a).since = fam(b).since = w.time;
-  blend(a, b); weddingGathering(w, a, b); // step-families and both families together (familyLife.ts)
+  blend(a, b); weddingGathering(w, a, b); weddingFaith(w, a, b); // step-families and both families together (familyLife.ts)
   // One household: the one with a job (or the player) keeps their home.
   const stay = a.player ? a : b.player ? b : a.job != null || b.job == null ? a : b;
   moveIn(w, stay === a ? b : a, stay);

@@ -34,6 +34,7 @@ import { DayPlanner } from './DayPlanner';
 import { CarPanel } from './CarPanel';
 import { BodyPanel } from './BodyPanel';
 import { HomeLifePanel } from './HomeLifePanel';
+import { FaithPanel } from './FaithPanel';
 import { pensionOf, pensionQuote, pensionRules, retire, retireCheck } from '../../sim/pensions';
 import { isMinor, parentTime, parentTimeCheck, play, playCheck, schoolDay, schoolDayCheck } from '../../sim/childhood';
 import { continueAsNewcomer, successor, writeWill } from '../../sim/legacy';
@@ -125,6 +126,7 @@ export function Life({ w }: { w: World }) {
         <Panel title="Health"><HealthPanel w={w} p={p} /></Panel>
         <Panel title="💪 Body"><BodyPanel w={w} p={p} /></Panel>
         <Panel title="🧠 Mind and mood"><MindPanel w={w} p={p} /></Panel>
+        <Panel title="🛐 Faith and festivals"><FaithPanel w={w} p={p} /></Panel>
         <Panel title="🚬 Habits"><HabitsPanel w={w} p={p} /></Panel>
         <Panel title="👥 Your circles" class="wide"><CirclesPanel w={w} p={p} /></Panel>
         <Panel title="🗣️ What people are saying"><GossipPanel w={w} p={p} /></Panel>

@@ -8,6 +8,7 @@
 // - Standing at work counts towards promotion in public service.
 // - The player can do something with each circle once a week: have friends round, drinks after
 //   work, help a neighbour, a club night, attend services.
+import { RELIGION_INFO, devout, religionOf } from './faith';
 import { startRumour } from './gossip';
 import type { Citizen, Id, World } from './types';
 import { DAY, dayOf } from '../engine/clock';
@@ -21,7 +22,7 @@ import { cref, hhref, jailed, player } from './query';
 import { ageOf } from './growth';
 import { lifeOf } from './lifecycle';
 import { adjustRel } from './social';
-import { valueDistance, valueOf } from './mind';
+import { valueDistance } from './mind';
 import { HOBBIES } from './hobbies';
 import { siblingsOf } from './kinship';
 
@@ -48,7 +49,7 @@ export function pastimeOf(c: Citizen): string | null {
   const keys = Object.keys(HOBBIES);
   return hash01(c.id, 2802) < 0.6 ? keys[Math.floor(hash01(c.id, 2803) * keys.length)] : null;
 }
-const believer = (w: World, c: Citizen) => valueOf(w, c, 'faith') >= 0.55;
+const believer = (w: World, c: Citizen) => devout(w, c);
 
 /** Colleagues in a public service: same service, same region (indexed once per census). */
 const postIndex = new WeakMap<object, Map<string, Citizen[]>>();
@@ -85,7 +86,7 @@ export function circlesOf(w: World, c: Citizen): Circle[] {
   if (nb.length) out.push({ kind: 'neighbours', name: `Neighbours in ${w.regions[c.home].name}`, members: nb });
   const pt = pastimeOf(c);
   if (pt) { const club = near(c, home.filter((x) => pastimeOf(x) === pt && ageOf(w, x) >= 14), 20); if (club.length) out.push({ kind: 'club', name: `${HOBBIES[pt].label} club, ${w.regions[c.home].name}`, members: club }); }
-  if (believer(w, c)) { const cong = near(c, home.filter((x) => believer(w, x) && ageOf(w, x) >= 14), 25); if (cong.length) out.push({ kind: 'faith', name: `Congregation, ${w.regions[c.home].name}`, members: cong }); }
+  if (believer(w, c)) { const rel = religionOf(w, c); const cong = near(c, home.filter((x) => believer(w, x) && religionOf(w, x) === rel && ageOf(w, x) >= 14), 25); if (cong.length) out.push({ kind: 'faith', name: `${RELIGION_INFO[rel].people} congregation (${RELIGION_INFO[rel].place}), ${w.regions[c.home].name}`, members: cong }); }
   return out;
 }
 
@@ -110,7 +111,9 @@ export function circlesMonth(w: World) {
     const clubs = new Map<string, Citizen[]>();
     for (const c of people) { const p = pastimeOf(c); if (p) (clubs.get(p) ?? clubs.set(p, []).get(p)!).push(c); }
     groups.push(...clubs.values());
-    groups.push(people.filter((c) => believer(w, c)));
+    const congs = new Map<string, Citizen[]>();
+    for (const c of people) if (believer(w, c)) { const r = religionOf(w, c); (congs.get(r) ?? congs.set(r, []).get(r)!).push(c); }
+    groups.push(...congs.values());
     groups.push(people); // neighbours
   }
   for (const g of groups) {

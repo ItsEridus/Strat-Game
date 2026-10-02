@@ -5,6 +5,7 @@
 // the player arrives in another region, the position resets to its station (or
 // to home, in the home region). Layouts come from a hash of the region, never
 // from the world's dice, so venues never move between saves or visits.
+import { RELIGION_INFO, majorityOf } from './faith';
 import { census } from './census';
 import type { Citizen, Id, StoryInstance, World } from './types';
 import { DISTRICTS, FAMILIARITY_UNLOCKS, VENUE_KINDS, type DistrictId, type VenueKind } from '../data/places';
@@ -50,6 +51,7 @@ export function venuesOf(w: World, rid: Id): Venue[] {
   // Cafés and restaurants run by local people take their owner's name and sign.
   const owned = (kind: 'cafe' | 'restaurant') => census(w).all.find((c) => c.business?.kind === kind && c.business.region === rid && !c.gone);
   const ownedOver = (kind: 'cafe' | 'restaurant') => { const o = owned(kind); return o ? { name: o.business!.name, desc: `${VENUE_KINDS[kind].desc} Run by ${o.name}.` } : {}; };
+  { const rel = majorityOf(w.nations[controller(r)].iso); const nm: Record<string, string[]> = { christian: ['St Mary\'s Church', 'St Peter\'s Church', 'Grace Church', 'Holy Trinity'], muslim: ['Central Mosque', 'Al-Noor Mosque', 'Great Mosque'], hindu: ['Sri Ganesha Temple', 'Shiva Temple', 'Krishna Temple'], buddhist: ['Lotus Temple', 'Golden Pagoda', 'Temple of Quiet Light'], jewish: ['Beth Shalom Synagogue'], folk: ['The Old Shrine', 'Hill Shrine'] }; add('worship', { name: pickStable(nm[rel] ?? nm.christian, `${rid}:worship`), icon: RELIGION_INFO[rel].icon }); }
   add('home'); add('park'); add('cafe', ownedOver('cafe')); add('community'); add('gym'); add('library'); add('lookout');
   add('cityhall', { name: `${pickStable(VENUE_KINDS.cityhall.names, `${rid}:hall`)}, ${e.seat || city}` });
   add('parties'); add('police', { name: `${city} ${pickStable(VENUE_KINDS.police.names, `${rid}:pd`)}` });

@@ -13,7 +13,7 @@ export const DISTRICTS: Record<DistrictId, { name: string; icon: string; desc: s
 };
 
 export type VenueKind =
-  | 'home' | 'park' | 'cafe' | 'community' | 'gym' | 'library' | 'lookout'
+  | 'home' | 'park' | 'cafe' | 'community' | 'gym' | 'library' | 'lookout' | 'worship'
   | 'cityhall' | 'parties' | 'police' | 'newsroom' | 'clinic'
   | 'market' | 'restaurant' | 'bank' | 'backroom'
   | 'unionhall' | 'company'
@@ -36,6 +36,7 @@ export const VENUE_KINDS: Record<VenueKind, VenueKindInfo> = {
   home: { district: 'residential', icon: '🏠', desc: 'Where you live. Family time and rest happen here.', essential: true, names: ['Home'] },
   park: { district: 'residential', icon: '🌳', desc: 'Joggers, dog walkers, families and long talks on benches.', essential: true, names: ['Riverside Park', 'Liberty Park', 'Memorial Park', 'Central Park', 'Oak Hill Park', 'Lakeside Gardens', 'Victoria Gardens', 'Founders Park'] },
   cafe: { district: 'residential', icon: '☕', desc: 'The neighbourhood café: gossip, first dates and people you half know.', essential: true, names: ['The Copper Kettle', 'Blue Door Café', 'Corner Grind', 'Daily Bread', 'The Lantern', 'Half Moon Coffee', 'Morning Star', 'The Old Mill Café'] },
+  worship: { district: 'residential', icon: '🛐', desc: 'The local place of worship: services, festivals, weddings and funerals. Its congregation is one of your circles if you are devout (Life).', essential: true, screen: 'life', names: ['St Mary\'s', 'Grace Church', 'Central Mosque', 'Sri Ganesha Temple', 'Beth Shalom', 'Lotus Temple'] },
   community: { district: 'residential', icon: '🤝', desc: 'Community centre: volunteers, clubs, meetings and the noticeboard.', minFamiliarity: 5, names: ['Community Centre', 'Neighbourhood Hall', 'Civic Club', 'Commons Hall'] },
   gym: { district: 'residential', icon: '🏋️', desc: 'Weights, a running track and the people who train here every day.', minFamiliarity: 10, screen: 'character', names: ['Ironworks Gym', 'Northside Athletic', 'The Forge', 'Peak Fitness', 'Victory Gym'] },
   library: { district: 'residential', icon: '📚', desc: 'Quiet rooms, study desks and a very helpful librarian.', minFamiliarity: 15, screen: 'library', names: ['Public Library', 'Carnegie Library', 'Municipal Library', 'Reading Rooms'] },
