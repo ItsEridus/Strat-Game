@@ -3,6 +3,26 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.7.4: home life
+
+The fourth part of 2.8 Life 2.0: the everyday.
+
+- **Furnishing.** Go from bare essentials to a comfortable or stylish home. A comfortable home is a happier one.
+- **Improvements** (owners): a new kitchen or bathroom, insulation, solar panels or an extension. They cost a share
+  of the home's value and raise what it sells for; insulation and solar panels cut the energy bill, and new rooms
+  make home more comfortable.
+- **Bills.** Electricity, heating, water and internet are paid every month by everyone with a home of their own
+  (tenants included), by the size of the home and the country's energy price, which follows the world fuel
+  markets.
+- **Appliances.** A washing machine, a dishwasher or a robot vacuum each save hours of housework a week.
+- **Housework.** It takes about ten hours a week for one person, more for a couple and for children:
+  - couples share it as couples in their country usually do: women still do most of it almost everywhere (about
+    60% in Britain and America, 80% or more in Japan, Korea and India);
+  - or you can agree to share it equally, take most of it on, or leave most of it to your partner;
+  - a partner who does far more than their share grows resentful;
+  - a cleaner halves the work, for a monthly fee.
+- **On screen:** a "Home life" panel in Life (Money), and the housework on your day planner.
+
 ### New in 2.7.3: the body
 
 The third part of 2.8 Life 2.0: the everyday.

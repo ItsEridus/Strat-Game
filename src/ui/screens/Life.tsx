@@ -33,6 +33,7 @@ import { LovePanel } from './LovePanel';
 import { DayPlanner } from './DayPlanner';
 import { CarPanel } from './CarPanel';
 import { BodyPanel } from './BodyPanel';
+import { HomeLifePanel } from './HomeLifePanel';
 import { pensionOf, pensionQuote, pensionRules, retire, retireCheck } from '../../sim/pensions';
 import { isMinor, parentTime, parentTimeCheck, play, playCheck, schoolDay, schoolDayCheck } from '../../sim/childhood';
 import { continueAsNewcomer, successor, writeWill } from '../../sim/legacy';
@@ -112,6 +113,7 @@ export function Life({ w }: { w: World }) {
       </>}
       {tab === 'money' && <>
         <Panel title="Home"><HomePanel w={w} p={p} /></Panel>
+        <Panel title="🏠 Home life"><HomeLifePanel w={w} p={p} /></Panel>
         <Panel title="Payslip"><PayslipPanel w={w} p={p} /></Panel>
         <Panel title="Work for yourself"><BusinessPanel w={w} p={p} /></Panel>
         <Panel title="Money this month"><Budget w={w} p={p} /></Panel>

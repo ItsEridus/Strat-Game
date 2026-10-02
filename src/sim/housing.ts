@@ -3,6 +3,7 @@
 // sought-after places cost more; prices move slowly. Rent and upkeep are part
 // of daily living costs (paid to the background economy, where landlords,
 // builders and repairers are); buying and selling trade with it too.
+import { homeUplift } from './homeLife';
 import { MORTGAGE } from './mortgageHook';
 import { addHeirloom } from './legacy';
 import type { Citizen, Id, Region, World } from './types';
@@ -17,7 +18,7 @@ import { ageOf } from './growth';
 import { lifeGate, milestone } from './lifecycle';
 
 export type HomeSize = 'room' | 'flat' | 'house';
-export interface Home { kind: 'rent' | 'own' | 'family'; region: Id; size: HomeSize; since: number; paid?: number /* purchase price (minor) */ }
+export interface Home { kind: 'rent' | 'own' | 'family'; region: Id; size: HomeSize; since: number; paid?: number /* purchase price (minor) */; improved?: import('./homeLife').Improvement[] /* (2.8) */ }
 
 export const SIZES: Record<HomeSize, { label: string; icon: string; comfort: number }> = {
   room: { label: 'Room in a shared house', icon: '🚪', comfort: -2 },
@@ -100,7 +101,7 @@ export function rehouse(w: World, c: Citizen) {
 function sellTo(w: World, c: Citizen, h: Home): number {
   const nat = controller(w.regions[h.region]);
   const code = w.nations[nat].cur;
-  const gross = priceOf(w, h.region, h.size);
+  const gross = Math.round(priceOf(w, h.region, h.size) * homeUplift(c)); // improvements add value (homeLife.ts)
   const net = Math.floor(gross * (1 - B.housing.fees));
   return pay(w, hhref(nat), cref(c.id), code, net, `Sale of your ${SIZES[h.size].label.toLowerCase()}`) ? net : 0;
 }

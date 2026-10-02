@@ -49,6 +49,7 @@ export interface Citizen {
   orient?: import('./partnership').Orientation; alimony?: import('./partnership').Alimony; // whom they are drawn to (player's choice); maintenance they pay (2.7)
   matches?: import('./familyLife').Match[]; // dating matches to meet (2.7)
   body?: { bmi: number; fitness: number; diet: import('./body').Diet }; // weight, fitness and diet, once they change (2.8)
+  household?: import('./homeLife').Household; // furnishing, appliances, a cleaner, how the housework is shared (2.8)
   commute?: import('./everyday').Mode; sleep?: import('./everyday').Sleep; car?: import('./everyday').Car | null; // how they get to work, their nights, their car (2.8)
   ties?: import('./ties').Tie[]; // lasting memories of other people: grudges, gratitude, old flames, rivals, comrades (2.6)
   habits?: Partial<Record<import('./habits').Habit, import('./habits').HabitState>>; // smoking, drinking, gambling, gaming (2.6)
