@@ -3,6 +3,23 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.9.1: the family tree and chronicle
+
+The first part of 3.0 Life 2.0: generations.
+
+- **The dynasty.** Your lives now belong to a family, named for the first of the line. Each life you live is a
+  generation: an heir who is your child is the next generation, while a spouse or sibling who carries on stays in
+  the same one.
+- **The family tree** is drawn from who is whose parent, child and spouse, as far back as the records go (people
+  who have died stay in the records), with the children still growing up at home. You can open anyone on it.
+- **The family chronicle** records the family's great moments as they happen, with each generation's life in
+  summary:
+  - births;
+  - marriages;
+  - deaths;
+  - successions, for the player and their relatives by blood or marriage.
+- **On screen:** a "Family tree and chronicle" panel in Life (Legacy).
+
 ### New in 2.9.0: Life 2.0, culture and belonging
 
 2.9 is complete: where people come from and what they belong to. Its parts:

@@ -38,6 +38,7 @@ import { FaithPanel } from './FaithPanel';
 import { LanguagesPanel } from './LanguagesPanel';
 import { MigrationPanel } from './MigrationPanel';
 import { IdentityPanel } from './IdentityPanel';
+import { FamilyTree } from './FamilyTree';
 import { pensionOf, pensionQuote, pensionRules, retire, retireCheck } from '../../sim/pensions';
 import { isMinor, parentTime, parentTimeCheck, play, playCheck, schoolDay, schoolDayCheck } from '../../sim/childhood';
 import { continueAsNewcomer, successor, writeWill } from '../../sim/legacy';
@@ -143,6 +144,7 @@ export function Life({ w }: { w: World }) {
       </>}
       {tab === 'legacy' && <>
         <Panel title="Will and legacy" class="wide"><LegacyPanel w={w} p={p} /></Panel>
+        <Panel title="🌳 Family tree and chronicle" class="wide"><FamilyTree w={w} p={p} /></Panel>
       </>}
       <Panel title="Go to" class="wide">
         <div class="row wrap">

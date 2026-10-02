@@ -3,6 +3,7 @@
 // citizens; the bereaved grieve and inherit. The player lives by the same rules:
 // ask someone out, take them on dates, propose, marry, start a family — and a
 // partner who is neglected may leave.
+import { noteBirth, noteMarriage } from './dynasty';
 import { faithGap, weddingFaith } from './faith';
 import { blend, custody, weddingGathering } from './familyLife';
 import { divorce, marriageBar, mutual, sameSex } from './partnership';
@@ -91,6 +92,7 @@ function babyName(w: World, parent: Citizen) {
 export function haveBaby(w: World, a: Citizen, b: Citizen) {
   const kid = { name: babyName(w, a), born: w.time };
   fam(a).kids.push(kid);
+  noteBirth(w, a, b, kid.name); // the family chronicle (dynasty.ts)
   localNews(w, a.home, `👶 ${a.name} and ${b.name} welcomed a baby, ${kid.name.split(' ')[0]}.`);
   return kid;
 }
@@ -218,7 +220,7 @@ function fertilityFactor(w: World, c: Citizen): number {
 function wed(w: World, a: Citizen, b: Citizen) {
   fam(a).status = fam(b).status = 'married';
   fam(a).since = fam(b).since = w.time;
-  blend(a, b); weddingGathering(w, a, b); weddingFaith(w, a, b); // step-families and both families together (familyLife.ts)
+  blend(a, b); weddingGathering(w, a, b); weddingFaith(w, a, b); noteMarriage(w, a, b); // step-families and both families together (familyLife.ts)
   // One household: the one with a job (or the player) keeps their home.
   const stay = a.player ? a : b.player ? b : a.job != null || b.job == null ? a : b;
   moveIn(w, stay === a ? b : a, stay);

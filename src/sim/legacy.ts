@@ -2,6 +2,7 @@
 // growing up, heirlooms, and (for the player) succession. When the player dies
 // the story continues as their heir, and the life just ended joins the family's
 // legacy archive.
+import { dynastyOf, noteDeath, noteSuccession } from './dynasty';
 import type { Citizen, Id, Kid, World } from './types';
 import { pay } from '../engine/ledger';
 import { fmtAmt } from '../engine/money';
@@ -117,7 +118,10 @@ function archive(w: World, p: Citizen, cause: string, heir: Citizen | null): Leg
 export function playerDies(w: World, cause: string, deps: { releaseRoles: (w: World, c: Citizen, why: string) => void; settleEstate: (w: World, c: Citizen, heir: Citizen | null) => void; bereave: (w: World, c: Citizen) => void }): Citizen | null {
   const p = player(w);
   const heir = successor(w, p);
+  dynastyOf(w);
   const entry = archive(w, p, cause, heir);
+  noteDeath(w, p, cause);
+  if (heir) noteSuccession(w, p, heir);
   deps.releaseRoles(w, p, 'died');
   deps.settleEstate(w, p, heir);
   deps.bereave(w, p);

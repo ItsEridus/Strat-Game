@@ -876,6 +876,7 @@ export interface World {
   orbit?: { debris: number; cascades: number }; // debris in low orbit, 0..100 (2.4)
   almanac?: import('./almanac').Almanac; // the record of the campaign: leaders and yearly statistics (2.5)
   scenarioApplied?: boolean; // the start scenario has been applied (2.5)
+  dynasty?: import('./dynasty').Dynasty; // the family the player's lives belong to: generations and chronicle (3.0)
   mhSeeded?: boolean; // mental health as it stands at the start has been set (2.6)
   rumours?: import('./gossip').Rumour[]; nextRumour?: number; // what people are saying about each other (2.7)
   habitsSeeded?: number; // citizens below this id have been given the habits of people like them (2.6)
