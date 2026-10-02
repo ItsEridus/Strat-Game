@@ -426,6 +426,7 @@ export interface Nation {
   dissolved?: number; // when it ceased to exist (absorbed by another country) (2.3)
   mergedInto?: Id; // the country that absorbed it (2.3)
   failedSince?: number; // a failed state since then (2.3)
+  techs?: Record<string, number>; // technologies it has, and when it got them (2.4)
   lastCoup?: { t: number; ok: boolean; leader: Id }; // the latest coup attempt (2.3)
   armedBy?: Record<Id, number>; // foreign sponsors that sent it arms, and how often (2.3)
   overlord?: Id; // the power it answers to, if it is a puppet state (2.3)
@@ -833,6 +834,7 @@ export interface World {
   treaties?: Record<Id, import('./treaties').Treaty>;
   intl?: import('./intlOrgs').IntlState;
   newStates?: import('./secession').NewState[]; // states born in play (2.3)
+  techFirsts?: Record<string, import('./technology').TechFirst>; // who achieved each technology first, and when (2.4)
   standoffs?: import('./crises').Crisis[]; // international crises short of war (2.0)
   armsRaces?: import('./balanceOfPower').ArmsRace[]; // rival pairs building up against each other (2.0)
   bop?: import('./balanceOfPower').BopPoint[]; // shares of world power, monthly (2.0) // the UN, G20, WTO and IMF (2.0)

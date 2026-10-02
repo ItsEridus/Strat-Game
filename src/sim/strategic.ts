@@ -16,6 +16,7 @@ import { ageOf } from './growth';
 import { B } from '../data/balance';
 import { TECH_DOMAINS, baselineOf, type TechDomain } from '../data/nationBaselines';
 import { healthFactor, infraFactor, researchFactor } from './nationalBudget';
+import { techGrowth } from './technology';
 
 export interface Capabilities {
   tech: Record<TechDomain, number>; // 0..100+ (the leader near 100 in 2025)
@@ -88,6 +89,8 @@ export function strategicMonth(w: World, n: Nation, leaders: Record<TechDomain, 
   if (tp.sanctions) why.push(['sanctions', tp.sanctions]);
   if (tp.agreements) why.push(['trade agreements', tp.agreements]);
   why.push(['the world economy', w.econ.cycle * 1.2]);
+  const tg = techGrowth(w, n);
+  if (tg) why.push(['new technology', tg]);
   const g = Math.max(-6, Math.min(10, why.reduce((t, [, v]) => t + v, 0)));
   c.productivity *= Math.pow(1 + g / 100, 1 / 12);
   c.growth = Math.round(g * 10) / 10;

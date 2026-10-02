@@ -8,6 +8,7 @@
 // Leaving the world is done properly: a death hands the estate to the family
 // (or the state), offices fall vacant and are refilled, commands pass on, and
 // the person stays on record so history can still name them.
+import { techFx } from './technology';
 import { hasQuirk } from './nature';
 import { playerDies, settleWill } from './legacy';
 import type { Citizen, Id, Ideology, Nation, Persona, Region, World } from './types';
@@ -67,7 +68,8 @@ export function healthLabel(h: number) {
 export function mortality(w: World, c: Citizen): number {
   const age = ageOf(w, c);
   const yearly = 0.0003 * Math.exp(0.09 * (age - 30)) * (1 + Math.max(0, 60 - healthOf(c)) / 15);
-  return Math.min(0.2, yearly / (w.settings.lifeYearDays ?? 365));
+  const medicine = 1 - Math.min(0.4, techFx(w.nations[c.nation]).lifespan); // medical technology lengthens lives
+  return Math.min(0.2, (yearly * medicine) / (w.settings.lifeYearDays ?? 365));
 }
 
 // ---------- targets: how many people a region can hold ----------

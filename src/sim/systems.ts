@@ -2,6 +2,7 @@
 // The order is part of determinism: do not reorder casually.
 import { secessionDaily } from './secession';
 import { civilWarDaily } from './civilWar';
+import { technologyDaily } from './technology';
 import { uprisingsDaily } from './uprisings';
 import { regimesDaily } from './regimes';
 import { warCourseDaily } from './warCourse';
@@ -130,7 +131,7 @@ export function registerSystems() {
   HANDLERS.warDeadline = (w, p) => onWarDeadline(w, p.war);
   tickHooks.push(soldiersTick);
   hourlyHooks.push((w: World) => { if (!lod.coarse || hourOf(w.time) % 2 === 0) militaryHourly(w); peaceHousekeeping(w); });
-  dailyHooks.push((w: World) => { regimesDaily(w); uprisingsDaily(w); secessionDaily(w); warCourseDaily(w); civilWarDaily(w); warHomeDaily(w); withScope(() => { beliefsDaily(w); treatiesDaily(w); diplomacyDaily(w); diplomacyActionsDaily(w); intlDaily(w); balanceOfPowerDaily(w); crisesDaily(w); }); defenseBudget(w); aiClaimReserves(w); updateExile(w); computeSupply(w); });
+  dailyHooks.push((w: World) => { regimesDaily(w); uprisingsDaily(w); secessionDaily(w); warCourseDaily(w); civilWarDaily(w); technologyDaily(w); warHomeDaily(w); withScope(() => { beliefsDaily(w); treatiesDaily(w); diplomacyDaily(w); diplomacyActionsDaily(w); intlDaily(w); balanceOfPowerDaily(w); crisesDaily(w); }); defenseBudget(w); aiClaimReserves(w); updateExile(w); computeSupply(w); });
 
   // Stage 4: finance & progression
   HANDLERS.auctionEnd = (w, p) => onAuctionEnd(w, p.id);

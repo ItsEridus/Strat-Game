@@ -19,6 +19,9 @@ import { REGIMES, regimeOf } from '../../sim/regimes';
 import { coupRisk } from '../../sim/uprisings';
 import { Bar } from '../common';
 import { identityOf } from '../../sim/secession';
+import { TECHS } from '../../data/techTree';
+import { controlled, hasTech, researchMass, threshold } from '../../sim/technology';
+import { capsOf } from '../../sim/strategic';
 
 export function CountryExtras({ w, id }: { w: World; id: Id }) {
   const p = player(w);
@@ -28,6 +31,7 @@ export function CountryExtras({ w, id }: { w: World; id: Id }) {
   return (
     <>
       <RegimePanel w={w} id={id} />
+      <TechPanel w={w} id={id} />
       {mine && n.president === p.id && <Cabinet w={w} />}
       {mine && offices.length > 0 && (
         <Panel title="Your office">
@@ -111,6 +115,23 @@ function Applications({ w }: { w: World }) {
           <ActBtn small run={(w) => decideCitizenship(w, p.id, n.id, r.cit, true)}>Approve</ActBtn>
           <ActBtn small kind="danger" run={(w) => decideCitizenship(w, p.id, n.id, r.cit, false)}>Deny</ActBtn></div>
       )) : <Empty>No pending applications.</Empty>}
+    </Panel>
+  );
+}
+
+function TechPanel({ w, id }: { w: World; id: Id }) {
+  const n = w.nations[id];
+  const caps = capsOf(w, n);
+  const firsts = w.techFirsts ?? {};
+  const next = TECHS.filter((d) => !hasTech(n, d.id)).map((d) => ({ d, gap: threshold(d) - caps.tech[d.domain] })).sort((a, b) => a.gap - b.gap).slice(0, 4);
+  return (
+    <Panel title="🔬 Technology">
+      <p class="small">Research effort {researchMass(n).toFixed(1)} (R&D spending × the size of the economy). {Object.keys(n.techs ?? {}).length} of {TECHS.length} frontier technologies; {Object.values(firsts).filter((f) => f.nation === id).length} world firsts.</p>
+      <table class="table compact small"><tbody>
+        {TECHS.filter((d) => hasTech(n, d.id)).map((d) => <tr><td title={d.desc}>{d.icon} {d.name}</td><td>{firsts[d.id]?.nation === id ? '🥇 first' : 'adopted'} {fmtWhen(w, n.techs![d.id])}</td></tr>)}
+        {next.map(({ d, gap }) => <tr class="muted"><td title={d.desc}>{d.icon} {d.name}</td><td>{gap > 0 ? `${gap.toFixed(1)} points of ${d.domain} technology short` : firsts[d.id] ? (controlled(w, n, d.id) ? 'within reach; its holders keep it from us' : 'within reach; adoption under way') : d.uncertain ? 'within reach of research; an uncertain breakthrough' : 'within reach of research'}</td></tr>)}
+      </tbody></table>
+      <Help>Technologies become possible as a country advances in each domain (R&D, with know-how spreading from the leaders). The first to reach one may make the breakthrough, more likely with a larger research effort; others adopt it once they are close, faster with good institutions, slower if every holder dislikes them. Each brings faster growth for a decade, stronger forces, sharper intelligence, longer lives or cheaper energy.</Help>
     </Panel>
   );
 }

@@ -3,6 +3,35 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.3.1: the technology tree
+
+The first part of 2.4 Frontiers.
+
+- **26 frontier technologies for 2025–2075**, in the six technology domains, grounded in current research:
+  - AI agents, sub-2-nanometre chips, post-quantum cryptography, AI-driven cyber operations, fault-tolerant quantum
+    computers and human-level AI;
+  - advanced robotics, industrial 3D printing and humanoid robots;
+  - drone swarms, hypersonic missiles, laser air defence and autonomous combat systems;
+  - personalised mRNA therapies, AI diagnosis, gene therapy and slowing ageing;
+  - solid-state batteries, enhanced geothermal, small modular reactors and fusion power;
+  - reusable rockets, satellite mega-constellations, anti-satellite weapons, a lunar base and a Mars landing.
+- **Breakthroughs.** Each technology becomes possible once a country's level in its domain reaches a threshold,
+  measured from the 2025 world leader. The first country there may make the breakthrough, more likely with a
+  larger research effort (R&D spending times the size of the economy). Human-level AI, slowing ageing, fusion and
+  Mars are uncertain: even when possible, they are unlikely in any given year. In 50-year test runs, AI agents
+  and mRNA therapies arrive in the late 2020s, quantum computers in the 2050s and fusion in the 2060s; human-level
+  AI comes late or never.
+- **Diffusion and export controls.** Others adopt a technology once they are close, faster with effective
+  institutions. If every country that has it dislikes them (or embargoes them), adoption is much slower.
+- **Effects:**
+  - faster growth for ten years after adoption, a lasting gain in output per worker;
+  - stronger formations;
+  - sharper intelligence (a quantum computer reads traffic not protected by post-quantum codes);
+  - lower mortality, and cheaper energy;
+  - prestige missions improve the world's view of the country that achieves them.
+- **The Country screen** has a Technology panel: what the country holds, its world firsts, and what is next
+  within reach.
+
 ### New in 2.3.0: Rise & fall
 
 2.3 is complete. Countries now rise and fall:

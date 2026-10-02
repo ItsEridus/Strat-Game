@@ -8,6 +8,7 @@
 // Arabia, Russia and Mexico) cuts output when oil is cheap and raises it when oil is
 // dear. Countries without their own rare earths or lithium are exposed when the main
 // producer embargoes them.
+import { techFx } from './technology';
 import type { Company, Id, Nation, World } from './types';
 import { ENERGY, OPEC_PLUS, SOURCES, energyBaseline, type Fuel, type Mineral, type Source } from '../data/energy';
 import { dateAt } from '../engine/calendar';
@@ -60,6 +61,7 @@ export function energyPrice(w: World, n: Nation): number {
     const fuel = s === 'coal' || s === 'gas' || s === 'oil' ? s : null;
     p += e.mix[s] * (fuel ? 1 + (r[fuel] - 1) * (0.4 + 0.6 * importShare(n, fuel)) : 1);
   }
+  p *= 1 - Math.min(0.5, techFx(n).energy); // cheaper storage, reactors and (one day) fusion
   return Math.round(p * 1000) / 1000;
 }
 
