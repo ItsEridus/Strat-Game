@@ -20,6 +20,7 @@ import { ageOf } from './growth';
 import { census } from './census';
 import { jailed } from './query';
 import { notify } from '../engine/events';
+import { griefOf } from './mentalHealth';
 
 export type Value = 'family' | 'career' | 'faith' | 'community' | 'freedom';
 export const VALUES: Value[] = ['family', 'career', 'faith', 'community', 'freedom'];
@@ -112,7 +113,7 @@ export function mindMonth(w: World) {
     const n = w.nations[c.nation];
     if (n && (n.president === c.id || n.deputies.includes(c.id))) once(w, c, `office:${n.president === c.id ? 'p' : 'd'}:${n.termStart ?? 0}`, () => { shape(w, c, 'ambition', 0.03, 'holding office'); shape(w, c, 'risk', 0.02, 'holding office'); });
     if (jailed(w, c)) once(w, c, `jail:${Math.floor(month / 6)}`, () => { shape(w, c, 'loyalty', -0.05, 'time in prison'); shape(w, c, 'risk', 0.03, 'time in prison'); });
-    if ((c.life?.grief ?? 0) > 30) once(w, c, `grief:${Math.floor(month / 12)}`, () => shape(w, c, 'activity', -0.03, 'grief'));
+    if (griefOf(w, c) > 15) once(w, c, `grief:${Math.floor(month / 12)}`, () => shape(w, c, 'activity', -0.03, 'grief'));
     if (f.bankrupt != null) once(w, c, `bust:${f.bankrupt}`, () => { shape(w, c, 'risk', -0.05, 'going bust'); shape(w, c, 'greed', -0.02, 'going bust'); });
     const fam = c.family;
     if (fam?.status === 'married') once(w, c, `married:${fam.partner}`, () => shape(w, c, 'family', 0.05, 'marriage'));

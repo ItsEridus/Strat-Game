@@ -25,6 +25,7 @@ import { controller } from '../../sim/query';
 import { SIZES, buyCheck, buyHome, housingCost, priceOf, rentCheck, rentHome, rentOf, sellHome, type HomeSize } from '../../sim/housing';
 import { KIND, buyWithMortgage, creditOf, incomeOf, loanCheck, loansOf, mortgageCheck, rateFor, repayLoan, takePersonalLoan } from '../../sim/loans';
 import { CONDITIONS, clinicCheck, conditionsOf, endLeave, parentalCheck, takeParentalLeave, treated, visitClinic, visitCost } from '../../sim/health';
+import { MindPanel } from './MindPanel';
 import { pensionOf, pensionQuote, pensionRules, retire, retireCheck } from '../../sim/pensions';
 import { isMinor, parentTime, parentTimeCheck, play, playCheck, schoolDay, schoolDayCheck } from '../../sim/childhood';
 import { continueAsNewcomer, successor, writeWill } from '../../sim/legacy';
@@ -111,6 +112,7 @@ export function Life({ w }: { w: World }) {
       </>}
       {tab === 'health' && <>
         <Panel title="Health"><HealthPanel w={w} p={p} /></Panel>
+        <Panel title="🧠 Mind and mood"><MindPanel w={w} p={p} /></Panel>
         <Panel title="Education"><EducationPanel w={w} p={p} /></Panel>
         <Panel title="Hobbies"><Hobbies w={w} p={p} /></Panel>
         <Panel title="Pets"><Pets w={w} p={p} /></Panel>
@@ -270,7 +272,7 @@ function RetirementPanel({ w, p }: { w: World; p: Citizen }) {
 }
 
 function HealthPanel({ w, p }: { w: World; p: Citizen }) {
-  const conds = conditionsOf(p);
+  const conds = conditionsOf(p).filter((x) => !CONDITIONS[x.key].mind); // the mind has its own panel
   const v = visitCost(w, p);
   const leave = p.leave && p.leave.until > w.time ? p.leave : null;
   return (

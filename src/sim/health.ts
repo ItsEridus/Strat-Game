@@ -1,6 +1,7 @@
 // Health conditions, treatment and leave. People catch the flu, hurt their
 // backs, get injured at work or in battle, and with age develop chronic
-// illnesses; stress can turn into depression. A clinic visit (priced by each
+// illnesses; depression, anxiety and burnout are modelled in depth in
+// sim/mentalHealth.ts. A clinic visit (priced by each
 // country's health system) treats them: acute illnesses heal faster, chronic
 // ones are kept in check while the prescription lasts. The badly ill go on
 // sick leave (paid by the employer or the state), and new parents can take
@@ -21,16 +22,18 @@ import { schoolQuality } from './education';
 import { INDUSTRY_INFO } from '../data/items';
 import { activeCrises } from './dynamics';
 
-export type CondKey = 'flu' | 'injury' | 'back' | 'depression' | 'diabetes' | 'heart' | 'cancer' | 'wound';
-export interface Condition { key: CondKey; since: number; until?: number; treatedUntil?: number; sev: number }
+export type CondKey = 'flu' | 'injury' | 'back' | 'depression' | 'anxiety' | 'burnout' | 'diabetes' | 'heart' | 'cancer' | 'wound';
+export interface Condition { key: CondKey; since: number; until?: number; treatedUntil?: number; sev: number; sought?: boolean } // sought: help asked for (mental health)
 export interface Leave { kind: 'sick' | 'parental'; from: number; until: number }
 
-interface CondDef { label: string; icon: string; sev: number; acute?: [number, number]; chronic?: boolean; work?: boolean }
+interface CondDef { label: string; icon: string; sev: number; acute?: [number, number]; chronic?: boolean; work?: boolean; mind?: boolean }
 export const CONDITIONS: Record<CondKey, CondDef> = {
   flu: { label: 'Flu', icon: '🤒', sev: 1, acute: [4, 10] },
   injury: { label: 'Work injury', icon: '🩼', sev: 2, acute: [10, 30], work: true },
   back: { label: 'Back pain', icon: '🦴', sev: 1, acute: [20, 60] },
-  depression: { label: 'Depression', icon: '🌧️', sev: 2, chronic: true },
+  depression: { label: 'Depression', icon: '🌧️', sev: 2, chronic: true, mind: true },
+  anxiety: { label: 'Anxiety', icon: '🌀', sev: 1, chronic: true, mind: true },
+  burnout: { label: 'Burnout', icon: '🔥', sev: 2, acute: [30, 90], work: true, mind: true },
   diabetes: { label: 'Diabetes', icon: '🩸', sev: 1, chronic: true },
   heart: { label: 'Heart disease', icon: '🫀', sev: 2, chronic: true },
   cancer: { label: 'Cancer', icon: '🎗️', sev: 3, chronic: true },
@@ -62,8 +65,8 @@ export const conditionsOf = (c: Citizen) => (c.conditions ?? []).filter((x) => x
 export const treated = (w: World, x: Condition) => (x.treatedUntil ?? -1) > w.time;
 /** How much ill health conditions take off the health a person drifts toward. */
 export const conditionToll = (w: World, c: Citizen) => conditionsOf(c).reduce((t, x) => t + x.sev * (treated(w, x) ? 2 : 6), 0);
-/** Too ill to work: a serious acute condition, untreated cancer, or bad depression. */
-export const tooIll = (w: World, c: Citizen) => conditionsOf(c).some((x) => x.sev >= 3 || (x.sev >= 2 && !treated(w, x) && (CONDITIONS[x.key].acute || x.key === 'depression')));
+/** Too ill to work: a serious acute condition, untreated cancer, severe (or untreated moderate) depression, burnout. */
+export const tooIll = (w: World, c: Citizen) => conditionsOf(c).some((x) => x.sev >= 3 || x.key === 'burnout' || (x.sev >= 2 && !treated(w, x) && (CONDITIONS[x.key].acute || x.key === 'depression')));
 /** Why someone cannot work today (sick or on leave), or null. */
 export function leaveCheck(w: World, c: Citizen): string | null {
   if (c.leave && c.leave.until > w.time) return c.leave.kind === 'parental' ? 'You are on parental leave.' : 'You are on sick leave.';
@@ -87,14 +90,12 @@ export const wound = (w: World, c: Citizen) => catchCondition(w, c, 'wound');
 /** Yearly chances (calendar for acute illnesses; on the pace of life for age-related ones). */
 function onsetRates(w: World, c: Citizen, epidemic: boolean): [CondKey, number][] {
   const age = ageOf(w, c);
-  const stress = c.life?.stress ?? 25;
   const manual = c.persona === 'soldier' || c.persona === 'builder' || (c.job != null && !!w.companies[c.job] && INDUSTRY_INFO[w.companies[c.job].industry]?.raw);
   const life = 365 / (w.settings.lifeYearDays ?? 365);
   return [
     ['flu', (epidemic ? 1.5 : 0.25) / 365],
     ['injury', (manual ? 0.06 : 0.01) / 365],
     ['back', (age > 35 ? 0.03 : 0.01) / 365],
-    ['depression', (stress > 70 ? 0.25 : stress > 55 ? 0.05 : 0.01) / 365],
     ['diabetes', (age > 40 ? 0.006 : 0.001) * life / 365],
     ['heart', (age > 50 ? 0.003 * (age - 45) / 5 : 0) * life / 365],
     ['cancer', (age > 50 ? 0.002 * (age - 40) / 10 : 0.0002) * life / 365],
@@ -131,10 +132,10 @@ export function visitClinic(w: World, c: Citizen = player(w)): Result {
   const q = (schoolQuality(w, w.regions[c.loc]) + (w.regions[c.loc].staff?.clinic ?? 0.6) * 100) / 200; // care quality 0..1
   const notes: string[] = [];
   for (const x of conditionsOf(c)) {
+    if (CONDITIONS[x.key].mind) { if (!c.player && !x.sought) continue; x.sought = true; } // the mind is treated when someone asks for help
     x.treatedUntil = w.time + 30 * DAY;
     if (x.until) x.until = w.time + Math.round((x.until - w.time) * (0.6 - q * 0.2));
     if (x.key === 'cancer' && hash01(c.id, today(w), 99) < 0.08 + q * 0.12) { x.until = w.time + 30 * DAY; notes.push('the cancer is responding to treatment'); }
-    if (x.key === 'depression' && (c.life?.stress ?? 0) < 50 && hash01(c.id, today(w), 98) < 0.3) { x.until = w.time + 14 * DAY; notes.push('the depression is lifting'); }
   }
   return ok(`🏥 Seen at the clinic${v.patient ? ` (${fmtAmt(v.code, v.patient)})` : ' (free at the point of use)'}: ${conditionsOf(c).map((x) => CONDITIONS[x.key].label.toLowerCase()).join(', ')} treated${notes.length ? `; ${notes.join('; ')}` : ''}.`);
 }
@@ -205,6 +206,6 @@ export function healthDaily(w: World) {
       }
     }
     // NPCs see a doctor when they need to and can afford it.
-    if (!c.player && c.conditions?.some((x) => !treated(w, x)) && hash01(c.id, d, 501) < 0.3 && !clinicCheck(w, c)) visitClinic(w, c);
+    if (!c.player && c.conditions?.some((x) => !treated(w, x) && (!CONDITIONS[x.key].mind || x.sought)) && hash01(c.id, d, 501) < 0.3 && !clinicCheck(w, c)) visitClinic(w, c);
   }
 }

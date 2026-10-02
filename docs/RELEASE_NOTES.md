@@ -3,6 +3,42 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.5.2: mental health in depth
+
+The second part of 2.6 Life 2.0: the mind.
+
+- **Depression, anxiety and burnout** come and go for everyone:
+  - **Who is at risk:** a person's own temperament and family history, earlier episodes, stress, loneliness,
+    losing work, grief, poor health, prison and war at home. Women are more often depressed and anxious, the
+    young more often anxious, and burnout comes from long strain at work (more for workaholics and those in
+    office).
+  - **How common:** about one adult in twenty-five is depressed and a similar share anxious at any time, as in the
+    WHO's estimates. Some people begin the game already struggling.
+  - **Episodes change month by month** (mild, moderate or severe). About half lift within six months. Medication,
+    therapy and support speed recovery; untreated depression under heavy stress gets worse. Each episode makes the
+    next more likely.
+  - **Work:** moderate depression left untreated, severe depression and burnout mean sick leave.
+- **Grief has a course.** When someone dies, the people who loved them grieve: their partner, parents, children
+  and close friends. Grief is raw at first, eases over months and comes back on anniversaries. For about one
+  bereaved person in ten (more after losing a child) it does not ease, until therapy helps.
+- **Help:**
+  - **Talk to someone you trust** (once a day): it eases stress and brings you closer.
+  - **Therapy:** twelve weekly sessions, either on the public waiting list (free or cheap where it exists, from
+    about four weeks in Australia and Argentina to twenty in Germany and half a year in Canada) or privately (from
+    about $20 a session in India to $160 in Australia; the United States has private therapy only).
+  - **A doctor** prescribes medication.
+- **Stigma and access by country:**
+  - **Access:** about half of those in need get care in rich countries, and under one in ten in India (World Mental
+    Health surveys).
+  - **Stigma** is high in Korea, Japan, China, India, Russia and Saudi Arabia. It keeps people from seeking help
+    (men most of all), and some people you confide in will not want to hear it.
+  - **Over time:** access grows and stigma fades over the decades. A national mental-health programme (about 0.4%
+    of revenue, launched by governments or by you as head of government) halves waiting lists and speeds both.
+- **On screen:**
+  - a "Mind and mood" panel in Life, with your conditions, the losses you are grieving, therapy, and the people
+    you can talk to;
+  - a mental-health panel on each country page (depression, anxiety, burnout, share in care, access, stigma).
+
 ### New in 2.5.1: values, and personality that grows
 
 The first part of 2.6 Life 2.0: the mind.

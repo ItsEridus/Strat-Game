@@ -28,6 +28,7 @@ import { creditSummary } from '../../sim/sovereign';
 import { ageingDrag, demoOf } from '../../sim/demography';
 import { reserveShare, stocksOf } from '../../sim/markets';
 import { bondRate } from '../../sim/publicFinance';
+import { MentalHealthPanel } from './MindPanel';
 
 export function CountryExtras({ w, id }: { w: World; id: Id }) {
   const p = player(w);
@@ -39,6 +40,7 @@ export function CountryExtras({ w, id }: { w: World; id: Id }) {
       <RegimePanel w={w} id={id} />
       <CreditPanel w={w} id={id} />
       <DemographyPanel w={w} id={id} />
+      <MentalHealthPanel w={w} id={id} />
       <TechPanel w={w} id={id} />
       <SpacePanel w={w} id={id} />
       {mine && n.president === p.id && <Cabinet w={w} />}

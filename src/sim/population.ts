@@ -37,6 +37,7 @@ import { closeContract } from './contracts';
 import { activeCrises } from './dynamics';
 import { applyCitizenship } from './travel';
 import { fam, bereave, kidComesOfAge } from './family';
+import { mourn } from './mentalHealth';
 import { assignEducation } from './education';
 import { conditionToll } from './health';
 
@@ -215,6 +216,7 @@ export function die(w: World, c: Citizen, cause: string) {
   const heir = heirOf(w, c);
   releaseRoles(w, c, 'died');
   settleEstate(w, c, heir);
+  mourn(w, c);
   bereave(w, c);
   c.gone = { t: w.time, why: 'died', note: cause };
   invalidateCensus(w);

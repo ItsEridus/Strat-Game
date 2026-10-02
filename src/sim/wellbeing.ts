@@ -17,6 +17,7 @@ import { petComfort } from './kinship';
 import { SIZES } from './housing';
 import { incomeOf, loansOf } from './loans';
 import { hasQuirk } from './nature';
+import { griefOf } from './mentalHealth';
 
 type Part = [string, number];
 
@@ -54,7 +55,13 @@ function parts(w: World, c: Citizen, friends: number): { happy: Part[]; stress: 
   const h = c.health ?? 90;
   happy.push(['health', Math.max(-15, Math.min(8, (h - 70) / 3))]);
   if (h < 50) stress.push(['poor health', 10]);
-  if (L.grief) { happy.push(['grief', -L.grief]); stress.push(['grief', L.grief / 2]); }
+  const grief = griefOf(w, c);
+  if (grief >= 0.5) { happy.push(['grief', -grief]); stress.push(['grief', grief / 2]); }
+  for (const x of c.conditions ?? []) {
+    if (x.key === 'depression') happy.push(['depression', -4 - x.sev * 4]);
+    else if (x.key === 'anxiety') stress.push(['anxiety', 3 + x.sev * 3]);
+    else if (x.key === 'burnout') { happy.push(['burnout', -5]); stress.push(['burnout', 8]); }
+  }
   if (jailed(w, c)) { happy.push(['prison', -25]); stress.push(['prison', 30]); }
   happy.push(['how the country is run', c.mood * 0.3]);
   const r = w.regions[c.home];
