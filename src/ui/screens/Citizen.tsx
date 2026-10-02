@@ -22,6 +22,7 @@ import { TRAIT_LABEL, VALUES, VALUE_LABEL, valuesOf, type Value } from '../../si
 import { Bar, CitLink } from '../common';
 import { postTitle } from '../../sim/services';
 import { TIE_INFO } from '../../sim/ties';
+import { takesAfter } from '../../sim/heredity';
 import { BACKGROUNDS, QUIRKS, TALENTS, backgroundOf, natureOf } from '../../sim/nature';
 import { startTalk, talkCheck } from '../../sim/interact';
 
@@ -78,6 +79,7 @@ export function CitizenProfile({ w }: { w: World }) {
           {VALUES.map((v) => <tr><td>{VALUE_LABEL[v]}</td><td><Bar v={valuesOf(w, c)[v] * 100} max={100} color="#8a63d2" label={`${Math.round(valuesOf(w, c)[v] * 100)}`} /></td></tr>)}
         </tbody></table>
         <p class="small muted">Ambition {Math.round(c.traits.ambition * 100)} · appetite for risk {Math.round(c.traits.risk * 100)} · loyalty {Math.round(c.traits.loyalty * 100)} · love of money {Math.round(c.traits.greed * 100)} · energy {Math.round(c.traits.activity * 100)}</p>
+        {takesAfter(w, c) && <p class="small">Takes after <CitLink w={w} id={takesAfter(w, c)!.id} /> in temperament.</p>}
         {(c.mind?.log.length ?? 0) > 0 && <><h4>How life has shaped {c.player ? 'you' : 'them'}</h4><ul class="small">{[...c.mind!.log].reverse().slice(0, 8).map((l) => <li>{fmtDate(l.t, 'medium')}: {l.why} — {(VALUES as string[]).includes(l.trait) ? `${VALUE_LABEL[l.trait as Value].toLowerCase()} matters ${l.delta > 0 ? 'more' : 'less'}` : `${TRAIT_LABEL[l.trait as keyof typeof TRAIT_LABEL]} ${l.delta > 0 ? 'up' : 'down'}`}</li>)}</ul></>}
       </Panel>
       {(c.ties?.length ?? 0) > 0 && <Panel title={c.player ? '🗝️ People you remember' : `🗝️ People ${c.name.split(' ')[0]} remembers`}>

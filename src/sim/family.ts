@@ -3,6 +3,7 @@
 // citizens; the bereaved grieve and inherit. The player lives by the same rules:
 // ask someone out, take them on dates, propose, marry, start a family — and a
 // partner who is neglected may leave.
+import { inherit } from './heredity';
 import { noteBirth, noteMarriage } from './dynasty';
 import { faithGap, weddingFaith } from './faith';
 import { blend, custody, weddingGathering } from './familyLife';
@@ -141,6 +142,7 @@ export function kidComesOfAge(w: World, parent: Citizen, kid: Kid) {
   }
   comeOfAgeFrom(w, kid, c, parent);
   c.look = blendLook(w, c, parent, other && f.status === 'married' ? other : undefined);
+  inherit(w, c, fam(c).parents.map((id) => w.citizens[id])); // temperament, talents, values and faith (heredity.ts)
   releaseTrusts(w, kid, c);
   localNews(w, parent.home, `🎓 ${c.name}, ${parent.name}'s child, came of age.`);
   return c;

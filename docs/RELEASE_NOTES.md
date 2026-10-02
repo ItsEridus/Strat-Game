@@ -3,6 +3,22 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.9.2: what children inherit
+
+The second part of 3.0 Life 2.0: generations.
+
+When a child grows up and sets out on their own, they now take after their parents:
+
+- **Looks** blend across the generations, as before.
+- **Temperament.** Each of the five traits (ambition, appetite for risk, loyalty, love of money, energy) is about
+  half inherited, as twin studies find, and pulled back towards the average: ambitious parents have ambitious
+  children, but less extreme than themselves. Each child also has a share of their own.
+- **Talents run in families.** A child often has one parent's talent, and quirks are sometimes passed on.
+- **Values.** Children grow up with something of their parents' outlook (family, career, faith, community,
+  freedom).
+- **Faith.** Most keep the family's faith.
+- **On screen:** profiles show whom someone takes after in temperament.
+
 ### New in 2.9.1: the family tree and chronicle
 
 The first part of 3.0 Life 2.0: generations.
