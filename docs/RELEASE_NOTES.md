@@ -3,6 +3,25 @@
 A single-player society strategy game on a map of Earth: live as one citizen among thousands of simulated
 people across sixteen real countries, with every US state and Canadian province self-governing.
 
+### New in 2.8.5: identity
+
+The fourth part of 2.9 Life 2.0: culture and belonging.
+
+- **National pride.** Each country starts from the World Values Survey: most Indians, Mexicans and Turks are very
+  proud of their country, and few Germans, Japanese and Koreans say so. Pride rises and falls with the economy,
+  standing in the world (soft power), wars and the government.
+- **Each person's pride** follows their country's, their age (older people are prouder), how much they value
+  community, and their politics. People who came from abroad, and those whose mother tongue is a minority
+  language, are less attached to the nation.
+- **Regional attachment** is strongest where a region has an identity of its own, and among those who speak its
+  own language.
+- **Division.** A country is divided when its politics split into opposed camps of similar size, when many are
+  newcomers under a nationalist government, and when minorities of faith and language feel apart. A deeply
+  divided country is harder to govern: approval falls and independence movements grow.
+- **In elections** the proud lean towards nationalist parties.
+- **On screen:** an "Identity" panel in Life (your pride and regional attachment), and an identity panel on each
+  country page (pride and division).
+
 ### New in 2.8.4: migration and integration
 
 The third part of 2.9 Life 2.0: culture and belonging.

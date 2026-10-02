@@ -26,6 +26,7 @@ import { bodyDaily } from './body';
 import { homeDaily } from './homeLife';
 import { languagesDaily } from './languages';
 import { migrationDaily } from './migration';
+import { identityDaily } from './identity';
 import { faithDaily } from './faith';
 import { uprisingsDaily } from './uprisings';
 import { regimesDaily } from './regimes';
@@ -155,7 +156,7 @@ export function registerSystems() {
   HANDLERS.warDeadline = (w, p) => onWarDeadline(w, p.war);
   tickHooks.push(soldiersTick);
   hourlyHooks.push((w: World) => { if (!lod.coarse || hourOf(w.time) % 2 === 0) militaryHourly(w); peaceHousekeeping(w); });
-  dailyHooks.push((w: World) => { regimesDaily(w); uprisingsDaily(w); secessionDaily(w); warCourseDaily(w); civilWarDaily(w); technologyDaily(w); cyberDaily(w); spaceDaily(w); automationDaily(w); sovereignDaily(w); marketsDaily(w); climateDaily(w); softPowerDaily(w); demographyDaily(w); almanacDaily(w); mindDaily(w); mentalHealthDaily(w); habitsDaily(w); tiesDaily(w); circlesDaily(w); gossipDaily(w); partnershipDaily(w); familyLifeDaily(w); everydayDaily(w); carsDaily(w); bodyDaily(w); homeDaily(w); languagesDaily(w); migrationDaily(w); faithDaily(w); warHomeDaily(w); withScope(() => { beliefsDaily(w); treatiesDaily(w); diplomacyDaily(w); diplomacyActionsDaily(w); intlDaily(w); balanceOfPowerDaily(w); crisesDaily(w); }); defenseBudget(w); aiClaimReserves(w); updateExile(w); computeSupply(w); });
+  dailyHooks.push((w: World) => { regimesDaily(w); uprisingsDaily(w); secessionDaily(w); warCourseDaily(w); civilWarDaily(w); technologyDaily(w); cyberDaily(w); spaceDaily(w); automationDaily(w); sovereignDaily(w); marketsDaily(w); climateDaily(w); softPowerDaily(w); demographyDaily(w); almanacDaily(w); mindDaily(w); mentalHealthDaily(w); habitsDaily(w); tiesDaily(w); circlesDaily(w); gossipDaily(w); partnershipDaily(w); familyLifeDaily(w); everydayDaily(w); carsDaily(w); bodyDaily(w); homeDaily(w); languagesDaily(w); migrationDaily(w); identityDaily(w); faithDaily(w); warHomeDaily(w); withScope(() => { beliefsDaily(w); treatiesDaily(w); diplomacyDaily(w); diplomacyActionsDaily(w); intlDaily(w); balanceOfPowerDaily(w); crisesDaily(w); }); defenseBudget(w); aiClaimReserves(w); updateExile(w); computeSupply(w); });
 
   // Stage 4: finance & progression
   HANDLERS.auctionEnd = (w, p) => onAuctionEnd(w, p.id);

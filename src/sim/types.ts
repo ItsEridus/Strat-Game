@@ -460,6 +460,7 @@ export interface Nation {
   fossil0?: number; // the fossil share of its energy mix at the start (2.5)
   climateMigrants?: number; // people who left its hottest regions for cooler ones (2.5)
   soft?: number; // soft power, 0..100 (2.5)
+  pride?: number; division?: number; // national pride and how divided the country is, 0..100 (2.9)
   demo?: import('./demography').Demography; // fertility, ageing, migration and population (2.5)
   mh?: import('./mentalHealth').NationMH; // mental health care: access, stigma, a national programme (2.6)
   tobacco?: number; // tobacco duty against 2025 (2.6)

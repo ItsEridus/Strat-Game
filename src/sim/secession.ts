@@ -14,6 +14,7 @@
 //   until it builds its own. Other countries decide whether to recognise it: after a
 //   referendum, nearly everyone does; after a unilateral declaration, mostly the parent's
 //   rivals.
+import { identityAlienation } from './identity';
 import type { Id, Nation, Region, World } from './types';
 import { DAY } from '../engine/clock';
 import { dateAt } from '../engine/calendar';
@@ -72,7 +73,7 @@ function supportMonth(w: World) {
     const id = identityOf(r);
     if (id < 15) { r.indep = Math.max(0, (r.indep ?? 0) * 0.9); continue; }
     const reg = regimeOf(n);
-    const alienation = r.unrest / 200 + (reg.legitimacy < 40 ? 0.2 : 0) + (n.approval < 35 ? 0.1 : 0) + (isDemocracy(n) ? 0 : 0.15) + (n.warScore < -30 ? 0.1 : 0);
+    const alienation = r.unrest / 200 + identityAlienation(n) + (reg.legitimacy < 40 ? 0.2 : 0) + (n.approval < 35 ? 0.1 : 0) + (isDemocracy(n) ? 0 : 0.15) + (n.warScore < -30 ? 0.1 : 0);
     const base = INDEP_2025[r.name] ?? id * 0.25;
     const target = Math.min(100, base + id * alienation);
     r.indep = Math.round(((r.indep ?? base) + (target - (r.indep ?? base)) * 0.05) * 10) / 10;
